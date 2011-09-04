@@ -1,7 +1,12 @@
 package org.tyrannyofheaven.bukkit.zPermissions.dao;
 
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
 import org.tyrannyofheaven.bukkit.zPermissions.model.Entry;
-import org.tyrannyofheaven.bukkit.zPermissions.model.Owner;
+import org.tyrannyofheaven.bukkit.zPermissions.model.Membership;
+import org.tyrannyofheaven.bukkit.zPermissions.model.PermissionEntity;
 
 import com.avaje.ebean.EbeanServer;
 
@@ -18,26 +23,16 @@ public class AvajePermissionDao implements PermissionDao {
     }
 
     @Override
-    public Boolean getPlayerPermission(String name, String permission) {
+    public Boolean getPermission(String name, boolean group, String permission) {
         getEbeanServer().beginTransaction();
         try {
-            Owner owner = getEbeanServer().find(Owner.class).where()
-                .eq("name", name)
-                .eq("group", false)
+            Entry entry = getEbeanServer().find(Entry.class).where()
+                .eq("entity.name", name)
+                .eq("entity.group", group)
+                .eq("permission", permission)
                 .findUnique();
-            if (owner != null) {
-                // FIXME
-                Entry found = null;
-                for (Entry entry : owner.getPermissions()) {
-                    if (entry.getPermission().equals(permission)) {
-                        found = entry;
-                        break;
-                    }
-                }
-                
-                if (found != null)
-                    return found.isValue();
-            }
+            if (entry != null)
+                return entry.isValue();
             return null;
         }
         finally {
@@ -46,15 +41,15 @@ public class AvajePermissionDao implements PermissionDao {
     }
 
     @Override
-    public void setPlayerPermission(String name, String permission, boolean value) {
+    public void setPermission(String name, boolean group, String permission, boolean value) {
         getEbeanServer().beginTransaction();
         try {
-            Owner owner = getEbeanServer().find(Owner.class).where()
+            PermissionEntity owner = getEbeanServer().find(PermissionEntity.class).where()
                 .eq("name", name)
                 .eq("group", false)
                 .findUnique();
             if (owner == null) {
-                owner = new Owner();
+                owner = new PermissionEntity();
                 owner.setName(name);
                 owner.setGroup(false);
             }
@@ -69,9 +64,10 @@ public class AvajePermissionDao implements PermissionDao {
             
             if (found == null) {
                 found = new Entry();
-                owner.getPermissions().add(found);
-                found.setOwner(owner);
+                found.setEntity(owner);
                 found.setPermission(permission);
+
+                owner.getPermissions().add(found);
             }
             
             found.setValue(value);
@@ -85,9 +81,105 @@ public class AvajePermissionDao implements PermissionDao {
     }
 
     @Override
-    public void unsetPlayerPermission(String name, String permission) {
-        // TODO Auto-generated method stub
+    public void unsetPermission(String name, boolean group, String permission) {
+        getEbeanServer().beginTransaction();
+        try {
+            Entry entry = getEbeanServer().find(Entry.class).where()
+                .eq("entity.name", name)
+                .eq("entity.group", group)
+                .eq("permission", permission)
+                .findUnique();
+            if (entry != null) {
+                getEbeanServer().delete(entry);
+                getEbeanServer().commitTransaction();
+            }
+        }
+        finally {
+            getEbeanServer().endTransaction();
+        }
+    }
 
+    @Override
+    public void addMember(String groupName, String member) {
+        getEbeanServer().beginTransaction();
+        try {
+            PermissionEntity group = getEbeanServer().find(PermissionEntity.class).where()
+                .eq("name", groupName)
+                .eq("group", true)
+                .findUnique();
+
+            Membership membership = null;
+            if (group == null) {
+                group = new PermissionEntity();
+                group.setName(groupName);
+                group.setGroup(true);
+                getEbeanServer().save(group);
+            }
+            else {
+                membership = getEbeanServer().find(Membership.class).where()
+                    .eq("member", member)
+                    .eq("group", group)
+                    .findUnique();
+            }
+            
+            if (membership == null) {
+                membership = new Membership();
+                membership.setMember(member);
+                membership.setGroup(group);
+                getEbeanServer().save(membership);
+
+                group.getMemberships().add(membership);
+                getEbeanServer().commitTransaction();
+            }
+        }
+        finally {
+            getEbeanServer().endTransaction();
+        }
+    }
+
+    @Override
+    public void removeMember(String groupName, String member) {
+        getEbeanServer().beginTransaction();
+        try {
+            PermissionEntity group = getEbeanServer().find(PermissionEntity.class).where()
+                .eq("name", groupName)
+                .eq("group", true)
+                .findUnique();
+            
+            if (group != null) {
+                Membership membership = getEbeanServer().find(Membership.class).where()
+                    .eq("member", member)
+                    .eq("group", group)
+                    .findUnique();
+                
+                if (membership != null) {
+                    getEbeanServer().delete(membership);
+                    getEbeanServer().commitTransaction();
+                }
+            }
+        }
+        finally {
+            getEbeanServer().endTransaction();
+        }
+    }
+
+    @Override
+    public Set<PermissionEntity> getGroups(String member) {
+        getEbeanServer().beginTransaction();
+        try {
+            List<Membership> memberships = getEbeanServer().find(Membership.class).where()
+                .eq("member", member)
+                .findList();
+            
+            Set<PermissionEntity> groups = new HashSet<PermissionEntity>();
+            for (Membership membership : memberships) {
+                groups.add(membership.getGroup());
+            }
+            return groups;
+        }
+        finally {
+            getEbeanServer().endTransaction();
+        }
     }
 
 }

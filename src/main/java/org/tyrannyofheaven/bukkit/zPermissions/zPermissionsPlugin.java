@@ -12,7 +12,8 @@ import org.tyrannyofheaven.bukkit.util.command.ToHCommandExecutor;
 import org.tyrannyofheaven.bukkit.zPermissions.dao.AvajePermissionDao;
 import org.tyrannyofheaven.bukkit.zPermissions.dao.PermissionDao;
 import org.tyrannyofheaven.bukkit.zPermissions.model.Entry;
-import org.tyrannyofheaven.bukkit.zPermissions.model.Owner;
+import org.tyrannyofheaven.bukkit.zPermissions.model.Membership;
+import org.tyrannyofheaven.bukkit.zPermissions.model.PermissionEntity;
 
 public class zPermissionsPlugin extends JavaPlugin {
 
@@ -52,8 +53,9 @@ public class zPermissionsPlugin extends JavaPlugin {
     @Override
     public List<Class<?>> getDatabaseClasses() {
         List<Class<?>> result = new ArrayList<Class<?>>();
-        result.add(Owner.class);
+        result.add(PermissionEntity.class);
         result.add(Entry.class);
+        result.add(Membership.class);
         return result;
     }
 
