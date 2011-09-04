@@ -15,8 +15,10 @@ public class GroupCommand {
     }
 
     @Command("set")
-    public void set(ZPermissionsPlugin plugin, CommandSender sender, @Session("groupName") String name, @Option("permission") String permission, @Option("value") boolean value) {
+    public void set(ZPermissionsPlugin plugin, CommandSender sender, @Session("groupName") String name, @Option("permission") String permission, @Option(value="value", optional=true) Boolean value) {
         WorldPermission wp = new WorldPermission(permission);
+        if (value == null)
+            value = Boolean.TRUE;
         plugin.getDao().setPermission(name, true, wp.getWorld(), wp.getPermission(), value);
         ToHUtils.sendMessage(sender, "%s set to %s", permission, value);
         // TODO refresh group members or everything

@@ -20,8 +20,10 @@ public class PlayerCommand {
     }
 
     @Command("set")
-    public void set(ZPermissionsPlugin plugin, CommandSender sender, @Session("playerName") String name, @Option("permission") String permission, @Option("value") boolean value) {
+    public void set(ZPermissionsPlugin plugin, CommandSender sender, @Session("playerName") String name, @Option("permission") String permission, @Option(value="value", optional=true) Boolean value) {
         WorldPermission wp = new WorldPermission(permission);
+        if (value == null)
+            value = Boolean.TRUE;
         plugin.getDao().setPermission(name, false, wp.getWorld(), wp.getPermission(), value);
         ToHUtils.sendMessage(sender, "%s set to %s", permission, value);
         plugin.refreshPlayer(name);
