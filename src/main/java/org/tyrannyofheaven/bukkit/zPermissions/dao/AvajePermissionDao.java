@@ -167,35 +167,29 @@ public class AvajePermissionDao implements PermissionDao {
 
     @Override
     public Set<PermissionEntity> getGroups(String member) {
-        getEbeanServer().beginTransaction();
-        try {
-            List<Membership> memberships = getEbeanServer().find(Membership.class).where()
-                .eq("member", member.toLowerCase())
-                .findList();
-            
-            Set<PermissionEntity> groups = new HashSet<PermissionEntity>();
-            for (Membership membership : memberships) {
-                groups.add(membership.getGroup());
-            }
-            return groups;
+        // NB: relies on outer transaction
+        if (getEbeanServer().currentTransaction() == null)
+            throw new IllegalStateException("Needs a transaction");
+        List<Membership> memberships = getEbeanServer().find(Membership.class).where()
+            .eq("member", member.toLowerCase())
+            .findList();
+
+        Set<PermissionEntity> groups = new HashSet<PermissionEntity>();
+        for (Membership membership : memberships) {
+            groups.add(membership.getGroup());
         }
-        finally {
-            getEbeanServer().endTransaction();
-        }
+        return groups;
     }
 
     @Override
-    public PermissionEntity getPlayer(String playerName) {
-        getEbeanServer().beginTransaction();
-        try {
-            return getEbeanServer().find(PermissionEntity.class).where()
-                .eq("name", playerName.toLowerCase())
-                .eq("group", false)
-                .findUnique();
-        }
-        finally {
-            getEbeanServer().endTransaction();
-        }
+    public PermissionEntity getEntity(String name, boolean group) {
+        // NB: relies on outer transaction
+        if (getEbeanServer().currentTransaction() == null)
+            throw new IllegalStateException("Needs a transaction");
+        return getEbeanServer().find(PermissionEntity.class).where()
+            .eq("name", name.toLowerCase())
+            .eq("group", group)
+            .findUnique();
     }
 
     @Override
@@ -239,6 +233,19 @@ public class AvajePermissionDao implements PermissionDao {
             }
             
             getEbeanServer().commitTransaction();
+        }
+        finally {
+            getEbeanServer().endTransaction();
+        }
+    }
+
+    @Override
+    public List<PermissionEntity> getEntities(boolean group) {
+        getEbeanServer().beginTransaction();
+        try {
+            return getEbeanServer().find(PermissionEntity.class).where()
+                .eq("group", group)
+                .findList();
         }
         finally {
             getEbeanServer().endTransaction();
