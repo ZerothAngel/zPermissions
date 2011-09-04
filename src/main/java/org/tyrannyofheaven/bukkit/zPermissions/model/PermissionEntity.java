@@ -23,6 +23,8 @@ public class PermissionEntity {
 
     private boolean group;
 
+    private String displayName;
+
     private PermissionEntity parent;
     
     private Set<Entry> permissions = new HashSet<Entry>();
@@ -56,6 +58,15 @@ public class PermissionEntity {
 
     public void setGroup(boolean group) {
         this.group = group;
+    }
+
+    @Column(nullable=false)
+    public String getDisplayName() {
+        return displayName;
+    }
+
+    public void setDisplayName(String displayName) {
+        this.displayName = displayName;
     }
 
     @ManyToOne(optional=true)
