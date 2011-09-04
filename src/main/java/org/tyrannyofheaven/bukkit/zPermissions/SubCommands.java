@@ -6,7 +6,6 @@ import java.util.Set;
 
 import org.bukkit.ChatColor;
 import org.bukkit.command.CommandSender;
-import org.bukkit.entity.Player;
 import org.tyrannyofheaven.bukkit.util.ToHUtils;
 import org.tyrannyofheaven.bukkit.util.command.Command;
 import org.tyrannyofheaven.bukkit.util.command.Option;
@@ -16,37 +15,51 @@ import org.tyrannyofheaven.bukkit.zPermissions.model.PermissionEntity;
 public class SubCommands {
 
     @Command("get")
-    public void get(ZPermissionsPlugin plugin, @Option("player") String name, @Option("permission") String permission, CommandSender sender) {
+    public void get(ZPermissionsPlugin plugin, CommandSender sender, @Option("player") String name, @Option("permission") String permission) {
         ToHUtils.sendMessage(sender, "%s = %s", permission, plugin.getDao().getPermission(name, false, permission));
     }
 
     @Command("set")
-    public void set(ZPermissionsPlugin plugin, @Option("player") String name, @Option("permission") String permission, @Option("value") boolean value) {
+    public void set(ZPermissionsPlugin plugin, CommandSender sender, @Option("player") String name, @Option("permission") String permission, @Option("value") boolean value) {
         plugin.getDao().setPermission(name, false, permission, value);
-        Player player = plugin.getServer().getPlayer(name);
-        if (player != null)
-            plugin.addAttachment(player);
+        ToHUtils.sendMessage(sender, "%s set to %s", permission, value);
+        plugin.refreshPlayer(name);
     }
 
     @Command({"unset", "rm"})
-    public void unset(ZPermissionsPlugin plugin, @Option("player") String name, @Option("permission") String permission) {
+    public void unset(ZPermissionsPlugin plugin, CommandSender sender, @Option("player") String name, @Option("permission") String permission) {
         plugin.getDao().unsetPermission(name, false, permission);
+        ToHUtils.sendMessage(sender, "%s unset", permission);
+    }
+
+    @Command("gget")
+    public void gget(ZPermissionsPlugin plugin, CommandSender sender, @Option("group") String name, @Option("permission") String permission) {
+        ToHUtils.sendMessage(sender, "%s = %s", permission, plugin.getDao().getPermission(name, true, permission));
+    }
+
+    @Command("gset")
+    public void gset(ZPermissionsPlugin plugin, CommandSender sender, @Option("group") String name, @Option("permission") String permission, @Option("value") boolean value) {
+        plugin.getDao().setPermission(name, true, permission, value);
+        ToHUtils.sendMessage(sender, "%s set to %s", permission, value);
+        // TODO refresh group members or everything
+    }
+
+    @Command({"gunset", "grm"})
+    public void gunset(ZPermissionsPlugin plugin, CommandSender sender, @Option("group") String name, @Option("permission") String permission) {
+        plugin.getDao().unsetPermission(name, true, permission);
+        ToHUtils.sendMessage(sender, "%s unset", permission);
     }
 
     @Command("addmember")
     public void addMember(ZPermissionsPlugin plugin, @Option("group") String groupName, @Option("player") String playerName) {
         plugin.getDao().addMember(groupName, playerName);
-        Player player = plugin.getServer().getPlayer(playerName);
-        if (player != null)
-            plugin.addAttachment(player);
+        plugin.refreshPlayer(playerName);
     }
 
     @Command({"removemember", "rmmember"})
     public void removeMember(ZPermissionsPlugin plugin, @Option("group") String groupName, @Option("player") String playerName) {
         plugin.getDao().removeMember(groupName, playerName);
-        Player player = plugin.getServer().getPlayer(playerName);
-        if (player != null)
-            plugin.addAttachment(player);
+        plugin.refreshPlayer(playerName);
     }
 
     @Command("groups")
@@ -55,6 +68,11 @@ public class SubCommands {
         plugin.getDatabase().beginTransaction();
         try {
             groups = plugin.getDao().getGroups(name);
+            if (groups.isEmpty()) {
+                PermissionEntity defaultGroup = plugin.getDao().getEntity(plugin.getDefaultGroup(), true);
+                if (defaultGroup != null)
+                    groups.add(defaultGroup);
+            }
         }
         finally {
             plugin.getDatabase().endTransaction();
@@ -77,9 +95,7 @@ public class SubCommands {
     @Command("setgroup")
     public void setGroup(ZPermissionsPlugin plugin, @Option("player") String playerName, @Option("group") String groupName) {
         plugin.getDao().setGroup(playerName, groupName);
-        Player player = plugin.getServer().getPlayer(playerName);
-        if (player != null)
-            plugin.addAttachment(player);
+        plugin.refreshPlayer(playerName);
     }
 
     @Command({"list", "ls"})

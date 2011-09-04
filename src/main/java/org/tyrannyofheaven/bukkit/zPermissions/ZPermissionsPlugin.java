@@ -100,7 +100,7 @@ public class ZPermissionsPlugin extends JavaPlugin {
         try {
             Set<PermissionEntity> groups = getDao().getGroups(player.getName());
             if (groups.isEmpty()) {
-                PermissionEntity defaultGroup = getDao().getEntity(DEFAULT_GROUP, true);
+                PermissionEntity defaultGroup = getDao().getEntity(getDefaultGroup(), true);
                 if (defaultGroup != null)
                     groups.add(defaultGroup);
             }
@@ -141,6 +141,16 @@ public class ZPermissionsPlugin extends JavaPlugin {
         PermissionAttachment old = attachments.put(player.getName(), pa);
         if (old != null)
             old.remove();
+    }
+
+    void refreshPlayer(String playerName) {
+        Player player = getServer().getPlayer(playerName);
+        if (player != null)
+            addAttachment(player);
+    }
+
+    String getDefaultGroup() {
+        return DEFAULT_GROUP;
     }
 
 }
