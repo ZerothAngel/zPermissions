@@ -1,0 +1,7 @@
+name: zPermissions
+version: 1.0
+main: org.tyrannyofheaven.bukkit.zPermissions.zPermissionsPlugin
+database: true
+commands:
+  perm:
+    aliases: p
