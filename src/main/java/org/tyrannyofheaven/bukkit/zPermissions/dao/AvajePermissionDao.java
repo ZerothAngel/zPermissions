@@ -1,7 +1,7 @@
 package org.tyrannyofheaven.bukkit.zPermissions.dao;
 
 import org.tyrannyofheaven.bukkit.zPermissions.model.Entry;
-import org.tyrannyofheaven.bukkit.zPermissions.model.Player;
+import org.tyrannyofheaven.bukkit.zPermissions.model.Owner;
 
 import com.avaje.ebean.EbeanServer;
 
@@ -21,16 +21,22 @@ public class AvajePermissionDao implements PermissionDao {
     public Boolean getPlayerPermission(String name, String permission) {
         getEbeanServer().beginTransaction();
         try {
-            Player player = getEbeanServer().find(Player.class).where()
+            Owner owner = getEbeanServer().find(Owner.class).where()
                 .eq("name", name)
+                .eq("group", false)
                 .findUnique();
-            if (player != null) {
-                Entry entry = getEbeanServer().find(Entry.class).where()
-                    .eq("owner", player)
-                    .eq("name", permission)
-                    .findUnique();
-                if (entry != null)
-                    return entry.isValue();
+            if (owner != null) {
+                // FIXME
+                Entry found = null;
+                for (Entry entry : owner.getPermissions()) {
+                    if (entry.getPermission().equals(permission)) {
+                        found = entry;
+                        break;
+                    }
+                }
+                
+                if (found != null)
+                    return found.isValue();
             }
             return null;
         }
@@ -43,16 +49,18 @@ public class AvajePermissionDao implements PermissionDao {
     public void setPlayerPermission(String name, String permission, boolean value) {
         getEbeanServer().beginTransaction();
         try {
-            Player player = getEbeanServer().find(Player.class).where()
+            Owner owner = getEbeanServer().find(Owner.class).where()
                 .eq("name", name)
+                .eq("group", false)
                 .findUnique();
-            if (player == null) {
-                player = new Player();
-                player.setName(name);
+            if (owner == null) {
+                owner = new Owner();
+                owner.setName(name);
+                owner.setGroup(false);
             }
 
             Entry found = null;
-            for (Entry entry : player.getPermissions()) {
+            for (Entry entry : owner.getPermissions()) {
                 if (entry.getPermission().equals(permission)) {
                     found = entry;
                     break;
@@ -61,14 +69,14 @@ public class AvajePermissionDao implements PermissionDao {
             
             if (found == null) {
                 found = new Entry();
-                player.getPermissions().add(found);
-                found.setOwner(player);
+                owner.getPermissions().add(found);
+                found.setOwner(owner);
                 found.setPermission(permission);
             }
             
             found.setValue(value);
 
-            getEbeanServer().save(player);
+            getEbeanServer().save(owner);
             getEbeanServer().commitTransaction();
         }
         finally {

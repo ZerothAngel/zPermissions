@@ -5,27 +5,28 @@ import java.util.Set;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
-import javax.persistence.DiscriminatorColumn;
-import javax.persistence.DiscriminatorType;
 import javax.persistence.Entity;
 import javax.persistence.Id;
-import javax.persistence.Inheritance;
-import javax.persistence.InheritanceType;
+import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
+import javax.persistence.UniqueConstraint;
 
 @Entity
-@Table(name="owners")
-@Inheritance(strategy=InheritanceType.SINGLE_TABLE)
-@DiscriminatorColumn(discriminatorType=DiscriminatorType.CHAR,length=1)
-public abstract class Owner {
+@Table(name="entries")
+@UniqueConstraint(columnNames={"name", "is_group"})
+public class Owner {
 
     private Long id;
 
     private String name;
 
+    private boolean group;
+
     private Set<Entry> permissions = new HashSet<Entry>();
 
+    private Owner parent;
+    
     @Id
     public Long getId() {
         return id;
@@ -35,13 +36,22 @@ public abstract class Owner {
         this.id = id;
     }
 
-    @Column(nullable = false)
+    @Column(nullable=false)
     public String getName() {
         return name;
     }
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    @Column(name="is_group", nullable=false)
+    public boolean isGroup() {
+        return group;
+    }
+
+    public void setGroup(boolean group) {
+        this.group = group;
     }
 
     @OneToMany(cascade = CascadeType.ALL)
@@ -51,6 +61,15 @@ public abstract class Owner {
 
     public void setPermissions(Set<Entry> permissions) {
         this.permissions = permissions;
+    }
+
+    @ManyToOne(optional=true)
+    public Owner getParent() {
+        return parent;
+    }
+
+    public void setParent(Owner parent) {
+        this.parent = parent;
     }
 
 }
