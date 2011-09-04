@@ -8,6 +8,7 @@ import java.util.Set;
 import org.tyrannyofheaven.bukkit.zPermissions.model.Entry;
 import org.tyrannyofheaven.bukkit.zPermissions.model.Membership;
 import org.tyrannyofheaven.bukkit.zPermissions.model.PermissionEntity;
+import org.tyrannyofheaven.bukkit.zPermissions.model.PermissionWorld;
 
 import com.avaje.ebean.EbeanServer;
 
@@ -23,13 +24,42 @@ public class AvajePermissionDao implements PermissionDao {
         return ebean;
     }
 
+    private PermissionWorld getWorld(String world, boolean create) {
+        PermissionWorld permissionWorld = null;
+        if (world != null) {
+            permissionWorld = getEbeanServer().find(PermissionWorld.class).where()
+                .eq("name", world.toLowerCase())
+                .findUnique();
+            if (permissionWorld == null) {
+                if (create) {
+                    permissionWorld = new PermissionWorld();
+                    permissionWorld.setName(world.toLowerCase());
+                    getEbeanServer().save(permissionWorld);
+                }
+                else {
+                    throw new IllegalArgumentException("No such world");
+                }
+            }
+        }
+        return permissionWorld;
+    }
+
     @Override
-    public Boolean getPermission(String name, boolean group, String permission) {
+    public Boolean getPermission(String name, boolean group, String world, String permission) {
         getEbeanServer().beginTransaction();
         try {
+            PermissionWorld permissionWorld;
+            try {
+                permissionWorld = getWorld(world, false);
+            }
+            catch (IllegalArgumentException e) {
+                return null;
+            }
+
             Entry entry = getEbeanServer().find(Entry.class).where()
                 .eq("entity.name", name.toLowerCase())
                 .eq("entity.group", group)
+                .eq("world", permissionWorld)
                 .eq("permission", permission.toLowerCase())
                 .findUnique();
             if (entry != null)
@@ -42,9 +72,11 @@ public class AvajePermissionDao implements PermissionDao {
     }
 
     @Override
-    public void setPermission(String name, boolean group, String permission, boolean value) {
+    public void setPermission(String name, boolean group, String world, String permission, boolean value) {
         getEbeanServer().beginTransaction();
         try {
+            PermissionWorld permissionWorld = getWorld(world, true);
+
             PermissionEntity owner = getEbeanServer().find(PermissionEntity.class).where()
                 .eq("name", name.toLowerCase())
                 .eq("group", group)
@@ -59,7 +91,8 @@ public class AvajePermissionDao implements PermissionDao {
             Entry found = null;
             permission = permission.toLowerCase();
             for (Entry entry : owner.getPermissions()) {
-                if (entry.getPermission().equals(permission)) {
+                if (entry.getPermission().equals(permission) &&
+                        (entry.getWorld() == null ? permissionWorld == null : entry.getWorld().equals(permissionWorld))) {
                     found = entry;
                     break;
                 }
@@ -68,6 +101,7 @@ public class AvajePermissionDao implements PermissionDao {
             if (found == null) {
                 found = new Entry();
                 found.setEntity(owner);
+                found.setWorld(permissionWorld);
                 found.setPermission(permission.toLowerCase());
 
                 owner.getPermissions().add(found);
@@ -84,12 +118,21 @@ public class AvajePermissionDao implements PermissionDao {
     }
 
     @Override
-    public void unsetPermission(String name, boolean group, String permission) {
+    public void unsetPermission(String name, boolean group, String world, String permission) {
         getEbeanServer().beginTransaction();
         try {
+            PermissionWorld permissionWorld;
+            try {
+                permissionWorld = getWorld(world, false);
+            }
+            catch (IllegalArgumentException e) {
+                return;
+            }
+
             Entry entry = getEbeanServer().find(Entry.class).where()
                 .eq("entity.name", name.toLowerCase())
                 .eq("entity.group", group)
+                .eq("world", permissionWorld)
                 .eq("permission", permission.toLowerCase())
                 .findUnique();
             if (entry != null) {

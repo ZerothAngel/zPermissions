@@ -16,7 +16,7 @@ public class ZPermissionsPlayerListener extends PlayerListener {
 
     @Override
     public void onPlayerJoin(PlayerJoinEvent event) {
-        plugin.addAttachment(event.getPlayer());
+        plugin.addAttachment(event.getPlayer(), true);
     }
 
     @Override
@@ -29,6 +29,8 @@ public class ZPermissionsPlayerListener extends PlayerListener {
     @Override
     public void onPlayerTeleport(PlayerTeleportEvent event) {
         if (event.isCancelled()) return;
+        
+        plugin.addAttachment(event.getPlayer(), false);
     }
 
     @Override

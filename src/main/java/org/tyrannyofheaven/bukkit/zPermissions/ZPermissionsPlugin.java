@@ -22,12 +22,16 @@ import org.tyrannyofheaven.bukkit.zPermissions.dao.PermissionDao;
 import org.tyrannyofheaven.bukkit.zPermissions.model.Entry;
 import org.tyrannyofheaven.bukkit.zPermissions.model.Membership;
 import org.tyrannyofheaven.bukkit.zPermissions.model.PermissionEntity;
+import org.tyrannyofheaven.bukkit.zPermissions.model.PermissionWorld;
 
 public class ZPermissionsPlugin extends JavaPlugin {
 
     private static final String DEFAULT_GROUP = "default"; // TODO configurable
 
+    // FIXME should be synchronized
     private final Map<String, PermissionAttachment> attachments = new HashMap<String, PermissionAttachment>();
+
+    private final Map<String, String> lastWorld = new HashMap<String, String>();
 
     private PermissionDao dao;
 
@@ -61,6 +65,9 @@ public class ZPermissionsPlugin extends JavaPlugin {
         getServer().getPluginManager().registerEvent(Type.PLAYER_JOIN, pl, Priority.Monitor, this);
         getServer().getPluginManager().registerEvent(Type.PLAYER_KICK, pl, Priority.Monitor, this);
         getServer().getPluginManager().registerEvent(Type.PLAYER_QUIT, pl, Priority.Monitor, this);
+        getServer().getPluginManager().registerEvent(Type.PLAYER_TELEPORT, pl, Priority.Monitor, this);
+        
+        // TODO resolve players already online
     }
 
     public void log(String format, Object... args) {
@@ -71,12 +78,13 @@ public class ZPermissionsPlugin extends JavaPlugin {
     public List<Class<?>> getDatabaseClasses() {
         List<Class<?>> result = new ArrayList<Class<?>>();
         result.add(PermissionEntity.class);
+        result.add(PermissionWorld.class);
         result.add(Entry.class);
         result.add(Membership.class);
         return result;
     }
 
-    private void resolveGroup(Map<String, Boolean> permissions, PermissionEntity group) {
+    private void resolveGroup(Map<String, Boolean> permissions, String world, PermissionEntity group) {
         // Build list of group ancestors
         List<PermissionEntity> ancestry = new ArrayList<PermissionEntity>();
         ancestry.add(group);
@@ -89,13 +97,13 @@ public class ZPermissionsPlugin extends JavaPlugin {
         Collections.reverse(ancestry);
         
         for (PermissionEntity ancestor : ancestry) {
-            for (Entry e : ancestor.getPermissions()) {
-                permissions.put(e.getPermission(), e.isValue());
-            }
+            applyPermissions(permissions, ancestor, world);
         }
     }
 
     private Map<String, Boolean> resolvePlayer(Player player) {
+        String world = player.getWorld().getName().toLowerCase();
+
         getDatabase().beginTransaction();
         try {
             Set<PermissionEntity> groups = getDao().getGroups(player.getName());
@@ -109,15 +117,13 @@ public class ZPermissionsPlugin extends JavaPlugin {
 
             // For now, group ordering is arbitrary TODO priorities?
             for (PermissionEntity group : groups) {
-                resolveGroup(permissions, group);
+                resolveGroup(permissions, world, group);
             }
 
+            // Player-specific permissions overrides all group permissions
             PermissionEntity playerEntity = getDao().getEntity(player.getName(), false);
             if (playerEntity != null) {
-                // Add player-specific permissions
-                for (Entry e : playerEntity.getPermissions()) {
-                    permissions.put(e.getPermission(), e.isValue());
-                }
+                applyPermissions(permissions, playerEntity, world);
             }
 
             return permissions;
@@ -127,13 +133,41 @@ public class ZPermissionsPlugin extends JavaPlugin {
         }
     }
 
+    private void applyPermissions(Map<String, Boolean> permissions, PermissionEntity entity, String world) {
+        Map<String, Boolean> worldPermissions = new HashMap<String, Boolean>();
+
+        // Apply non-world-specific permissions first
+        for (Entry e : entity.getPermissions()) {
+            if (e.getWorld() == null) {
+                permissions.put(e.getPermission(), e.isValue());
+            }
+            else if (e.getWorld().getName().equals(world)) {
+                worldPermissions.put(e.getPermission(), e.isValue());
+            }
+        }
+
+        // Then override with world-specific permissions
+        permissions.putAll(worldPermissions);
+    }
+
     void removeAttachment(Player player) {
         PermissionAttachment pa = attachments.get(player.getName());
         if (pa != null)
             pa.remove();
     }
 
-    void addAttachment(Player player) {
+    void addAttachment(Player player, boolean force) {
+        // Check if the player changed worlds
+        if (!force) {
+            String playerLastWorld = lastWorld.get(player.getName());
+            
+            force = !player.getWorld().getName().equals(playerLastWorld);
+        }
+
+        if (!force) return;
+
+        lastWorld.put(player.getName(), player.getWorld().getName());
+
         PermissionAttachment pa = player.addAttachment(this);
         for (Map.Entry<String, Boolean> me : resolvePlayer(player).entrySet()) {
             pa.setPermission(me.getKey(), me.getValue());
@@ -146,7 +180,7 @@ public class ZPermissionsPlugin extends JavaPlugin {
     void refreshPlayer(String playerName) {
         Player player = getServer().getPlayer(playerName);
         if (player != null)
-            addAttachment(player);
+            addAttachment(player, true);
     }
 
     String getDefaultGroup() {

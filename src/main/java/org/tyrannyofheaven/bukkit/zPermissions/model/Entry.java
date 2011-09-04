@@ -10,12 +10,14 @@ import javax.persistence.UniqueConstraint;
 
 @Entity
 @Table(name="entries")
-@UniqueConstraint(columnNames={"entity_id", "permission"})
+@UniqueConstraint(columnNames={"entity_id", "world_id", "permission"})
 public class Entry {
 
     private Long id;
 
     private PermissionEntity entity;
+
+    private PermissionWorld world;
 
     private String permission;
     
@@ -38,6 +40,16 @@ public class Entry {
 
     public void setEntity(PermissionEntity owner) {
         this.entity = owner;
+    }
+
+    @JoinColumn(name="world_id")
+    @ManyToOne(optional=true)
+    public PermissionWorld getWorld() {
+        return world;
+    }
+
+    public void setWorld(PermissionWorld world) {
+        this.world = world;
     }
 
     @Column(nullable=false)
@@ -64,6 +76,7 @@ public class Entry {
         if ((obj instanceof Entry)) return false;
         Entry o = (Entry)obj;
         return getEntity().equals(o.getEntity()) &&
+            (getWorld() == null ? o.getWorld() == null : getWorld().equals(o.getWorld())) &&
             getPermission().equals(o.getPermission());
     }
 
@@ -71,6 +84,7 @@ public class Entry {
     public int hashCode() {
         int result = 17;
         result = 37 * result + getEntity().hashCode();
+        result = 37 * result + (getWorld() == null ? 0 : getWorld().hashCode());
         result = 37 * result + getPermission().hashCode();
         return result;
     }

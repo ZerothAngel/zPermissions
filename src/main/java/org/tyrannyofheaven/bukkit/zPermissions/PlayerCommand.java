@@ -15,19 +15,22 @@ public class PlayerCommand {
 
     @Command("get")
     public void get(ZPermissionsPlugin plugin, CommandSender sender, @Session("playerName") String name, @Option("permission") String permission) {
-        ToHUtils.sendMessage(sender, "%s = %s", permission, plugin.getDao().getPermission(name, false, permission));
+        WorldPermission wp = new WorldPermission(permission);
+        ToHUtils.sendMessage(sender, "%s = %s", permission, plugin.getDao().getPermission(name, false, wp.getWorld(), wp.getPermission()));
     }
 
     @Command("set")
     public void set(ZPermissionsPlugin plugin, CommandSender sender, @Session("playerName") String name, @Option("permission") String permission, @Option("value") boolean value) {
-        plugin.getDao().setPermission(name, false, permission, value);
+        WorldPermission wp = new WorldPermission(permission);
+        plugin.getDao().setPermission(name, false, wp.getWorld(), wp.getPermission(), value);
         ToHUtils.sendMessage(sender, "%s set to %s", permission, value);
         plugin.refreshPlayer(name);
     }
 
     @Command({"unset", "rm"})
     public void unset(ZPermissionsPlugin plugin, CommandSender sender, @Session("playerName") String name, @Option("permission") String permission) {
-        plugin.getDao().unsetPermission(name, false, permission);
+        WorldPermission wp = new WorldPermission(permission);
+        plugin.getDao().unsetPermission(name, false, wp.getWorld(), wp.getPermission());
         ToHUtils.sendMessage(sender, "%s unset", permission);
     }
 
