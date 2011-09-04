@@ -1,101 +1,57 @@
 package org.tyrannyofheaven.bukkit.zPermissions;
 
-import java.util.Iterator;
 import java.util.List;
-import java.util.Set;
 
 import org.bukkit.ChatColor;
 import org.bukkit.command.CommandSender;
 import org.tyrannyofheaven.bukkit.util.ToHUtils;
 import org.tyrannyofheaven.bukkit.util.command.Command;
+import org.tyrannyofheaven.bukkit.util.command.CommandSession;
+import org.tyrannyofheaven.bukkit.util.command.HelpBuilder;
 import org.tyrannyofheaven.bukkit.util.command.Option;
 import org.tyrannyofheaven.bukkit.util.command.ParseException;
 import org.tyrannyofheaven.bukkit.zPermissions.model.PermissionEntity;
 
 public class SubCommands {
 
-    @Command("get")
-    public void get(ZPermissionsPlugin plugin, CommandSender sender, @Option("player") String name, @Option("permission") String permission) {
-        ToHUtils.sendMessage(sender, "%s = %s", permission, plugin.getDao().getPermission(name, false, permission));
-    }
+    private final PlayerCommand playerCommand = new PlayerCommand();
 
-    @Command("set")
-    public void set(ZPermissionsPlugin plugin, CommandSender sender, @Option("player") String name, @Option("permission") String permission, @Option("value") boolean value) {
-        plugin.getDao().setPermission(name, false, permission, value);
-        ToHUtils.sendMessage(sender, "%s set to %s", permission, value);
-        plugin.refreshPlayer(name);
-    }
+    private final GroupCommand groupCommand = new GroupCommand();
 
-    @Command({"unset", "rm"})
-    public void unset(ZPermissionsPlugin plugin, CommandSender sender, @Option("player") String name, @Option("permission") String permission) {
-        plugin.getDao().unsetPermission(name, false, permission);
-        ToHUtils.sendMessage(sender, "%s unset", permission);
-    }
-
-    @Command("gget")
-    public void gget(ZPermissionsPlugin plugin, CommandSender sender, @Option("group") String name, @Option("permission") String permission) {
-        ToHUtils.sendMessage(sender, "%s = %s", permission, plugin.getDao().getPermission(name, true, permission));
-    }
-
-    @Command("gset")
-    public void gset(ZPermissionsPlugin plugin, CommandSender sender, @Option("group") String name, @Option("permission") String permission, @Option("value") boolean value) {
-        plugin.getDao().setPermission(name, true, permission, value);
-        ToHUtils.sendMessage(sender, "%s set to %s", permission, value);
-        // TODO refresh group members or everything
-    }
-
-    @Command({"gunset", "grm"})
-    public void gunset(ZPermissionsPlugin plugin, CommandSender sender, @Option("group") String name, @Option("permission") String permission) {
-        plugin.getDao().unsetPermission(name, true, permission);
-        ToHUtils.sendMessage(sender, "%s unset", permission);
-    }
-
-    @Command("addmember")
-    public void addMember(ZPermissionsPlugin plugin, @Option("group") String groupName, @Option("player") String playerName) {
-        plugin.getDao().addMember(groupName, playerName);
-        plugin.refreshPlayer(playerName);
-    }
-
-    @Command({"removemember", "rmmember"})
-    public void removeMember(ZPermissionsPlugin plugin, @Option("group") String groupName, @Option("player") String playerName) {
-        plugin.getDao().removeMember(groupName, playerName);
-        plugin.refreshPlayer(playerName);
-    }
-
-    @Command("groups")
-    public void getGroups(ZPermissionsPlugin plugin, CommandSender sender, @Option("player") String name) {
-        Set<PermissionEntity> groups;
-        plugin.getDatabase().beginTransaction();
-        try {
-            groups = plugin.getDao().getGroups(name);
-            if (groups.isEmpty()) {
-                PermissionEntity defaultGroup = plugin.getDao().getEntity(plugin.getDefaultGroup(), true);
-                if (defaultGroup != null)
-                    groups.add(defaultGroup);
-            }
+    @Command({"player", "pl", "p"})
+    public PlayerCommand player(HelpBuilder helpBuilder, CommandSender sender, CommandSession session, @Option(value="player", nullable=true) String playerName, String[] args) {
+        if (args.length == 0) {
+            helpBuilder.withCommandSender(sender)
+                .withHandler(playerCommand)
+                .forCommand("get")
+                .forCommand("set")
+                .forCommand("unset")
+                .forCommand("groups")
+                .forCommand("setgroup")
+                .show();
+            return null;
         }
-        finally {
-            plugin.getDatabase().endTransaction();
-        }
-        if (groups.isEmpty()) {
-            sender.sendMessage("Not a member of any group");
-        }
-        else {
-            StringBuilder sb = new StringBuilder();
-            for (Iterator<PermissionEntity> i = groups.iterator(); i.hasNext();) {
-                PermissionEntity group = i.next();
-                sb.append(group.getName());
-                if (i.hasNext())
-                    sb.append(", ");
-            }
-            sender.sendMessage(ChatColor.YELLOW + sb.toString());
-        }
+        
+        session.setValue("playerName", playerName);
+        return playerCommand;
     }
 
-    @Command("setgroup")
-    public void setGroup(ZPermissionsPlugin plugin, @Option("player") String playerName, @Option("group") String groupName) {
-        plugin.getDao().setGroup(playerName, groupName);
-        plugin.refreshPlayer(playerName);
+    @Command({"group", "gr", "g"})
+    public GroupCommand group(HelpBuilder helpBuilder, CommandSender sender, CommandSession session, @Option(value="group", nullable=true) String groupName, String[] args) {
+        if (args.length == 0) {
+            helpBuilder.withCommandSender(sender)
+                .withHandler(groupCommand)
+                .forCommand("get")
+                .forCommand("set")
+                .forCommand("unset")
+                .forCommand("addmember")
+                .forCommand("removemember")
+                .show();
+            return null;
+        }
+        
+        session.setValue("groupName", groupName);
+        return groupCommand;
     }
 
     @Command({"list", "ls"})
