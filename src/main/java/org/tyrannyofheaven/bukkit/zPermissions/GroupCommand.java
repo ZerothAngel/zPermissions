@@ -6,23 +6,26 @@ import org.tyrannyofheaven.bukkit.util.command.Command;
 import org.tyrannyofheaven.bukkit.util.command.Option;
 import org.tyrannyofheaven.bukkit.util.command.Session;
 
-class GroupCommand {
+public class GroupCommand {
 
     @Command("get")
     public void get(ZPermissionsPlugin plugin, CommandSender sender, @Session("groupName") String name, @Option("permission") String permission) {
-        ToHUtils.sendMessage(sender, "%s = %s", permission, plugin.getDao().getPermission(name, true, permission));
+        WorldPermission wp = new WorldPermission(permission);
+        ToHUtils.sendMessage(sender, "%s = %s", permission, plugin.getDao().getPermission(name, true, wp.getWorld(), wp.getPermission()));
     }
 
     @Command("set")
     public void set(ZPermissionsPlugin plugin, CommandSender sender, @Session("groupName") String name, @Option("permission") String permission, @Option("value") boolean value) {
-        plugin.getDao().setPermission(name, true, permission, value);
+        WorldPermission wp = new WorldPermission(permission);
+        plugin.getDao().setPermission(name, true, wp.getWorld(), wp.getPermission(), value);
         ToHUtils.sendMessage(sender, "%s set to %s", permission, value);
         // TODO refresh group members or everything
     }
 
     @Command({"unset", "rm"})
     public void unset(ZPermissionsPlugin plugin, CommandSender sender, @Session("groupName") String name, @Option("permission") String permission) {
-        plugin.getDao().unsetPermission(name, true, permission);
+        WorldPermission wp = new WorldPermission(permission);
+        plugin.getDao().unsetPermission(name, true, wp.getWorld(), wp.getPermission());
         ToHUtils.sendMessage(sender, "%s unset", permission);
     }
 

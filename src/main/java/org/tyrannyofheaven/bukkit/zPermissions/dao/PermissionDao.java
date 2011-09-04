@@ -7,11 +7,11 @@ import org.tyrannyofheaven.bukkit.zPermissions.model.PermissionEntity;
 
 public interface PermissionDao {
 
-    public Boolean getPermission(String name, boolean group, String permission);
+    public Boolean getPermission(String name, boolean group, String world, String permission);
 
-    public void setPermission(String name, boolean group, String permission, boolean value);
+    public void setPermission(String name, boolean group, String world, String permission, boolean value);
 
-    public void unsetPermission(String name, boolean group, String permission);
+    public void unsetPermission(String name, boolean group, String world, String permission);
 
     public void addMember(String groupName, String member);
     
