@@ -28,7 +28,6 @@ public class ZPermissionsPlugin extends JavaPlugin {
 
     private static final String DEFAULT_GROUP = "default"; // TODO configurable
 
-    // FIXME should be synchronized
     private final Map<String, PermissionAttachment> attachments = new HashMap<String, PermissionAttachment>();
 
     private final Map<String, String> lastWorld = new HashMap<String, String>();
@@ -41,13 +40,26 @@ public class ZPermissionsPlugin extends JavaPlugin {
 
     @Override
     public void onDisable() {
+        // Clear any player state
+        synchronized (lastWorld) {
+            lastWorld.clear();
+        }
+
+        // Remove our attachments
+        Map<String, PermissionAttachment> copy;
+        synchronized (attachments) {
+            copy = new HashMap<String, PermissionAttachment>(attachments);
+            attachments.clear();
+        }
+        for (PermissionAttachment pa : copy.values()) {
+            pa.remove();
+        }
+
         log("%s disabled.", getDescription().getVersion());
     }
 
     @Override
     public void onEnable() {
-        log("%s enabled.", getDescription().getVersion());
-        
         try {
             getDatabase().createQuery(Entry.class).findRowCount();
         }
@@ -66,8 +78,12 @@ public class ZPermissionsPlugin extends JavaPlugin {
         getServer().getPluginManager().registerEvent(Type.PLAYER_KICK, pl, Priority.Monitor, this);
         getServer().getPluginManager().registerEvent(Type.PLAYER_QUIT, pl, Priority.Monitor, this);
         getServer().getPluginManager().registerEvent(Type.PLAYER_TELEPORT, pl, Priority.Monitor, this);
-        
-        // TODO resolve players already online
+
+        for (Player player : getServer().getOnlinePlayers()) {
+            updateAttachment(player, true);
+        }
+
+        log("%s enabled.", getDescription().getVersion());
     }
 
     public void log(String format, Object... args) {
@@ -151,28 +167,42 @@ public class ZPermissionsPlugin extends JavaPlugin {
     }
 
     void removeAttachment(Player player) {
-        PermissionAttachment pa = attachments.get(player.getName());
+        PermissionAttachment pa;
+        synchronized (attachments) {
+            pa = attachments.get(player.getName());
+            if (pa != null)
+                attachments.remove(player.getName());
+        }
         if (pa != null)
-            pa.remove();
+            pa.remove(); // potential to call a callback, so do it outside synchronized block
     }
 
-    void addAttachment(Player player, boolean force) {
+    void updateAttachment(Player player, boolean force) {
         // Check if the player changed worlds
         if (!force) {
-            String playerLastWorld = lastWorld.get(player.getName());
+            String playerLastWorld;
+            synchronized (lastWorld) {
+                playerLastWorld = lastWorld.get(player.getName());
+            }
             
             force = !player.getWorld().getName().equals(playerLastWorld);
         }
 
         if (!force) return;
 
-        lastWorld.put(player.getName(), player.getWorld().getName());
+        synchronized (lastWorld) {
+            lastWorld.put(player.getName(), player.getWorld().getName());
+        }
 
         PermissionAttachment pa = player.addAttachment(this);
         for (Map.Entry<String, Boolean> me : resolvePlayer(player).entrySet()) {
             pa.setPermission(me.getKey(), me.getValue());
         }
-        PermissionAttachment old = attachments.put(player.getName(), pa);
+
+        PermissionAttachment old;
+        synchronized (attachments) {
+            old = attachments.put(player.getName(), pa);
+        }
         if (old != null)
             old.remove();
     }
@@ -180,7 +210,7 @@ public class ZPermissionsPlugin extends JavaPlugin {
     void refreshPlayer(String playerName) {
         Player player = getServer().getPlayer(playerName);
         if (player != null)
-            addAttachment(player, true);
+            updateAttachment(player, true);
     }
 
     String getDefaultGroup() {
