@@ -1,5 +1,6 @@
 package org.tyrannyofheaven.bukkit.zPermissions.dao;
 
+import java.util.List;
 import java.util.Set;
 
 import org.tyrannyofheaven.bukkit.zPermissions.model.PermissionEntity;
@@ -18,7 +19,9 @@ public interface PermissionDao {
 
     public Set<PermissionEntity> getGroups(String member);
 
-    public PermissionEntity getPlayer(String playerName);
+    public PermissionEntity getEntity(String name, boolean group);
+
+    public List<PermissionEntity> getEntities(boolean group);
 
     public void setGroup(String playerName, String groupName);
 

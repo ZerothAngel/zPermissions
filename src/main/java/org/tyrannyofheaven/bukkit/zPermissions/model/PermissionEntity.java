@@ -78,7 +78,7 @@ public class PermissionEntity {
         this.parent = parent;
     }
 
-    @OneToMany(cascade = CascadeType.ALL)
+    @OneToMany(mappedBy="entity", cascade=CascadeType.ALL)
     public Set<Entry> getPermissions() {
         return permissions;
     }
@@ -87,7 +87,7 @@ public class PermissionEntity {
         this.permissions = permissions;
     }
 
-    @OneToMany(cascade = CascadeType.ALL)
+    @OneToMany(mappedBy="parent", cascade=CascadeType.ALL)
     public Set<PermissionEntity> getChildren() {
         return children;
     }
@@ -96,7 +96,7 @@ public class PermissionEntity {
         this.children = children;
     }
 
-    @OneToMany(cascade = CascadeType.ALL)
+    @OneToMany(mappedBy="group", cascade=CascadeType.ALL)
     public Set<Membership> getMemberships() {
         return memberships;
     }
