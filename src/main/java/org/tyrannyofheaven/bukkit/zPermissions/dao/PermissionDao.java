@@ -18,4 +18,8 @@ public interface PermissionDao {
 
     public Set<PermissionEntity> getGroups(String member);
 
+    public PermissionEntity getPlayer(String playerName);
+
+    public void setGroup(String playerName, String groupName);
+
 }

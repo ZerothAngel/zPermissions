@@ -55,4 +55,9 @@ public class SubCommands {
         }
     }
 
+    @Command("setgroup")
+    public void setGroup(zPermissionsPlugin plugin, @Option("player") String playerName, @Option("group") String groupName) {
+        plugin.getDao().setGroup(playerName, groupName);
+    }
+
 }
