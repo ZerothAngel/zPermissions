@@ -6,57 +6,44 @@ import org.tyrannyofheaven.bukkit.util.ToHUtils;
 import org.tyrannyofheaven.bukkit.util.command.Command;
 import org.tyrannyofheaven.bukkit.util.command.Option;
 import org.tyrannyofheaven.bukkit.util.command.Session;
+import org.tyrannyofheaven.bukkit.util.transaction.TransactionCallbackWithoutResult;
 import org.tyrannyofheaven.bukkit.zPermissions.model.Entry;
 import org.tyrannyofheaven.bukkit.zPermissions.model.PermissionEntity;
 
-public class GroupCommand {
+public class GroupCommand extends CommonCommand {
 
-    @Command("get")
-    public void get(ZPermissionsPlugin plugin, CommandSender sender, @Session("groupName") String name, @Option("permission") String permission) {
-        WorldPermission wp = new WorldPermission(permission);
-        ToHUtils.sendMessage(sender, "%s = %s", permission, plugin.getDao().getPermission(name, true, wp.getWorld(), wp.getPermission()));
-    }
-
-    @Command("set")
-    public void set(ZPermissionsPlugin plugin, CommandSender sender, @Session("groupName") String name, @Option("permission") String permission, @Option(value="value", optional=true) Boolean value) {
-        WorldPermission wp = new WorldPermission(permission);
-        if (value == null)
-            value = Boolean.TRUE;
-        plugin.getDao().setPermission(name, true, wp.getWorld(), wp.getPermission(), value);
-        ToHUtils.sendMessage(sender, "%s set to %s", permission, value);
-        plugin.refreshPlayers();
-    }
-
-    @Command({"unset", "rm"})
-    public void unset(ZPermissionsPlugin plugin, CommandSender sender, @Session("groupName") String name, @Option("permission") String permission) {
-        WorldPermission wp = new WorldPermission(permission);
-        plugin.getDao().unsetPermission(name, true, wp.getWorld(), wp.getPermission());
-        ToHUtils.sendMessage(sender, "%s unset", permission);
-        plugin.refreshPlayers();
+    public GroupCommand() {
+        super(true);
     }
 
     @Command("addmember")
-    public void addMember(ZPermissionsPlugin plugin, @Session("groupName") String groupName, @Option("player") String playerName) {
-        plugin.getDao().addMember(groupName, playerName);
+    public void addMember(final ZPermissionsPlugin plugin, final @Session("entityName") String groupName, final @Option("player") String playerName) {
+        plugin.getTransactionStrategy().execute(new TransactionCallbackWithoutResult() {
+            @Override
+            public void doInTransactionWithoutResult() throws Exception {
+                plugin.getDao().addMember(groupName, playerName);
+            }
+        });
+
         plugin.refreshPlayer(playerName);
     }
 
     @Command({"removemember", "rmmember"})
-    public void removeMember(ZPermissionsPlugin plugin, @Session("groupName") String groupName, @Option("player") String playerName) {
-        plugin.getDao().removeMember(groupName, playerName);
+    public void removeMember(final ZPermissionsPlugin plugin, final @Session("entityName") String groupName, final @Option("player") String playerName) {
+        plugin.getTransactionStrategy().execute(new TransactionCallbackWithoutResult() {
+            @Override
+            public void doInTransactionWithoutResult() throws Exception {
+                plugin.getDao().removeMember(groupName, playerName);
+            }
+        });
+
         plugin.refreshPlayer(playerName);
     }
 
     @Command("show")
-    public void show(ZPermissionsPlugin plugin, CommandSender sender, @Session("groupName") String groupName) {
-        plugin.getDatabase().beginTransaction();
-        PermissionEntity entity;
-        try {
-            entity = plugin.getDao().getEntity(groupName, true);
-        }
-        finally {
-            plugin.getDatabase().endTransaction();
-        }
+    public void show(ZPermissionsPlugin plugin, CommandSender sender, @Session("entityName") String groupName) {
+        PermissionEntity entity = plugin.getDao().getEntity(groupName, true);
+
         if (entity != null) {
             ToHUtils.sendMessage(sender, "%sGroup-specific permissions for %s%s:", ChatColor.YELLOW, ChatColor.WHITE, entity.getDisplayName());
             ToHUtils.sendMessage(sender, "%sPriority: %s", ChatColor.YELLOW, entity.getPriority());
@@ -67,6 +54,7 @@ public class GroupCommand {
                 ToHUtils.sendMessage(sender, "%s- %s%s: %s", ChatColor.DARK_GREEN, e.getWorld() == null ? "" : e.getWorld().getName() + ":", e.getPermission(), e.isValue());
             }
         }
+
         if (entity == null || entity.getPermissions().isEmpty()) {
             sender.sendMessage(ChatColor.RED + "Group has no group-specific permissions");
             return;
@@ -75,14 +63,26 @@ public class GroupCommand {
     }
 
     @Command("setparent")
-    public void setParent(ZPermissionsPlugin plugin, CommandSender sender, @Session("groupName") String groupName, @Option(value="parent", optional=true) String parentName) {
-        plugin.getDao().setParent(groupName, parentName);
+    public void setParent(final ZPermissionsPlugin plugin, CommandSender sender, final @Session("entityName") String groupName, final @Option(value="parent", optional=true) String parentName) {
+        plugin.getTransactionStrategy().execute(new TransactionCallbackWithoutResult() {
+            @Override
+            public void doInTransactionWithoutResult() throws Exception {
+                plugin.getDao().setParent(groupName, parentName);
+            }
+        });
+
         plugin.refreshPlayers();
     }
 
     @Command("setpriority")
-    public void setPriority(ZPermissionsPlugin plugin, CommandSender sender, @Session("groupName") String groupName, @Option("priority") int priority) {
-        plugin.getDao().setPriority(groupName, priority);
+    public void setPriority(final ZPermissionsPlugin plugin, CommandSender sender, final @Session("entityName") String groupName, final @Option("priority") int priority) {
+        plugin.getTransactionStrategy().execute(new TransactionCallbackWithoutResult() {
+            @Override
+            public void doInTransactionWithoutResult() throws Exception {
+                plugin.getDao().setPriority(groupName, priority);
+            }
+        });
+
         plugin.refreshPlayers();
     }
 

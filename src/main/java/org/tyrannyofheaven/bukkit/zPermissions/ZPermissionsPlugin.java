@@ -19,6 +19,9 @@ import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.util.config.ConfigurationNode;
 import org.tyrannyofheaven.bukkit.util.ToHUtils;
 import org.tyrannyofheaven.bukkit.util.command.ToHCommandExecutor;
+import org.tyrannyofheaven.bukkit.util.transaction.AvajeTransactionStrategy;
+import org.tyrannyofheaven.bukkit.util.transaction.TransactionCallback;
+import org.tyrannyofheaven.bukkit.util.transaction.TransactionStrategy;
 import org.tyrannyofheaven.bukkit.zPermissions.dao.AvajePermissionDao;
 import org.tyrannyofheaven.bukkit.zPermissions.dao.PermissionDao;
 import org.tyrannyofheaven.bukkit.zPermissions.model.Entry;
@@ -44,7 +47,13 @@ public class ZPermissionsPlugin extends JavaPlugin {
 
     private Map<String, List<String>> tracks = new HashMap<String, List<String>>();
 
+    private TransactionStrategy transactionStrategy;
+
     private PermissionDao dao;
+
+    TransactionStrategy getTransactionStrategy() {
+        return transactionStrategy;
+    }
 
     PermissionDao getDao() {
         return dao;
@@ -95,6 +104,7 @@ public class ZPermissionsPlugin extends JavaPlugin {
             log("Done.");
         }
         
+        transactionStrategy = new AvajeTransactionStrategy(getDatabase());
         dao = new AvajePermissionDao(getDatabase());
         
         CommandExecutor ce = new ToHCommandExecutor<ZPermissionsPlugin>(this, new RootCommand());
@@ -157,36 +167,36 @@ public class ZPermissionsPlugin extends JavaPlugin {
         }
     }
 
-    private Map<String, Boolean> resolvePlayer(Player player) {
-        String world = player.getWorld().getName().toLowerCase();
+    private Map<String, Boolean> resolvePlayer(final Player player) {
+        final String world = player.getWorld().getName().toLowerCase();
 
-        getDatabase().beginTransaction();
-        try {
-            List<PermissionEntity> groups = getDao().getGroups(player.getName());
-            if (groups.isEmpty()) {
-                PermissionEntity defaultGroup = getDao().getEntity(getDefaultGroup(), true);
-                if (defaultGroup != null)
-                    groups.add(defaultGroup);
+        return getTransactionStrategy().execute(new TransactionCallback<Map<String, Boolean>>() {
+            @Override
+            public Map<String, Boolean> doInTransaction() throws Exception {
+                // TODO Auto-generated method stub
+                List<PermissionEntity> groups = getDao().getGroups(player.getName());
+                if (groups.isEmpty()) {
+                    PermissionEntity defaultGroup = getDao().getEntity(getDefaultGroup(), true);
+                    if (defaultGroup != null)
+                        groups.add(defaultGroup);
+                }
+
+                Map<String, Boolean> permissions = new HashMap<String, Boolean>();
+
+                // Resolve each group in turn (highest priority resolved last)
+                for (PermissionEntity group : groups) {
+                    resolveGroup(permissions, world, group);
+                }
+
+                // Player-specific permissions overrides all group permissions
+                PermissionEntity playerEntity = getDao().getEntity(player.getName(), false);
+                if (playerEntity != null) {
+                    applyPermissions(permissions, playerEntity, world);
+                }
+
+                return permissions;
             }
-
-            Map<String, Boolean> permissions = new HashMap<String, Boolean>();
-
-            // Resolve each group in turn (highest priority resolved last)
-            for (PermissionEntity group : groups) {
-                resolveGroup(permissions, world, group);
-            }
-
-            // Player-specific permissions overrides all group permissions
-            PermissionEntity playerEntity = getDao().getEntity(player.getName(), false);
-            if (playerEntity != null) {
-                applyPermissions(permissions, playerEntity, world);
-            }
-
-            return permissions;
-        }
-        finally {
-            getDatabase().endTransaction();
-        }
+        });
     }
 
     private void applyPermissions(Map<String, Boolean> permissions, PermissionEntity entity, String world) {
