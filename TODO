@@ -1,4 +1,5 @@
 -   Multi-world support!
 -   Group priorities
+-   Automatic group permissions i.e. group.<groupname>
 -   Ranks/ladders
 -   YAML export/import

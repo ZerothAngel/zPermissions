@@ -5,7 +5,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.logging.Level;
 
 import javax.persistence.PersistenceException;
@@ -79,10 +78,8 @@ public class ZPermissionsPlugin extends JavaPlugin {
         getServer().getPluginManager().registerEvent(Type.PLAYER_QUIT, pl, Priority.Monitor, this);
         getServer().getPluginManager().registerEvent(Type.PLAYER_TELEPORT, pl, Priority.Monitor, this);
 
-        for (Player player : getServer().getOnlinePlayers()) {
-            updateAttachment(player, true);
-        }
-
+        refreshPlayers();
+        
         log("%s enabled.", getDescription().getVersion());
     }
 
@@ -122,7 +119,7 @@ public class ZPermissionsPlugin extends JavaPlugin {
 
         getDatabase().beginTransaction();
         try {
-            Set<PermissionEntity> groups = getDao().getGroups(player.getName());
+            List<PermissionEntity> groups = getDao().getGroups(player.getName());
             if (groups.isEmpty()) {
                 PermissionEntity defaultGroup = getDao().getEntity(getDefaultGroup(), true);
                 if (defaultGroup != null)
@@ -131,7 +128,7 @@ public class ZPermissionsPlugin extends JavaPlugin {
 
             Map<String, Boolean> permissions = new HashMap<String, Boolean>();
 
-            // For now, group ordering is arbitrary TODO priorities?
+            // Resolve each group in turn (highest priority resolved last)
             for (PermissionEntity group : groups) {
                 resolveGroup(permissions, world, group);
             }
@@ -211,6 +208,12 @@ public class ZPermissionsPlugin extends JavaPlugin {
         Player player = getServer().getPlayer(playerName);
         if (player != null)
             updateAttachment(player, true);
+    }
+
+    void refreshPlayers() {
+        for (Player player : getServer().getOnlinePlayers()) {
+            updateAttachment(player, true);
+        }
     }
 
     String getDefaultGroup() {

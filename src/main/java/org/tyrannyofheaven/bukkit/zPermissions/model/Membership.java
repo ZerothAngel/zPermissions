@@ -62,4 +62,9 @@ public class Membership {
         return result;
     }
 
+    @Override
+    public String toString() {
+        return String.format("Membership[%s -> %s]", getGroup().getName(), getMember());
+    }
+
 }

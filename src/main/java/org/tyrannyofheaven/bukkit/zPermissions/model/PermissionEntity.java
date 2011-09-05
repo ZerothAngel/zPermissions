@@ -25,6 +25,8 @@ public class PermissionEntity {
 
     private String displayName;
 
+    private int priority;
+
     private PermissionEntity parent;
     
     private Set<Entry> permissions = new HashSet<Entry>();
@@ -87,6 +89,14 @@ public class PermissionEntity {
         this.permissions = permissions;
     }
 
+    public int getPriority() {
+        return priority;
+    }
+
+    public void setPriority(int priority) {
+        this.priority = priority;
+    }
+
     @OneToMany(mappedBy="parent", cascade=CascadeType.ALL)
     public Set<PermissionEntity> getChildren() {
         return children;
@@ -120,6 +130,11 @@ public class PermissionEntity {
         result = 37 * result + getName().hashCode();
         result = 37 * result + Boolean.valueOf(isGroup()).hashCode();
         return result;
+    }
+
+    @Override
+    public String toString() {
+        return String.format("Entity[%s,%s]", getName(), isGroup());
     }
 
 }

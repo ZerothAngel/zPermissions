@@ -44,4 +44,9 @@ public class PermissionWorld {
         return getName().hashCode();
     }
 
+    @Override
+    public String toString() {
+        return String.format("World[%s]", getName());
+    }
+
 }
