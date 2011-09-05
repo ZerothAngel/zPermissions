@@ -1,9 +1,7 @@
 package org.tyrannyofheaven.bukkit.zPermissions.dao;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 import org.tyrannyofheaven.bukkit.zPermissions.model.Entry;
 import org.tyrannyofheaven.bukkit.zPermissions.model.Membership;
@@ -108,13 +106,11 @@ public class AvajePermissionDao implements PermissionDao {
                 found.setEntity(owner);
                 found.setWorld(permissionWorld);
                 found.setPermission(permission);
-
-                owner.getPermissions().add(found);
             }
             
             found.setValue(value);
 
-            getEbeanServer().save(owner);
+            getEbeanServer().save(found);
             getEbeanServer().commitTransaction();
         }
         finally {
@@ -200,15 +196,16 @@ public class AvajePermissionDao implements PermissionDao {
     }
 
     @Override
-    public Set<PermissionEntity> getGroups(String member) {
+    public List<PermissionEntity> getGroups(String member) {
         // NB: relies on outer transaction
         if (getEbeanServer().currentTransaction() == null)
             throw new IllegalStateException("Needs a transaction");
         List<Membership> memberships = getEbeanServer().find(Membership.class).where()
             .eq("member", member.toLowerCase())
+            .orderBy("group.priority")
             .findList();
 
-        Set<PermissionEntity> groups = new HashSet<PermissionEntity>();
+        List<PermissionEntity> groups = new ArrayList<PermissionEntity>();
         for (Membership membership : memberships) {
             groups.add(membership.getGroup());
         }
@@ -288,6 +285,22 @@ public class AvajePermissionDao implements PermissionDao {
             else {
                 group.setParent(null);
             }
+            getEbeanServer().save(group);
+            getEbeanServer().commitTransaction();
+        }
+        finally {
+            getEbeanServer().endTransaction();
+        }
+    }
+
+    @Override
+    public void setPriority(String groupName, int priority) {
+        getEbeanServer().beginTransaction();
+        try {
+            PermissionEntity group = getEntity(groupName, true, true);
+            
+            group.setPriority(priority);
+
             getEbeanServer().save(group);
             getEbeanServer().commitTransaction();
         }

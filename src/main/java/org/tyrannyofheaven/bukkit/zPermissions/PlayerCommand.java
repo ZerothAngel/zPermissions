@@ -1,7 +1,7 @@
 package org.tyrannyofheaven.bukkit.zPermissions;
 
 import java.util.Iterator;
-import java.util.Set;
+import java.util.List;
 
 import org.bukkit.ChatColor;
 import org.bukkit.command.CommandSender;
@@ -39,7 +39,7 @@ public class PlayerCommand {
 
     @Command("groups")
     public void getGroups(ZPermissionsPlugin plugin, CommandSender sender, @Session("playerName") String name) {
-        Set<PermissionEntity> groups;
+        List<PermissionEntity> groups;
         plugin.getDatabase().beginTransaction();
         try {
             groups = plugin.getDao().getGroups(name);

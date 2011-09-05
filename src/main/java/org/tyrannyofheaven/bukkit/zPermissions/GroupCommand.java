@@ -24,7 +24,7 @@ public class GroupCommand {
             value = Boolean.TRUE;
         plugin.getDao().setPermission(name, true, wp.getWorld(), wp.getPermission(), value);
         ToHUtils.sendMessage(sender, "%s set to %s", permission, value);
-        // TODO refresh group members or everything
+        plugin.refreshPlayers();
     }
 
     @Command({"unset", "rm"})
@@ -32,6 +32,7 @@ public class GroupCommand {
         WorldPermission wp = new WorldPermission(permission);
         plugin.getDao().unsetPermission(name, true, wp.getWorld(), wp.getPermission());
         ToHUtils.sendMessage(sender, "%s unset", permission);
+        plugin.refreshPlayers();
     }
 
     @Command("addmember")
@@ -58,6 +59,7 @@ public class GroupCommand {
         }
         if (entity != null) {
             ToHUtils.sendMessage(sender, "%sGroup-specific permissions for %s%s:", ChatColor.YELLOW, ChatColor.WHITE, entity.getDisplayName());
+            ToHUtils.sendMessage(sender, "%sPriority: %s", ChatColor.YELLOW, entity.getPriority());
             if (entity.getParent() != null) {
                 ToHUtils.sendMessage(sender, "%sParent: %s", ChatColor.DARK_BLUE, entity.getParent().getDisplayName());
             }
@@ -75,6 +77,13 @@ public class GroupCommand {
     @Command("setparent")
     public void setParent(ZPermissionsPlugin plugin, CommandSender sender, @Session("groupName") String groupName, @Option(value="parent", optional=true) String parentName) {
         plugin.getDao().setParent(groupName, parentName);
+        plugin.refreshPlayers();
     }
-    
+
+    @Command("setpriority")
+    public void setPriority(ZPermissionsPlugin plugin, CommandSender sender, @Session("groupName") String groupName, @Option("priority") int priority) {
+        plugin.getDao().setPriority(groupName, priority);
+        plugin.refreshPlayers();
+    }
+
 }

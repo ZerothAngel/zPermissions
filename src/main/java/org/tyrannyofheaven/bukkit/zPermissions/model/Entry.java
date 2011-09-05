@@ -89,4 +89,12 @@ public class Entry {
         return result;
     }
 
+    @Override
+    public String toString() {
+        if (getWorld() == null)
+            return String.format("%s:*all*:%s -> %s", getEntity(), getPermission(), isValue());
+        else
+            return String.format("%s:%s:%s -> %s", getEntity(), getWorld().getName(), getPermission(), isValue());
+    }
+
 }

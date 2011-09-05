@@ -1,7 +1,6 @@
 package org.tyrannyofheaven.bukkit.zPermissions.dao;
 
 import java.util.List;
-import java.util.Set;
 
 import org.tyrannyofheaven.bukkit.zPermissions.model.PermissionEntity;
 
@@ -17,7 +16,7 @@ public interface PermissionDao {
     
     public void removeMember(String groupName, String member);
 
-    public Set<PermissionEntity> getGroups(String member);
+    public List<PermissionEntity> getGroups(String member);
 
     public PermissionEntity getEntity(String name, boolean group);
 
@@ -26,5 +25,7 @@ public interface PermissionDao {
     public void setGroup(String playerName, String groupName);
 
     public void setParent(String groupName, String parentName);
+
+    public void setPriority(String groupName, int priority);
 
 }
