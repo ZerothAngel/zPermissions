@@ -239,18 +239,7 @@ public class AvajePermissionDao implements PermissionDao {
     public void setGroup(String playerName, String groupName) {
         getEbeanServer().beginTransaction();
         try {
-            PermissionEntity group = getEbeanServer().find(PermissionEntity.class).where()
-                .eq("name", groupName.toLowerCase())
-                .eq("group", true)
-                .findUnique();
-
-            if (group == null) {
-                group = new PermissionEntity();
-                group.setName(groupName.toLowerCase());
-                group.setGroup(true);
-                group.setDisplayName(groupName);
-                getEbeanServer().save(group);
-            }
+            PermissionEntity group = getGroup(groupName, true);
 
             List<Membership> memberships = getEbeanServer().find(Membership.class).where()
                 .eq("member", playerName.toLowerCase())
@@ -293,6 +282,42 @@ public class AvajePermissionDao implements PermissionDao {
         finally {
             getEbeanServer().endTransaction();
         }
+    }
+
+    @Override
+    public void setParent(String groupName, String parentName) {
+        getEbeanServer().beginTransaction();
+        try {
+            PermissionEntity group = getGroup(groupName, true);
+            
+            if (parentName != null) {
+                PermissionEntity parent = getGroup(parentName, true);
+                group.setParent(parent);
+            }
+            else {
+                group.setParent(null);
+            }
+            getEbeanServer().save(group);
+            getEbeanServer().commitTransaction();
+        }
+        finally {
+            getEbeanServer().endTransaction();
+        }
+    }
+
+    private PermissionEntity getGroup(String groupName, boolean create) {
+        PermissionEntity group = getEbeanServer().find(PermissionEntity.class).where()
+            .eq("name", groupName.toLowerCase())
+            .eq("group", true)
+            .findUnique();
+        if (group == null && create) {
+            group = new PermissionEntity();
+            group.setName(groupName.toLowerCase());
+            group.setGroup(true);
+            group.setDisplayName(groupName);
+            getEbeanServer().save(group);
+        }
+        return group;
     }
 
 }

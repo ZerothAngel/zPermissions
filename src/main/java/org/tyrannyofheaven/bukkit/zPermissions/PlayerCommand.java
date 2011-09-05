@@ -9,6 +9,7 @@ import org.tyrannyofheaven.bukkit.util.ToHUtils;
 import org.tyrannyofheaven.bukkit.util.command.Command;
 import org.tyrannyofheaven.bukkit.util.command.Option;
 import org.tyrannyofheaven.bukkit.util.command.Session;
+import org.tyrannyofheaven.bukkit.zPermissions.model.Entry;
 import org.tyrannyofheaven.bukkit.zPermissions.model.PermissionEntity;
 
 public class PlayerCommand {
@@ -70,6 +71,27 @@ public class PlayerCommand {
     public void setGroup(ZPermissionsPlugin plugin, @Session("playerName") String playerName, @Option("group") String groupName) {
         plugin.getDao().setGroup(playerName, groupName);
         plugin.refreshPlayer(playerName);
+    }
+
+    @Command("show")
+    public void show(ZPermissionsPlugin plugin, CommandSender sender, @Session("playerName") String playerName) {
+        plugin.getDatabase().beginTransaction();
+        PermissionEntity entity;
+        try {
+            entity = plugin.getDao().getEntity(playerName, false);
+        }
+        finally {
+            plugin.getDatabase().endTransaction();
+        }
+        if (entity == null || entity.getPermissions().isEmpty()) {
+            sender.sendMessage(ChatColor.RED + "Player has no player-specific permissions");
+            return;
+        }
+        
+        ToHUtils.sendMessage(sender, "%sPlayer-specific permissions for %s%s:", ChatColor.YELLOW, ChatColor.WHITE, entity.getDisplayName());
+        for (Entry e : entity.getPermissions()) {
+            ToHUtils.sendMessage(sender, "%s- %s%s: %s", ChatColor.DARK_GREEN, e.getWorld() == null ? "" : e.getWorld().getName() + ":", e.getPermission(), e.isValue());
+        }
     }
 
 }

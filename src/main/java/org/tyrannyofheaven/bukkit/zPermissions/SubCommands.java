@@ -28,6 +28,7 @@ public class SubCommands {
                 .forCommand("unset")
                 .forCommand("groups")
                 .forCommand("setgroup")
+                .forCommand("show")
                 .show();
             return null;
         }
@@ -44,8 +45,10 @@ public class SubCommands {
                 .forCommand("get")
                 .forCommand("set")
                 .forCommand("unset")
+                .forCommand("setparent")
                 .forCommand("addmember")
                 .forCommand("removemember")
+                .forCommand("show")
                 .show();
             return null;
         }
