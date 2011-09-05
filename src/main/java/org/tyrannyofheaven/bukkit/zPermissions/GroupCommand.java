@@ -1,10 +1,13 @@
 package org.tyrannyofheaven.bukkit.zPermissions;
 
+import org.bukkit.ChatColor;
 import org.bukkit.command.CommandSender;
 import org.tyrannyofheaven.bukkit.util.ToHUtils;
 import org.tyrannyofheaven.bukkit.util.command.Command;
 import org.tyrannyofheaven.bukkit.util.command.Option;
 import org.tyrannyofheaven.bukkit.util.command.Session;
+import org.tyrannyofheaven.bukkit.zPermissions.model.Entry;
+import org.tyrannyofheaven.bukkit.zPermissions.model.PermissionEntity;
 
 public class GroupCommand {
 
@@ -43,4 +46,33 @@ public class GroupCommand {
         plugin.refreshPlayer(playerName);
     }
 
+    @Command("show")
+    public void show(ZPermissionsPlugin plugin, CommandSender sender, @Session("groupName") String groupName) {
+        plugin.getDatabase().beginTransaction();
+        PermissionEntity entity;
+        try {
+            entity = plugin.getDao().getEntity(groupName, true);
+        }
+        finally {
+            plugin.getDatabase().endTransaction();
+        }
+        if (entity == null || entity.getPermissions().isEmpty()) {
+            sender.sendMessage(ChatColor.RED + "Group has no group-specific permissions");
+            return;
+        }
+        
+        ToHUtils.sendMessage(sender, "%sGroup-specific permissions for %s%s:", ChatColor.YELLOW, ChatColor.WHITE, entity.getDisplayName());
+        if (entity.getParent() != null) {
+            ToHUtils.sendMessage(sender, "%sParent: %s", ChatColor.DARK_BLUE, entity.getParent().getDisplayName());
+        }
+        for (Entry e : entity.getPermissions()) {
+            ToHUtils.sendMessage(sender, "%s- %s%s: %s", ChatColor.DARK_GREEN, e.getWorld() == null ? "" : e.getWorld().getName() + ":", e.getPermission(), e.isValue());
+        }
+    }
+
+    @Command("setparent")
+    public void setParent(ZPermissionsPlugin plugin, CommandSender sender, @Session("groupName") String groupName, @Option(value="parent", optional=true) String parentName) {
+        plugin.getDao().setParent(groupName, parentName);
+    }
+    
 }

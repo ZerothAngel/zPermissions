@@ -25,4 +25,6 @@ public interface PermissionDao {
 
     public void setGroup(String playerName, String groupName);
 
+    public void setParent(String groupName, String parentName);
+
 }
