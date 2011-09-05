@@ -1,3 +1,4 @@
+group-permission: 'group.%s'
 default-group: default
 default-track: default
 tracks:

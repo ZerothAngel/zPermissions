@@ -40,6 +40,8 @@ public class ZPermissionsPlugin extends JavaPlugin {
     
     private String defaultTrack;
     
+    private String groupPermissionFormat;
+
     private Map<String, List<String>> tracks = new HashMap<String, List<String>>();
 
     private PermissionDao dao;
@@ -147,6 +149,11 @@ public class ZPermissionsPlugin extends JavaPlugin {
         
         for (PermissionEntity ancestor : ancestry) {
             applyPermissions(permissions, ancestor, world);
+            
+            // Add group permission, if present
+            if (groupPermissionFormat != null) {
+                permissions.put(String.format(groupPermissionFormat, ancestor.getName()), Boolean.TRUE);
+            }
         }
     }
 
@@ -268,10 +275,17 @@ public class ZPermissionsPlugin extends JavaPlugin {
         // Barebones defaults
         defaultGroup = DEFAULT_GROUP;
         defaultTrack = DEFAULT_TRACK;
+        groupPermissionFormat = null;
         tracks.clear();
         
+        String value;
+        
         // Read values, set accordingly
-        String value = (String)getConfiguration().getProperty("default-group");
+        value = (String)getConfiguration().getProperty("group-permission");
+        if (ToHUtils.hasText(value))
+            groupPermissionFormat = value;
+
+        value = (String)getConfiguration().getProperty("default-group");
         if (ToHUtils.hasText(value))
             defaultGroup = value;
         

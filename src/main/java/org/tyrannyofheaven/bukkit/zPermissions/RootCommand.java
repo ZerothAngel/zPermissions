@@ -119,7 +119,7 @@ public class RootCommand {
     }
 
     @Command("demote")
-    @Require("zpermissions.promote")
+    @Require("zpermissions.demote")
     public void demote(ZPermissionsPlugin plugin, CommandSender sender, @Option("player") String playerName, @Option(value="track", optional=true) String trackName) {
         rankChange(plugin, sender, playerName, trackName, false);
     }
