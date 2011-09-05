@@ -1,5 +1,6 @@
 package org.tyrannyofheaven.bukkit.zPermissions;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -9,11 +10,13 @@ import java.util.logging.Level;
 
 import javax.persistence.PersistenceException;
 
+import org.bukkit.command.CommandExecutor;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Event.Priority;
 import org.bukkit.event.Event.Type;
 import org.bukkit.permissions.PermissionAttachment;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.util.config.ConfigurationNode;
 import org.tyrannyofheaven.bukkit.util.ToHUtils;
 import org.tyrannyofheaven.bukkit.util.command.ToHCommandExecutor;
 import org.tyrannyofheaven.bukkit.zPermissions.dao.AvajePermissionDao;
@@ -25,11 +28,19 @@ import org.tyrannyofheaven.bukkit.zPermissions.model.PermissionWorld;
 
 public class ZPermissionsPlugin extends JavaPlugin {
 
-    private static final String DEFAULT_GROUP = "default"; // TODO configurable
+    private static final String DEFAULT_GROUP = "default";
+    
+    private static final String DEFAULT_TRACK = "default";
 
     private final Map<String, PermissionAttachment> attachments = new HashMap<String, PermissionAttachment>();
 
     private final Map<String, String> lastWorld = new HashMap<String, String>();
+
+    private String defaultGroup;
+    
+    private String defaultTrack;
+    
+    private Map<String, List<String>> tracks = new HashMap<String, List<String>>();
 
     private PermissionDao dao;
 
@@ -59,6 +70,20 @@ public class ZPermissionsPlugin extends JavaPlugin {
 
     @Override
     public void onEnable() {
+        // Create data directory, if needed
+        if (!getDataFolder().exists())
+            getDataFolder().mkdirs();
+
+        // Create config file, if needed
+        File configFile = new File(getDataFolder(), "config.yml");
+        if (!configFile.exists()) {
+            ToHUtils.copyResourceToFile(this, "config.yml", configFile);
+            // Re-load config
+            getConfiguration().load();
+        }
+
+        readConfig();
+
         try {
             getDatabase().createQuery(Entry.class).findRowCount();
         }
@@ -70,8 +95,11 @@ public class ZPermissionsPlugin extends JavaPlugin {
         
         dao = new AvajePermissionDao(getDatabase());
         
-        getCommand("perm").setExecutor(new ToHCommandExecutor<ZPermissionsPlugin>(this, new RootCommand()));
-        
+        CommandExecutor ce = new ToHCommandExecutor<ZPermissionsPlugin>(this, new RootCommand());
+        getCommand("perm").setExecutor(ce);
+        getCommand("promote").setExecutor(ce);
+        getCommand("demote").setExecutor(ce);
+
         ZPermissionsPlayerListener pl = new ZPermissionsPlayerListener(this);
         getServer().getPluginManager().registerEvent(Type.PLAYER_JOIN, pl, Priority.Monitor, this);
         getServer().getPluginManager().registerEvent(Type.PLAYER_KICK, pl, Priority.Monitor, this);
@@ -85,6 +113,14 @@ public class ZPermissionsPlugin extends JavaPlugin {
 
     public void log(String format, Object... args) {
         ToHUtils.log(this, Level.INFO, format, args);
+    }
+
+    public void warn(String format, Object... args) {
+        ToHUtils.log(this, Level.WARNING, format, args);
+    }
+
+    public void debug(String format, Object... args) {
+        ToHUtils.log(this, Level.FINE, format, args);
     }
 
     @Override
@@ -217,7 +253,53 @@ public class ZPermissionsPlugin extends JavaPlugin {
     }
 
     String getDefaultGroup() {
-        return DEFAULT_GROUP;
+        return defaultGroup;
+    }
+
+    String getDefaultTrack() {
+        return defaultTrack;
+    }
+
+    List<String> getTrack(String trackName) {
+        return tracks.get(trackName);
+    }
+
+    private void readConfig() {
+        // Barebones defaults
+        defaultGroup = DEFAULT_GROUP;
+        defaultTrack = DEFAULT_TRACK;
+        tracks.clear();
+        
+        // Read values, set accordingly
+        String value = (String)getConfiguration().getProperty("default-group");
+        if (ToHUtils.hasText(value))
+            defaultGroup = value;
+        
+        value = (String)getConfiguration().getProperty("default-track");
+        if (ToHUtils.hasText(value))
+            defaultTrack = value;
+
+        // Read tracks, if any
+        ConfigurationNode node = getConfiguration().getNode("tracks");
+        if (node != null) {
+            for (String trackName : node.getKeys()) {
+                List<Object> list = node.getList(trackName);
+                if (list == null) {
+                    warn("Track %s must have a list value", trackName);
+                    continue;
+                }
+
+                List<String> members = new ArrayList<String>();
+                for (Object o : list) {
+                    if (!(o instanceof String)) {
+                        warn("Track %s contains non-string value", trackName);
+                        continue;
+                    }
+                    members.add((String)o);
+                }
+                tracks.put(trackName, members);
+            }
+        }
     }
 
 }
