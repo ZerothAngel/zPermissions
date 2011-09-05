@@ -5,3 +5,6 @@ database: true
 commands:
   perm:
     aliases: p
+permissions:
+  zpermissions.*:
+    default: op

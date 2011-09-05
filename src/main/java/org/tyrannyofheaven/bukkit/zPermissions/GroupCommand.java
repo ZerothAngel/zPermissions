@@ -56,18 +56,20 @@ public class GroupCommand {
         finally {
             plugin.getDatabase().endTransaction();
         }
+        if (entity != null) {
+            ToHUtils.sendMessage(sender, "%sGroup-specific permissions for %s%s:", ChatColor.YELLOW, ChatColor.WHITE, entity.getDisplayName());
+            if (entity.getParent() != null) {
+                ToHUtils.sendMessage(sender, "%sParent: %s", ChatColor.DARK_BLUE, entity.getParent().getDisplayName());
+            }
+            for (Entry e : entity.getPermissions()) {
+                ToHUtils.sendMessage(sender, "%s- %s%s: %s", ChatColor.DARK_GREEN, e.getWorld() == null ? "" : e.getWorld().getName() + ":", e.getPermission(), e.isValue());
+            }
+        }
         if (entity == null || entity.getPermissions().isEmpty()) {
             sender.sendMessage(ChatColor.RED + "Group has no group-specific permissions");
             return;
         }
         
-        ToHUtils.sendMessage(sender, "%sGroup-specific permissions for %s%s:", ChatColor.YELLOW, ChatColor.WHITE, entity.getDisplayName());
-        if (entity.getParent() != null) {
-            ToHUtils.sendMessage(sender, "%sParent: %s", ChatColor.DARK_BLUE, entity.getParent().getDisplayName());
-        }
-        for (Entry e : entity.getPermissions()) {
-            ToHUtils.sendMessage(sender, "%s- %s%s: %s", ChatColor.DARK_GREEN, e.getWorld() == null ? "" : e.getWorld().getName() + ":", e.getPermission(), e.isValue());
-        }
     }
 
     @Command("setparent")
