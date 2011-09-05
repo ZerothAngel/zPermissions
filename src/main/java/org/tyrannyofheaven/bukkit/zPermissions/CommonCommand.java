@@ -57,7 +57,7 @@ public abstract class CommonCommand {
             }
         });
     
-        ToHUtils.sendMessage(sender, "%s unset", permission);
+        ToHUtils.sendMessage(sender, "%s%s unset", ChatColor.YELLOW, permission);
         plugin.refreshPlayers();
     }
 
