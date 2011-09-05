@@ -44,6 +44,21 @@ public class AvajePermissionDao implements PermissionDao {
         return permissionWorld;
     }
 
+    private PermissionEntity getEntity(String name, boolean group, boolean create) {
+        PermissionEntity entity = getEbeanServer().find(PermissionEntity.class).where()
+            .eq("name", name.toLowerCase())
+            .eq("group", group)
+            .findUnique();
+        if (entity == null && create) {
+            entity = new PermissionEntity();
+            entity.setName(name.toLowerCase());
+            entity.setGroup(group);
+            entity.setDisplayName(name);
+            getEbeanServer().save(entity);
+        }
+        return entity;
+    }
+
     @Override
     public Boolean getPermission(String name, boolean group, String world, String permission) {
         getEbeanServer().beginTransaction();
@@ -75,24 +90,14 @@ public class AvajePermissionDao implements PermissionDao {
     public void setPermission(String name, boolean group, String world, String permission, boolean value) {
         getEbeanServer().beginTransaction();
         try {
+            PermissionEntity owner = getEntity(name, group, true);
             PermissionWorld permissionWorld = getWorld(world, true);
-
-            PermissionEntity owner = getEbeanServer().find(PermissionEntity.class).where()
-                .eq("name", name.toLowerCase())
-                .eq("group", group)
-                .findUnique();
-            if (owner == null) {
-                owner = new PermissionEntity();
-                owner.setName(name.toLowerCase());
-                owner.setGroup(group);
-                owner.setDisplayName(name);
-            }
+            permission = permission.toLowerCase();
 
             Entry found = null;
-            permission = permission.toLowerCase();
             for (Entry entry : owner.getPermissions()) {
-                if (entry.getPermission().equals(permission) &&
-                        (entry.getWorld() == null ? permissionWorld == null : entry.getWorld().equals(permissionWorld))) {
+                if (permission.equals(entry.getPermission()) &&
+                        (permissionWorld == null ? entry.getWorld() == null : permissionWorld.equals(entry.getWorld().getName()))) {
                     found = entry;
                     break;
                 }
@@ -102,7 +107,7 @@ public class AvajePermissionDao implements PermissionDao {
                 found = new Entry();
                 found.setEntity(owner);
                 found.setWorld(permissionWorld);
-                found.setPermission(permission.toLowerCase());
+                found.setPermission(permission);
 
                 owner.getPermissions().add(found);
             }
@@ -135,6 +140,7 @@ public class AvajePermissionDao implements PermissionDao {
                 .eq("world", permissionWorld)
                 .eq("permission", permission.toLowerCase())
                 .findUnique();
+
             if (entry != null) {
                 getEbeanServer().delete(entry);
                 getEbeanServer().commitTransaction();
@@ -149,33 +155,21 @@ public class AvajePermissionDao implements PermissionDao {
     public void addMember(String groupName, String member) {
         getEbeanServer().beginTransaction();
         try {
-            PermissionEntity group = getEbeanServer().find(PermissionEntity.class).where()
-                .eq("name", groupName.toLowerCase())
-                .eq("group", true)
-                .findUnique();
+            PermissionEntity group = getEntity(groupName, true, true);
 
-            Membership membership = null;
-            if (group == null) {
-                group = new PermissionEntity();
-                group.setName(groupName.toLowerCase());
-                group.setGroup(true);
-                group.setDisplayName(groupName);
-                getEbeanServer().save(group);
-            }
-            else {
-                membership = getEbeanServer().find(Membership.class).where()
-                    .eq("member", member.toLowerCase())
-                    .eq("group", group)
-                    .findUnique();
-            }
+            Membership membership = getEbeanServer().find(Membership.class).where()
+                .eq("member", member.toLowerCase())
+                .eq("group", group)
+                .findUnique();
             
             if (membership == null) {
                 membership = new Membership();
                 membership.setMember(member.toLowerCase());
                 membership.setGroup(group);
                 getEbeanServer().save(membership);
-                getEbeanServer().commitTransaction();
             }
+
+            getEbeanServer().commitTransaction();
         }
         finally {
             getEbeanServer().endTransaction();
@@ -186,10 +180,7 @@ public class AvajePermissionDao implements PermissionDao {
     public void removeMember(String groupName, String member) {
         getEbeanServer().beginTransaction();
         try {
-            PermissionEntity group = getEbeanServer().find(PermissionEntity.class).where()
-                .eq("name", groupName.toLowerCase())
-                .eq("group", true)
-                .findUnique();
+            PermissionEntity group = getEntity(groupName, true, false);
             
             if (group != null) {
                 Membership membership = getEbeanServer().find(Membership.class).where()
@@ -239,7 +230,7 @@ public class AvajePermissionDao implements PermissionDao {
     public void setGroup(String playerName, String groupName) {
         getEbeanServer().beginTransaction();
         try {
-            PermissionEntity group = getGroup(groupName, true);
+            PermissionEntity group = getEntity(groupName, true, true);
 
             List<Membership> memberships = getEbeanServer().find(Membership.class).where()
                 .eq("member", playerName.toLowerCase())
@@ -288,10 +279,10 @@ public class AvajePermissionDao implements PermissionDao {
     public void setParent(String groupName, String parentName) {
         getEbeanServer().beginTransaction();
         try {
-            PermissionEntity group = getGroup(groupName, true);
+            PermissionEntity group = getEntity(groupName, true, true);
             
             if (parentName != null) {
-                PermissionEntity parent = getGroup(parentName, true);
+                PermissionEntity parent = getEntity(parentName, true, true);
                 group.setParent(parent);
             }
             else {
@@ -303,21 +294,6 @@ public class AvajePermissionDao implements PermissionDao {
         finally {
             getEbeanServer().endTransaction();
         }
-    }
-
-    private PermissionEntity getGroup(String groupName, boolean create) {
-        PermissionEntity group = getEbeanServer().find(PermissionEntity.class).where()
-            .eq("name", groupName.toLowerCase())
-            .eq("group", true)
-            .findUnique();
-        if (group == null && create) {
-            group = new PermissionEntity();
-            group.setName(groupName.toLowerCase());
-            group.setGroup(true);
-            group.setDisplayName(groupName);
-            getEbeanServer().save(group);
-        }
-        return group;
     }
 
 }

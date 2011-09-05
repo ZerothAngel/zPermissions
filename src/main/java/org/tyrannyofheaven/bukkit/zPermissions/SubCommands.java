@@ -4,6 +4,8 @@ import java.util.List;
 
 import org.bukkit.ChatColor;
 import org.bukkit.command.CommandSender;
+import org.bukkit.entity.Player;
+import org.bukkit.permissions.PermissionAttachmentInfo;
 import org.tyrannyofheaven.bukkit.util.ToHUtils;
 import org.tyrannyofheaven.bukkit.util.command.Command;
 import org.tyrannyofheaven.bukkit.util.command.CommandSession;
@@ -73,6 +75,33 @@ public class SubCommands {
         for (PermissionEntity entity : entities) {
             ToHUtils.sendMessage(sender, "%s- %s", ChatColor.DARK_GREEN, entity.getDisplayName());
         }
+    }
+
+    @Command("check")
+    public void check(ZPermissionsPlugin plugin, CommandSender sender, @Option("permission") String permission, @Option(value="player", optional=true) String playerName) {
+        Player player;
+        if (playerName == null) {
+            if (!(sender instanceof Player)) {
+                sender.sendMessage(ChatColor.RED + "Cannot check permissions of console");
+                return;
+            }
+            player = (Player)sender;
+        }
+        else {
+            player = plugin.getServer().getPlayer(playerName);
+            if (player == null) {
+                sender.sendMessage(ChatColor.RED + "No such player is online");
+                return;
+            }
+        }
+        
+        for (PermissionAttachmentInfo pai : player.getEffectivePermissions()) {
+            if (permission.equalsIgnoreCase(pai.getPermission())) {
+                ToHUtils.sendMessage(sender, "%s%s = %s", ChatColor.GOLD, pai.getPermission(), pai.getValue());
+                return;
+            }
+        }
+        ToHUtils.sendMessage(sender, "%s%s does not set %s", ChatColor.GOLD, player.getName(), permission);
     }
 
 }
