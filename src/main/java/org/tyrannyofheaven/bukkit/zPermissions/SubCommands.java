@@ -18,7 +18,7 @@ public class SubCommands {
 
     private final PlayerCommand playerCommand = new PlayerCommand();
 
-    private final GroupCommand groupCommand = new GroupCommand();
+    private final CommonCommand groupCommand = new GroupCommand();
 
     @Command({"player", "pl", "p"})
     public PlayerCommand player(HelpBuilder helpBuilder, CommandSender sender, CommandSession session, @Option(value="player", nullable=true) String playerName, String[] args) {
@@ -35,12 +35,12 @@ public class SubCommands {
             return null;
         }
         
-        session.setValue("playerName", playerName);
+        session.setValue("entityName", playerName);
         return playerCommand;
     }
 
     @Command({"group", "gr", "g"})
-    public GroupCommand group(HelpBuilder helpBuilder, CommandSender sender, CommandSession session, @Option(value="group", nullable=true) String groupName, String[] args) {
+    public CommonCommand group(HelpBuilder helpBuilder, CommandSender sender, CommandSession session, @Option(value="group", nullable=true) String groupName, String[] args) {
         if (args.length == 0) {
             helpBuilder.withCommandSender(sender)
                 .withHandler(groupCommand)
@@ -55,7 +55,7 @@ public class SubCommands {
             return null;
         }
         
-        session.setValue("groupName", groupName);
+        session.setValue("entityName", groupName);
         return groupCommand;
     }
 
@@ -71,7 +71,9 @@ public class SubCommands {
         else {
             throw new ParseException(ChatColor.RED + "<what> should be 'groups' or 'players'");
         }
+
         List<PermissionEntity> entities = plugin.getDao().getEntities(group);
+
         for (PermissionEntity entity : entities) {
             ToHUtils.sendMessage(sender, "%s- %s", ChatColor.DARK_GREEN, entity.getDisplayName());
         }
