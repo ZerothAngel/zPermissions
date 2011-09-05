@@ -2,9 +2,22 @@ name: zPermissions
 version: 1.0
 main: org.tyrannyofheaven.bukkit.zPermissions.ZPermissionsPlugin
 database: true
+
 commands:
   perm:
     aliases: p
+  promote:
+    aliases: rankup
+  demote:
+    aliases: rankdown
+
 permissions:
   zpermissions.*:
     default: op
+    children:
+      zpermissions.promote: true
+      zpermissions.demote: true
+  zpermissions.promote:
+    description: Allows use of the /promote command
+  zpermissions.demote:
+    description: Allows use of the /demote command

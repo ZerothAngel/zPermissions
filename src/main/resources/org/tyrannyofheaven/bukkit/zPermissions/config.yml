@@ -1,0 +1,7 @@
+default-group: default
+default-track: default
+tracks:
+  default:
+  - default
+  - somegroup
+  - someothergroup
