@@ -71,8 +71,8 @@ public class SubCommands {
                 .forCommand("purge")
                 .forCommand("members")
                 .forCommand("setparent")
-                .forCommand("addmember")
-                .forCommand("removemember")
+                .forCommand("add")
+                .forCommand("remove")
                 .forCommand("show")
                 .show();
             return null;
