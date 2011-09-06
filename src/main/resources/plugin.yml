@@ -28,6 +28,7 @@ permissions:
       zpermissions.list: true
       zpermissions.check: true
       zpermissions.check.other: true
+      zpermissions.reload: true
       zpermissions.promote: true
       zpermissions.demote: true
   zpermissions.player:
@@ -40,6 +41,8 @@ permissions:
     description: Allows use of the /permissions check command
   zpermissions.check.other:
     description: Allows use of the /permissions check command on others
+  zpermissions.reload:
+    description: Allows use of the /permissions reload command
   zpermissions.promote:
     description: Allows use of the /promote command
   zpermissions.demote:

@@ -120,4 +120,11 @@ public class SubCommands {
         sendMessage(sender, colorize("{AQUA}%s{YELLOW} does not set {GOLD}%s"), player.getName(), permission);
     }
 
+    @Command(value="reload", description="Re-read config.yml")
+    @Require("zpermissions.reload")
+    public void reload(ZPermissionsPlugin plugin, CommandSender sender) {
+        plugin.reload();
+        sendMessage(sender, colorize("{WHITE}config.yml{YELLOW} reloaded"));
+    }
+
 }

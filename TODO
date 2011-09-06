@@ -1,7 +1,7 @@
--   Multi-world support!
--   Group priorities
--   Automatic group permissions i.e. group.<groupname>
--   Ranks/ladders
+-   Multi-world support! **DONE**
+-   Group priorities **DONE**
+-   Automatic group permissions i.e. group.<groupname> **DONE**
+-   Ranks/ladders **DONE**
 -   YAML export/import
 -   "members" command
 -   purge/delete command
