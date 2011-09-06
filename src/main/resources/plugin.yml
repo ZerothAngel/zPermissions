@@ -1,22 +1,45 @@
 name: zPermissions
-version: 1.0
+version: 0.9
 main: org.tyrannyofheaven.bukkit.zPermissions.ZPermissionsPlugin
+description: Superperms implementation with Bukkit database backend
+author: ZerothAngel
 database: true
 
 commands:
-  perm:
-    aliases: p
+  permissions:
+    description: Top-level command for zPermissions
+    aliases: [perm, p]
   promote:
+    description: Promote a player up a rank
     aliases: rankup
+    permission: zpermissions.promote
   demote:
+    description: Demote a player down a rank
     aliases: rankdown
+    permission: zpermissions.demote
 
 permissions:
   zpermissions.*:
+    description: All-inclusive permission for zPermissions
     default: op
     children:
+      zpermissions.player: true
+      zpermissions.group: true
+      zpermissions.list: true
+      zpermissions.check: true
+      zpermissions.check.other: true
       zpermissions.promote: true
       zpermissions.demote: true
+  zpermissions.player:
+    description: Allows use of the /permissions player command
+  zpermissions.group:
+    description: Allows use of the /permissions group command
+  zpermissions.list:
+    description: Allows use of the /permissions list command
+  zpermissions.check:
+    description: Allows use of the /permissions check command
+  zpermissions.check.other:
+    description: Allows use of the /permissions check command on others
   zpermissions.promote:
     description: Allows use of the /promote command
   zpermissions.demote:

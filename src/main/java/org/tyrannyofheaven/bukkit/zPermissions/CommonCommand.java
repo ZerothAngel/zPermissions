@@ -19,7 +19,7 @@ public abstract class CommonCommand {
         this.group = group;
     }
 
-    @Command("get")
+    @Command(value="get", description="View a permission")
     public void get(final ZPermissionsPlugin plugin, CommandSender sender, final @Session("entityName") String name, @Option("permission") String permission) {
         final WorldPermission wp = new WorldPermission(permission);
     
@@ -38,7 +38,7 @@ public abstract class CommonCommand {
         }
     }
 
-    @Command("set")
+    @Command(value="set", description="Set a permission")
     public void set(final ZPermissionsPlugin plugin, CommandSender sender, final @Session("entityName") String name, @Option("permission") String permission, final @Option(value="value", optional=true) Boolean value) {
         final WorldPermission wp = new WorldPermission(permission);
     
@@ -53,7 +53,7 @@ public abstract class CommonCommand {
         plugin.refreshPlayers();
     }
 
-    @Command( { "unset", "rm" })
+    @Command(value={"unset", "rm"}, description="Remove a permission")
     public void unset(final ZPermissionsPlugin plugin, CommandSender sender, final @Session("entityName") String name, @Option("permission") String permission) {
         final WorldPermission wp = new WorldPermission(permission);
     
@@ -64,7 +64,7 @@ public abstract class CommonCommand {
             }
         });
     
-        sendMessage(sender, "{GOLD}%s{YELLOW} unset for %s%s", permission, group ? ChatColor.DARK_GREEN : ChatColor.AQUA, name);
+        sendMessage(sender, colorize("{GOLD}%s{YELLOW} unset for %s%s"), permission, group ? ChatColor.DARK_GREEN : ChatColor.AQUA, name);
         plugin.refreshPlayers();
     }
 
