@@ -6,5 +6,5 @@
 -   "members" command
 -   purge/delete command
 -   Unit tests! Especially for the DAO!
--   Check for inheritance cycles!
+-   Check for inheritance cycles! **DONE**
 

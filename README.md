@@ -33,8 +33,6 @@ SuperpermsBridge.
 I don't consider zPermissions feature complete yet (and thus not worthy of an
 actual release or "1.0" version). Some things I would like to add:
 
-*   Disallow inheritance cycles(!)
-
 *   Import/export to YAML. I realize the server (or in-game) command line is
 	an awful interface. Being able to import/export would be nice for upgrades
 	as well.

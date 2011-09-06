@@ -23,6 +23,7 @@ import org.tyrannyofheaven.bukkit.util.command.Command;
 import org.tyrannyofheaven.bukkit.util.command.Option;
 import org.tyrannyofheaven.bukkit.util.command.Session;
 import org.tyrannyofheaven.bukkit.util.transaction.TransactionCallbackWithoutResult;
+import org.tyrannyofheaven.bukkit.zPermissions.dao.DaoException;
 import org.tyrannyofheaven.bukkit.zPermissions.model.Entry;
 import org.tyrannyofheaven.bukkit.zPermissions.model.PermissionEntity;
 
@@ -81,13 +82,18 @@ public class GroupCommand extends CommonCommand {
 
     @Command(value="setparent", description="Set a group's parent")
     public void setParent(final ZPermissionsPlugin plugin, CommandSender sender, final @Session("entityName") String groupName, final @Option(value="parent", optional=true) String parentName) {
-        // FIXME check for cycles!
-        plugin.getTransactionStrategy().execute(new TransactionCallbackWithoutResult() {
-            @Override
-            public void doInTransactionWithoutResult() throws Exception {
-                plugin.getDao().setParent(groupName, parentName);
-            }
-        });
+        try {
+            plugin.getTransactionStrategy().execute(new TransactionCallbackWithoutResult() {
+                @Override
+                public void doInTransactionWithoutResult() throws Exception {
+                    plugin.getDao().setParent(groupName, parentName);
+                }
+            });
+        }
+        catch (DaoException e) {
+            sendMessage(sender, colorize("{RED}%s"), e.getMessage());
+            return;
+        }
 
         sendMessage(sender, colorize("{DARK_GREEN}%s{YELLOW}'s parent is now {DARK_GREEN}%s"), groupName, parentName);
         plugin.refreshPlayers();

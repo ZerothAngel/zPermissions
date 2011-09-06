@@ -261,8 +261,17 @@ public class AvajePermissionDao implements PermissionDao {
         PermissionEntity group = getEntity(groupName, true, true);
 
         if (parentName != null) {
-            // FIXME check for cycles!
             PermissionEntity parent = getEntity(parentName, true, true);
+
+            // Check for a cycle
+            PermissionEntity check = parent;
+            while (check != null) {
+                if (group.equals(check)) {
+                    throw new DaoException("This would result in an inheritance cycle!");
+                }
+                check = check.getParent();
+            }
+
             group.setParent(parent);
         }
         else {
