@@ -2,6 +2,7 @@ package org.tyrannyofheaven.bukkit.zPermissions;
 
 import static org.tyrannyofheaven.bukkit.util.ToHUtils.colorize;
 import static org.tyrannyofheaven.bukkit.util.ToHUtils.sendMessage;
+import static org.tyrannyofheaven.bukkit.util.permissions.PermissionUtils.requirePermission;
 
 import java.util.List;
 
@@ -13,6 +14,7 @@ import org.tyrannyofheaven.bukkit.util.command.CommandSession;
 import org.tyrannyofheaven.bukkit.util.command.HelpBuilder;
 import org.tyrannyofheaven.bukkit.util.command.Option;
 import org.tyrannyofheaven.bukkit.util.command.ParseException;
+import org.tyrannyofheaven.bukkit.util.command.Require;
 import org.tyrannyofheaven.bukkit.zPermissions.model.PermissionEntity;
 
 public class SubCommands {
@@ -21,7 +23,8 @@ public class SubCommands {
 
     private final CommonCommand groupCommand = new GroupCommand();
 
-    @Command({"player", "pl", "p"})
+    @Command(value={"player", "pl", "p"}, description="Player-related commands")
+    @Require("zpermissions.player")
     public PlayerCommand player(HelpBuilder helpBuilder, CommandSender sender, CommandSession session, @Option(value="player", nullable=true) String playerName, String[] args) {
         if (args.length == 0) {
             helpBuilder.withCommandSender(sender)
@@ -40,7 +43,8 @@ public class SubCommands {
         return playerCommand;
     }
 
-    @Command({"group", "gr", "g"})
+    @Command(value={"group", "gr", "g"}, description="Group-related commands")
+    @Require("zpermissions.group")
     public CommonCommand group(HelpBuilder helpBuilder, CommandSender sender, CommandSession session, @Option(value="group", nullable=true) String groupName, String[] args) {
         if (args.length == 0) {
             helpBuilder.withCommandSender(sender)
@@ -60,7 +64,8 @@ public class SubCommands {
         return groupCommand;
     }
 
-    @Command({"list", "ls"})
+    @Command(value={"list", "ls"}, description="List players or groups in the database")
+    @Require("zpermissions.list")
     public void list(ZPermissionsPlugin plugin, CommandSender sender, @Option("what") String what) {
         boolean group;
         if ("groups".startsWith(what)) {
@@ -85,7 +90,8 @@ public class SubCommands {
         }
     }
 
-    @Command("check")
+    @Command(value="check", description="Check against effective permissions")
+    @Require("zpermissions.check")
     public void check(ZPermissionsPlugin plugin, CommandSender sender, @Option("permission") String permission, @Option(value="player", optional=true) String playerName) {
         Player player;
         if (playerName == null) {
@@ -96,6 +102,8 @@ public class SubCommands {
             player = (Player)sender;
         }
         else {
+            requirePermission(sender, "zpermissions.check.other");
+
             player = plugin.getServer().getPlayer(playerName);
             if (player == null) {
                 sendMessage(sender, colorize("{RED}Player is not online."));

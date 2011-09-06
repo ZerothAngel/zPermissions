@@ -22,8 +22,8 @@ public class RootCommand {
 
     private final SubCommands sc = new SubCommands();
 
-    @Command("perm")
-    @Require("zpermissions.*")
+    @Command("permissions")
+    @Require({"zpermissions.player", "zpermissions.group", "zpermissions.list", "zpermissions.check"})
     public Object perm(HelpBuilder helpBuilder, CommandSender sender, String[] args) {
         if (args.length == 0) {
             helpBuilder.withCommandSender(sender)
@@ -31,6 +31,7 @@ public class RootCommand {
                 .forCommand("player")
                 .forCommand("group")
                 .forCommand("list")
+                .forCommand("check")
                 .show();
             return null;
         }

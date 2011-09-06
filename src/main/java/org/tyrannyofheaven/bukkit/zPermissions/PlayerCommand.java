@@ -21,7 +21,7 @@ public class PlayerCommand extends CommonCommand {
         super(false);
     }
 
-    @Command("groups")
+    @Command(value="groups", description="List groups this player is a member of")
     public void getGroups(ZPermissionsPlugin plugin, CommandSender sender, @Session("entityName") String name) {
         List<PermissionEntity> groups = plugin.getDao().getGroups(name);
 
@@ -50,7 +50,7 @@ public class PlayerCommand extends CommonCommand {
         }
     }
 
-    @Command("setgroup")
+    @Command(value="setgroup", description="Set this player's singular group")
     public void setGroup(final ZPermissionsPlugin plugin, CommandSender sender, final @Session("entityName") String playerName, final @Option("group") String groupName) {
         plugin.getTransactionStrategy().execute(new TransactionCallbackWithoutResult() {
             @Override
@@ -63,7 +63,7 @@ public class PlayerCommand extends CommonCommand {
         plugin.refreshPlayer(playerName);
     }
 
-    @Command("show")
+    @Command(value="show", description="Show information about a player")
     public void show(ZPermissionsPlugin plugin, CommandSender sender, @Session("entityName") String playerName) {
         PermissionEntity entity = plugin.getDao().getEntity(playerName, false);
 
