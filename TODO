@@ -5,3 +5,4 @@
 -   YAML export/import
 -   "members" command
 -   purge/delete command
+-   Unit tests! Especially for the DAO!
