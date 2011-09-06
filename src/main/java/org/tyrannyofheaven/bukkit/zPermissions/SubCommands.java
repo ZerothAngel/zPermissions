@@ -1,12 +1,13 @@
 package org.tyrannyofheaven.bukkit.zPermissions;
 
+import static org.tyrannyofheaven.bukkit.util.ToHUtils.sendMessage;
+
 import java.util.List;
 
 import org.bukkit.ChatColor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.permissions.PermissionAttachmentInfo;
-import org.tyrannyofheaven.bukkit.util.ToHUtils;
 import org.tyrannyofheaven.bukkit.util.command.Command;
 import org.tyrannyofheaven.bukkit.util.command.CommandSession;
 import org.tyrannyofheaven.bukkit.util.command.HelpBuilder;
@@ -69,13 +70,13 @@ public class SubCommands {
             group = false;
         }
         else {
-            throw new ParseException(ChatColor.RED + "<what> should be 'groups' or 'players'");
+            throw new ParseException("<what> should be 'groups' or 'players'");
         }
 
         List<PermissionEntity> entities = plugin.getDao().getEntities(group);
 
         for (PermissionEntity entity : entities) {
-            ToHUtils.sendMessage(sender, "%s- %s", ChatColor.DARK_GREEN, entity.getDisplayName());
+            sendMessage(sender, "%s- %s", ChatColor.DARK_GREEN, entity.getDisplayName());
         }
     }
 
@@ -99,11 +100,11 @@ public class SubCommands {
         
         for (PermissionAttachmentInfo pai : player.getEffectivePermissions()) {
             if (permission.equalsIgnoreCase(pai.getPermission())) {
-                ToHUtils.sendMessage(sender, "%s%s = %s", ChatColor.GOLD, pai.getPermission(), pai.getValue());
+                sendMessage(sender, "%s%s = %s", ChatColor.GOLD, pai.getPermission(), pai.getValue());
                 return;
             }
         }
-        ToHUtils.sendMessage(sender, "%s%s does not set %s", ChatColor.GOLD, player.getName(), permission);
+        sendMessage(sender, "%s%s does not set %s", ChatColor.GOLD, player.getName(), permission);
     }
 
 }

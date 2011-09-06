@@ -1,8 +1,9 @@
 package org.tyrannyofheaven.bukkit.zPermissions;
 
+import static org.tyrannyofheaven.bukkit.util.ToHUtils.sendMessage;
+
 import org.bukkit.ChatColor;
 import org.bukkit.command.CommandSender;
-import org.tyrannyofheaven.bukkit.util.ToHUtils;
 import org.tyrannyofheaven.bukkit.util.command.Command;
 import org.tyrannyofheaven.bukkit.util.command.Option;
 import org.tyrannyofheaven.bukkit.util.command.Session;
@@ -28,7 +29,7 @@ public abstract class CommonCommand {
             }
         });
         
-        ToHUtils.sendMessage(sender, "%s%s = %s", ChatColor.YELLOW, permission, result);
+        sendMessage(sender, "%s%s = %s", ChatColor.YELLOW, permission, result);
     }
 
     @Command("set")
@@ -42,7 +43,7 @@ public abstract class CommonCommand {
             }
         });
     
-        ToHUtils.sendMessage(sender, "%s%s set to %s", ChatColor.YELLOW, permission, value == null ? Boolean.TRUE : value);
+        sendMessage(sender, "%s%s set to %s", ChatColor.YELLOW, permission, value == null ? Boolean.TRUE : value);
         plugin.refreshPlayers();
     }
 
@@ -57,7 +58,7 @@ public abstract class CommonCommand {
             }
         });
     
-        ToHUtils.sendMessage(sender, "%s%s unset", ChatColor.YELLOW, permission);
+        sendMessage(sender, "%s%s unset", ChatColor.YELLOW, permission);
         plugin.refreshPlayers();
     }
 

@@ -1,12 +1,16 @@
 package org.tyrannyofheaven.bukkit.zPermissions;
 
+import static org.tyrannyofheaven.bukkit.util.ToHUtils.assertFalse;
+import static org.tyrannyofheaven.bukkit.util.ToHUtils.delimitedString;
+import static org.tyrannyofheaven.bukkit.util.ToHUtils.hasText;
+import static org.tyrannyofheaven.bukkit.util.ToHUtils.sendMessage;
+
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
 import org.bukkit.ChatColor;
 import org.bukkit.command.CommandSender;
-import org.tyrannyofheaven.bukkit.util.ToHUtils;
 import org.tyrannyofheaven.bukkit.util.command.Command;
 import org.tyrannyofheaven.bukkit.util.command.HelpBuilder;
 import org.tyrannyofheaven.bukkit.util.command.Option;
@@ -35,7 +39,7 @@ public class RootCommand {
 
     private void rankChange(final ZPermissionsPlugin plugin, final CommandSender sender, final String playerName, String trackName, final boolean rankUp) {
         // Resolve track
-        if (!ToHUtils.hasText(trackName))
+        if (!hasText(trackName))
             trackName = plugin.getDefaultTrack();
         
         final List<String> track = plugin.getTrack(trackName);
@@ -63,7 +67,7 @@ public class RootCommand {
                 if (playerGroupNames.size() > 1) {
                     // Hmm, player is member of 2 or more groups in track. Don't know
                     // what to do, so abort.
-                    ToHUtils.sendMessage(sender, "%sPlayer is in more than one group in that track: %s%s", ChatColor.RED, ChatColor.WHITE, ToHUtils.delimitedString(", ", playerGroupNames));
+                    sendMessage(sender, "%sPlayer is in more than one group in that track: %s%s", ChatColor.RED, ChatColor.WHITE, delimitedString(", ", playerGroupNames));
                     return;
                 }
                 else if (playerGroupNames.isEmpty()) {
@@ -71,17 +75,17 @@ public class RootCommand {
                     if (rankUp) {
                         String group = track.get(0);
                         plugin.getDao().addMember(group, playerName);
-                        ToHUtils.sendMessage(sender, "%sAdding %s to %s%s", ChatColor.YELLOW, playerName, ChatColor.GREEN, group);
+                        sendMessage(sender, "%sAdding %s to %s%s", ChatColor.YELLOW, playerName, ChatColor.GREEN, group);
                     }
                     else {
-                        ToHUtils.sendMessage(sender, "%sPlayer is not in any groups in that track", ChatColor.RED);
+                        sendMessage(sender, "%sPlayer is not in any groups in that track", ChatColor.RED);
                         return;
                     }
                 }
                 else {
                     String oldGroup = playerGroupNames.iterator().next();
                     int rankIndex = track.indexOf(oldGroup);
-                    ToHUtils.assertFalse(rankIndex < 0); // should never happen...
+                    assertFalse(rankIndex < 0); // should never happen...
         
                     // Rank up or down
                     rankIndex += rankUp ? 1 : -1;
@@ -89,7 +93,7 @@ public class RootCommand {
                     // If now ranked below first rank, remove altogether
                     if (rankIndex < 0) {
                         plugin.getDao().removeMember(oldGroup, playerName);
-                        ToHUtils.sendMessage(sender, "%sRemoving %s from %s%s", ChatColor.YELLOW, playerName, ChatColor.GREEN, oldGroup);
+                        sendMessage(sender, "%sRemoving %s from %s%s", ChatColor.YELLOW, playerName, ChatColor.GREEN, oldGroup);
                     }
                     else {
                         // Constrain rank to [1..track.size() - 1]
@@ -101,7 +105,7 @@ public class RootCommand {
                         plugin.getDao().removeMember(oldGroup, playerName);
                         plugin.getDao().addMember(newGroup, playerName);
         
-                        ToHUtils.sendMessage(sender, "%sRanking %s %s from %s%s%s to %s%s",
+                        sendMessage(sender, "%sRanking %s %s from %s%s%s to %s%s",
                                 ChatColor.YELLOW,
                                 (rankUp ? "up" : "down"),
                                 playerName,
