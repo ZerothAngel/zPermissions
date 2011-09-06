@@ -1,8 +1,8 @@
 package org.tyrannyofheaven.bukkit.zPermissions;
 
+import static org.tyrannyofheaven.bukkit.util.ToHUtils.colorize;
 import static org.tyrannyofheaven.bukkit.util.ToHUtils.sendMessage;
 
-import org.bukkit.ChatColor;
 import org.bukkit.command.CommandSender;
 import org.tyrannyofheaven.bukkit.util.command.Command;
 import org.tyrannyofheaven.bukkit.util.command.Option;
@@ -18,7 +18,7 @@ public class GroupCommand extends CommonCommand {
     }
 
     @Command("addmember")
-    public void addMember(final ZPermissionsPlugin plugin, final @Session("entityName") String groupName, final @Option("player") String playerName) {
+    public void addMember(final ZPermissionsPlugin plugin, CommandSender sender, final @Session("entityName") String groupName, final @Option("player") String playerName) {
         plugin.getTransactionStrategy().execute(new TransactionCallbackWithoutResult() {
             @Override
             public void doInTransactionWithoutResult() throws Exception {
@@ -26,11 +26,12 @@ public class GroupCommand extends CommonCommand {
             }
         });
 
+        sendMessage(sender, colorize("{AQUA}%s{YELLOW} added to {DARK_GREEN}%s"), playerName, groupName);
         plugin.refreshPlayer(playerName);
     }
 
     @Command({"removemember", "rmmember"})
-    public void removeMember(final ZPermissionsPlugin plugin, final @Session("entityName") String groupName, final @Option("player") String playerName) {
+    public void removeMember(final ZPermissionsPlugin plugin, CommandSender sender, final @Session("entityName") String groupName, final @Option("player") String playerName) {
         plugin.getTransactionStrategy().execute(new TransactionCallbackWithoutResult() {
             @Override
             public void doInTransactionWithoutResult() throws Exception {
@@ -38,6 +39,7 @@ public class GroupCommand extends CommonCommand {
             }
         });
 
+        sendMessage(sender, colorize("{AQUA}%s{YELLOW} removed from {DARK_GREEN}%s"), playerName, groupName);
         plugin.refreshPlayer(playerName);
     }
 
@@ -46,21 +48,20 @@ public class GroupCommand extends CommonCommand {
         PermissionEntity entity = plugin.getDao().getEntity(groupName, true);
 
         if (entity != null) {
-            sendMessage(sender, "%sGroup-specific permissions for %s%s:", ChatColor.YELLOW, ChatColor.WHITE, entity.getDisplayName());
-            sendMessage(sender, "%sPriority: %s", ChatColor.YELLOW, entity.getPriority());
+            sendMessage(sender, colorize("{YELLOW}Declared permissions for {DARK_GREEN}%s{YELLOW}:"), entity.getDisplayName());
+            sendMessage(sender, colorize("{YELLOW}Priority: {GREEN}%s"), entity.getPriority());
             if (entity.getParent() != null) {
-                sendMessage(sender, "%sParent: %s", ChatColor.DARK_BLUE, entity.getParent().getDisplayName());
+                sendMessage(sender, colorize("{YELLOW}Parent: {DARK_GREEN}%s"), entity.getParent().getDisplayName());
             }
             for (Entry e : entity.getPermissions()) {
-                sendMessage(sender, "%s- %s%s: %s", ChatColor.DARK_GREEN, e.getWorld() == null ? "" : e.getWorld().getName() + ":", e.getPermission(), e.isValue());
+                sendMessage(sender, colorize("{DARK_GREEN}- {GOLD}%s%s{DARK_GREEN}: {GREEN}%s"), e.getWorld() == null ? "" : e.getWorld().getName() + ":", e.getPermission(), e.isValue());
             }
         }
 
         if (entity == null || entity.getPermissions().isEmpty()) {
-            sender.sendMessage(ChatColor.RED + "Group has no group-specific permissions");
+            sendMessage(sender, colorize("{RED}Group has no declared permissions."));
             return;
         }
-        
     }
 
     @Command("setparent")
@@ -72,6 +73,7 @@ public class GroupCommand extends CommonCommand {
             }
         });
 
+        sendMessage(sender, colorize("{DARK_GREEN}%s{YELLOW}'s parent is now {DARK_GREEN}%s"), groupName, parentName);
         plugin.refreshPlayers();
     }
 
@@ -84,6 +86,7 @@ public class GroupCommand extends CommonCommand {
             }
         });
 
+        sendMessage(sender, colorize("{DARK_GREEN}%s{YELLOW}'s priority is now {GREEN}%d"), groupName, priority);
         plugin.refreshPlayers();
     }
 

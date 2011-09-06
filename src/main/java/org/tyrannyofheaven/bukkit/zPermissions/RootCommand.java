@@ -1,6 +1,7 @@
 package org.tyrannyofheaven.bukkit.zPermissions;
 
 import static org.tyrannyofheaven.bukkit.util.ToHUtils.assertFalse;
+import static org.tyrannyofheaven.bukkit.util.ToHUtils.colorize;
 import static org.tyrannyofheaven.bukkit.util.ToHUtils.delimitedString;
 import static org.tyrannyofheaven.bukkit.util.ToHUtils.hasText;
 import static org.tyrannyofheaven.bukkit.util.ToHUtils.sendMessage;
@@ -9,7 +10,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import org.bukkit.ChatColor;
 import org.bukkit.command.CommandSender;
 import org.tyrannyofheaven.bukkit.util.command.Command;
 import org.tyrannyofheaven.bukkit.util.command.HelpBuilder;
@@ -44,19 +44,18 @@ public class RootCommand {
         
         final List<String> track = plugin.getTrack(trackName);
         if (track == null || track.isEmpty()) {
-            sender.sendMessage(ChatColor.RED + "Track is not defined");
+            sendMessage(sender, colorize("{RED}Track has not been defined."));
             return;
         }
         
         // Determine what groups the player and the track have in common
         final Set<String> trackGroupNames = new HashSet<String>(track);
 
+        // Do everything in one ginormous transaction. TODO move the sendMessage
+        // calls outside of transaction...
         plugin.getTransactionStrategy().execute(new TransactionCallbackWithoutResult() {
             @Override
             public void doInTransactionWithoutResult() throws Exception {
-                // Do everything in one ginormous transaction. TODO move the sendMessage
-                // calls outside of transaction...
-                
                 Set<String> playerGroupNames = new HashSet<String>();
                 for (PermissionEntity group : plugin.getDao().getGroups(playerName)) {
                     playerGroupNames.add(group.getName());
@@ -67,7 +66,7 @@ public class RootCommand {
                 if (playerGroupNames.size() > 1) {
                     // Hmm, player is member of 2 or more groups in track. Don't know
                     // what to do, so abort.
-                    sendMessage(sender, "%sPlayer is in more than one group in that track: %s%s", ChatColor.RED, ChatColor.WHITE, delimitedString(", ", playerGroupNames));
+                    sendMessage(sender, colorize("{RED}Player is in more than one group in that track: {DARK_GREEN}%s"), delimitedString(", ", playerGroupNames));
                     return;
                 }
                 else if (playerGroupNames.isEmpty()) {
@@ -75,10 +74,10 @@ public class RootCommand {
                     if (rankUp) {
                         String group = track.get(0);
                         plugin.getDao().addMember(group, playerName);
-                        sendMessage(sender, "%sAdding %s to %s%s", ChatColor.YELLOW, playerName, ChatColor.GREEN, group);
+                        sendMessage(sender, colorize("{YELLOW}Adding {AQUA}%s{YELLOW} to {DARK_GREEN}%s"), playerName, group);
                     }
                     else {
-                        sendMessage(sender, "%sPlayer is not in any groups in that track", ChatColor.RED);
+                        sendMessage(sender, colorize("{RED}Player is not in any groups in that track."));
                         return;
                     }
                 }
@@ -93,7 +92,7 @@ public class RootCommand {
                     // If now ranked below first rank, remove altogether
                     if (rankIndex < 0) {
                         plugin.getDao().removeMember(oldGroup, playerName);
-                        sendMessage(sender, "%sRemoving %s from %s%s", ChatColor.YELLOW, playerName, ChatColor.GREEN, oldGroup);
+                        sendMessage(sender, colorize("{YELLOW}Removing {AQUA}%s{YELLOW} from {DARK_GREEN}%s"), playerName, oldGroup);
                     }
                     else {
                         // Constrain rank to [1..track.size() - 1]
@@ -105,12 +104,11 @@ public class RootCommand {
                         plugin.getDao().removeMember(oldGroup, playerName);
                         plugin.getDao().addMember(newGroup, playerName);
         
-                        sendMessage(sender, "%sRanking %s %s from %s%s%s to %s%s",
-                                ChatColor.YELLOW,
+                        sendMessage(sender, colorize("{YELLOW}Ranking %s {AQUA}%s{YELLOW} from {DARK_GREEN}%s{YELLOW} to {DARK_GREEN}%s"),
                                 (rankUp ? "up" : "down"),
                                 playerName,
-                                ChatColor.GREEN, oldGroup, ChatColor.YELLOW,
-                                ChatColor.GREEN, newGroup);
+                                oldGroup,
+                                newGroup);
                     }
                 }
             }

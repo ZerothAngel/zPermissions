@@ -1,6 +1,6 @@
 package org.tyrannyofheaven.bukkit.zPermissions;
 
-public class WorldPermission {
+class WorldPermission {
 
     private final String world;
     

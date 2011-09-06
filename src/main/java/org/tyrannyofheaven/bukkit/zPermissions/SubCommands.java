@@ -1,10 +1,10 @@
 package org.tyrannyofheaven.bukkit.zPermissions;
 
+import static org.tyrannyofheaven.bukkit.util.ToHUtils.colorize;
 import static org.tyrannyofheaven.bukkit.util.ToHUtils.sendMessage;
 
 import java.util.List;
 
-import org.bukkit.ChatColor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.permissions.PermissionAttachmentInfo;
@@ -75,8 +75,13 @@ public class SubCommands {
 
         List<PermissionEntity> entities = plugin.getDao().getEntities(group);
 
-        for (PermissionEntity entity : entities) {
-            sendMessage(sender, "%s- %s", ChatColor.DARK_GREEN, entity.getDisplayName());
+        if (entities.isEmpty()) {
+            sendMessage(sender, colorize("{YELLOW}No %s found."), group ? "groups" : "players");
+        }
+        else {
+            for (PermissionEntity entity : entities) {
+                sendMessage(sender, colorize("{DARK_GREEN}- %s"), entity.getDisplayName());
+            }
         }
     }
 
@@ -85,7 +90,7 @@ public class SubCommands {
         Player player;
         if (playerName == null) {
             if (!(sender instanceof Player)) {
-                sender.sendMessage(ChatColor.RED + "Cannot check permissions of console");
+                sendMessage(sender, colorize("{RED}Cannot check permissions of console."));
                 return;
             }
             player = (Player)sender;
@@ -93,18 +98,18 @@ public class SubCommands {
         else {
             player = plugin.getServer().getPlayer(playerName);
             if (player == null) {
-                sender.sendMessage(ChatColor.RED + "No such player is online");
+                sendMessage(sender, colorize("{RED}Player is not online."));
                 return;
             }
         }
         
         for (PermissionAttachmentInfo pai : player.getEffectivePermissions()) {
             if (permission.equalsIgnoreCase(pai.getPermission())) {
-                sendMessage(sender, "%s%s = %s", ChatColor.GOLD, pai.getPermission(), pai.getValue());
+                sendMessage(sender, colorize("{AQUA}%s{YELLOW} sets {GOLD}%s{YELLOW} to {GREEN}%s"), player.getName(), pai.getPermission(), pai.getValue());
                 return;
             }
         }
-        sendMessage(sender, "%s%s does not set %s", ChatColor.GOLD, player.getName(), permission);
+        sendMessage(sender, colorize("{AQUA}%s{YELLOW} does not set {GOLD}%s"), player.getName(), permission);
     }
 
 }

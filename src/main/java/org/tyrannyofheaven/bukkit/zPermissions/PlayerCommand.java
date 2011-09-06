@@ -1,5 +1,6 @@
 package org.tyrannyofheaven.bukkit.zPermissions;
 
+import static org.tyrannyofheaven.bukkit.util.ToHUtils.colorize;
 import static org.tyrannyofheaven.bukkit.util.ToHUtils.sendMessage;
 
 import java.util.Iterator;
@@ -32,28 +33,33 @@ public class PlayerCommand extends CommonCommand {
         }
 
         if (groups.isEmpty()) {
-            sender.sendMessage("Not a member of any group");
+            sendMessage(sender, colorize("{YELLOW}Player is not a member of any groups."));
         }
         else {
             StringBuilder sb = new StringBuilder();
             for (Iterator<PermissionEntity> i = groups.iterator(); i.hasNext();) {
                 PermissionEntity group = i.next();
-                sb.append(group.getName());
-                if (i.hasNext())
+                sb.append(ChatColor.DARK_GREEN);
+                sb.append(group.getDisplayName());
+                if (i.hasNext()) {
+                    sb.append(ChatColor.YELLOW);
                     sb.append(", ");
+                }
             }
-            sender.sendMessage(ChatColor.YELLOW + sb.toString());
+            sendMessage(sender, colorize("{AQUA}%s{YELLOW} is a member of: %s"), name, sb.toString());
         }
     }
 
     @Command("setgroup")
-    public void setGroup(final ZPermissionsPlugin plugin, final @Session("entityName") String playerName, final @Option("group") String groupName) {
+    public void setGroup(final ZPermissionsPlugin plugin, CommandSender sender, final @Session("entityName") String playerName, final @Option("group") String groupName) {
         plugin.getTransactionStrategy().execute(new TransactionCallbackWithoutResult() {
             @Override
             public void doInTransactionWithoutResult() throws Exception {
                 plugin.getDao().setGroup(playerName, groupName);
             }
         });
+
+        sendMessage(sender, colorize("{AQUA}%s{YELLOW}'s group set to {DARK_GREEN}%s"), playerName, groupName);
         plugin.refreshPlayer(playerName);
     }
 
@@ -62,13 +68,13 @@ public class PlayerCommand extends CommonCommand {
         PermissionEntity entity = plugin.getDao().getEntity(playerName, false);
 
         if (entity == null || entity.getPermissions().isEmpty()) {
-            sender.sendMessage(ChatColor.RED + "Player has no player-specific permissions");
+            sendMessage(sender, colorize("{RED}Player has no declared permissions."));
             return;
         }
         
-        sendMessage(sender, "%sPlayer-specific permissions for %s%s:", ChatColor.YELLOW, ChatColor.WHITE, entity.getDisplayName());
+        sendMessage(sender, colorize("{YELLOW}Declared permissions for {AQUA}%s{YELLOW}:"), entity.getDisplayName());
         for (Entry e : entity.getPermissions()) {
-            sendMessage(sender, "%s- %s%s: %s", ChatColor.DARK_GREEN, e.getWorld() == null ? "" : e.getWorld().getName() + ":", e.getPermission(), e.isValue());
+            sendMessage(sender, colorize("{DARK_GREEN}- {GOLD}%s%s{DARK_GREEN}: {GREEN}%s"), e.getWorld() == null ? "" : e.getWorld().getName() + ":", e.getPermission(), e.isValue());
         }
     }
 
