@@ -67,6 +67,35 @@
           </execution>
         </executions>
       </plugin>
+      <plugin>
+        <groupId>com.pyx4me</groupId>
+        <artifactId>proguard-maven-plugin</artifactId>
+        <executions>
+          <execution>
+            <phase>package</phase>
+            <goals>
+              <goal>proguard</goal>
+            </goals>
+          </execution>
+        </executions>
+        <configuration>
+          <options>
+            <option>-keepattributes Signature,*Annotation*</option>
+	    <option>-keep @javax.persistence.Entity class * { *; }</option>
+            <option>-keepclassmembers class * { @org.tyrannyofheaven.bukkit.util.command.Command *; }</option>
+            <option>-keep public class * extends org.bukkit.plugin.java.JavaPlugin</option>
+          </options>
+          <libs>
+            <lib>${java.home}/../Classes/classes.jar</lib>
+          </libs>
+          <exclusions>
+            <exclusion>
+              <groupId>org.tyrannyofheaven.bukkit</groupId>
+              <artifactId>ToHUtils</artifactId>
+            </exclusion>
+          </exclusions>
+        </configuration>
+      </plugin>
     </plugins>
   </build>
 </project>
