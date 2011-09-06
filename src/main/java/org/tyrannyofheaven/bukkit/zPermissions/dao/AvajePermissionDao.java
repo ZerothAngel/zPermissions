@@ -197,7 +197,7 @@ public class AvajePermissionDao implements PermissionDao {
         // NB: No explicit transaction required
         List<Membership> memberships = getEbeanServer().find(Membership.class).where()
             .eq("member", member.toLowerCase())
-            .orderBy("group.priority")
+            .orderBy("group.priority, group.name")
             .findList();
 
         List<PermissionEntity> groups = new ArrayList<PermissionEntity>();
@@ -261,6 +261,7 @@ public class AvajePermissionDao implements PermissionDao {
         PermissionEntity group = getEntity(groupName, true, true);
 
         if (parentName != null) {
+            // FIXME check for cycles!
             PermissionEntity parent = getEntity(parentName, true, true);
             group.setParent(parent);
         }

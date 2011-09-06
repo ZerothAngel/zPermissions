@@ -81,6 +81,7 @@ public class GroupCommand extends CommonCommand {
 
     @Command(value="setparent", description="Set a group's parent")
     public void setParent(final ZPermissionsPlugin plugin, CommandSender sender, final @Session("entityName") String groupName, final @Option(value="parent", optional=true) String parentName) {
+        // FIXME check for cycles!
         plugin.getTransactionStrategy().execute(new TransactionCallbackWithoutResult() {
             @Override
             public void doInTransactionWithoutResult() throws Exception {
