@@ -23,7 +23,7 @@ public class RootCommand {
     private final SubCommands sc = new SubCommands();
 
     @Command("permissions")
-    @Require({"zpermissions.player", "zpermissions.group", "zpermissions.list", "zpermissions.check"})
+    @Require({"zpermissions.player", "zpermissions.group", "zpermissions.list", "zpermissions.check", "zpermissions.reload"})
     public Object perm(HelpBuilder helpBuilder, CommandSender sender, String[] args) {
         if (args.length == 0) {
             helpBuilder.withCommandSender(sender)
@@ -32,6 +32,7 @@ public class RootCommand {
                 .forCommand("group")
                 .forCommand("list")
                 .forCommand("check")
+                .forCommand("reload")
                 .show();
             return null;
         }

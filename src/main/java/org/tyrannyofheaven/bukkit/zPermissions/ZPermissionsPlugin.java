@@ -329,4 +329,10 @@ public class ZPermissionsPlugin extends JavaPlugin {
         }
     }
 
+    synchronized void reload() {
+        getConfiguration().load();
+        readConfig();
+        refreshPlayers();
+    }
+
 }
