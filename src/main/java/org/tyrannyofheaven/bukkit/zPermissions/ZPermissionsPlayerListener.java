@@ -6,7 +6,7 @@ import org.bukkit.event.player.PlayerListener;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.player.PlayerTeleportEvent;
 
-public class ZPermissionsPlayerListener extends PlayerListener {
+class ZPermissionsPlayerListener extends PlayerListener {
 
     private final ZPermissionsPlugin plugin;
     

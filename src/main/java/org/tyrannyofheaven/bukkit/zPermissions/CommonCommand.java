@@ -1,5 +1,6 @@
 package org.tyrannyofheaven.bukkit.zPermissions;
 
+import static org.tyrannyofheaven.bukkit.util.ToHUtils.colorize;
 import static org.tyrannyofheaven.bukkit.util.ToHUtils.sendMessage;
 
 import org.bukkit.ChatColor;
@@ -29,7 +30,12 @@ public abstract class CommonCommand {
             }
         });
         
-        sendMessage(sender, "%s%s = %s", ChatColor.YELLOW, permission, result);
+        if (result == null) {
+            sendMessage(sender, colorize("%s%s{YELLOW} does not set {GOLD}%s"), group ? ChatColor.DARK_GREEN : ChatColor.AQUA, name, permission);
+        }
+        else {
+            sendMessage(sender, colorize("%s%s{YELLOW} sets {GOLD}%s{YELLOW} to {GREEN}%s"), group ? ChatColor.DARK_GREEN : ChatColor.AQUA, name, permission, result);
+        }
     }
 
     @Command("set")
@@ -43,7 +49,7 @@ public abstract class CommonCommand {
             }
         });
     
-        sendMessage(sender, "%s%s set to %s", ChatColor.YELLOW, permission, value == null ? Boolean.TRUE : value);
+        sendMessage(sender, colorize("{GOLD}%s{YELLOW} set to {GREEN}%s{YELLOW} for %s%s"), permission, value == null ? Boolean.TRUE : value, group ? ChatColor.DARK_GREEN : ChatColor.AQUA, name);
         plugin.refreshPlayers();
     }
 
@@ -58,7 +64,7 @@ public abstract class CommonCommand {
             }
         });
     
-        sendMessage(sender, "%s%s unset", ChatColor.YELLOW, permission);
+        sendMessage(sender, "{GOLD}%s{YELLOW} unset for %s%s", permission, group ? ChatColor.DARK_GREEN : ChatColor.AQUA, name);
         plugin.refreshPlayers();
     }
 
