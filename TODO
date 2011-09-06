@@ -3,8 +3,7 @@
 -   Automatic group permissions i.e. group.<groupname> **DONE**
 -   Ranks/ladders **DONE**
 -   YAML export/import
--   "members" command
--   purge/delete command
+-   "members" command **DONE**
+-   purge/delete command **DONE**
 -   Unit tests! Especially for the DAO!
 -   Check for inheritance cycles! **DONE**
-

@@ -291,4 +291,71 @@ public class AvajePermissionDao implements PermissionDao {
         getEbeanServer().save(group);
     }
 
+    // Iterate over each world, deleting any that are unused
+    private void cleanWorlds() {
+        for (PermissionWorld world : getEbeanServer().find(PermissionWorld.class).findList()) {
+            if (getEbeanServer().createQuery(Entry.class).where().eq("world", world).findRowCount() == 0) {
+                // No more entries reference this world
+                getEbeanServer().delete(world);
+            }
+        }
+    }
+
+    @Override
+    public boolean deleteEntity(String name, boolean group) {
+        checkTransaction();
+
+        PermissionEntity entity = getEntity(name, group, false);
+        
+        if (group) {
+            // Deleting a group
+            if (entity != null) {
+                // Break parent/child relationship
+                for (PermissionEntity child : entity.getChildren()) {
+                    child.setParent(null);
+                    getEbeanServer().save(child);
+                }
+
+                // Delete group's entity
+                getEbeanServer().delete(entity); // should cascade to entries and memberships
+                cleanWorlds();
+                return true;
+            }
+        }
+        else {
+            // Deleting a player
+
+            // Delete memberships
+            List<Membership> memberships = getEbeanServer().find(Membership.class).where()
+                .eq("member", name.toLowerCase())
+                .findList();
+            getEbeanServer().delete(memberships);
+
+            if (entity != null) {
+                // Delete player's entity
+                getEbeanServer().delete(entity); // should cascade to entries
+                cleanWorlds();
+            }
+            
+            return !memberships.isEmpty() || entity != null;
+        }
+        
+        return false; // nothing to delete
+    }
+
+    @Override
+    public List<String> getMembers(String group) {
+        // No explicit transaction required
+        List<Membership> memberships = getEbeanServer().find(Membership.class).where()
+            .eq("group.name", group.toLowerCase())
+            .orderBy("member")
+            .findList();
+        
+        List<String> result = new ArrayList<String>(memberships.size());
+        for (Membership membership : memberships) {
+            result.add(membership.getMember());
+        }
+        return result;
+    }
+
 }
