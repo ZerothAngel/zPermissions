@@ -16,8 +16,12 @@
 package org.tyrannyofheaven.bukkit.zPermissions;
 
 import static org.tyrannyofheaven.bukkit.util.ToHUtils.colorize;
+import static org.tyrannyofheaven.bukkit.util.ToHUtils.delimitedString;
 import static org.tyrannyofheaven.bukkit.util.ToHUtils.sendMessage;
 
+import java.util.List;
+
+import org.bukkit.ChatColor;
 import org.bukkit.command.CommandSender;
 import org.tyrannyofheaven.bukkit.util.command.Command;
 import org.tyrannyofheaven.bukkit.util.command.Option;
@@ -33,7 +37,7 @@ public class GroupCommand extends CommonCommand {
         super(true);
     }
 
-    @Command(value="addmember", description="Add a player to a group")
+    @Command(value="add", description="Add a player to a group")
     public void addMember(final ZPermissionsPlugin plugin, CommandSender sender, final @Session("entityName") String groupName, final @Option("player") String playerName) {
         plugin.getTransactionStrategy().execute(new TransactionCallbackWithoutResult() {
             @Override
@@ -46,7 +50,7 @@ public class GroupCommand extends CommonCommand {
         plugin.refreshPlayer(playerName);
     }
 
-    @Command(value={"removemember", "rmmember"}, description="Remove a player from a group")
+    @Command(value={"remove", "rm"}, description="Remove a player from a group")
     public void removeMember(final ZPermissionsPlugin plugin, CommandSender sender, final @Session("entityName") String groupName, final @Option("player") String playerName) {
         plugin.getTransactionStrategy().execute(new TransactionCallbackWithoutResult() {
             @Override
@@ -59,7 +63,7 @@ public class GroupCommand extends CommonCommand {
         plugin.refreshPlayer(playerName);
     }
 
-    @Command(value="show", description="Show information about a group")
+    @Command(value={"show", "sh"}, description="Show information about a group")
     public void show(ZPermissionsPlugin plugin, CommandSender sender, @Session("entityName") String groupName) {
         PermissionEntity entity = plugin.getDao().getEntity(groupName, true);
 
@@ -80,7 +84,7 @@ public class GroupCommand extends CommonCommand {
         }
     }
 
-    @Command(value="setparent", description="Set a group's parent")
+    @Command(value={"setparent", "parent"}, description="Set a group's parent")
     public void setParent(final ZPermissionsPlugin plugin, CommandSender sender, final @Session("entityName") String groupName, final @Option(value="parent", optional=true) String parentName) {
         try {
             plugin.getTransactionStrategy().execute(new TransactionCallbackWithoutResult() {
@@ -99,7 +103,7 @@ public class GroupCommand extends CommonCommand {
         plugin.refreshPlayers();
     }
 
-    @Command(value="setpriority", description="Set a group's priority")
+    @Command(value={"setpriority", "priority"}, description="Set a group's priority")
     public void setPriority(final ZPermissionsPlugin plugin, CommandSender sender, final @Session("entityName") String groupName, final @Option("priority") int priority) {
         plugin.getTransactionStrategy().execute(new TransactionCallbackWithoutResult() {
             @Override
@@ -110,6 +114,17 @@ public class GroupCommand extends CommonCommand {
 
         sendMessage(sender, colorize("{DARK_GREEN}%s{YELLOW}'s priority is now {GREEN}%d"), groupName, priority);
         plugin.refreshPlayers();
+    }
+
+    @Command(value="members", description="List members of a group")
+    public void members(ZPermissionsPlugin plugin, CommandSender sender, @Session("entityName") String groupName) {
+        List<String> members = plugin.getDao().getMembers(groupName);
+        
+        if (members.isEmpty())
+            sendMessage(sender, colorize("{YELLOW}Group has no members."));
+        else {
+            sendMessage(sender, colorize("{YELLOW}Members of {DARK_GREEN}%s{YELLOW}: {AQUA}%s"), groupName, delimitedString(ChatColor.YELLOW + ", " + ChatColor.AQUA, members));
+        }
     }
 
 }

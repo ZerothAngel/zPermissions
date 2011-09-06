@@ -68,7 +68,7 @@ public abstract class CommonCommand {
         plugin.refreshPlayers();
     }
 
-    @Command(value={"unset", "rm"}, description="Remove a permission")
+    @Command(value="unset", description="Remove a permission")
     public void unset(final ZPermissionsPlugin plugin, CommandSender sender, final @Session("entityName") String name, @Option("permission") String permission) {
         final WorldPermission wp = new WorldPermission(permission);
     
@@ -81,6 +81,24 @@ public abstract class CommonCommand {
     
         sendMessage(sender, colorize("{GOLD}%s{YELLOW} unset for %s%s"), permission, group ? ChatColor.DARK_GREEN : ChatColor.AQUA, name);
         plugin.refreshPlayers();
+    }
+
+    @Command(value="purge", description="Delete this group or player") // doh!
+    public void delete(final ZPermissionsPlugin plugin, CommandSender sender, final @Session("entityName") String name) {
+        boolean result = plugin.getTransactionStrategy().execute(new TransactionCallback<Boolean>() {
+            @Override
+            public Boolean doInTransaction() throws Exception {
+                return plugin.getDao().deleteEntity(name, group);
+            }
+        });
+        
+        if (result)
+            sendMessage(sender, colorize("{YELLOW}%s %s%s{YELLOW} deleted"),
+                    (group ? "Group" : "Player"),
+                    (group ? ChatColor.DARK_GREEN : ChatColor.AQUA),
+                    name);
+        else
+            sendMessage(sender, colorize("{RED}%s not found."), group ? "Group" : "Player");
     }
 
 }

@@ -112,7 +112,7 @@ public class PermissionEntity {
         this.priority = priority;
     }
 
-    @OneToMany(mappedBy="parent", cascade=CascadeType.ALL)
+    @OneToMany(mappedBy="parent")
     public Set<PermissionEntity> getChildren() {
         return children;
     }

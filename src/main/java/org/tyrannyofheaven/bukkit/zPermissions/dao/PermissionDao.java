@@ -33,6 +33,8 @@ public interface PermissionDao {
 
     public List<PermissionEntity> getGroups(String member);
 
+    public List<String> getMembers(String group);
+
     public PermissionEntity getEntity(String name, boolean group);
 
     public List<PermissionEntity> getEntities(boolean group);
@@ -42,5 +44,7 @@ public interface PermissionDao {
     public void setParent(String groupName, String parentName);
 
     public void setPriority(String groupName, int priority);
+
+    public boolean deleteEntity(String name, boolean group);
 
 }
