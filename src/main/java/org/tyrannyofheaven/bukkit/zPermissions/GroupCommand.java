@@ -1,8 +1,9 @@
 package org.tyrannyofheaven.bukkit.zPermissions;
 
+import static org.tyrannyofheaven.bukkit.util.ToHUtils.sendMessage;
+
 import org.bukkit.ChatColor;
 import org.bukkit.command.CommandSender;
-import org.tyrannyofheaven.bukkit.util.ToHUtils;
 import org.tyrannyofheaven.bukkit.util.command.Command;
 import org.tyrannyofheaven.bukkit.util.command.Option;
 import org.tyrannyofheaven.bukkit.util.command.Session;
@@ -45,13 +46,13 @@ public class GroupCommand extends CommonCommand {
         PermissionEntity entity = plugin.getDao().getEntity(groupName, true);
 
         if (entity != null) {
-            ToHUtils.sendMessage(sender, "%sGroup-specific permissions for %s%s:", ChatColor.YELLOW, ChatColor.WHITE, entity.getDisplayName());
-            ToHUtils.sendMessage(sender, "%sPriority: %s", ChatColor.YELLOW, entity.getPriority());
+            sendMessage(sender, "%sGroup-specific permissions for %s%s:", ChatColor.YELLOW, ChatColor.WHITE, entity.getDisplayName());
+            sendMessage(sender, "%sPriority: %s", ChatColor.YELLOW, entity.getPriority());
             if (entity.getParent() != null) {
-                ToHUtils.sendMessage(sender, "%sParent: %s", ChatColor.DARK_BLUE, entity.getParent().getDisplayName());
+                sendMessage(sender, "%sParent: %s", ChatColor.DARK_BLUE, entity.getParent().getDisplayName());
             }
             for (Entry e : entity.getPermissions()) {
-                ToHUtils.sendMessage(sender, "%s- %s%s: %s", ChatColor.DARK_GREEN, e.getWorld() == null ? "" : e.getWorld().getName() + ":", e.getPermission(), e.isValue());
+                sendMessage(sender, "%s- %s%s: %s", ChatColor.DARK_GREEN, e.getWorld() == null ? "" : e.getWorld().getName() + ":", e.getPermission(), e.isValue());
             }
         }
 

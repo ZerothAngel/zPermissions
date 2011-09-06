@@ -1,5 +1,8 @@
 package org.tyrannyofheaven.bukkit.zPermissions;
 
+import static org.tyrannyofheaven.bukkit.util.ToHUtils.copyResourceToFile;
+import static org.tyrannyofheaven.bukkit.util.ToHUtils.hasText;
+
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -88,7 +91,7 @@ public class ZPermissionsPlugin extends JavaPlugin {
         // Create config file, if needed
         File configFile = new File(getDataFolder(), "config.yml");
         if (!configFile.exists()) {
-            ToHUtils.copyResourceToFile(this, "config.yml", configFile);
+            copyResourceToFile(this, "config.yml", configFile);
             // Re-load config
             getConfiguration().load();
         }
@@ -292,15 +295,15 @@ public class ZPermissionsPlugin extends JavaPlugin {
         
         // Read values, set accordingly
         value = (String)getConfiguration().getProperty("group-permission");
-        if (ToHUtils.hasText(value))
+        if (hasText(value))
             groupPermissionFormat = value;
 
         value = (String)getConfiguration().getProperty("default-group");
-        if (ToHUtils.hasText(value))
+        if (hasText(value))
             defaultGroup = value;
         
         value = (String)getConfiguration().getProperty("default-track");
-        if (ToHUtils.hasText(value))
+        if (hasText(value))
             defaultTrack = value;
 
         // Read tracks, if any
