@@ -55,7 +55,7 @@ public class GroupCommand extends CommonCommand {
         });
 
         sendMessage(sender, colorize("{AQUA}%s{YELLOW} added to {DARK_GREEN}%s"), playerName, groupName);
-        checkPlayer(plugin, sender, playerName);
+        plugin.checkPlayer(sender, playerName);
         plugin.refreshPlayer(playerName);
     }
 
@@ -75,7 +75,7 @@ public class GroupCommand extends CommonCommand {
         }
         else {
             sendMessage(sender, colorize("{DARK_GREEN}%s{RED} does not exist or {AQUA}%s{RED} is not a member"), groupName, playerName);
-            checkPlayer(plugin, sender, playerName);
+            plugin.checkPlayer(sender, playerName);
         }
     }
 

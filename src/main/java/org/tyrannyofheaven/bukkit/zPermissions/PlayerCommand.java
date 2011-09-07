@@ -55,7 +55,7 @@ public class PlayerCommand extends CommonCommand {
 
         if (groups.isEmpty()) {
             sendMessage(sender, colorize("{YELLOW}Player is not a member of any groups."));
-            checkPlayer(plugin, sender, name);
+            plugin.checkPlayer(sender, name);
         }
         else {
             StringBuilder sb = new StringBuilder();
@@ -82,7 +82,7 @@ public class PlayerCommand extends CommonCommand {
         });
 
         sendMessage(sender, colorize("{AQUA}%s{YELLOW}'s group set to {DARK_GREEN}%s"), playerName, groupName);
-        checkPlayer(plugin, sender, playerName);
+        plugin.checkPlayer(sender, playerName);
         plugin.refreshPlayer(playerName);
     }
 
@@ -92,7 +92,7 @@ public class PlayerCommand extends CommonCommand {
 
         if (entity == null || entity.getPermissions().isEmpty()) {
             sendMessage(sender, colorize("{RED}Player has no declared permissions."));
-            checkPlayer(plugin, sender, playerName);
+            plugin.checkPlayer(sender, playerName);
             return;
         }
         

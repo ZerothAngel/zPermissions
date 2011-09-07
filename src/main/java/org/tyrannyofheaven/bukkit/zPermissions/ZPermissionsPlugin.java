@@ -15,8 +15,10 @@
  */
 package org.tyrannyofheaven.bukkit.zPermissions;
 
+import static org.tyrannyofheaven.bukkit.util.ToHUtils.colorize;
 import static org.tyrannyofheaven.bukkit.util.ToHUtils.copyResourceToFile;
 import static org.tyrannyofheaven.bukkit.util.ToHUtils.hasText;
+import static org.tyrannyofheaven.bukkit.util.ToHUtils.sendMessage;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -29,6 +31,7 @@ import java.util.logging.Level;
 import javax.persistence.PersistenceException;
 
 import org.bukkit.command.CommandExecutor;
+import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Event.Priority;
 import org.bukkit.event.Event.Type;
@@ -445,6 +448,17 @@ public class ZPermissionsPlugin extends JavaPlugin {
         getConfiguration().load();
         readConfig();
         refreshPlayers();
+    }
+
+    /**
+     * Give a little warning if the player isn't online.
+     * 
+     * @param playerName the player name
+     */
+    void checkPlayer(CommandSender sender, String playerName) {
+        if (getServer().getPlayer(playerName) == null) {
+            sendMessage(sender, colorize("{GRAY}(Player not online, make sure the name is correct)"));
+        }
     }
 
 }
