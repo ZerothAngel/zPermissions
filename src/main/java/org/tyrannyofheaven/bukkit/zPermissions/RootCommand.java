@@ -142,6 +142,7 @@ public class RootCommand {
             }
         });
         
+        plugin.checkPlayer(sender, playerName);
         plugin.refreshPlayer(playerName);
     }
 

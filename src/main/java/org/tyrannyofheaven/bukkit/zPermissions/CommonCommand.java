@@ -62,7 +62,7 @@ public abstract class CommonCommand {
         if (result == null) {
             sendMessage(sender, colorize("%s%s{YELLOW} does not set {GOLD}%s"), group ? ChatColor.DARK_GREEN : ChatColor.AQUA, name, permission);
             if (!group)
-                checkPlayer(plugin, sender, name);
+                plugin.checkPlayer(sender, name);
         }
         else {
             sendMessage(sender, colorize("%s%s{YELLOW} sets {GOLD}%s{YELLOW} to {GREEN}%s"), group ? ChatColor.DARK_GREEN : ChatColor.AQUA, name, permission, result);
@@ -84,7 +84,7 @@ public abstract class CommonCommand {
     
         sendMessage(sender, colorize("{GOLD}%s{YELLOW} set to {GREEN}%s{YELLOW} for %s%s"), permission, value == null ? Boolean.TRUE : value, group ? ChatColor.DARK_GREEN : ChatColor.AQUA, name);
         if (!group)
-            checkPlayer(plugin, sender, name);
+            plugin.checkPlayer(sender, name);
         plugin.refreshPlayers();
     }
 
@@ -108,7 +108,7 @@ public abstract class CommonCommand {
         else {
             sendMessage(sender, colorize("%s%s{RED} does not set {GOLD}%s"), group ? ChatColor.DARK_GREEN : ChatColor.AQUA, name, permission);
             if (!group)
-                checkPlayer(plugin, sender, name);
+                plugin.checkPlayer(sender, name);
         }
     }
 
@@ -128,17 +128,6 @@ public abstract class CommonCommand {
                     name);
         else
             sendMessage(sender, colorize("{RED}%s not found."), group ? "Group" : "Player");
-    }
-
-    /**
-     * Give a little warning if the player isn't online.
-     * 
-     * @param playerName the player name
-     */
-    protected void checkPlayer(ZPermissionsPlugin plugin, CommandSender sender, String playerName) {
-        if (plugin.getServer().getPlayer(playerName) == null) {
-            sendMessage(sender, colorize("{GRAY}WARNING: Player is not online, be sure the name is spelled\n{GRAY}correctly!"));
-        }
     }
 
 }
