@@ -30,6 +30,12 @@ import org.tyrannyofheaven.bukkit.util.transaction.TransactionCallbackWithoutRes
 import org.tyrannyofheaven.bukkit.zPermissions.model.Entry;
 import org.tyrannyofheaven.bukkit.zPermissions.model.PermissionEntity;
 
+/**
+ * Handler for player sub-commands. Expects the CommandSession to contain the
+ * name of the player in <code>entityName</code>.
+ * 
+ * @author asaddi
+ */
 public class PlayerCommand extends CommonCommand {
 
     public PlayerCommand() {
@@ -49,6 +55,7 @@ public class PlayerCommand extends CommonCommand {
 
         if (groups.isEmpty()) {
             sendMessage(sender, colorize("{YELLOW}Player is not a member of any groups."));
+            checkPlayer(plugin, sender, name);
         }
         else {
             StringBuilder sb = new StringBuilder();
@@ -75,6 +82,7 @@ public class PlayerCommand extends CommonCommand {
         });
 
         sendMessage(sender, colorize("{AQUA}%s{YELLOW}'s group set to {DARK_GREEN}%s"), playerName, groupName);
+        checkPlayer(plugin, sender, playerName);
         plugin.refreshPlayer(playerName);
     }
 
@@ -84,6 +92,7 @@ public class PlayerCommand extends CommonCommand {
 
         if (entity == null || entity.getPermissions().isEmpty()) {
             sendMessage(sender, colorize("{RED}Player has no declared permissions."));
+            checkPlayer(plugin, sender, playerName);
             return;
         }
         

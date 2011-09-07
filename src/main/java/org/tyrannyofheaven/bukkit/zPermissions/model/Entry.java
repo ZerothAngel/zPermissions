@@ -23,6 +23,11 @@ import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 import javax.persistence.UniqueConstraint;
 
+/**
+ * A permission entry.
+ * 
+ * @author asaddi
+ */
 @Entity
 @Table(name="entries")
 @UniqueConstraint(columnNames={"entity_id", "world_id", "permission"})

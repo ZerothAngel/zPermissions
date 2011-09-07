@@ -21,6 +21,12 @@ import org.bukkit.event.player.PlayerListener;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.player.PlayerTeleportEvent;
 
+/**
+ * PlayerListener for zPermissions. Simply updates or removes the zPermissions
+ * attachment as appropriate.
+ * 
+ * @author asaddi
+ */
 class ZPermissionsPlayerListener extends PlayerListener {
 
     private final ZPermissionsPlugin plugin;

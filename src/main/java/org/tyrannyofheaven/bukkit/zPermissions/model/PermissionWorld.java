@@ -20,6 +20,11 @@ import javax.persistence.Id;
 import javax.persistence.Table;
 import javax.persistence.UniqueConstraint;
 
+/**
+ * Represents a world that permission entries may be associated with.
+ * 
+ * @author asaddi
+ */
 @Entity
 @Table(name="worlds")
 @UniqueConstraint(columnNames="name")

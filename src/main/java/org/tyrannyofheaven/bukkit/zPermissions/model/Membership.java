@@ -22,6 +22,11 @@ import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 import javax.persistence.UniqueConstraint;
 
+/**
+ * Represents group membership.
+ * 
+ * @author asaddi
+ */
 @Entity
 @Table(name="memberships")
 @UniqueConstraint(columnNames={"member", "group_id"})

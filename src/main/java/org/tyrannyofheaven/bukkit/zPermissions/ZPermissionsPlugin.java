@@ -47,36 +47,66 @@ import org.tyrannyofheaven.bukkit.zPermissions.model.Membership;
 import org.tyrannyofheaven.bukkit.zPermissions.model.PermissionEntity;
 import org.tyrannyofheaven.bukkit.zPermissions.model.PermissionWorld;
 
+/**
+ * zPermissions main class.
+ * 
+ * @author asaddi
+ */
 public class ZPermissionsPlugin extends JavaPlugin {
 
+    // Name of the default group, in absence of a config file
     private static final String DEFAULT_GROUP = "default";
-    
+
+    // Name of the default track, in absence of a config file
     private static final String DEFAULT_TRACK = "default";
 
+    // Maps player names to attachments. All access must be synchronized to
+    // attachments.
     private final Map<String, PermissionAttachment> attachments = new HashMap<String, PermissionAttachment>();
 
+    // Maps player names to world names. All access must be synchronized to
+    // attachments.
     private final Map<String, String> lastWorld = new HashMap<String, String>();
 
+    // The configured default group
     private String defaultGroup;
-    
+
+    // The configured default track
     private String defaultTrack;
-    
+
+    // The configured group permission node format
     private String groupPermissionFormat;
 
+    // Track definitions
     private Map<String, List<String>> tracks = new HashMap<String, List<String>>();
 
+    // TransactionStrategy implementation
     private TransactionStrategy transactionStrategy;
 
+    // DAO implementation
     private PermissionDao dao;
 
+    /**
+     * Retrieve this plugin's TransactionStrategy
+     * 
+     * @return the TransactionStrategy
+     */
     TransactionStrategy getTransactionStrategy() {
         return transactionStrategy;
     }
 
+    /**
+     * Retrive this plugin's DAO.
+     * 
+     * @return the DAO
+     */
     PermissionDao getDao() {
         return dao;
     }
 
+    /* (non-Javadoc)
+     * @see org.bukkit.plugin.Plugin#onDisable()
+     */
     @Override
     public void onDisable() {
         // Clear any player state
@@ -97,6 +127,9 @@ public class ZPermissionsPlugin extends JavaPlugin {
         log("%s disabled.", getDescription().getVersion());
     }
 
+    /* (non-Javadoc)
+     * @see org.bukkit.plugin.Plugin#onEnable()
+     */
     @Override
     public void onEnable() {
         // Create data directory, if needed
@@ -111,8 +144,10 @@ public class ZPermissionsPlugin extends JavaPlugin {
             getConfiguration().load();
         }
 
+        // Read config
         readConfig();
 
+        // Create database schema, if needed
         try {
             getDatabase().createQuery(Entry.class).findRowCount();
         }
@@ -121,38 +156,63 @@ public class ZPermissionsPlugin extends JavaPlugin {
             installDDL();
             log("Done.");
         }
-        
+
+        // Set up TransactionStrategy and DAO
         transactionStrategy = new AvajeTransactionStrategy(getDatabase());
         dao = new AvajePermissionDao(getDatabase());
-        
+
+        // Install our commands
         CommandExecutor ce = new ToHCommandExecutor<ZPermissionsPlugin>(this, new RootCommand());
         getCommand("perm").setExecutor(ce);
         getCommand("promote").setExecutor(ce);
         getCommand("demote").setExecutor(ce);
 
+        // Install our listeners
         ZPermissionsPlayerListener pl = new ZPermissionsPlayerListener(this);
         getServer().getPluginManager().registerEvent(Type.PLAYER_JOIN, pl, Priority.Monitor, this);
         getServer().getPluginManager().registerEvent(Type.PLAYER_KICK, pl, Priority.Monitor, this);
         getServer().getPluginManager().registerEvent(Type.PLAYER_QUIT, pl, Priority.Monitor, this);
         getServer().getPluginManager().registerEvent(Type.PLAYER_TELEPORT, pl, Priority.Monitor, this);
 
+        // Make sure everyone currently online has an attachment
         refreshPlayers();
         
         log("%s enabled.", getDescription().getVersion());
     }
 
+    /**
+     * Log a message at INFO level.
+     * 
+     * @param format the message format
+     * @param args format args
+     */
     public void log(String format, Object... args) {
         ToHUtils.log(this, Level.INFO, format, args);
     }
 
+    /**
+     * Log a message at WARNING level.
+     * 
+     * @param format the message format
+     * @param args format args
+     */
     public void warn(String format, Object... args) {
         ToHUtils.log(this, Level.WARNING, format, args);
     }
 
+    /**
+     * Log a message at FINE level.
+     * 
+     * @param format the message format
+     * @param args format args
+     */
     public void debug(String format, Object... args) {
         ToHUtils.log(this, Level.FINE, format, args);
     }
 
+    /* (non-Javadoc)
+     * @see org.bukkit.plugin.java.JavaPlugin#getDatabaseClasses()
+     */
     @Override
     public List<Class<?>> getDatabaseClasses() {
         List<Class<?>> result = new ArrayList<Class<?>>();
@@ -163,6 +223,8 @@ public class ZPermissionsPlugin extends JavaPlugin {
         return result;
     }
 
+    // Resolve a group's permissions. Ancestor permissions should be overridden
+    // each successive descendant.
     private void resolveGroup(Map<String, Boolean> permissions, String world, PermissionEntity group) {
         // Build list of group ancestors
         List<PermissionEntity> ancestry = new ArrayList<PermissionEntity>();
@@ -185,15 +247,18 @@ public class ZPermissionsPlugin extends JavaPlugin {
         }
     }
 
+    // Resolve a player's permissions. Any permissions declared on the player
+    // should override group permissions.
     private Map<String, Boolean> resolvePlayer(final Player player) {
         final String world = player.getWorld().getName().toLowerCase();
 
         return getTransactionStrategy().execute(new TransactionCallback<Map<String, Boolean>>() {
             @Override
             public Map<String, Boolean> doInTransaction() throws Exception {
-                // TODO Auto-generated method stub
+                // Get this player's groups
                 List<PermissionEntity> groups = getDao().getGroups(player.getName());
                 if (groups.isEmpty()) {
+                    // If no groups, use the default group
                     PermissionEntity defaultGroup = getDao().getEntity(getDefaultGroup(), true);
                     if (defaultGroup != null)
                         groups.add(defaultGroup);
@@ -217,6 +282,9 @@ public class ZPermissionsPlugin extends JavaPlugin {
         });
     }
 
+    // Apply an entity's permissions to the permission map. Global permissions
+    // (ones not assigned to any specific world) are applied first. They are
+    // then overidden by any world-specific permissions.
     private void applyPermissions(Map<String, Boolean> permissions, PermissionEntity entity, String world) {
         Map<String, Boolean> worldPermissions = new HashMap<String, Boolean>();
 
@@ -275,30 +343,56 @@ public class ZPermissionsPlugin extends JavaPlugin {
             old.remove();
     }
 
+    /**
+     * Refresh a particular player's attachment (and therefore, effective
+     * permissions). Only does something if the player is actually online.
+     * 
+     * @param playerName the name of the player
+     */
     void refreshPlayer(String playerName) {
         Player player = getServer().getPlayer(playerName);
         if (player != null)
             updateAttachment(player, true);
     }
 
+    /**
+     * Refresh the attachments of all online players.
+     */
     void refreshPlayers() {
         for (Player player : getServer().getOnlinePlayers()) {
             updateAttachment(player, true);
         }
     }
 
+    /**
+     * Retrieve the configured default group.
+     * 
+     * @return the default group
+     */
     String getDefaultGroup() {
         return defaultGroup;
     }
 
+    /**
+     * Retrieve the configured default track.
+     * 
+     * @return the default track
+     */
     String getDefaultTrack() {
         return defaultTrack;
     }
 
+    /**
+     * Retrieve the list of groups for the given track.
+     * 
+     * @param trackName the name of the track
+     * @return a list of groups (in ascending order) associated with the track
+     */
     List<String> getTrack(String trackName) {
         return tracks.get(trackName);
     }
 
+    // Read config.yml
     private void readConfig() {
         // Barebones defaults
         defaultGroup = DEFAULT_GROUP;
@@ -344,6 +438,9 @@ public class ZPermissionsPlugin extends JavaPlugin {
         }
     }
 
+    /**
+     * Re-read config.yml and refresh attachments of all online players.
+     */
     synchronized void reload() {
         getConfiguration().load();
         readConfig();

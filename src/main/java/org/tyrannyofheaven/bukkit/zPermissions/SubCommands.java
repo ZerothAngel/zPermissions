@@ -32,16 +32,24 @@ import org.tyrannyofheaven.bukkit.util.command.ParseException;
 import org.tyrannyofheaven.bukkit.util.command.Require;
 import org.tyrannyofheaven.bukkit.zPermissions.model.PermissionEntity;
 
+/**
+ * Handler for sub-commands of /permissions
+ * 
+ * @author asaddi
+ */
 public class SubCommands {
 
+    // The "/permissions player" handler
     private final PlayerCommand playerCommand = new PlayerCommand();
 
+    // The "/permissions group" handler
     private final CommonCommand groupCommand = new GroupCommand();
 
     @Command(value={"player", "pl", "p"}, description="Player-related commands")
     @Require("zpermissions.player")
     public PlayerCommand player(HelpBuilder helpBuilder, CommandSender sender, CommandSession session, @Option(value="player", nullable=true) String playerName, String[] args) {
         if (args.length == 0) {
+            // Display sub-command help
             helpBuilder.withCommandSender(sender)
                 .withHandler(playerCommand)
                 .forCommand("get")
@@ -55,6 +63,7 @@ public class SubCommands {
             return null;
         }
         
+        // Stuff name into session for next handler
         session.setValue("entityName", playerName);
         return playerCommand;
     }
@@ -63,6 +72,7 @@ public class SubCommands {
     @Require("zpermissions.group")
     public CommonCommand group(HelpBuilder helpBuilder, CommandSender sender, CommandSession session, @Option(value="group", nullable=true) String groupName, String[] args) {
         if (args.length == 0) {
+            // Display sub-command help
             helpBuilder.withCommandSender(sender)
                 .withHandler(groupCommand)
                 .forCommand("get")
@@ -77,7 +87,8 @@ public class SubCommands {
                 .show();
             return null;
         }
-        
+
+        // Stuff name into session for next handler
         session.setValue("entityName", groupName);
         return groupCommand;
     }
@@ -113,13 +124,16 @@ public class SubCommands {
     public void check(ZPermissionsPlugin plugin, CommandSender sender, @Option("permission") String permission, @Option(value="player", optional=true) String playerName) {
         Player player;
         if (playerName == null) {
+            // No player specified
             if (!(sender instanceof Player)) {
                 sendMessage(sender, colorize("{RED}Cannot check permissions of console."));
                 return;
             }
+            // Use sender
             player = (Player)sender;
         }
         else {
+            // Checking perms for another player
             requirePermission(sender, "zpermissions.check.other");
 
             player = plugin.getServer().getPlayer(playerName);
@@ -128,7 +142,8 @@ public class SubCommands {
                 return;
             }
         }
-        
+
+        // Scan effective permissions
         for (PermissionAttachmentInfo pai : player.getEffectivePermissions()) {
             if (permission.equalsIgnoreCase(pai.getPermission())) {
                 sendMessage(sender, colorize("{AQUA}%s{YELLOW} sets {GOLD}%s{YELLOW} to {GREEN}%s"), player.getName(), pai.getPermission(), pai.getValue());

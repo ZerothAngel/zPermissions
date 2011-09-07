@@ -26,18 +26,32 @@ import org.tyrannyofheaven.bukkit.util.command.Session;
 import org.tyrannyofheaven.bukkit.util.transaction.TransactionCallback;
 import org.tyrannyofheaven.bukkit.util.transaction.TransactionCallbackWithoutResult;
 
+/**
+ * Handler for common commands between "/permissions group" and
+ * "/permissions player"
+ * 
+ * @author asaddi
+ */
 public abstract class CommonCommand {
 
+    // true if this is handling groups
     private final boolean group;
-    
+
+    /**
+     * Instantiate this handler.
+     * 
+     * @param group true if this is handling groups
+     */
     protected CommonCommand(boolean group) {
         this.group = group;
     }
 
     @Command(value="get", description="View a permission")
     public void get(final ZPermissionsPlugin plugin, CommandSender sender, final @Session("entityName") String name, @Option("permission") String permission) {
+        // Get world/permission
         final WorldPermission wp = new WorldPermission(permission);
-    
+
+        // Read entry from DAO, if any
         Boolean result = plugin.getTransactionStrategy().execute(new TransactionCallback<Boolean>() {
             @Override
             public Boolean doInTransaction() throws Exception {
@@ -47,6 +61,8 @@ public abstract class CommonCommand {
         
         if (result == null) {
             sendMessage(sender, colorize("%s%s{YELLOW} does not set {GOLD}%s"), group ? ChatColor.DARK_GREEN : ChatColor.AQUA, name, permission);
+            if (!group)
+                checkPlayer(plugin, sender, name);
         }
         else {
             sendMessage(sender, colorize("%s%s{YELLOW} sets {GOLD}%s{YELLOW} to {GREEN}%s"), group ? ChatColor.DARK_GREEN : ChatColor.AQUA, name, permission, result);
@@ -55,8 +71,10 @@ public abstract class CommonCommand {
 
     @Command(value="set", description="Set a permission")
     public void set(final ZPermissionsPlugin plugin, CommandSender sender, final @Session("entityName") String name, @Option("permission") String permission, final @Option(value="value", optional=true) Boolean value) {
+        // Get world/permission
         final WorldPermission wp = new WorldPermission(permission);
     
+        // Set permission. Should never fail. World/entity will be created as needed.
         plugin.getTransactionStrategy().execute(new TransactionCallbackWithoutResult() {
             @Override
             public void doInTransactionWithoutResult() throws Exception {
@@ -65,22 +83,33 @@ public abstract class CommonCommand {
         });
     
         sendMessage(sender, colorize("{GOLD}%s{YELLOW} set to {GREEN}%s{YELLOW} for %s%s"), permission, value == null ? Boolean.TRUE : value, group ? ChatColor.DARK_GREEN : ChatColor.AQUA, name);
+        if (!group)
+            checkPlayer(plugin, sender, name);
         plugin.refreshPlayers();
     }
 
     @Command(value="unset", description="Remove a permission")
     public void unset(final ZPermissionsPlugin plugin, CommandSender sender, final @Session("entityName") String name, @Option("permission") String permission) {
+        // Get world/permission
         final WorldPermission wp = new WorldPermission(permission);
     
-        plugin.getTransactionStrategy().execute(new TransactionCallbackWithoutResult() {
+        // Delete permission entry.
+        Boolean result = plugin.getTransactionStrategy().execute(new TransactionCallback<Boolean>() {
             @Override
-            public void doInTransactionWithoutResult() throws Exception {
-                plugin.getDao().unsetPermission(name, group, wp.getWorld(), wp.getPermission());
+            public Boolean doInTransaction() throws Exception {
+                return plugin.getDao().unsetPermission(name, group, wp.getWorld(), wp.getPermission());
             }
         });
-    
-        sendMessage(sender, colorize("{GOLD}%s{YELLOW} unset for %s%s"), permission, group ? ChatColor.DARK_GREEN : ChatColor.AQUA, name);
-        plugin.refreshPlayers();
+
+        if (result) {
+            sendMessage(sender, colorize("{GOLD}%s{YELLOW} unset for %s%s"), permission, group ? ChatColor.DARK_GREEN : ChatColor.AQUA, name);
+            plugin.refreshPlayers();
+        }
+        else {
+            sendMessage(sender, colorize("%s%s{RED} does not set {GOLD}%s"), group ? ChatColor.DARK_GREEN : ChatColor.AQUA, name, permission);
+            if (!group)
+                checkPlayer(plugin, sender, name);
+        }
     }
 
     @Command(value="purge", description="Delete this group or player") // doh!
@@ -99,6 +128,17 @@ public abstract class CommonCommand {
                     name);
         else
             sendMessage(sender, colorize("{RED}%s not found."), group ? "Group" : "Player");
+    }
+
+    /**
+     * Give a little warning if the player isn't online.
+     * 
+     * @param playerName the player name
+     */
+    protected void checkPlayer(ZPermissionsPlugin plugin, CommandSender sender, String playerName) {
+        if (plugin.getServer().getPlayer(playerName) == null) {
+            sendMessage(sender, colorize("{GRAY}WARNING: Player is not online, be sure the name is spelled\n{GRAY}correctly!"));
+        }
     }
 
 }
