@@ -33,6 +33,16 @@ import org.tyrannyofheaven.bukkit.util.command.Require;
 import org.tyrannyofheaven.bukkit.util.transaction.TransactionCallbackWithoutResult;
 import org.tyrannyofheaven.bukkit.zPermissions.model.PermissionEntity;
 
+/**
+ * Handler for top-level commands:
+ * <ul>
+ *   <li>/permissions</li>
+ *   <li>/promote</li>
+ *   <li>/demote</li>
+ * </ul>
+ * 
+ * @author zerothangel
+ */
 public class RootCommand {
 
     private final SubCommands sc = new SubCommands();
@@ -54,6 +64,7 @@ public class RootCommand {
         return sc;
     }
 
+    // Perform the actual promotion/demotion
     private void rankChange(final ZPermissionsPlugin plugin, final CommandSender sender, final String playerName, String trackName, final boolean rankUp) {
         // Resolve track
         if (!hasText(trackName))
@@ -121,8 +132,8 @@ public class RootCommand {
                         plugin.getDao().removeMember(oldGroup, playerName);
                         plugin.getDao().addMember(newGroup, playerName);
         
-                        sendMessage(sender, colorize("{YELLOW}Ranking %s {AQUA}%s{YELLOW} from {DARK_GREEN}%s{YELLOW} to {DARK_GREEN}%s"),
-                                (rankUp ? "up" : "down"),
+                        sendMessage(sender, colorize("{YELLOW}%s {AQUA}%s{YELLOW} from {DARK_GREEN}%s{YELLOW} to {DARK_GREEN}%s"),
+                                (rankUp ? "Promoting" : "Demoting"),
                                 playerName,
                                 oldGroup,
                                 newGroup);

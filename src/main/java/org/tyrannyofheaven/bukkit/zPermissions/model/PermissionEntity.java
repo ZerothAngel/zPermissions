@@ -27,6 +27,15 @@ import javax.persistence.OneToMany;
 import javax.persistence.Table;
 import javax.persistence.UniqueConstraint;
 
+/**
+ * The permission entity &mdash; something that can have a set of permission
+ * entries. Originally I had different classes for players and groups, but
+ * Avaje's handling of inheritance seems a bit wonky. So I've basically
+ * collapsed both classes into this single class, using {@link #isGroup()} as
+ * a discriminator. Ugh...
+ * 
+ * @author zerothangel
+ */
 @Entity
 @Table(name="entities")
 @UniqueConstraint(columnNames={"name", "is_group"})

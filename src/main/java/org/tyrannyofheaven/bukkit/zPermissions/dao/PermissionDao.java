@@ -19,17 +19,29 @@ import java.util.List;
 
 import org.tyrannyofheaven.bukkit.zPermissions.model.PermissionEntity;
 
+/**
+ * Data access object for zPermissions. This isn't actually a pure DAO as it
+ * contains some business logic &mdash; {@link #setGroup(String, String)} being the
+ * biggest offender. Ah well... :)
+ * 
+ * <p>More like a DAO/service object, I guess!
+ * 
+ * <p>Methods should be self-explanatory. I'm not gonna write javadocs for each and
+ * every one! (yet) :P
+ * 
+ * @author zerothangel
+ */
 public interface PermissionDao {
 
     public Boolean getPermission(String name, boolean group, String world, String permission);
 
     public void setPermission(String name, boolean group, String world, String permission, boolean value);
 
-    public void unsetPermission(String name, boolean group, String world, String permission);
+    public boolean unsetPermission(String name, boolean group, String world, String permission);
 
     public void addMember(String groupName, String member);
     
-    public void removeMember(String groupName, String member);
+    public boolean removeMember(String groupName, String member);
 
     public List<PermissionEntity> getGroups(String member);
 

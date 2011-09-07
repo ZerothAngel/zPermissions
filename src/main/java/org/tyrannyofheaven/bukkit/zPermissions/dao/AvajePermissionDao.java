@@ -25,6 +25,11 @@ import org.tyrannyofheaven.bukkit.zPermissions.model.PermissionWorld;
 
 import com.avaje.ebean.EbeanServer;
 
+/**
+ * DAO implementation using Avaje Ebeans.
+ * 
+ * @author zerothangel
+ */
 public class AvajePermissionDao implements PermissionDao {
 
     private final EbeanServer ebean;
@@ -33,10 +38,13 @@ public class AvajePermissionDao implements PermissionDao {
         this.ebean = ebean;
     }
 
+    // Retrieve associated EbeanServer
     private EbeanServer getEbeanServer() {
         return ebean;
     }
 
+    // Retrieve named world, optionally creating it
+    // If world is null, null is returned denoting a global entry.
     private PermissionWorld getWorld(String world, boolean create) {
         PermissionWorld permissionWorld = null;
         if (world != null) {
@@ -57,6 +65,7 @@ public class AvajePermissionDao implements PermissionDao {
         return permissionWorld;
     }
 
+    // Retrieve the named entity/type, optionally creating it.
     private PermissionEntity getEntity(String name, boolean group, boolean create) {
         PermissionEntity entity = getEbeanServer().find(PermissionEntity.class).where()
             .eq("name", name.toLowerCase())
@@ -132,7 +141,7 @@ public class AvajePermissionDao implements PermissionDao {
     }
 
     @Override
-    public void unsetPermission(String name, boolean group, String world, String permission) {
+    public boolean unsetPermission(String name, boolean group, String world, String permission) {
         checkTransaction();
 
         PermissionWorld permissionWorld;
@@ -140,7 +149,7 @@ public class AvajePermissionDao implements PermissionDao {
             permissionWorld = getWorld(world, false);
         }
         catch (IllegalArgumentException e) {
-            return;
+            return false;
         }
 
         Entry entry = getEbeanServer().find(Entry.class).where()
@@ -152,7 +161,10 @@ public class AvajePermissionDao implements PermissionDao {
 
         if (entry != null) {
             getEbeanServer().delete(entry);
+            return true;
         }
+        
+        return false;
     }
 
     @Override
@@ -175,7 +187,7 @@ public class AvajePermissionDao implements PermissionDao {
     }
 
     @Override
-    public void removeMember(String groupName, String member) {
+    public boolean removeMember(String groupName, String member) {
         checkTransaction();
 
         PermissionEntity group = getEntity(groupName, true, false);
@@ -188,8 +200,11 @@ public class AvajePermissionDao implements PermissionDao {
 
             if (membership != null) {
                 getEbeanServer().delete(membership);
+                return true;
             }
         }
+        
+        return false;
     }
 
     @Override

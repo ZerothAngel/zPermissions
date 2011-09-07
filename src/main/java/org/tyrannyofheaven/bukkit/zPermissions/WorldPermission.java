@@ -15,6 +15,13 @@
  */
 package org.tyrannyofheaven.bukkit.zPermissions;
 
+/**
+ * Holder/parser for world-specific permissions as specified on the command-line.
+ * Permissions with no world specifier assume the world is null (i.e. global
+ * permission). Permissions specific to a world should be "&lt;world>:&lt;permission>"
+ * 
+ * @author zerothangel
+ */
 class WorldPermission {
 
     private final String world;
@@ -22,6 +29,7 @@ class WorldPermission {
     private final String permission;
 
     WorldPermission(String worldPermission) {
+        // Break up into world/permission, as appropriate
         String[] parts = worldPermission.split(":", 2);
         if (parts.length == 1) {
             // No world
@@ -34,10 +42,20 @@ class WorldPermission {
         }
     }
 
+    /**
+     * Return the name of the world if this is a world-specific permission.
+     * 
+     * @return the name of the world or null if global
+     */
     public String getWorld() {
         return world;
     }
 
+    /**
+     * Return the permission.
+     * 
+     * @return the permission
+     */
     public String getPermission() {
         return permission;
     }
