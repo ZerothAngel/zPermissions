@@ -126,8 +126,11 @@
         <artifactId>maven-jar-plugin</artifactId>
         <configuration>
           <archive>
+	    <manifest>
+	      <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
+	    </manifest>
             <manifestEntries>
-	      <SCM-Revision>${buildNumber}</SCM-Revision>
+	      <Implementation-Build>${buildNumber}</Implementation-Build>
             </manifestEntries>
           </archive>
         </configuration>
