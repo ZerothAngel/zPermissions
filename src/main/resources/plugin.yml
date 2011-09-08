@@ -30,7 +30,9 @@ permissions:
       zpermissions.check.other: true
       zpermissions.reload: true
       zpermissions.promote: true
+      zpermissions.promote.*: true
       zpermissions.demote: true
+      zpermissions.demote.*: true
   zpermissions.player:
     description: Allows use of the /permissions player command
   zpermissions.group:
@@ -45,5 +47,9 @@ permissions:
     description: Allows use of the /permissions reload command
   zpermissions.promote:
     description: Allows use of the /promote command
+  zpermissions.promote.*:
+    description: Allows use of /promote on all tracks
   zpermissions.demote:
     description: Allows use of the /demote command
+  zpermissions.demote.*:
+    description: Allows use of /demote on all tracks

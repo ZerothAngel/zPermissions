@@ -20,6 +20,7 @@ import static org.tyrannyofheaven.bukkit.util.ToHUtils.colorize;
 import static org.tyrannyofheaven.bukkit.util.ToHUtils.delimitedString;
 import static org.tyrannyofheaven.bukkit.util.ToHUtils.hasText;
 import static org.tyrannyofheaven.bukkit.util.ToHUtils.sendMessage;
+import static org.tyrannyofheaven.bukkit.util.permissions.PermissionUtils.requireOnePermission;
 
 import java.util.HashSet;
 import java.util.List;
@@ -75,7 +76,11 @@ public class RootCommand {
             sendMessage(sender, colorize("{RED}Track has not been defined."));
             return;
         }
-        
+
+        requireOnePermission(sender,
+                String.format("zpermissions.%s.*", rankUp ? "promote" : "demote"),
+                String.format("zpermissions.%s.%s", rankUp ? "promote" : "demote", trackName));
+
         // Determine what groups the player and the track have in common
         final Set<String> trackGroupNames = new HashSet<String>(track);
 

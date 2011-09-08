@@ -7,4 +7,4 @@
 -   purge/delete command **DONE**
 -   Unit tests! Especially for the DAO!
 -   Check for inheritance cycles! **DONE**
--   Limit promote/demote to specific tracks via permissions
+-   Limit promote/demote to specific tracks via permissions **DONE**
