@@ -305,7 +305,12 @@ public class ZPermissionsPlugin extends JavaPlugin {
         permissions.putAll(worldPermissions);
     }
 
+    // Remove all state associated with a player, including their attachment
     void removeAttachment(Player player) {
+        synchronized (lastWorld) {
+            lastWorld.remove(player.getName());
+        }
+
         PermissionAttachment pa;
         synchronized (attachments) {
             pa = attachments.get(player.getName());
@@ -316,6 +321,8 @@ public class ZPermissionsPlugin extends JavaPlugin {
             pa.remove(); // potential to call a callback, so do it outside synchronized block
     }
 
+    // Update state about a player, resolving effective permissions and
+    // creating/updating their attachment
     void updateAttachment(Player player, boolean force) {
         // Check if the player changed worlds
         if (!force) {
