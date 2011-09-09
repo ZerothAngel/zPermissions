@@ -37,26 +37,26 @@ class ZPermissionsPlayerListener extends PlayerListener {
 
     @Override
     public void onPlayerJoin(PlayerJoinEvent event) {
-        plugin.updateAttachment(event.getPlayer(), true);
+        plugin.updateAttachment(event.getPlayer().getName(), true);
     }
 
     @Override
     public void onPlayerKick(PlayerKickEvent event) {
         if (event.isCancelled()) return;
         
-        plugin.removeAttachment(event.getPlayer());
+        plugin.removeAttachment(event.getPlayer().getName());
     }
 
     @Override
     public void onPlayerTeleport(PlayerTeleportEvent event) {
         if (event.isCancelled()) return;
         
-        plugin.updateAttachment(event.getPlayer(), false);
+        plugin.updateAttachment(event.getPlayer().getName(), false);
     }
 
     @Override
     public void onPlayerQuit(PlayerQuitEvent event) {
-        plugin.removeAttachment(event.getPlayer());
+        plugin.removeAttachment(event.getPlayer().getName());
     }
 
 }

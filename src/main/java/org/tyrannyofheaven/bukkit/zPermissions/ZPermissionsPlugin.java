@@ -63,13 +63,8 @@ public class ZPermissionsPlugin extends JavaPlugin {
     // Name of the default track, in absence of a config file
     private static final String DEFAULT_TRACK = "default";
 
-    // Maps player names to attachments. All access must be synchronized to
-    // attachments.
-    private final Map<String, PermissionAttachment> attachments = new HashMap<String, PermissionAttachment>();
-
-    // Maps player names to world names. All access must be synchronized to
-    // attachments.
-    private final Map<String, String> lastWorld = new HashMap<String, String>();
+    // Internal state kept about each online player
+    private final Map<String, PlayerState> playerStates = new HashMap<String, PlayerState>();
 
     // The configured default group
     private String defaultGroup;
@@ -113,18 +108,16 @@ public class ZPermissionsPlugin extends JavaPlugin {
     @Override
     public void onDisable() {
         // Clear any player state
-        synchronized (lastWorld) {
-            lastWorld.clear();
-        }
 
-        // Remove our attachments
-        Map<String, PermissionAttachment> copy;
-        synchronized (attachments) {
-            copy = new HashMap<String, PermissionAttachment>(attachments);
-            attachments.clear();
+        // Make copy before clearing
+        Map<String, PlayerState> copy; 
+        synchronized (playerStates) {
+            copy = new HashMap<String, PlayerState>(playerStates);
+            playerStates.clear();
         }
-        for (PermissionAttachment pa : copy.values()) {
-            pa.remove();
+        // Remove attachments
+        for (PlayerState playerState : copy.values()) {
+            playerState.getAttachment().remove();
         }
 
         log("%s disabled.", getDescription().getVersion());
@@ -306,51 +299,76 @@ public class ZPermissionsPlugin extends JavaPlugin {
     }
 
     // Remove all state associated with a player, including their attachment
-    void removeAttachment(Player player) {
-        synchronized (lastWorld) {
-            lastWorld.remove(player.getName());
+    void removeAttachment(String playerName) {
+        PlayerState playerState = null;
+        synchronized (playerStates) {
+            Player player = getPlayerExact(playerName);
+            if (player != null)
+                playerState = playerStates.remove(player.getName());
         }
-
-        PermissionAttachment pa;
-        synchronized (attachments) {
-            pa = attachments.get(player.getName());
-            if (pa != null)
-                attachments.remove(player.getName());
-        }
-        if (pa != null)
-            pa.remove(); // potential to call a callback, so do it outside synchronized block
+        if (playerState != null)
+            playerState.getAttachment().remove(); // potential to call a callback, so do it outside synchronized block
     }
 
     // Update state about a player, resolving effective permissions and
     // creating/updating their attachment
-    void updateAttachment(Player player, boolean force) {
-        // Check if the player changed worlds
-        if (!force) {
-            String playerLastWorld;
-            synchronized (lastWorld) {
-                playerLastWorld = lastWorld.get(player.getName());
-            }
-            
-            force = !player.getWorld().getName().equals(playerLastWorld);
+    void updateAttachment(String playerName, boolean force) {
+        Player player;
+        PlayerState playerState = null;
+        synchronized (playerStates) {
+            player = getPlayerExact(playerName);
+            if (player != null)
+                playerState = playerStates.get(player.getName());
         }
 
+        if (player == null) return;
+
+        // Check if the player changed worlds or isn't known yet
+        if (!force) {
+            force = playerState == null || !player.getWorld().getName().equals(playerState.getWorld());
+        }
+
+        // No need to update yet (most likely called by movement-based event)
         if (!force) return;
 
-        synchronized (lastWorld) {
-            lastWorld.put(player.getName(), player.getWorld().getName());
-        }
-
+        // Resolve effective permissions
         PermissionAttachment pa = player.addAttachment(this);
         for (Map.Entry<String, Boolean> me : resolvePlayer(player).entrySet()) {
             pa.setPermission(me.getKey(), me.getValue());
         }
 
-        PermissionAttachment old;
-        synchronized (attachments) {
-            old = attachments.put(player.getName(), pa);
+        // Update state
+        PermissionAttachment old = null;
+        synchronized (playerStates) {
+            // NB: Must re-fetch since player could have been removed since first fetch
+            player = getPlayerExact(playerName);
+            if (player != null) {
+                playerState = playerStates.get(player.getName());
+                if (playerState == null) {
+                    // Doesn't exist yet, add it
+                    playerState = new PlayerState(pa, player.getWorld().getName());
+                    playerStates.put(player.getName(), playerState);
+                }
+                else if (playerState != null) {
+                    // Update values
+                    old = playerState.setAttachment(pa);
+                    playerState.setWorld(player.getWorld().getName());
+                }
+            }
         }
+        
+        // Remove old attachment, if there was one
         if (old != null)
             old.remove();
+    }
+
+    // FIXME Added to Server in CB1087
+    private Player getPlayerExact(String playerName) {
+        for (Player player : getServer().getOnlinePlayers()) {
+            if (player.getName().equalsIgnoreCase(playerName))
+                return player;
+        }
+        return null;
     }
 
     /**
@@ -360,9 +378,7 @@ public class ZPermissionsPlugin extends JavaPlugin {
      * @param playerName the name of the player
      */
     void refreshPlayer(String playerName) {
-        Player player = getServer().getPlayer(playerName);
-        if (player != null)
-            updateAttachment(player, true);
+        updateAttachment(playerName, true);
     }
 
     /**
@@ -370,7 +386,7 @@ public class ZPermissionsPlugin extends JavaPlugin {
      */
     void refreshPlayers() {
         for (Player player : getServer().getOnlinePlayers()) {
-            updateAttachment(player, true);
+            updateAttachment(player.getName(), true);
         }
     }
 
@@ -463,9 +479,45 @@ public class ZPermissionsPlugin extends JavaPlugin {
      * @param playerName the player name
      */
     void checkPlayer(CommandSender sender, String playerName) {
-        if (getServer().getPlayer(playerName) == null) {
+        if (getPlayerExact(playerName) == null) {
             sendMessage(sender, colorize("{GRAY}(Player not online, make sure the name is correct)"));
         }
+    }
+
+    // Encapsulates state about a player
+    private static class PlayerState {
+        
+        private PermissionAttachment attachment;
+
+        private String world;
+
+        public PlayerState(PermissionAttachment attachment, String world) {
+            setAttachment(attachment);
+            setWorld(world);
+        }
+
+        public PermissionAttachment getAttachment() {
+            return attachment;
+        }
+
+        public PermissionAttachment setAttachment(PermissionAttachment attachment) {
+            if (attachment == null)
+                throw new IllegalArgumentException("attachment cannot be null");
+            PermissionAttachment old = this.attachment;
+            this.attachment = attachment;
+            return old;
+        }
+
+        public String getWorld() {
+            return world;
+        }
+
+        public void setWorld(String world) {
+            if (world == null)
+                throw new IllegalArgumentException("world cannot be null");
+            this.world = world;
+        }
+
     }
 
 }
