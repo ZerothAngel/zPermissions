@@ -21,6 +21,7 @@ import java.util.List;
 import org.tyrannyofheaven.bukkit.zPermissions.model.Entry;
 import org.tyrannyofheaven.bukkit.zPermissions.model.Membership;
 import org.tyrannyofheaven.bukkit.zPermissions.model.PermissionEntity;
+import org.tyrannyofheaven.bukkit.zPermissions.model.PermissionRegion;
 import org.tyrannyofheaven.bukkit.zPermissions.model.PermissionWorld;
 
 import com.avaje.ebean.EbeanServer;
@@ -41,6 +42,28 @@ public class AvajePermissionDao implements PermissionDao {
     // Retrieve associated EbeanServer
     private EbeanServer getEbeanServer() {
         return ebean;
+    }
+
+    // Retrieve named region, optionally creating it
+    // If region is null, null is returned denoting a world-wide entry.
+    private PermissionRegion getRegion(String region, boolean create) {
+        PermissionRegion permissionRegion = null;
+        if (region != null) {
+            permissionRegion = getEbeanServer().find(PermissionRegion.class).where()
+                .eq("name", region.toLowerCase())
+                .findUnique();
+            if (permissionRegion == null) {
+                if (create) {
+                    permissionRegion = new PermissionRegion();
+                    permissionRegion.setName(region.toLowerCase());
+                    getEbeanServer().save(permissionRegion);
+                }
+                else {
+                    throw new IllegalArgumentException("No such region");
+                }
+            }
+        }
+        return permissionRegion;
     }
 
     // Retrieve named world, optionally creating it
@@ -89,8 +112,16 @@ public class AvajePermissionDao implements PermissionDao {
     }
 
     @Override
-    public Boolean getPermission(String name, boolean group, String world, String permission) {
+    public Boolean getPermission(String name, boolean group, String region, String world, String permission) {
         checkTransaction();
+
+        PermissionRegion permissionRegion;
+        try {
+            permissionRegion = getRegion(region, false);
+        }
+        catch (IllegalArgumentException e) {
+            return null;
+        }
 
         PermissionWorld permissionWorld;
         try {
@@ -103,6 +134,7 @@ public class AvajePermissionDao implements PermissionDao {
         Entry entry = getEbeanServer().find(Entry.class).where()
             .eq("entity.name", name.toLowerCase())
             .eq("entity.group", group)
+            .eq("region", permissionRegion)
             .eq("world", permissionWorld)
             .eq("permission", permission.toLowerCase())
             .findUnique();
@@ -112,16 +144,18 @@ public class AvajePermissionDao implements PermissionDao {
     }
 
     @Override
-    public void setPermission(String name, boolean group, String world, String permission, boolean value) {
+    public void setPermission(String name, boolean group, String region, String world, String permission, boolean value) {
         checkTransaction();
 
         PermissionEntity owner = getEntity(name, group, true);
+        PermissionRegion permissionRegion = getRegion(region, true);
         PermissionWorld permissionWorld = getWorld(world, true);
         permission = permission.toLowerCase();
 
         Entry found = null;
         for (Entry entry : owner.getPermissions()) {
             if (permission.equals(entry.getPermission()) &&
+                    (permissionRegion == null ? entry.getRegion() == null : permissionRegion.equals(entry.getRegion())) &&
                     (permissionWorld == null ? entry.getWorld() == null : permissionWorld.equals(entry.getWorld().getName()))) {
                 found = entry;
                 break;
@@ -131,6 +165,7 @@ public class AvajePermissionDao implements PermissionDao {
         if (found == null) {
             found = new Entry();
             found.setEntity(owner);
+            found.setRegion(permissionRegion);
             found.setWorld(permissionWorld);
             found.setPermission(permission);
         }
@@ -141,8 +176,16 @@ public class AvajePermissionDao implements PermissionDao {
     }
 
     @Override
-    public boolean unsetPermission(String name, boolean group, String world, String permission) {
+    public boolean unsetPermission(String name, boolean group, String region, String world, String permission) {
         checkTransaction();
+
+        PermissionRegion permissionRegion;
+        try {
+            permissionRegion = getRegion(region, false);
+        }
+        catch (IllegalArgumentException e) {
+            return false;
+        }
 
         PermissionWorld permissionWorld;
         try {
@@ -155,12 +198,14 @@ public class AvajePermissionDao implements PermissionDao {
         Entry entry = getEbeanServer().find(Entry.class).where()
             .eq("entity.name", name.toLowerCase())
             .eq("entity.group", group)
+            .eq("region", permissionRegion)
             .eq("world", permissionWorld)
             .eq("permission", permission.toLowerCase())
             .findUnique();
 
         if (entry != null) {
             getEbeanServer().delete(entry);
+            cleanWorldsAndRegions();
             return true;
         }
         
@@ -306,8 +351,14 @@ public class AvajePermissionDao implements PermissionDao {
         getEbeanServer().save(group);
     }
 
-    // Iterate over each world, deleting any that are unused
-    private void cleanWorlds() {
+    // Iterate over each world/region, deleting any that are unused
+    private void cleanWorldsAndRegions() {
+        for (PermissionRegion region : getEbeanServer().find(PermissionRegion.class).findList()) {
+            if (getEbeanServer().createQuery(Entry.class).where().eq("region", region).findRowCount() == 0) {
+                // No more entries reference this region
+                getEbeanServer().delete(region);
+            }
+        }
         for (PermissionWorld world : getEbeanServer().find(PermissionWorld.class).findList()) {
             if (getEbeanServer().createQuery(Entry.class).where().eq("world", world).findRowCount() == 0) {
                 // No more entries reference this world
@@ -333,7 +384,7 @@ public class AvajePermissionDao implements PermissionDao {
 
                 // Delete group's entity
                 getEbeanServer().delete(entity); // should cascade to entries and memberships
-                cleanWorlds();
+                cleanWorldsAndRegions();
                 return true;
             }
         }
@@ -349,7 +400,7 @@ public class AvajePermissionDao implements PermissionDao {
             if (entity != null) {
                 // Delete player's entity
                 getEbeanServer().delete(entity); // should cascade to entries
-                cleanWorlds();
+                cleanWorldsAndRegions();
             }
             
             return !memberships.isEmpty() || entity != null;

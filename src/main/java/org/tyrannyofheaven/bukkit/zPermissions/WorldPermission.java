@@ -24,13 +24,26 @@ package org.tyrannyofheaven.bukkit.zPermissions;
  */
 class WorldPermission {
 
+    private final String region;
+
     private final String world;
     
     private final String permission;
 
     WorldPermission(String worldPermission) {
+        // Pull out region, if present
+        String[] parts = worldPermission.split("/", 2);
+        if (parts.length == 1) {
+            // No region
+            region = null;
+        }
+        else {
+            region = parts[0];
+            worldPermission = parts[1];
+        }
+
         // Break up into world/permission, as appropriate
-        String[] parts = worldPermission.split(":", 2);
+        parts = worldPermission.split(":", 2);
         if (parts.length == 1) {
             // No world
             world = null;
@@ -40,6 +53,14 @@ class WorldPermission {
             world = parts[0];
             permission = parts[1];
         }
+    }
+
+    /**
+     * Return the region if this is a region-specific permission
+     * @return
+     */
+    public String getRegion() {
+        return region;
     }
 
     /**

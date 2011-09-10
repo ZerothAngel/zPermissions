@@ -30,12 +30,14 @@ import javax.persistence.UniqueConstraint;
  */
 @Entity
 @Table(name="entries")
-@UniqueConstraint(columnNames={"entity_id", "world_id", "permission"})
+@UniqueConstraint(columnNames={"entity_id", "region_id", "world_id", "permission"})
 public class Entry {
 
     private Long id;
 
     private PermissionEntity entity;
+
+    private PermissionRegion region;
 
     private PermissionWorld world;
 
@@ -60,6 +62,16 @@ public class Entry {
 
     public void setEntity(PermissionEntity owner) {
         this.entity = owner;
+    }
+
+    @JoinColumn(name="region_id")
+    @ManyToOne(optional=true)
+    public PermissionRegion getRegion() {
+        return region;
+    }
+
+    public void setRegion(PermissionRegion region) {
+        this.region = region;
     }
 
     @JoinColumn(name="world_id")
@@ -96,6 +108,7 @@ public class Entry {
         if ((obj instanceof Entry)) return false;
         Entry o = (Entry)obj;
         return getEntity().equals(o.getEntity()) &&
+            (getRegion() == null ? o.getRegion() == null : getRegion().equals(o.getRegion())) &&
             (getWorld() == null ? o.getWorld() == null : getWorld().equals(o.getWorld())) &&
             getPermission().equals(o.getPermission());
     }
@@ -104,6 +117,7 @@ public class Entry {
     public int hashCode() {
         int result = 17;
         result = 37 * result + getEntity().hashCode();
+        result = 37 * result + (getRegion() == null ? 0 : getRegion().hashCode());
         result = 37 * result + (getWorld() == null ? 0 : getWorld().hashCode());
         result = 37 * result + getPermission().hashCode();
         return result;
@@ -111,10 +125,11 @@ public class Entry {
 
     @Override
     public String toString() {
-        if (getWorld() == null)
-            return String.format("%s:*all*:%s -> %s", getEntity(), getPermission(), isValue());
-        else
-            return String.format("%s:%s:%s -> %s", getEntity(), getWorld().getName(), getPermission(), isValue());
+        return String.format("%s%s%s -> %s",
+                (getRegion() == null ? "" : getRegion().getName() + "@"),
+                (getWorld() == null ? "" : getWorld().getName() + ":"),
+                getPermission(),
+                isValue());
     }
 
 }
