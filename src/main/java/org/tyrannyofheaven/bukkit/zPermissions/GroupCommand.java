@@ -90,7 +90,7 @@ public class GroupCommand extends CommonCommand {
                 sendMessage(sender, colorize("{YELLOW}Parent: {DARK_GREEN}%s"), entity.getParent().getDisplayName());
             }
             for (Entry e : entity.getPermissions()) {
-                sendMessage(sender, colorize("{DARK_GREEN}- {GOLD}%s%s{DARK_GREEN}: {GREEN}%s"), e.getWorld() == null ? "" : e.getWorld().getName() + ":", e.getPermission(), e.isValue());
+                displayEntry(sender, e);
             }
         }
 

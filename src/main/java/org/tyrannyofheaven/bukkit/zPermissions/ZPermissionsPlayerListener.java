@@ -18,6 +18,7 @@ package org.tyrannyofheaven.bukkit.zPermissions;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerKickEvent;
 import org.bukkit.event.player.PlayerListener;
+import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.player.PlayerTeleportEvent;
 
@@ -37,7 +38,7 @@ class ZPermissionsPlayerListener extends PlayerListener {
 
     @Override
     public void onPlayerJoin(PlayerJoinEvent event) {
-        plugin.updateAttachment(event.getPlayer().getName(), true);
+        plugin.updateAttachment(event.getPlayer().getName(), plugin.getPlayerRegions(event.getPlayer()), true);
     }
 
     @Override
@@ -51,12 +52,24 @@ class ZPermissionsPlayerListener extends PlayerListener {
     public void onPlayerTeleport(PlayerTeleportEvent event) {
         if (event.isCancelled()) return;
         
-        plugin.updateAttachment(event.getPlayer().getName(), false);
+        plugin.updateAttachment(event.getPlayer().getName(), plugin.getPlayerRegions(event.getPlayer()), false);
     }
 
     @Override
     public void onPlayerQuit(PlayerQuitEvent event) {
         plugin.removeAttachment(event.getPlayer().getName());
+    }
+
+    @Override
+    public void onPlayerMove(PlayerMoveEvent event) {
+        if (event.isCancelled()) return;
+
+        // Only bother if player actually moved to a new block
+        if (event.getFrom().getX() != event.getTo().getX() ||
+                event.getFrom().getY() != event.getTo().getY() ||
+                event.getFrom().getZ() != event.getTo().getZ()) {
+            plugin.updateAttachment(event.getPlayer().getName(), plugin.getPlayerRegions(event.getPlayer()), false);
+        }
     }
 
 }

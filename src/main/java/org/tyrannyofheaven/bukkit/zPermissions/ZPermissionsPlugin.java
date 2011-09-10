@@ -24,8 +24,10 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.logging.Level;
 
 import javax.persistence.PersistenceException;
@@ -48,7 +50,13 @@ import org.tyrannyofheaven.bukkit.zPermissions.dao.PermissionDao;
 import org.tyrannyofheaven.bukkit.zPermissions.model.Entry;
 import org.tyrannyofheaven.bukkit.zPermissions.model.Membership;
 import org.tyrannyofheaven.bukkit.zPermissions.model.PermissionEntity;
+import org.tyrannyofheaven.bukkit.zPermissions.model.PermissionRegion;
 import org.tyrannyofheaven.bukkit.zPermissions.model.PermissionWorld;
+
+import com.sk89q.worldguard.bukkit.WorldGuardPlugin;
+import com.sk89q.worldguard.protection.ApplicableRegionSet;
+import com.sk89q.worldguard.protection.managers.RegionManager;
+import com.sk89q.worldguard.protection.regions.ProtectedRegion;
 
 /**
  * zPermissions main class.
@@ -83,6 +91,9 @@ public class ZPermissionsPlugin extends JavaPlugin {
 
     // DAO implementation
     private PermissionDao dao;
+
+    // WorldGuard, if present
+    private WorldGuardPlugin worldGuardPlugin;
 
     /**
      * Retrieve this plugin's TransactionStrategy
@@ -128,6 +139,8 @@ public class ZPermissionsPlugin extends JavaPlugin {
      */
     @Override
     public void onEnable() {
+        log("%s starting...", getDescription().getVersion());
+
         // Create data directory, if needed
         if (!getDataFolder().exists())
             getDataFolder().mkdirs();
@@ -169,6 +182,14 @@ public class ZPermissionsPlugin extends JavaPlugin {
         getServer().getPluginManager().registerEvent(Type.PLAYER_KICK, pl, Priority.Monitor, this);
         getServer().getPluginManager().registerEvent(Type.PLAYER_QUIT, pl, Priority.Monitor, this);
         getServer().getPluginManager().registerEvent(Type.PLAYER_TELEPORT, pl, Priority.Monitor, this);
+
+        // Detect WorldGuard
+        worldGuardPlugin = (WorldGuardPlugin)getServer().getPluginManager().getPlugin("WorldGuard");
+        if (worldGuardPlugin != null) {
+            // Only check PLAYER_MOVE if region support is enabled
+            getServer().getPluginManager().registerEvent(Type.PLAYER_MOVE, pl, Priority.Monitor, this);
+            log("WorldGuard region support enabled.");
+        }
 
         // Make sure everyone currently online has an attachment
         refreshPlayers();
@@ -213,6 +234,7 @@ public class ZPermissionsPlugin extends JavaPlugin {
     public List<Class<?>> getDatabaseClasses() {
         List<Class<?>> result = new ArrayList<Class<?>>();
         result.add(PermissionEntity.class);
+        result.add(PermissionRegion.class);
         result.add(PermissionWorld.class);
         result.add(Entry.class);
         result.add(Membership.class);
@@ -221,7 +243,7 @@ public class ZPermissionsPlugin extends JavaPlugin {
 
     // Resolve a group's permissions. Ancestor permissions should be overridden
     // each successive descendant.
-    private void resolveGroup(Map<String, Boolean> permissions, String world, PermissionEntity group) {
+    private void resolveGroup(Map<String, Boolean> permissions, Set<String> regions, String world, PermissionEntity group) {
         // Build list of group ancestors
         List<PermissionEntity> ancestry = new ArrayList<PermissionEntity>();
         ancestry.add(group);
@@ -234,7 +256,7 @@ public class ZPermissionsPlugin extends JavaPlugin {
         Collections.reverse(ancestry);
         
         for (PermissionEntity ancestor : ancestry) {
-            applyPermissions(permissions, ancestor, world);
+            applyPermissions(permissions, ancestor, regions, world);
             
             // Add group permission, if present
             if (groupPermissionFormat != null) {
@@ -245,7 +267,7 @@ public class ZPermissionsPlugin extends JavaPlugin {
 
     // Resolve a player's permissions. Any permissions declared on the player
     // should override group permissions.
-    private Map<String, Boolean> resolvePlayer(final Player player) {
+    private Map<String, Boolean> resolvePlayer(final Player player, final Set<String> regions) {
         final String world = player.getWorld().getName().toLowerCase();
 
         return getTransactionStrategy().execute(new TransactionCallback<Map<String, Boolean>>() {
@@ -264,13 +286,13 @@ public class ZPermissionsPlugin extends JavaPlugin {
 
                 // Resolve each group in turn (highest priority resolved last)
                 for (PermissionEntity group : groups) {
-                    resolveGroup(permissions, world, group);
+                    resolveGroup(permissions, regions, world, group);
                 }
 
                 // Player-specific permissions overrides all group permissions
                 PermissionEntity playerEntity = getDao().getEntity(player.getName(), false);
                 if (playerEntity != null) {
-                    applyPermissions(permissions, playerEntity, world);
+                    applyPermissions(permissions, playerEntity, regions, world);
                 }
 
                 return permissions;
@@ -281,21 +303,43 @@ public class ZPermissionsPlugin extends JavaPlugin {
     // Apply an entity's permissions to the permission map. Global permissions
     // (ones not assigned to any specific world) are applied first. They are
     // then overidden by any world-specific permissions.
-    private void applyPermissions(Map<String, Boolean> permissions, PermissionEntity entity, String world) {
-        Map<String, Boolean> worldPermissions = new HashMap<String, Boolean>();
+    private void applyPermissions(Map<String, Boolean> permissions, PermissionEntity entity, Set<String> regions, String world) {
+        Map<String, Boolean> regionPermissions = new HashMap<String, Boolean>();
+        List<Entry> worldPermissions = new ArrayList<Entry>();
 
-        // Apply non-world-specific permissions first
+        // Apply non-region-specific, non-world-specific permissions first
         for (Entry e : entity.getPermissions()) {
-            if (e.getWorld() == null) {
+            if (e.getRegion() == null && e.getWorld() == null) {
                 permissions.put(e.getPermission(), e.isValue());
             }
+            else if (e.getRegion() != null && e.getWorld() == null) {
+                // Global region-specific (should these really be supported?)
+                if (regions.contains(e.getRegion().getName()))
+                    regionPermissions.put(e.getPermission(), e.isValue());
+            }
             else if (e.getWorld().getName().equals(world)) {
-                worldPermissions.put(e.getPermission(), e.isValue());
+                worldPermissions.add(e);
             }
         }
 
         // Then override with world-specific permissions
-        permissions.putAll(worldPermissions);
+        Map<String, Boolean> regionWorldPermissions = new HashMap<String, Boolean>();
+        for (Entry e : worldPermissions) {
+            if (e.getRegion() == null) {
+                // Non region-specific
+                permissions.put(e.getPermission(), e.isValue());
+            }
+            else {
+                if (regions.contains(e.getRegion().getName()))
+                    regionWorldPermissions.put(e.getPermission(), e.isValue());
+            }
+        }
+        
+        // Override with global, region-specific permissions
+        permissions.putAll(regionPermissions);
+
+        // Finally, override with region- and world-specific permissions
+        permissions.putAll(regionWorldPermissions);
     }
 
     // Remove all state associated with a player, including their attachment
@@ -312,7 +356,7 @@ public class ZPermissionsPlugin extends JavaPlugin {
 
     // Update state about a player, resolving effective permissions and
     // creating/updating their attachment
-    void updateAttachment(String playerName, boolean force) {
+    void updateAttachment(String playerName, Set<String> regions, boolean force) {
         Player player;
         PlayerState playerState = null;
         synchronized (playerStates) {
@@ -325,7 +369,9 @@ public class ZPermissionsPlugin extends JavaPlugin {
 
         // Check if the player changed worlds or isn't known yet
         if (!force) {
-            force = playerState == null || !player.getWorld().getName().equals(playerState.getWorld());
+            force = playerState == null ||
+                !regions.equals(playerState.getRegions()) ||
+                !player.getWorld().getName().equals(playerState.getWorld());
         }
 
         // No need to update yet (most likely called by movement-based event)
@@ -333,7 +379,7 @@ public class ZPermissionsPlugin extends JavaPlugin {
 
         // Resolve effective permissions
         PermissionAttachment pa = player.addAttachment(this);
-        for (Map.Entry<String, Boolean> me : resolvePlayer(player).entrySet()) {
+        for (Map.Entry<String, Boolean> me : resolvePlayer(player, regions).entrySet()) {
             pa.setPermission(me.getKey(), me.getValue());
         }
 
@@ -346,12 +392,14 @@ public class ZPermissionsPlugin extends JavaPlugin {
                 playerState = playerStates.get(player.getName());
                 if (playerState == null) {
                     // Doesn't exist yet, add it
-                    playerState = new PlayerState(pa, player.getWorld().getName());
+                    playerState = new PlayerState(pa, regions, player.getWorld().getName());
                     playerStates.put(player.getName(), playerState);
                 }
                 else if (playerState != null) {
                     // Update values
                     old = playerState.setAttachment(pa);
+                    playerState.getRegions().clear();
+                    playerState.getRegions().addAll(regions);
                     playerState.setWorld(player.getWorld().getName());
                 }
             }
@@ -371,6 +419,30 @@ public class ZPermissionsPlugin extends JavaPlugin {
         return null;
     }
 
+    Set<String> getPlayerRegions(String playerName) {
+        Player player = getPlayerExact(playerName);
+        if (player != null)
+            return getPlayerRegions(player);
+        return Collections.emptySet();
+    }
+
+    Set<String> getPlayerRegions(Player player) {
+        WorldGuardPlugin wgp = getWorldGuardPlugin();
+        if (wgp != null) {
+            RegionManager rm = wgp.getRegionManager(player.getWorld());
+            ApplicableRegionSet ars = rm.getApplicableRegions(player.getLocation());
+
+            Set<String> result = new HashSet<String>();
+            for (ProtectedRegion pr : ars) {
+                // Ignore global region
+                if (!"__global__".equals(pr.getId())) // FIXME hardcoded
+                    result.add(pr.getId());
+            }
+            return result;
+        }
+        return Collections.emptySet();
+    }
+
     /**
      * Refresh a particular player's attachment (and therefore, effective
      * permissions). Only does something if the player is actually online.
@@ -378,7 +450,7 @@ public class ZPermissionsPlugin extends JavaPlugin {
      * @param playerName the name of the player
      */
     void refreshPlayer(String playerName) {
-        updateAttachment(playerName, true);
+        updateAttachment(playerName, getPlayerRegions(playerName), true);
     }
 
     /**
@@ -386,7 +458,7 @@ public class ZPermissionsPlugin extends JavaPlugin {
      */
     void refreshPlayers() {
         for (Player player : getServer().getOnlinePlayers()) {
-            updateAttachment(player.getName(), true);
+            updateAttachment(player.getName(), getPlayerRegions(player), true);
         }
     }
 
@@ -473,6 +545,10 @@ public class ZPermissionsPlugin extends JavaPlugin {
         refreshPlayers();
     }
 
+    private WorldGuardPlugin getWorldGuardPlugin() {
+        return worldGuardPlugin;
+    }
+
     /**
      * Give a little warning if the player isn't online.
      * 
@@ -489,10 +565,13 @@ public class ZPermissionsPlugin extends JavaPlugin {
         
         private PermissionAttachment attachment;
 
+        private final Set<String> regions = new HashSet<String>();
+
         private String world;
 
-        public PlayerState(PermissionAttachment attachment, String world) {
+        public PlayerState(PermissionAttachment attachment, Set<String> regions, String world) {
             setAttachment(attachment);
+            getRegions().addAll(regions);
             setWorld(world);
         }
 
@@ -506,6 +585,10 @@ public class ZPermissionsPlugin extends JavaPlugin {
             PermissionAttachment old = this.attachment;
             this.attachment = attachment;
             return old;
+        }
+
+        public Set<String> getRegions() {
+            return regions;
         }
 
         public String getWorld() {

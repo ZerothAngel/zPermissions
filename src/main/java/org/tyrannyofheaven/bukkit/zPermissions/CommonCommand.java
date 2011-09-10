@@ -25,6 +25,7 @@ import org.tyrannyofheaven.bukkit.util.command.Option;
 import org.tyrannyofheaven.bukkit.util.command.Session;
 import org.tyrannyofheaven.bukkit.util.transaction.TransactionCallback;
 import org.tyrannyofheaven.bukkit.util.transaction.TransactionCallbackWithoutResult;
+import org.tyrannyofheaven.bukkit.zPermissions.model.Entry;
 
 /**
  * Handler for common commands between "/permissions group" and
@@ -55,7 +56,7 @@ public abstract class CommonCommand {
         Boolean result = plugin.getTransactionStrategy().execute(new TransactionCallback<Boolean>() {
             @Override
             public Boolean doInTransaction() throws Exception {
-                return plugin.getDao().getPermission(name, group, wp.getWorld(), wp.getPermission());
+                return plugin.getDao().getPermission(name, group, wp.getRegion(), wp.getWorld(), wp.getPermission());
             }
         });
         
@@ -78,7 +79,7 @@ public abstract class CommonCommand {
         plugin.getTransactionStrategy().execute(new TransactionCallbackWithoutResult() {
             @Override
             public void doInTransactionWithoutResult() throws Exception {
-                plugin.getDao().setPermission(name, group, wp.getWorld(), wp.getPermission(), value == null ? Boolean.TRUE : value);
+                plugin.getDao().setPermission(name, group, wp.getRegion(), wp.getWorld(), wp.getPermission(), value == null ? Boolean.TRUE : value);
             }
         });
     
@@ -97,7 +98,7 @@ public abstract class CommonCommand {
         Boolean result = plugin.getTransactionStrategy().execute(new TransactionCallback<Boolean>() {
             @Override
             public Boolean doInTransaction() throws Exception {
-                return plugin.getDao().unsetPermission(name, group, wp.getWorld(), wp.getPermission());
+                return plugin.getDao().unsetPermission(name, group, wp.getRegion(), wp.getWorld(), wp.getPermission());
             }
         });
 
@@ -128,6 +129,14 @@ public abstract class CommonCommand {
                     name);
         else
             sendMessage(sender, colorize("{RED}%s not found."), group ? "Group" : "Player");
+    }
+
+    protected void displayEntry(CommandSender sender, Entry e) {
+        sendMessage(sender, colorize("{DARK_GREEN}- {GOLD}%s%s%s{DARK_GREEN}: {GREEN}%s"),
+                (e.getRegion() == null ? "" : e.getRegion().getName() + colorize("{DARK_GREEN}/{GOLD}")),
+                (e.getWorld() == null ? "" : e.getWorld().getName() + colorize("{DARK_GREEN}:{GOLD}")),
+                e.getPermission(),
+                e.isValue());
     }
 
 }
