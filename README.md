@@ -32,8 +32,23 @@ SuperpermsBridge.
 	of [WorldGuard](http://build.sk89q.com/job/WorldGuard/).
 		
 *   Ranks! You may define multiple tracks on which to promote/demote users.
+	Using permissions, you can also limit who can promote/demote others and
+	which tracks they may use.
 
-## Usage ##
+*   With the advent of Superperms/Bukkit permissions, the recommended
+    way of testing group membership is by using permissions. zPermissions
+	can automatically set a permission based on the group's name for each
+	group. By default, this configurable permission is `group.<groupname>`.
+
+*   The default group (the group assigned to players who have not been
+	explicitly placed into any groups) is named `default`. This may be changed.
+	
+## Installation & Usage ##
+
+Put zPermissions.jar in your server's `plugins` directory. Start up your server.
+This will create the file `config.yml` in your server's `plugins/zPermissions`
+directory. You may want to edit this file to set your default group and
+default track. You may also want to create your tracks.
 
 Type `/permissions` to get started. (`/perm` or `/p` may also work, if
 those aliases are available.)
