@@ -10,12 +10,13 @@ SuperpermsBridge.
 
 ## Features ##
 
-*   Uses Bukkit database to store permissions (i.e. bukkit.yml). Note however,
+*   Uses Bukkit database to store permissions (i.e. settings in bukkit.yml). Note however,
     SQLite, the default database for Bukkit, does **not** work. You must use a
     real database. I know this will scare away 99% of prospective users. :P
 	
     I developed with [H2](http://www.h2database.com/) and will probably deploy
-	with it.
+	with it. [PostgreSQL](http://www.postgresql.org/) also seems to
+	work fine and I'm sure [MySQL](http://dev.mysql.com/) will as well.
 
 *   Group inheritance. Groups may inherit permissions from a single parent
 	group.
@@ -26,7 +27,31 @@ SuperpermsBridge.
 
 *   Multi-world support. Each group may define world-specific permissions.
 
+*   Optional region support. Permissions may be associated with WorldGuard
+    regions. For now, you must be using a post-5.2.2 development version
+	of [WorldGuard](http://build.sk89q.com/job/WorldGuard/).
+		
 *   Ranks! You may define multiple tracks on which to promote/demote users.
+
+## Usage ##
+
+Type `/permissions` to get started. (`/perm` or `/p` may also work, if
+those aliases are available.)
+
+The permission nodes in the `get`, `set`, and `unset` sub-commands may
+be specified as:
+
+*   &lt;permission> &mdash; An unqualified permission node applies to all
+    worlds and all regions.
+*   &lt;world>:&lt;permission> &mdash; To make a permission world-specific,
+    prefix it with the world name followed by a colon.
+*   &lt;region>/&lt;world>:&lt;permission> &mdash; Region-specific permissions
+    take the above and prefix it with the region name followed by a
+    forward-slash. For now, you may also omit the world name (so it applies
+    to the named region in all worlds), though I'm not sure how useful
+    this would be.
+
+The rank commands are `/promote` and `/demote`.
 
 ## To Do ##
 
