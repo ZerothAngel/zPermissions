@@ -51,8 +51,11 @@ class ZPermissionsPlayerListener extends PlayerListener {
     @Override
     public void onPlayerTeleport(PlayerTeleportEvent event) {
         if (event.isCancelled()) return;
-        
-        plugin.updateAttachment(event.getPlayer().getName(), plugin.getPlayerRegions(event.getPlayer()), false);
+
+        if (event.getFrom().getWorld() != event.getTo().getWorld()) {
+            // Force attachment update if player changed worlds
+            plugin.updateAttachment(event.getPlayer().getName(), plugin.getPlayerRegions(event.getPlayer()), true);
+        }
     }
 
     @Override
@@ -68,6 +71,7 @@ class ZPermissionsPlayerListener extends PlayerListener {
         if (event.getFrom().getX() != event.getTo().getX() ||
                 event.getFrom().getY() != event.getTo().getY() ||
                 event.getFrom().getZ() != event.getTo().getZ()) {
+            // Conditionally update if containing regions changed
             plugin.updateAttachment(event.getPlayer().getName(), plugin.getPlayerRegions(event.getPlayer()), false);
         }
     }

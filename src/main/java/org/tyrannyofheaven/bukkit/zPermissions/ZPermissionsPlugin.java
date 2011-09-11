@@ -368,11 +368,10 @@ public class ZPermissionsPlugin extends JavaPlugin {
 
         if (player == null) return;
 
-        // Check if the player changed worlds or isn't known yet
+        // Check if the player changed regions or isn't known yet
         if (!force) {
             force = playerState == null ||
-                !regions.equals(playerState.getRegions()) ||
-                !player.getWorld().getName().equals(playerState.getWorld());
+                !regions.equals(playerState.getRegions());
         }
 
         // No need to update yet (most likely called by movement-based event)
@@ -393,7 +392,7 @@ public class ZPermissionsPlugin extends JavaPlugin {
                 playerState = playerStates.get(player.getName());
                 if (playerState == null) {
                     // Doesn't exist yet, add it
-                    playerState = new PlayerState(pa, regions, player.getWorld().getName());
+                    playerState = new PlayerState(pa, regions);
                     playerStates.put(player.getName(), playerState);
                 }
                 else if (playerState != null) {
@@ -401,7 +400,6 @@ public class ZPermissionsPlugin extends JavaPlugin {
                     old = playerState.setAttachment(pa);
                     playerState.getRegions().clear();
                     playerState.getRegions().addAll(regions);
-                    playerState.setWorld(player.getWorld().getName());
                 }
             }
         }
@@ -569,12 +567,9 @@ public class ZPermissionsPlugin extends JavaPlugin {
 
         private final Set<String> regions = new HashSet<String>();
 
-        private String world;
-
-        public PlayerState(PermissionAttachment attachment, Set<String> regions, String world) {
+        public PlayerState(PermissionAttachment attachment, Set<String> regions) {
             setAttachment(attachment);
             getRegions().addAll(regions);
-            setWorld(world);
         }
 
         public PermissionAttachment getAttachment() {
@@ -591,16 +586,6 @@ public class ZPermissionsPlugin extends JavaPlugin {
 
         public Set<String> getRegions() {
             return regions;
-        }
-
-        public String getWorld() {
-            return world;
-        }
-
-        public void setWorld(String world) {
-            if (world == null)
-                throw new IllegalArgumentException("world cannot be null");
-            this.world = world;
         }
 
     }
