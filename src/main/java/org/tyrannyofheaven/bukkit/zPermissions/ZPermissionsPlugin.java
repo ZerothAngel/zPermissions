@@ -72,6 +72,9 @@ public class ZPermissionsPlugin extends JavaPlugin {
     // Name of the default track, in absence of a config file
     private static final String DEFAULT_TRACK = "default";
 
+    // Default dump directory
+    private static final String DEFAULT_DUMP_DIRECTORY = "zPermissions-dumps";
+
     // Internal state kept about each online player
     private final Map<String, PlayerState> playerStates = new HashMap<String, PlayerState>();
 
@@ -83,6 +86,9 @@ public class ZPermissionsPlugin extends JavaPlugin {
 
     // The configured group permission node format
     private String groupPermissionFormat;
+
+    // The configured dump directory
+    private File dumpDirectory;
 
     // Track definitions
     private Map<String, List<String>> tracks = new HashMap<String, List<String>>();
@@ -490,11 +496,21 @@ public class ZPermissionsPlugin extends JavaPlugin {
         return tracks.get(trackName);
     }
 
+    /**
+     * Returns the configured dump directory.
+     * 
+     * @return the dump directory
+     */
+    File getDumpDirectory() {
+        return dumpDirectory;
+    }
+
     // Read config.yml
     private void readConfig() {
         // Barebones defaults
         defaultGroup = DEFAULT_GROUP;
         defaultTrack = DEFAULT_TRACK;
+        dumpDirectory = new File(DEFAULT_DUMP_DIRECTORY);
         groupPermissionFormat = null;
         tracks.clear();
         
@@ -512,6 +528,10 @@ public class ZPermissionsPlugin extends JavaPlugin {
         value = (String)getConfiguration().getProperty("default-track");
         if (hasText(value))
             defaultTrack = value;
+
+        value = (String)getConfiguration().getProperty("dump-directory");
+        if (hasText(value))
+            dumpDirectory = new File(value);
 
         // Read tracks, if any
         ConfigurationNode node = getConfiguration().getNode("tracks");

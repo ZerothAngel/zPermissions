@@ -2,7 +2,7 @@
 -   Group priorities **DONE**
 -   Automatic group permissions i.e. group.<groupname> **DONE**
 -   Ranks/ladders **DONE**
--   YAML export/import
+-   YAML export/import **DONE** (Not YAML, but still...)
 -   "members" command **DONE**
 -   purge/delete command **DONE**
 -   Unit tests! Especially for the DAO!

@@ -29,6 +29,8 @@ permissions:
       zpermissions.check: true
       zpermissions.check.other: true
       zpermissions.reload: true
+      zpermissions.export: true
+      zpermissions.import: true
       zpermissions.promote: true
       zpermissions.promote.*: true
       zpermissions.demote: true
@@ -45,6 +47,10 @@ permissions:
     description: Allows use of the /permissions check command on others
   zpermissions.reload:
     description: Allows use of the /permissions reload command
+  zpermissions.export:
+    description: Allows use of the /permissions export command
+  zpermissions.import:
+    description: Allows use of the /permissions import command
   zpermissions.promote:
     description: Allows use of the /promote command
   zpermissions.promote.*:
