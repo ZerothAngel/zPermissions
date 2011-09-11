@@ -126,7 +126,7 @@ public class Entry {
     @Override
     public String toString() {
         return String.format("%s%s%s -> %s",
-                (getRegion() == null ? "" : getRegion().getName() + "@"),
+                (getRegion() == null ? "" : getRegion().getName() + "/"),
                 (getWorld() == null ? "" : getWorld().getName() + ":"),
                 getPermission(),
                 isValue());

@@ -12,6 +12,9 @@ default-group: default
 # and /demote commands, this is the track used.
 default-track: default
 
+# Directory (relative to the server root) where to load/store dumps.
+dump-directory: zPermissions-dumps
+
 # Track definitions. Each key should be the name of the track. The value
 # should be a list of group names in ascending order.
 tracks:
