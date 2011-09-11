@@ -28,8 +28,7 @@ SuperpermsBridge.
 *   Multi-world support. Each group may define world-specific permissions.
 
 *   Optional region support. Permissions may be associated with WorldGuard
-    regions. For now, you must be using a post-5.2.2 development version
-	of [WorldGuard](http://build.sk89q.com/job/WorldGuard/).
+    regions.
 		
 *   Ranks! You may define multiple tracks on which to promote/demote users.
 	Using permissions, you can also limit who can promote/demote others and

@@ -53,6 +53,7 @@ import org.tyrannyofheaven.bukkit.zPermissions.model.PermissionEntity;
 import org.tyrannyofheaven.bukkit.zPermissions.model.PermissionRegion;
 import org.tyrannyofheaven.bukkit.zPermissions.model.PermissionWorld;
 
+import com.sk89q.worldedit.Vector;
 import com.sk89q.worldguard.bukkit.WorldGuardPlugin;
 import com.sk89q.worldguard.protection.ApplicableRegionSet;
 import com.sk89q.worldguard.protection.managers.RegionManager;
@@ -430,7 +431,8 @@ public class ZPermissionsPlugin extends JavaPlugin {
         WorldGuardPlugin wgp = getWorldGuardPlugin();
         if (wgp != null) {
             RegionManager rm = wgp.getRegionManager(player.getWorld());
-            ApplicableRegionSet ars = rm.getApplicableRegions(player.getLocation());
+            //ApplicableRegionSet ars = rm.getApplicableRegions(player.getLocation()); FIXME dev worldedit
+            ApplicableRegionSet ars = rm.getApplicableRegions(new Vector(player.getLocation().getX(), player.getLocation().getY(), player.getLocation().getZ()));
 
             Set<String> result = new HashSet<String>();
             for (ProtectedRegion pr : ars) {
