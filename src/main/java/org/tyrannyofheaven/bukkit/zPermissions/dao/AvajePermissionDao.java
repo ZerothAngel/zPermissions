@@ -56,7 +56,6 @@ public class AvajePermissionDao implements PermissionDao {
                 if (create) {
                     permissionRegion = new PermissionRegion();
                     permissionRegion.setName(region.toLowerCase());
-                    getEbeanServer().save(permissionRegion);
                 }
                 else {
                     throw new IllegalArgumentException("No such region");
@@ -78,7 +77,6 @@ public class AvajePermissionDao implements PermissionDao {
                 if (create) {
                     permissionWorld = new PermissionWorld();
                     permissionWorld.setName(world.toLowerCase());
-                    getEbeanServer().save(permissionWorld);
                 }
                 else {
                     throw new IllegalArgumentException("No such world");
@@ -99,7 +97,6 @@ public class AvajePermissionDao implements PermissionDao {
             entity.setName(name.toLowerCase());
             entity.setGroup(group);
             entity.setDisplayName(name);
-            getEbeanServer().save(entity);
         }
         return entity;
     }
@@ -148,8 +145,16 @@ public class AvajePermissionDao implements PermissionDao {
         checkTransaction();
 
         PermissionEntity owner = getEntity(name, group, true);
+        getEbeanServer().save(owner);
+
         PermissionRegion permissionRegion = getRegion(region, true);
+        if (permissionRegion != null)
+            getEbeanServer().save(permissionRegion);
+
         PermissionWorld permissionWorld = getWorld(world, true);
+        if (permissionWorld != null)
+            getEbeanServer().save(permissionWorld);
+
         permission = permission.toLowerCase();
 
         Entry found = null;
@@ -217,6 +222,7 @@ public class AvajePermissionDao implements PermissionDao {
         checkTransaction();
 
         PermissionEntity group = getEntity(groupName, true, true);
+        getEbeanServer().save(group);
 
         Membership membership = getEbeanServer().find(Membership.class).where()
             .eq("member", member.toLowerCase())
@@ -281,10 +287,11 @@ public class AvajePermissionDao implements PermissionDao {
         checkTransaction();
 
         PermissionEntity group = getEntity(groupName, true, true);
+        getEbeanServer().save(group);
 
         List<Membership> memberships = getEbeanServer().find(Membership.class).where()
-        .eq("member", playerName.toLowerCase())
-        .findList();
+            .eq("member", playerName.toLowerCase())
+            .findList();
 
         Membership found = null;
         List<Membership> toDelete = new ArrayList<Membership>();
@@ -333,6 +340,8 @@ public class AvajePermissionDao implements PermissionDao {
             }
 
             group.setParent(parent);
+            parent.getChildren().add(group);
+            getEbeanServer().save(parent);
         }
         else {
             group.setParent(null);
