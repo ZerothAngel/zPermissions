@@ -1,12 +1,16 @@
 # zPermissions &mdash; A Superperms plugin for Bukkit #
 
-This project exists mainly as a learning exercise and as a way to shakedown
-my [ToHUtils](https://github.com/ZerothAngel/ToHUtils) project. Though
-surprisingly, it is quite functional. :P
+zPermissions is an SQL database-backed Superperms (aka Bukkit permissions)
+implementation. Notable features are: multi-world support, ranks with multiple
+tracks/ladders, unlimited group inheritance (within reason), and optional
+region-specific permissions using [WorldGuard](http://dev.bukkit.org/server-mods/worldguard/) regions.
 
-This plugin **only** supports Superperms. If you need a bridge for plugins
-that use Permissions 2/3, please consider [PermissionsBukkit](http://dev.bukkit.org/server-mods/permbukkit/)'s
+There's no Permissions 2 or 3 support (and none is planned &mdash; ever).
+However, zPermissions works great with [PermissionsBukkit](http://dev.bukkit.org/server-mods/permbukkit/)'s
 SuperpermsBridge.
+
+Lastly, there is currently no build protection as I rely on WorldGuard for that.
+I aim to keep zPermissions a simple, yet feature-rich, Superperms provider.
 
 ## Features ##
 
@@ -29,7 +33,7 @@ SuperpermsBridge.
 
 *   Optional region support. Permissions may be associated with WorldGuard
     regions.
-		
+
 *   Ranks! You may define multiple tracks on which to promote/demote users.
 	Using permissions, you can also limit who can promote/demote others and
 	which tracks they may use.
@@ -41,7 +45,26 @@ SuperpermsBridge.
 
 *   The default group (the group assigned to players who have not been
 	explicitly placed into any groups) is named `default`. This may be changed.
-	
+
+## Concepts ##
+
+*   Groups are global &mdash; across all worlds. There are no plans to introduce
+    world-specific groups.
+
+*   However, players and groups may have world-specific and/or region-specific
+    permissions. These permissions are only in effect when the player is in
+    that particular world and/or region.
+
+*   The most general permissions are applied first. So that means: global group
+    permissions, world-specific group permissions, region-specific global
+    permissions, then finally region-specific and world-specific permissions.
+    Then repeat all that, but for player permissions.
+
+*   Players may be members of multiple groups. Groups may be assigned a
+    priority &mdash; a higher priority means the group is applied later so it
+	overrides earlier groups. Groups with the same priority are applied
+	alphabetically.
+
 ## Installation & Usage ##
 
 Put zPermissions.jar in your server's `plugins` directory. Start up your server.
@@ -67,9 +90,21 @@ be specified as:
 
 The rank commands are `/promote` and `/demote`.
 
-## To Do ##
+## Permissions ##
 
-I don't consider zPermissions feature complete yet (and thus not worthy of an
-actual release or "1.0" version). Some things I would like to add:
-
-*   Possibly a YAML backend, for those afraid of using databases.
+*   zpermissions.* &mdash; All-inclusive permission. Given to ops by default.
+*   zpermissions.player &mdash; `/permissions player` commands
+*   zpermissions.group &mdash; `/permissions group` commands
+*   zpermissions.list &mdash; `/permissions list` command
+*   zpermissions.check &mdash; `/permissions check` command
+*   zpermissions.check.other &mdash; `/permissions check` on other players
+*   zpermissions.reload &mdash; `/permissions reload` command
+*   zpermissions.export &mdash; `/permissions export` command
+*   zpermissions.import &mdash; `/permissions import` command
+*   zpermissions.promote &mdash; `/promote` command
+*   zpermissions.promote.* &mdash; Allows `/promote` on all tracks
+*   zpermissions.promote.&lt;track> &mdash; Allows `/promote` on a specific
+    track
+*   zpermissions.demote &mdash; `/demote` command
+*   zpermissions.demote.* &mdash;  Allows `/demote` on all tracks
+*   zpermissions.demote.&lt;track> &mdash; Allows `/demote` on a specific track
