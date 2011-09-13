@@ -108,3 +108,69 @@ The rank commands are `/promote` and `/demote`.
 *   zpermissions.demote &mdash; `/demote` command
 *   zpermissions.demote.* &mdash;  Allows `/demote` on all tracks
 *   zpermissions.demote.&lt;track> &mdash; Allows `/demote` on a specific track
+
+## Detailed Command Usage ##
+
+### General Commands ###
+
+*   `/permissions list <what>` &mdash; `what` should be "groups" or "players".
+    Lists groups or players in the system. Note that only players with
+    permissions set will be shown. (Players who are only members will not.)
+*   `/permissions check <permission> [player]` &mdash; Checks if yourself or
+    another player has the given permission.
+*   `/permissions reload` &mdash; Re-reads config.yml.
+*   `/permissions export <filename>` &mdash; Creates a file containing
+    all the zPermissions commands necessary to re-create your database. See
+    config.yml for the output directory.
+*   `/permissions import <filename>` &mdash; Executes a file containing
+    zPermissions commands. Only works on an empty database!
+
+### Player Commands ###
+
+*   `/permissions player <player> get <permission>` &mdash; View a permission
+    associated with a player.
+*   `/permissions player <player> set <permission> [value]` &mdash; Set a
+    permission for a player. `value` may be "true", "t", "false", "f" or omitted.
+    (Defaults to true.)
+*   `/permissions player <player> unset <permission>` &mdash; Remove a
+    permission from a player.
+*   `/permissions player <player> purge` &mdash; Delete a player from
+    zPermissions. Removes any permissions and group memberships.
+*   `/permissions player <player> groups` &mdash; List the groups a player is a
+    member of.
+*   `/permissions player <player> setgroup <group>` &mdash; Removes all of a
+    player's group memberships and adds them to given group.
+*   `/permissions player <player> show` &mdash; Show any permissions
+    associated with a player.
+
+### Group Commands ###
+
+*   `/permissions group <group> get <permission>` &mdash; View a permission
+    associated with a group.
+*   `/permissions group <group> set <permission> [value]` &mdash; Set a
+    permission for a group. `value` may be "true", "t", "false", "f" or omitted.
+    (Defaults to true.)
+*   `/permissions group <group> unset <permission>` &mdash; Remove a
+    permission from a group.
+*   `/permissions group <group> purge` &mdash; Delete a group from
+    zPermissions. Removes any permissions and group memberships. If the group
+    is a parent, its child groups are orphaned.
+*   `/permissions group <group> members` &mdash; List the members of the group.
+*   `/permissions group <group> setparent [parent]` &mdash; Set a group's
+    parent group. If `parent` is omitted, the group will have no parent.
+*   `/permissions group <group> add <player>` &mdash; Add a player as a member.
+*   `/permissions group <group> remove <player>` &mdash; Remove a player as a
+    member.
+*   `/permissions group <group> show` &mdash; Show any permissions
+    associated with a group.
+
+### Rank Commands ###
+
+*   `/promote <player> [track]` &mdash; Promote the player along the given
+    track. If `track` is omitted, the default track (see config.yml) is used. If
+    the player is not currently in any of the track's groups, they are added to
+    the first group in the track.
+*   `/demote <player> [track]` &mdash; Demote the player along the given
+    track. If `track` is omitted, the default track is used. If the player is in
+    the lowest group (the first group), they are removed from the group (and
+    the track) altogether.
