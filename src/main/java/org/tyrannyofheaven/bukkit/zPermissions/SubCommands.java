@@ -178,7 +178,7 @@ public class SubCommands {
         throw new ParseException("Invalid filename.");
     }
 
-    @Command(value="import", description="Import a dump of the database")
+    @Command(value={"import", "restore"}, description="Import a dump of the database")
     @Require("zpermissions.import")
     public void import_command(final ZPermissionsPlugin plugin, final CommandSender sender, @Option("filename") String filename) {
         File inFile = sanitizeFilename(plugin.getDumpDirectory(), filename);
