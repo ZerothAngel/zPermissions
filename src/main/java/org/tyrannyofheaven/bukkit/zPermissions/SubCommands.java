@@ -22,6 +22,7 @@ import static org.tyrannyofheaven.bukkit.util.permissions.PermissionUtils.requir
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.Date;
 import java.util.List;
 import java.util.logging.Level;
 
@@ -169,6 +170,7 @@ public class SubCommands {
         sendMessage(sender, colorize("{WHITE}config.yml{YELLOW} reloaded"));
     }
 
+    // Ensure filename doesn't have any funny characters
     private File sanitizeFilename(File dir, String filename) {
         String[] parts = filename.split(File.separator);
         if (parts.length == 1) {
@@ -225,6 +227,11 @@ public class SubCommands {
                 plugin.getTransactionStrategy().execute(new TransactionCallbackWithoutResult() {
                     @Override
                     public void doInTransactionWithoutResult() throws Exception {
+                        // Header
+                        out.println(String.format("# Dumped by %s %s on %s",
+                                plugin.getDescription().getName(),
+                                plugin.getDescription().getVersion(),
+                                new Date()));
                         // Dump players first
                         List<PermissionEntity> players = plugin.getDao().getEntities(false);
                         for (PermissionEntity entity : players) {

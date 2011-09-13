@@ -424,6 +424,7 @@ public class ZPermissionsPlugin extends JavaPlugin {
         return null;
     }
 
+    // Returns names of regions the player is currently inside
     Set<String> getPlayerRegions(String playerName) {
         Player player = getPlayerExact(playerName);
         if (player != null)
@@ -431,6 +432,7 @@ public class ZPermissionsPlugin extends JavaPlugin {
         return Collections.emptySet();
     }
 
+    // Returns names of regions the player is currently inside
     Set<String> getPlayerRegions(Player player) {
         WorldGuardPlugin wgp = getWorldGuardPlugin();
         if (wgp != null) {
@@ -565,6 +567,7 @@ public class ZPermissionsPlugin extends JavaPlugin {
         refreshPlayers();
     }
 
+    // Returns WorldGuardPlugin or null if not present
     private WorldGuardPlugin getWorldGuardPlugin() {
         return worldGuardPlugin;
     }
