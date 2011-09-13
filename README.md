@@ -48,17 +48,17 @@ I aim to keep zPermissions a simple, yet feature-rich, Superperms provider.
 
 ## Concepts ##
 
-*   Groups are global &mdash; across all worlds. There are no plans to introduce
-    world-specific groups.
+*   Groups are "universal" &mdash; across all worlds. There are no plans to
+    introduce world-specific groups.
 
 *   However, players and groups may have world-specific and/or region-specific
     permissions. These permissions are only in effect when the player is in
     that particular world and/or region.
 
-*   The most general permissions are applied first. So that means: global group
-    permissions, world-specific group permissions, region-specific global
-    permissions, then finally region-specific and world-specific permissions.
-    Then repeat all that, but for player permissions.
+*   The most general permissions are applied first. So that means: universal
+    group permissions, world-specific group permissions, region-specific
+    universal permissions, then finally region-specific and world-specific
+    permissions. Then repeat all that, but for player permissions.
 
 *   Players may be members of multiple groups. Groups may be assigned a
     priority &mdash; a higher priority means the group is applied later so it
