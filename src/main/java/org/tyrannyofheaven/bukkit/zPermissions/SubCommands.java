@@ -203,7 +203,7 @@ public class SubCommands {
             }
 
             // Execute commands
-            if (CommandReader.read(plugin.getServer(), sender, inFile)) {
+            if (CommandReader.read(plugin.getServer(), sender, inFile, plugin)) {
                 sendMessage(sender, colorize("{YELLOW}Import complete."));
             }
             else {
