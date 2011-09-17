@@ -68,9 +68,9 @@ class ZPermissionsPlayerListener extends PlayerListener {
         if (event.isCancelled()) return;
 
         // Only bother if player actually moved to a new block
-        if (event.getFrom().getX() != event.getTo().getX() ||
-                event.getFrom().getY() != event.getTo().getY() ||
-                event.getFrom().getZ() != event.getTo().getZ()) {
+        if (event.getFrom().getBlockX() != event.getTo().getBlockX() ||
+                event.getFrom().getBlockY() != event.getTo().getBlockY() ||
+                event.getFrom().getBlockZ() != event.getTo().getBlockZ()) {
             // Conditionally update if containing regions changed
             plugin.updateAttachment(event.getPlayer().getName(), plugin.getPlayerRegions(event.getPlayer()), false);
         }
