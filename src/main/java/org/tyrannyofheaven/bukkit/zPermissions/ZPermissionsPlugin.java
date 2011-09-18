@@ -32,6 +32,7 @@ import java.util.logging.Level;
 
 import javax.persistence.PersistenceException;
 
+import org.bukkit.Location;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
@@ -430,17 +431,17 @@ public class ZPermissionsPlugin extends JavaPlugin {
     Set<String> getPlayerRegions(String playerName) {
         Player player = getPlayerExact(playerName);
         if (player != null)
-            return getPlayerRegions(player);
+            return getRegions(player.getLocation());
         return Collections.emptySet();
     }
 
     // Returns names of regions the player is currently inside
-    Set<String> getPlayerRegions(Player player) {
+    Set<String> getRegions(Location location) {
         WorldGuardPlugin wgp = getWorldGuardPlugin();
         if (wgp != null) {
-            RegionManager rm = wgp.getRegionManager(player.getWorld());
+            RegionManager rm = wgp.getRegionManager(location.getWorld());
             //ApplicableRegionSet ars = rm.getApplicableRegions(player.getLocation()); FIXME dev worldedit
-            ApplicableRegionSet ars = rm.getApplicableRegions(new Vector(player.getLocation().getX(), player.getLocation().getY(), player.getLocation().getZ()));
+            ApplicableRegionSet ars = rm.getApplicableRegions(new Vector(location.getX(), location.getY(), location.getZ()));
 
             Set<String> result = new HashSet<String>();
             for (ProtectedRegion pr : ars) {
@@ -468,7 +469,7 @@ public class ZPermissionsPlugin extends JavaPlugin {
      */
     void refreshPlayers() {
         for (Player player : getServer().getOnlinePlayers()) {
-            updateAttachment(player.getName(), getPlayerRegions(player), true);
+            updateAttachment(player.getName(), getRegions(player.getLocation()), true);
         }
     }
 
