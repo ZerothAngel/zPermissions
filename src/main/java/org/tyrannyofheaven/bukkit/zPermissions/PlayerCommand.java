@@ -23,6 +23,7 @@ import java.util.List;
 
 import org.bukkit.ChatColor;
 import org.bukkit.command.CommandSender;
+import org.bukkit.entity.Player;
 import org.tyrannyofheaven.bukkit.util.command.Command;
 import org.tyrannyofheaven.bukkit.util.command.Option;
 import org.tyrannyofheaven.bukkit.util.command.Session;
@@ -37,6 +38,8 @@ import org.tyrannyofheaven.bukkit.zPermissions.model.PermissionEntity;
  * @author zerothangel
  */
 public class PlayerCommand extends CommonCommand {
+
+    private static final int TICKS_PER_SECOND = 20;
 
     public PlayerCommand() {
         super(false);
@@ -100,6 +103,26 @@ public class PlayerCommand extends CommonCommand {
         for (Entry e : entity.getPermissions()) {
             displayEntry(sender, e);
         }
+    }
+
+    @Command(value={"settemp", "temp", "tmp"}, description="Set a temporary permission")
+    public void settemp(ZPermissionsPlugin plugin, CommandSender sender, @Session("entityName") String playerName, @Option("permission") String permission, @Option(value="value", optional=true) Boolean value, @Option(value={"-t", "--timeout"}, valueName="timeout") Integer timeout) {
+        Player player = plugin.getServer().getPlayer(playerName);
+        if (player == null) {
+            sendMessage(sender, colorize("{RED}Player is not online."));
+            return;
+        }
+        
+        if (timeout == null)
+            timeout = plugin.getDefaultTempPermissionTimeout();
+        if (timeout <= 0) {
+            sendMessage(sender, colorize("{RED}Invalid timeout."));
+            return;
+        }
+
+        player.addAttachment(plugin, permission, value == null ? true : value, TICKS_PER_SECOND * timeout);
+
+        sendMessage(sender, colorize("{GOLD}%s{YELLOW} set to {GREEN}%s{YELLOW} for {AQUA}%s{YELLOW} for %d second%s"), permission, value == null ? Boolean.TRUE : value, player.getName(), timeout, timeout == 1 ? "" : "s");
     }
 
 }

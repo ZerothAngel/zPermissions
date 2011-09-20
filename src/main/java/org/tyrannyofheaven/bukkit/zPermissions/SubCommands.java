@@ -65,6 +65,7 @@ public class SubCommands {
                 .forCommand("get")
                 .forCommand("set")
                 .forCommand("unset")
+                .forCommand("settemp")
                 .forCommand("purge")
                 .forCommand("groups")
                 .forCommand("setgroup")

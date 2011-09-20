@@ -76,6 +76,9 @@ public class ZPermissionsPlugin extends JavaPlugin {
     // Default dump directory
     private static final String DEFAULT_DUMP_DIRECTORY = "zPermissions-dumps";
 
+    // Default timeout for temporary permissions
+    private static final int DEFAULT_TEMP_PERMISSION_TIMEOUT = 60;
+
     // Internal state kept about each online player
     private final Map<String, PlayerState> playerStates = new HashMap<String, PlayerState>();
 
@@ -90,6 +93,9 @@ public class ZPermissionsPlugin extends JavaPlugin {
 
     // The configured dump directory
     private File dumpDirectory;
+
+    // The configured default temporary permission timeout
+    private int defaultTempPermissionTimeout;
 
     // Track definitions
     private Map<String, List<String>> tracks = new HashMap<String, List<String>>();
@@ -510,6 +516,15 @@ public class ZPermissionsPlugin extends JavaPlugin {
         return dumpDirectory;
     }
 
+    /**
+     * Returns the configured default temporary permission timeout.
+     * 
+     * @return the temp permission timeout in seconds
+     */
+    public int getDefaultTempPermissionTimeout() {
+        return defaultTempPermissionTimeout;
+    }
+
     // Read config.yml
     private void readConfig() {
         // Barebones defaults
@@ -537,6 +552,8 @@ public class ZPermissionsPlugin extends JavaPlugin {
         value = (String)getConfiguration().getProperty("dump-directory");
         if (hasText(value))
             dumpDirectory = new File(value);
+
+        defaultTempPermissionTimeout = getConfiguration().getInt("default-temp-permission-timeout", DEFAULT_TEMP_PERMISSION_TIMEOUT);
 
         // Read tracks, if any
         ConfigurationNode node = getConfiguration().getNode("tracks");
