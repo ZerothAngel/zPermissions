@@ -173,7 +173,7 @@ public class SubCommands {
 
     // Ensure filename doesn't have any funny characters
     private File sanitizeFilename(File dir, String filename) {
-        String[] parts = filename.split(File.separator);
+        String[] parts = filename.split(File.separatorChar == '\\' ? "\\\\" : File.separator);
         if (parts.length == 1) {
             if (!parts[0].startsWith("."))
                 return new File(dir, filename);
@@ -222,7 +222,12 @@ public class SubCommands {
     public void export(final ZPermissionsPlugin plugin, CommandSender sender, @Option("filename") String filename) {
         File outFile = sanitizeFilename(plugin.getDumpDirectory(), filename);
         try {
-            plugin.getDumpDirectory().mkdirs();
+            if (!plugin.getDumpDirectory().exists()) {
+                if (!plugin.getDumpDirectory().mkdirs()) {
+                    sendMessage(sender, colorize("{RED}Unable to create dump directory"));
+                    return;
+                }
+            }
             final PrintWriter out = new PrintWriter(outFile);
             try {
                 plugin.getTransactionStrategy().execute(new TransactionCallbackWithoutResult() {

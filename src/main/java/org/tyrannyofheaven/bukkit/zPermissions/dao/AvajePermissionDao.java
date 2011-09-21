@@ -161,7 +161,7 @@ public class AvajePermissionDao implements PermissionDao {
         for (Entry entry : owner.getPermissions()) {
             if (permission.equals(entry.getPermission()) &&
                     (permissionRegion == null ? entry.getRegion() == null : permissionRegion.equals(entry.getRegion())) &&
-                    (permissionWorld == null ? entry.getWorld() == null : permissionWorld.equals(entry.getWorld().getName()))) {
+                    (permissionWorld == null ? entry.getWorld() == null : permissionWorld.equals(entry.getWorld()))) {
                 found = entry;
                 break;
             }

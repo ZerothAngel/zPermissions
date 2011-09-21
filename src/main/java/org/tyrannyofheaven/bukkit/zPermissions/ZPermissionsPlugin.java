@@ -153,8 +153,11 @@ public class ZPermissionsPlugin extends JavaPlugin {
         log("%s starting...", getDescription().getVersion());
 
         // Create data directory, if needed
-        if (!getDataFolder().exists())
-            getDataFolder().mkdirs();
+        if (!getDataFolder().exists()) {
+            if (!getDataFolder().mkdirs()) {
+                ToHUtils.log(this, Level.SEVERE, "Unable to create data folder");
+            }
+        }
 
         // Create config file, if needed
         File configFile = new File(getDataFolder(), "config.yml");
