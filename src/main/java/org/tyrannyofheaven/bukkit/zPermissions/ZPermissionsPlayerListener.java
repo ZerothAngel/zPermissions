@@ -15,6 +15,9 @@
  */
 package org.tyrannyofheaven.bukkit.zPermissions;
 
+import static org.tyrannyofheaven.bukkit.util.ToHUtils.registerEvent;
+
+import org.bukkit.event.Event.Priority;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerKickEvent;
 import org.bukkit.event.player.PlayerListener;
@@ -34,6 +37,17 @@ class ZPermissionsPlayerListener extends PlayerListener {
     
     ZPermissionsPlayerListener(ZPermissionsPlugin plugin) {
         this.plugin = plugin;
+    }
+
+    void registerEvents(boolean regionSupport) {
+        registerEvent("PLAYER_JOIN", this, Priority.Monitor, plugin);
+        registerEvent("PLAYER_KICK", this, Priority.Monitor, plugin); // Necessary?
+        registerEvent("PLAYER_QUIT", this, Priority.Monitor, plugin);
+        registerEvent("PLAYER_TELEPORT", this, Priority.Monitor, plugin);
+
+        // Only check PLAYER_MOVE if region support is enabled
+        if (regionSupport)
+            registerEvent("PLAYER_MOVE", this, Priority.Monitor, plugin);
     }
 
     @Override
