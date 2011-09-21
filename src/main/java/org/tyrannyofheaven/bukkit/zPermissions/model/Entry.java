@@ -105,7 +105,7 @@ public class Entry {
     @Override
     public boolean equals(Object obj) {
         if (obj == this) return true;
-        if ((obj instanceof Entry)) return false;
+        if (!(obj instanceof Entry)) return false;
         Entry o = (Entry)obj;
         return getEntity().equals(o.getEntity()) &&
             (getRegion() == null ? o.getRegion() == null : getRegion().equals(o.getRegion())) &&
