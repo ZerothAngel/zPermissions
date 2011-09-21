@@ -36,8 +36,6 @@ import org.bukkit.Location;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
-import org.bukkit.event.Event.Priority;
-import org.bukkit.event.Event.Type;
 import org.bukkit.permissions.PermissionAttachment;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.util.config.ConfigurationNode;
@@ -190,20 +188,16 @@ public class ZPermissionsPlugin extends JavaPlugin {
         getCommand("promote").setExecutor(ce);
         getCommand("demote").setExecutor(ce);
 
-        // Install our listeners
-        ZPermissionsPlayerListener pl = new ZPermissionsPlayerListener(this);
-        getServer().getPluginManager().registerEvent(Type.PLAYER_JOIN, pl, Priority.Monitor, this);
-        getServer().getPluginManager().registerEvent(Type.PLAYER_KICK, pl, Priority.Monitor, this);
-        getServer().getPluginManager().registerEvent(Type.PLAYER_QUIT, pl, Priority.Monitor, this);
-        getServer().getPluginManager().registerEvent(Type.PLAYER_TELEPORT, pl, Priority.Monitor, this);
-
         // Detect WorldGuard
         worldGuardPlugin = (WorldGuardPlugin)getServer().getPluginManager().getPlugin("WorldGuard");
-        if (worldGuardPlugin != null) {
-            // Only check PLAYER_MOVE if region support is enabled
-            getServer().getPluginManager().registerEvent(Type.PLAYER_MOVE, pl, Priority.Monitor, this);
+        boolean regionSupport = worldGuardPlugin != null;
+
+        // Install our listeners
+        ZPermissionsPlayerListener pl = new ZPermissionsPlayerListener(this);
+        pl.registerEvents(regionSupport);
+
+        if (regionSupport)
             log("WorldGuard region support enabled.");
-        }
 
         // Make sure everyone currently online has an attachment
         refreshPlayers();
@@ -521,7 +515,7 @@ public class ZPermissionsPlugin extends JavaPlugin {
      * 
      * @return the temp permission timeout in seconds
      */
-    public int getDefaultTempPermissionTimeout() {
+    int getDefaultTempPermissionTimeout() {
         return defaultTempPermissionTimeout;
     }
 
