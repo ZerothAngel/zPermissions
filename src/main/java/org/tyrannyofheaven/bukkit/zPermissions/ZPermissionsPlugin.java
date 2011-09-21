@@ -33,7 +33,6 @@ import java.util.logging.Level;
 import javax.persistence.PersistenceException;
 
 import org.bukkit.Location;
-import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.permissions.PermissionAttachment;
@@ -183,18 +182,14 @@ public class ZPermissionsPlugin extends JavaPlugin {
         dao = new AvajePermissionDao(getDatabase());
 
         // Install our commands
-        CommandExecutor ce = new ToHCommandExecutor<ZPermissionsPlugin>(this, new RootCommand());
-        getCommand("perm").setExecutor(ce);
-        getCommand("promote").setExecutor(ce);
-        getCommand("demote").setExecutor(ce);
+        (new ToHCommandExecutor<ZPermissionsPlugin>(this, new RootCommand())).registerCommands();
 
         // Detect WorldGuard
         worldGuardPlugin = (WorldGuardPlugin)getServer().getPluginManager().getPlugin("WorldGuard");
         boolean regionSupport = worldGuardPlugin != null;
 
         // Install our listeners
-        ZPermissionsPlayerListener pl = new ZPermissionsPlayerListener(this);
-        pl.registerEvents(regionSupport);
+        (new ZPermissionsPlayerListener(this)).registerEvents(regionSupport);
 
         if (regionSupport)
             log("WorldGuard region support enabled.");
