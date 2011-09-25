@@ -29,6 +29,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import javax.persistence.PersistenceException;
 
@@ -75,6 +76,9 @@ public class ZPermissionsPlugin extends JavaPlugin {
 
     // Default timeout for temporary permissions
     private static final int DEFAULT_TEMP_PERMISSION_TIMEOUT = 60;
+
+    // This plugin's logger
+    private final Logger logger = Logger.getLogger(getClass().getName());
 
     // Internal state kept about each online player
     private final Map<String, PlayerState> playerStates = new HashMap<String, PlayerState>();
@@ -185,7 +189,7 @@ public class ZPermissionsPlugin extends JavaPlugin {
         dao = new AvajePermissionDao(getDatabase());
 
         // Install our commands
-        (new ToHCommandExecutor<ZPermissionsPlugin>(this, new RootCommand())).registerCommands();
+        (new ToHCommandExecutor<ZPermissionsPlugin>(this, new RootCommand(this))).registerCommands();
 
         // Detect WorldGuard
         worldGuardPlugin = (WorldGuardPlugin)getServer().getPluginManager().getPlugin("WorldGuard");
@@ -352,9 +356,11 @@ public class ZPermissionsPlugin extends JavaPlugin {
     void removeAttachment(String playerName) {
         PlayerState playerState = null;
         synchronized (playerStates) {
-            Player player = getPlayerExact(playerName);
-            if (player != null)
+            Player player = getServer().getPlayerExact(playerName);
+            if (player != null) {
+                debug("Removing attachment for %s", player.getName());
                 playerState = playerStates.remove(player.getName());
+            }
         }
         if (playerState != null)
             playerState.getAttachment().remove(); // potential to call a callback, so do it outside synchronized block
@@ -366,7 +372,7 @@ public class ZPermissionsPlugin extends JavaPlugin {
         Player player;
         PlayerState playerState = null;
         synchronized (playerStates) {
-            player = getPlayerExact(playerName);
+            player = getServer().getPlayerExact(playerName);
             if (player != null)
                 playerState = playerStates.get(player.getName());
         }
@@ -383,6 +389,8 @@ public class ZPermissionsPlugin extends JavaPlugin {
         // No need to update yet (most likely called by movement-based event)
         if (!force) return;
 
+        debug("Updating attachment for %s", player.getName());
+
         // Resolve effective permissions
         PermissionAttachment pa = player.addAttachment(this);
         for (Map.Entry<String, Boolean> me : resolvePlayer(player, regions).entrySet()) {
@@ -393,7 +401,7 @@ public class ZPermissionsPlugin extends JavaPlugin {
         PermissionAttachment old = null;
         synchronized (playerStates) {
             // NB: Must re-fetch since player could have been removed since first fetch
-            player = getPlayerExact(playerName);
+            player = getServer().getPlayerExact(playerName);
             if (player != null) {
                 playerState = playerStates.get(player.getName());
                 if (playerState == null) {
@@ -416,18 +424,9 @@ public class ZPermissionsPlugin extends JavaPlugin {
             old.remove();
     }
 
-    // FIXME Added to Server in CB1087
-    private Player getPlayerExact(String playerName) {
-        for (Player player : getServer().getOnlinePlayers()) {
-            if (player.getName().equalsIgnoreCase(playerName))
-                return player;
-        }
-        return null;
-    }
-
     // Returns names of regions the player is currently inside
     Set<String> getPlayerRegions(String playerName) {
-        Player player = getPlayerExact(playerName);
+        Player player = getServer().getPlayerExact(playerName);
         if (player != null)
             return getRegions(player.getLocation());
         return Collections.emptySet();
@@ -444,7 +443,7 @@ public class ZPermissionsPlugin extends JavaPlugin {
             Set<String> result = new HashSet<String>();
             for (ProtectedRegion pr : ars) {
                 // Ignore global region
-                if (!"__global__".equals(pr.getId())) // FIXME hardcoded
+                if (!"__global__".equals(pr.getId())) // NB: Hardcoded and not available as constant in WorldGuard
                     result.add(pr.getId());
             }
             return result;
@@ -459,6 +458,7 @@ public class ZPermissionsPlugin extends JavaPlugin {
      * @param playerName the name of the player
      */
     void refreshPlayer(String playerName) {
+        debug("Refreshing player %s", playerName);
         updateAttachment(playerName, getPlayerRegions(playerName), true);
     }
 
@@ -466,6 +466,7 @@ public class ZPermissionsPlugin extends JavaPlugin {
      * Refresh the attachments of all online players.
      */
     void refreshPlayers() {
+        debug("Refreshing all online players");
         for (Player player : getServer().getOnlinePlayers()) {
             updateAttachment(player.getName(), getRegions(player.getLocation()), true);
         }
@@ -568,6 +569,11 @@ public class ZPermissionsPlugin extends JavaPlugin {
                 tracks.put(trackName, members);
             }
         }
+        
+        // Set debug logging
+        logger.setLevel(null);
+        if (getConfiguration().getBoolean("debug", false))
+            logger.setLevel(Level.FINE);
     }
 
     /**
@@ -590,7 +596,7 @@ public class ZPermissionsPlugin extends JavaPlugin {
      * @param playerName the player name
      */
     void checkPlayer(CommandSender sender, String playerName) {
-        if (getPlayerExact(playerName) == null) {
+        if (getServer().getPlayerExact(playerName) == null) {
             sendMessage(sender, colorize("{GRAY}(Player not online, make sure the name is correct)"));
         }
     }

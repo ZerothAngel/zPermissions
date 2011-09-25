@@ -41,12 +41,12 @@ public class PlayerCommand extends CommonCommand {
 
     private static final int TICKS_PER_SECOND = 20;
 
-    public PlayerCommand() {
-        super(false);
+    public PlayerCommand(ZPermissionsPlugin plugin) {
+        super(plugin, false);
     }
 
     @Command(value="groups", description="List groups this player is a member of")
-    public void getGroups(ZPermissionsPlugin plugin, CommandSender sender, @Session("entityName") String name) {
+    public void getGroups(CommandSender sender, @Session("entityName") String name) {
         List<PermissionEntity> groups = plugin.getDao().getGroups(name);
 
         // Add default group if needed and available
@@ -76,7 +76,7 @@ public class PlayerCommand extends CommonCommand {
     }
 
     @Command(value={"setgroup", "group"}, description="Set this player's singular group")
-    public void setGroup(final ZPermissionsPlugin plugin, CommandSender sender, final @Session("entityName") String playerName, final @Option("group") String groupName) {
+    public void setGroup(CommandSender sender, final @Session("entityName") String playerName, final @Option("group") String groupName) {
         plugin.getTransactionStrategy().execute(new TransactionCallbackWithoutResult() {
             @Override
             public void doInTransactionWithoutResult() throws Exception {
@@ -90,7 +90,7 @@ public class PlayerCommand extends CommonCommand {
     }
 
     @Command(value={"show", "sh"}, description="Show information about a player")
-    public void show(ZPermissionsPlugin plugin, CommandSender sender, @Session("entityName") String playerName) {
+    public void show(CommandSender sender, @Session("entityName") String playerName) {
         PermissionEntity entity = plugin.getDao().getEntity(playerName, false);
 
         if (entity == null || entity.getPermissions().isEmpty()) {
@@ -106,7 +106,7 @@ public class PlayerCommand extends CommonCommand {
     }
 
     @Command(value={"settemp", "temp", "tmp"}, description="Set a temporary permission")
-    public void settemp(ZPermissionsPlugin plugin, CommandSender sender, @Session("entityName") String playerName, @Option("permission") String permission, @Option(value="value", optional=true) Boolean value, @Option(value={"-t", "--timeout"}, valueName="timeout") Integer timeout) {
+    public void settemp(CommandSender sender, @Session("entityName") String playerName, @Option("permission") String permission, @Option(value="value", optional=true) Boolean value, @Option(value={"-t", "--timeout"}, valueName="timeout") Integer timeout) {
         Player player = plugin.getServer().getPlayer(playerName);
         if (player == null) {
             sendMessage(sender, colorize("{RED}Player is not online."));

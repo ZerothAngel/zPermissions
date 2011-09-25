@@ -40,12 +40,12 @@ import org.tyrannyofheaven.bukkit.zPermissions.model.PermissionEntity;
  */
 public class GroupCommand extends CommonCommand {
 
-    public GroupCommand() {
-        super(true);
+    public GroupCommand(ZPermissionsPlugin plugin) {
+        super(plugin, true);
     }
 
     @Command(value="add", description="Add a player to a group")
-    public void addMember(final ZPermissionsPlugin plugin, CommandSender sender, final @Session("entityName") String groupName, final @Option("player") String playerName) {
+    public void addMember(CommandSender sender, final @Session("entityName") String groupName, final @Option("player") String playerName) {
         // Add player to group. Will always succeed.
         plugin.getTransactionStrategy().execute(new TransactionCallbackWithoutResult() {
             @Override
@@ -60,7 +60,7 @@ public class GroupCommand extends CommonCommand {
     }
 
     @Command(value={"remove", "rm"}, description="Remove a player from a group")
-    public void removeMember(final ZPermissionsPlugin plugin, CommandSender sender, final @Session("entityName") String groupName, final @Option("player") String playerName) {
+    public void removeMember(CommandSender sender, final @Session("entityName") String groupName, final @Option("player") String playerName) {
         // Remove player from group
         Boolean result = plugin.getTransactionStrategy().execute(new TransactionCallback<Boolean>() {
             @Override
@@ -80,7 +80,7 @@ public class GroupCommand extends CommonCommand {
     }
 
     @Command(value={"show", "sh"}, description="Show information about a group")
-    public void show(ZPermissionsPlugin plugin, CommandSender sender, @Session("entityName") String groupName) {
+    public void show(CommandSender sender, @Session("entityName") String groupName) {
         PermissionEntity entity = plugin.getDao().getEntity(groupName, true);
 
         if (entity != null) {
@@ -101,7 +101,7 @@ public class GroupCommand extends CommonCommand {
     }
 
     @Command(value={"setparent", "parent"}, description="Set a group's parent")
-    public void setParent(final ZPermissionsPlugin plugin, CommandSender sender, final @Session("entityName") String groupName, final @Option(value="parent", optional=true) String parentName) {
+    public void setParent(CommandSender sender, final @Session("entityName") String groupName, final @Option(value="parent", optional=true) String parentName) {
         try {
             // Set parent. Creates group and/or parent if missing.
             plugin.getTransactionStrategy().execute(new TransactionCallbackWithoutResult() {
@@ -122,7 +122,7 @@ public class GroupCommand extends CommonCommand {
     }
 
     @Command(value={"setpriority", "priority"}, description="Set a group's priority")
-    public void setPriority(final ZPermissionsPlugin plugin, CommandSender sender, final @Session("entityName") String groupName, final @Option("priority") int priority) {
+    public void setPriority(CommandSender sender, final @Session("entityName") String groupName, final @Option("priority") int priority) {
         // Set the priority. Will not fail, creates group if necessary
         plugin.getTransactionStrategy().execute(new TransactionCallbackWithoutResult() {
             @Override
@@ -136,7 +136,7 @@ public class GroupCommand extends CommonCommand {
     }
 
     @Command(value="members", description="List members of a group")
-    public void members(ZPermissionsPlugin plugin, CommandSender sender, @Session("entityName") String groupName) {
+    public void members(CommandSender sender, @Session("entityName") String groupName) {
         List<String> members = plugin.getDao().getMembers(groupName);
         
         // NB: Can't tell if group doesn't exist or if it has no members.

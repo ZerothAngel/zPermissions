@@ -35,6 +35,9 @@ import org.tyrannyofheaven.bukkit.zPermissions.model.Entry;
  */
 public abstract class CommonCommand {
 
+    // Parent plugin
+    protected final ZPermissionsPlugin plugin;
+
     // true if this is handling groups
     private final boolean group;
 
@@ -43,12 +46,13 @@ public abstract class CommonCommand {
      * 
      * @param group true if this is handling groups
      */
-    protected CommonCommand(boolean group) {
+    protected CommonCommand(ZPermissionsPlugin plugin, boolean group) {
+        this.plugin = plugin;
         this.group = group;
     }
 
     @Command(value="get", description="View a permission")
-    public void get(final ZPermissionsPlugin plugin, CommandSender sender, final @Session("entityName") String name, @Option("permission") String permission) {
+    public void get(CommandSender sender, final @Session("entityName") String name, @Option("permission") String permission) {
         // Get world/permission
         final WorldPermission wp = new WorldPermission(permission);
 
@@ -71,7 +75,7 @@ public abstract class CommonCommand {
     }
 
     @Command(value="set", description="Set a permission")
-    public void set(final ZPermissionsPlugin plugin, CommandSender sender, final @Session("entityName") String name, @Option("permission") String permission, final @Option(value="value", optional=true) Boolean value) {
+    public void set(CommandSender sender, final @Session("entityName") String name, @Option("permission") String permission, final @Option(value="value", optional=true) Boolean value) {
         // Get world/permission
         final WorldPermission wp = new WorldPermission(permission);
     
@@ -90,7 +94,7 @@ public abstract class CommonCommand {
     }
 
     @Command(value="unset", description="Remove a permission")
-    public void unset(final ZPermissionsPlugin plugin, CommandSender sender, final @Session("entityName") String name, @Option("permission") String permission) {
+    public void unset(CommandSender sender, final @Session("entityName") String name, @Option("permission") String permission) {
         // Get world/permission
         final WorldPermission wp = new WorldPermission(permission);
     
@@ -114,7 +118,7 @@ public abstract class CommonCommand {
     }
 
     @Command(value="purge", description="Delete this group or player") // doh!
-    public void delete(final ZPermissionsPlugin plugin, CommandSender sender, final @Session("entityName") String name) {
+    public void delete(CommandSender sender, final @Session("entityName") String name) {
         boolean result = plugin.getTransactionStrategy().execute(new TransactionCallback<Boolean>() {
             @Override
             public Boolean doInTransaction() throws Exception {
