@@ -19,7 +19,6 @@ import static org.tyrannyofheaven.bukkit.util.ToHUtils.registerEvent;
 
 import org.bukkit.event.Event.Priority;
 import org.bukkit.event.player.PlayerJoinEvent;
-import org.bukkit.event.player.PlayerKickEvent;
 import org.bukkit.event.player.PlayerListener;
 import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
@@ -41,7 +40,6 @@ class ZPermissionsPlayerListener extends PlayerListener {
 
     void registerEvents(boolean regionSupport) {
         registerEvent("PLAYER_JOIN", this, Priority.Monitor, plugin);
-        registerEvent("PLAYER_KICK", this, Priority.Monitor, plugin); // Necessary?
         registerEvent("PLAYER_QUIT", this, Priority.Monitor, plugin);
         registerEvent("PLAYER_TELEPORT", this, Priority.Monitor, plugin);
 
@@ -56,9 +54,7 @@ class ZPermissionsPlayerListener extends PlayerListener {
     }
 
     @Override
-    public void onPlayerKick(PlayerKickEvent event) {
-        if (event.isCancelled()) return;
-        
+    public void onPlayerQuit(PlayerQuitEvent event) {
         plugin.removeAttachment(event.getPlayer().getName());
     }
 
@@ -68,11 +64,6 @@ class ZPermissionsPlayerListener extends PlayerListener {
 
         // Conditionally update if world changed
         plugin.updateAttachment(event.getPlayer().getName(), plugin.getRegions(event.getTo()), false);
-    }
-
-    @Override
-    public void onPlayerQuit(PlayerQuitEvent event) {
-        plugin.removeAttachment(event.getPlayer().getName());
     }
 
     @Override
