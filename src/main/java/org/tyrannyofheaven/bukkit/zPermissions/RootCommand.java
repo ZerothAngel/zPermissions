@@ -46,7 +46,16 @@ import org.tyrannyofheaven.bukkit.zPermissions.model.PermissionEntity;
  */
 public class RootCommand {
 
-    private final SubCommands sc = new SubCommands();
+    // Parent plugin
+    private final ZPermissionsPlugin plugin;
+
+    // Handler for /permissions sub-commands
+    private final SubCommands sc;
+
+    RootCommand(ZPermissionsPlugin plugin) {
+        this.plugin = plugin;
+        sc = new SubCommands(plugin);
+    }
 
     @Command("permissions")
     @Require({"zpermissions.player", "zpermissions.group", "zpermissions.list", "zpermissions.check", "zpermissions.reload",
@@ -69,7 +78,7 @@ public class RootCommand {
     }
 
     // Perform the actual promotion/demotion
-    private void rankChange(final ZPermissionsPlugin plugin, final CommandSender sender, final String playerName, String trackName, final boolean rankUp) {
+    private void rankChange(final CommandSender sender, final String playerName, String trackName, final boolean rankUp) {
         // Resolve track
         if (!hasText(trackName))
             trackName = plugin.getDefaultTrack();
@@ -87,8 +96,7 @@ public class RootCommand {
         // Determine what groups the player and the track have in common
         final Set<String> trackGroupNames = new HashSet<String>(track);
 
-        // Do everything in one ginormous transaction. TODO move the sendMessage
-        // calls outside of transaction...
+        // Do everything in one ginormous transaction.
         plugin.getTransactionStrategy().execute(new TransactionCallbackWithoutResult() {
             @Override
             public void doInTransactionWithoutResult() throws Exception {
@@ -156,14 +164,14 @@ public class RootCommand {
 
     @Command("promote")
     @Require("zpermissions.promote")
-    public void promote(ZPermissionsPlugin plugin, CommandSender sender, @Option("player") String playerName, @Option(value="track", optional=true) String trackName) {
-        rankChange(plugin, sender, playerName, trackName, true);
+    public void promote(CommandSender sender, @Option("player") String playerName, @Option(value="track", optional=true) String trackName) {
+        rankChange(sender, playerName, trackName, true);
     }
 
     @Command("demote")
     @Require("zpermissions.demote")
-    public void demote(ZPermissionsPlugin plugin, CommandSender sender, @Option("player") String playerName, @Option(value="track", optional=true) String trackName) {
-        rankChange(plugin, sender, playerName, trackName, false);
+    public void demote(CommandSender sender, @Option("player") String playerName, @Option(value="track", optional=true) String trackName) {
+        rankChange(sender, playerName, trackName, false);
     }
 
 }

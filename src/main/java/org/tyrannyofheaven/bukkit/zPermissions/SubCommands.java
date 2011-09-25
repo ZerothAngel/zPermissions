@@ -49,11 +49,20 @@ import org.tyrannyofheaven.bukkit.zPermissions.model.PermissionEntity;
  */
 public class SubCommands {
 
+    // Parent plugin
+    private final ZPermissionsPlugin plugin;
+
     // The "/permissions player" handler
-    private final PlayerCommand playerCommand = new PlayerCommand();
+    private final PlayerCommand playerCommand;
 
     // The "/permissions group" handler
-    private final CommonCommand groupCommand = new GroupCommand();
+    private final GroupCommand groupCommand;
+
+    SubCommands(ZPermissionsPlugin plugin) {
+        this.plugin = plugin;
+        playerCommand = new PlayerCommand(plugin);
+        groupCommand = new GroupCommand(plugin);
+    }
 
     @Command(value={"player", "pl", "p"}, description="Player-related commands")
     @Require("zpermissions.player")
@@ -106,7 +115,7 @@ public class SubCommands {
 
     @Command(value={"list", "ls"}, description="List players or groups in the database")
     @Require("zpermissions.list")
-    public void list(ZPermissionsPlugin plugin, CommandSender sender, @Option("what") String what) {
+    public void list(CommandSender sender, @Option("what") String what) {
         boolean group;
         if ("groups".startsWith(what)) {
             group = true;
@@ -132,7 +141,7 @@ public class SubCommands {
 
     @Command(value="check", description="Check against effective permissions")
     @Require("zpermissions.check")
-    public void check(ZPermissionsPlugin plugin, CommandSender sender, @Option("permission") String permission, @Option(value="player", optional=true) String playerName) {
+    public void check(CommandSender sender, @Option("permission") String permission, @Option(value="player", optional=true) String playerName) {
         Player player;
         if (playerName == null) {
             // No player specified
@@ -166,7 +175,7 @@ public class SubCommands {
 
     @Command(value="reload", description="Re-read config.yml")
     @Require("zpermissions.reload")
-    public void reload(ZPermissionsPlugin plugin, CommandSender sender) {
+    public void reload(CommandSender sender) {
         plugin.reload();
         sendMessage(sender, colorize("{WHITE}config.yml{YELLOW} reloaded"));
     }
@@ -183,7 +192,7 @@ public class SubCommands {
 
     @Command(value={"import", "restore"}, description="Import a dump of the database")
     @Require("zpermissions.import")
-    public void import_command(final ZPermissionsPlugin plugin, final CommandSender sender, @Option("filename") String filename) {
+    public void import_command(final CommandSender sender, @Option("filename") String filename) {
         File inFile = sanitizeFilename(plugin.getDumpDirectory(), filename);
         try {
             // Ensure database is empty
@@ -219,7 +228,7 @@ public class SubCommands {
     
     @Command(value={"export", "dump"}, description="Export a dump of the database")
     @Require("zpermissions.export")
-    public void export(final ZPermissionsPlugin plugin, CommandSender sender, @Option("filename") String filename) {
+    public void export(CommandSender sender, @Option("filename") String filename) {
         File outFile = sanitizeFilename(plugin.getDumpDirectory(), filename);
         try {
             if (!plugin.getDumpDirectory().exists()) {

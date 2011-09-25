@@ -25,3 +25,6 @@ tracks:
   - default
   - somegroup
   - someothergroup
+
+# Enable debug logging.
+debug: false
