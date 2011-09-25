@@ -118,6 +118,7 @@ public class RootCommand {
                     if (rankUp) {
                         String group = track.get(0);
                         plugin.getDao().addMember(group, playerName);
+                        plugin.log("%s added %s to %s", sender.getName(), playerName, group);
                         sendMessage(sender, colorize("{YELLOW}Adding {AQUA}%s{YELLOW} to {DARK_GREEN}%s"), playerName, group);
                     }
                     else {
@@ -136,6 +137,7 @@ public class RootCommand {
                     // If now ranked below first rank, remove altogether
                     if (rankIndex < 0) {
                         plugin.getDao().removeMember(oldGroup, playerName);
+                        plugin.log("%s removed %s from %s", sender.getName(), playerName, oldGroup);
                         sendMessage(sender, colorize("{YELLOW}Removing {AQUA}%s{YELLOW} from {DARK_GREEN}%s"), playerName, oldGroup);
                     }
                     else {
@@ -148,6 +150,11 @@ public class RootCommand {
                         plugin.getDao().removeMember(oldGroup, playerName);
                         plugin.getDao().addMember(newGroup, playerName);
         
+                        plugin.log("%s %s %s from %s to %s", sender.getName(),
+                                (rankUp ? "promoted" : "demoted"),
+                                playerName,
+                                oldGroup,
+                                newGroup);
                         sendMessage(sender, colorize("{YELLOW}%s {AQUA}%s{YELLOW} from {DARK_GREEN}%s{YELLOW} to {DARK_GREEN}%s"),
                                 (rankUp ? "Promoting" : "Demoting"),
                                 playerName,
