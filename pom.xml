@@ -35,7 +35,7 @@
     </dependency>
     <dependency>
       <groupId>org.tyrannyofheaven.bukkit</groupId>
-      <artifactId>ToHUtils</artifactId>
+      <artifactId>ToHBukkitUtils</artifactId>
       <version>1.0-SNAPSHOT</version>
     </dependency>
     <dependency>
@@ -88,26 +88,6 @@
           <target>1.6</target>
         </configuration>
       </plugin>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-shade-plugin</artifactId>
-	<version>1.4</version>
-        <executions>
-          <execution>
-            <phase>package</phase>
-            <goals>
-              <goal>shade</goal>
-            </goals>
-            <configuration>
-              <artifactSet>
-                <includes>
-                  <include>org.tyrannyofheaven.bukkit:ToHUtils</include>
-                </includes>
-              </artifactSet>
-            </configuration>
-          </execution>
-        </executions>
-      </plugin>
       <!--
       <plugin>
         <groupId>com.pyx4me</groupId>
@@ -136,7 +116,7 @@
           <exclusions>
             <exclusion>
               <groupId>org.tyrannyofheaven.bukkit</groupId>
-              <artifactId>ToHUtils</artifactId>
+              <artifactId>ToHBukkitUtils</artifactId>
             </exclusion>
           </exclusions>
         </configuration>
@@ -170,10 +150,40 @@
 	    </manifest>
             <manifestEntries>
 	      <Implementation-Build>${buildNumber}</Implementation-Build>
+              <Class-Path>lib/ToHBukkitUtils.jar ${project.artifactId}/ToHBukkitUtils.jar ../lib/ToHBukkitUtils.jar ../ToHBukkitUtils.jar</Class-Path>
             </manifestEntries>
           </archive>
         </configuration>
       </plugin>
     </plugins>
   </build>
+  <profiles>
+    <profile>
+      <id>standalone</id>
+      <build>
+	<plugins>
+	  <plugin>
+	    <groupId>org.apache.maven.plugins</groupId>
+	    <artifactId>maven-shade-plugin</artifactId>
+	    <version>1.4</version>
+	    <executions>
+	      <execution>
+		<phase>package</phase>
+		<goals>
+		  <goal>shade</goal>
+		</goals>
+		<configuration>
+		  <artifactSet>
+		    <includes>
+		      <include>org.tyrannyofheaven.bukkit:ToHBukkitUtils</include>
+		    </includes>
+		  </artifactSet>
+		</configuration>
+	      </execution>
+	    </executions>
+	  </plugin>
+	</plugins>
+      </build>
+    </profile>
+  </profiles>
 </project>
