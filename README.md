@@ -10,6 +10,7 @@ However, zPermissions works great with [PermissionsBukkit](http://dev.bukkit.org
 SuperpermsBridge.
 
 Lastly, there is currently no build protection as I rely on WorldGuard for that.
+
 I aim to keep zPermissions a simple, yet feature-rich, Superperms provider.
 
 ## Features ##
@@ -117,7 +118,8 @@ The rank commands are `/promote` and `/demote`.
     Lists groups or players in the system. Note that only players with
     permissions set will be shown. (Players who are only members will not.)
 *   `/permissions check <permission> [player]` &mdash; Checks if yourself or
-    another player has the given permission.
+    another player has the given permission. `permission` must be an
+    unqualified permission node &mdash; no world or region qualifiers.
 *   `/permissions reload` &mdash; Re-reads config.yml.
 *   `/permissions export <filename>` &mdash; Creates a file containing
     all the zPermissions commands necessary to re-create your database. See
@@ -134,6 +136,10 @@ The rank commands are `/promote` and `/demote`.
     (Defaults to true.)
 *   `/permissions player <player> unset <permission>` &mdash; Remove a
     permission from a player.
+*   `/permissions player <player> settemp [-t <timeout>] <permission> [value]`
+    &mdash; Set a temporary permission for `timeout` seconds. See config.yml
+    for default timeout. `permission` must be an unqualified permission node
+    &mdash; no world or region qualifiers.
 *   `/permissions player <player> purge` &mdash; Delete a player from
     zPermissions. Removes any permissions and group memberships.
 *   `/permissions player <player> groups` &mdash; List the groups a player is a
