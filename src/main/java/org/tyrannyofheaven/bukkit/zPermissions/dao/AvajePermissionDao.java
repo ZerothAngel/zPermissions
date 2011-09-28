@@ -16,6 +16,7 @@
 package org.tyrannyofheaven.bukkit.zPermissions.dao;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import org.tyrannyofheaven.bukkit.zPermissions.model.Entry;
@@ -431,6 +432,28 @@ public class AvajePermissionDao implements PermissionDao {
             result.add(membership.getMember());
         }
         return result;
+    }
+
+    @Override
+    public List<PermissionEntity> getAncestry(String groupName) {
+        PermissionEntity group = getEntity(groupName, true, false);
+        if (group == null)
+            return Collections.emptyList();
+
+        // Build list of group ancestors
+        List<PermissionEntity> ancestry = new ArrayList<PermissionEntity>();
+        ancestry.add(group);
+        while (group.getParent() != null) {
+            group = group.getParent();
+            getEbeanServer().refresh(group); // NB: Required oddity due to caching
+            getEbeanServer().refreshMany(group, "permissions"); // WHYYYY
+            ancestry.add(group);
+        }
+        
+        // Reverse list (will be applying farthest ancestors first)
+        Collections.reverse(ancestry);
+
+        return ancestry;
     }
 
 }

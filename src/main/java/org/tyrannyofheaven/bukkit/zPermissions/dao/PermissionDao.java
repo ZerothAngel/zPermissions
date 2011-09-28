@@ -59,4 +59,6 @@ public interface PermissionDao {
 
     public boolean deleteEntity(String name, boolean group);
 
+    public List<PermissionEntity> getAncestry(String groupName);
+
 }
