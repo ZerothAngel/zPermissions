@@ -291,15 +291,15 @@ public class ZPermissionsPlugin extends JavaPlugin {
     // Resolve a group's permissions. Ancestor permissions should be overridden
     // each successive descendant.
     private void resolveGroup(Map<String, Boolean> permissions, Set<String> regions, String world, String group) {
-        List<PermissionEntity> ancestry = getDao().getAncestry(group);
+        List<String> ancestry = getDao().getAncestry(group);
 
         debug("Ancestry for %s: %s", group, ancestry);
-        for (PermissionEntity ancestor : ancestry) {
-            applyPermissions(permissions, ancestor, regions, world);
+        for (String ancestor : ancestry) {
+            applyPermissions(permissions, ancestor, true, regions, world);
             
             // Add group permission, if present
             if (groupPermissionFormat != null) {
-                permissions.put(String.format(groupPermissionFormat, ancestor.getName()), Boolean.TRUE);
+                permissions.put(String.format(groupPermissionFormat, ancestor), Boolean.TRUE);
             }
         }
     }
@@ -328,10 +328,7 @@ public class ZPermissionsPlugin extends JavaPlugin {
                 }
 
                 // Player-specific permissions overrides all group permissions
-                PermissionEntity playerEntity = getDao().getEntity(player.getName(), false);
-                if (playerEntity != null) {
-                    applyPermissions(permissions, playerEntity, regions, world);
-                }
+                applyPermissions(permissions, player.getName(), false, regions, world);
 
                 return permissions;
             }
@@ -341,12 +338,12 @@ public class ZPermissionsPlugin extends JavaPlugin {
     // Apply an entity's permissions to the permission map. Global permissions
     // (ones not assigned to any specific world) are applied first. They are
     // then overidden by any world-specific permissions.
-    private void applyPermissions(Map<String, Boolean> permissions, PermissionEntity entity, Set<String> regions, String world) {
+    private void applyPermissions(Map<String, Boolean> permissions, String name, boolean group, Set<String> regions, String world) {
         Map<String, Boolean> regionPermissions = new HashMap<String, Boolean>();
         List<Entry> worldPermissions = new ArrayList<Entry>();
 
         // Apply non-region-specific, non-world-specific permissions first
-        for (Entry e : getDao().getEntries(entity.getName(), entity.isGroup())) { // WHYYY
+        for (Entry e : getDao().getEntries(name, group)) { // WHYYY
             if (e.getRegion() == null && e.getWorld() == null) {
                 permissions.put(e.getPermission(), e.isValue());
             }

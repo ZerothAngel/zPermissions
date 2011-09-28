@@ -435,7 +435,7 @@ public class AvajePermissionDao implements PermissionDao {
     }
 
     @Override
-    public List<PermissionEntity> getAncestry(String groupName) {
+    public List<String> getAncestry(String groupName) {
         checkTransaction();
 
         PermissionEntity group = getEntity(groupName, true, false);
@@ -443,12 +443,12 @@ public class AvajePermissionDao implements PermissionDao {
             return Collections.emptyList();
 
         // Build list of group ancestors
-        List<PermissionEntity> ancestry = new ArrayList<PermissionEntity>();
-        ancestry.add(group);
+        List<String> ancestry = new ArrayList<String>();
+        ancestry.add(group.getDisplayName());
         while (group.getParent() != null) {
             group = group.getParent();
             getEbeanServer().refresh(group); // NB: Required oddity due to caching
-            ancestry.add(group);
+            ancestry.add(group.getDisplayName());
         }
         
         // Reverse list (will be applying farthest ancestors first)
