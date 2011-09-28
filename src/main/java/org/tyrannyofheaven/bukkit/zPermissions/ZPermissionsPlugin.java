@@ -291,19 +291,8 @@ public class ZPermissionsPlugin extends JavaPlugin {
     // Resolve a group's permissions. Ancestor permissions should be overridden
     // each successive descendant.
     private void resolveGroup(Map<String, Boolean> permissions, Set<String> regions, String world, PermissionEntity group) {
-        PermissionEntity check = group;
+        List<PermissionEntity> ancestry = getDao().getAncestry(group.getDisplayName());
 
-        // Build list of group ancestors
-        List<PermissionEntity> ancestry = new ArrayList<PermissionEntity>();
-        ancestry.add(check);
-        while (check.getParent() != null) {
-            check = check.getParent();
-            ancestry.add(check);
-        }
-        
-        // Reverse list (will be applying farthest ancestors first)
-        Collections.reverse(ancestry);
-        
         debug("Ancestry for %s: %s", group.getDisplayName(), ancestry);
         for (PermissionEntity ancestor : ancestry) {
             applyPermissions(permissions, ancestor, regions, world);
