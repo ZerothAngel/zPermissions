@@ -291,17 +291,20 @@ public class ZPermissionsPlugin extends JavaPlugin {
     // Resolve a group's permissions. Ancestor permissions should be overridden
     // each successive descendant.
     private void resolveGroup(Map<String, Boolean> permissions, Set<String> regions, String world, PermissionEntity group) {
+        PermissionEntity check = group;
+
         // Build list of group ancestors
         List<PermissionEntity> ancestry = new ArrayList<PermissionEntity>();
-        ancestry.add(group);
-        while (group.getParent() != null) {
-            group = group.getParent();
-            ancestry.add(group);
+        ancestry.add(check);
+        while (check.getParent() != null) {
+            check = check.getParent();
+            ancestry.add(check);
         }
         
         // Reverse list (will be applying farthest ancestors first)
         Collections.reverse(ancestry);
         
+        debug("Ancestry for %s: %s", group.getDisplayName(), ancestry);
         for (PermissionEntity ancestor : ancestry) {
             applyPermissions(permissions, ancestor, regions, world);
             
@@ -332,6 +335,7 @@ public class ZPermissionsPlugin extends JavaPlugin {
                 Map<String, Boolean> permissions = new HashMap<String, Boolean>();
 
                 // Resolve each group in turn (highest priority resolved last)
+                debug("Groups for %s: %s", player.getName(), groups);
                 for (PermissionEntity group : groups) {
                     resolveGroup(permissions, regions, world, group);
                 }
@@ -405,7 +409,9 @@ public class ZPermissionsPlugin extends JavaPlugin {
 
     // Update state about a player, resolving effective permissions and
     // creating/updating their attachment
-    void updateAttachment(String playerName, Set<String> regions, boolean force) {
+    void updateAttachment(String playerName, Location location, boolean force) {
+        Set<String> regions = getRegions(location);
+
         Player player;
         PlayerState playerState = null;
         synchronized (playerStates) {
@@ -420,7 +426,7 @@ public class ZPermissionsPlugin extends JavaPlugin {
         if (!force) {
             force = playerState == null ||
                 !regions.equals(playerState.getRegions()) ||
-                !player.getWorld().getName().equals(playerState.getWorld());
+                !location.getWorld().getName().equals(playerState.getWorld());
         }
 
         // No need to update yet (most likely called by movement-based event)
@@ -443,7 +449,7 @@ public class ZPermissionsPlugin extends JavaPlugin {
                 playerState = playerStates.get(player.getName());
                 if (playerState == null) {
                     // Doesn't exist yet, add it
-                    playerState = new PlayerState(pa, regions, player.getWorld().getName());
+                    playerState = new PlayerState(pa, regions, location.getWorld().getName());
                     playerStates.put(player.getName(), playerState);
                 }
                 else if (playerState != null) {
@@ -451,7 +457,7 @@ public class ZPermissionsPlugin extends JavaPlugin {
                     old = playerState.setAttachment(pa);
                     playerState.getRegions().clear();
                     playerState.getRegions().addAll(regions);
-                    playerState.setWorld(player.getWorld().getName());
+                    playerState.setWorld(location.getWorld().getName());
                 }
             }
         }
@@ -461,16 +467,8 @@ public class ZPermissionsPlugin extends JavaPlugin {
             old.remove();
     }
 
-    // Returns names of regions the player is currently inside
-    Set<String> getPlayerRegions(String playerName) {
-        Player player = getServer().getPlayerExact(playerName);
-        if (player != null)
-            return getRegions(player.getLocation());
-        return Collections.emptySet();
-    }
-
-    // Returns names of regions the player is currently inside
-    Set<String> getRegions(Location location) {
+    // Returns names of regions that contain the location
+    private Set<String> getRegions(Location location) {
         WorldGuardPlugin wgp = getWorldGuardPlugin();
         if (wgp != null) {
             RegionManager rm = wgp.getRegionManager(location.getWorld());
@@ -495,8 +493,11 @@ public class ZPermissionsPlugin extends JavaPlugin {
      * @param playerName the name of the player
      */
     void refreshPlayer(String playerName) {
-        debug("Refreshing player %s", playerName);
-        updateAttachment(playerName, getPlayerRegions(playerName), true);
+        Player player = getServer().getPlayerExact(playerName);
+        if (player != null) {
+            debug("Refreshing player %s", playerName);
+            updateAttachment(playerName, player.getLocation(), true);
+        }
     }
 
     /**
@@ -505,7 +506,7 @@ public class ZPermissionsPlugin extends JavaPlugin {
     void refreshPlayers() {
         debug("Refreshing all online players");
         for (Player player : getServer().getOnlinePlayers()) {
-            updateAttachment(player.getName(), getRegions(player.getLocation()), true);
+            updateAttachment(player.getName(), player.getLocation(), true);
         }
     }
 
