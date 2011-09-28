@@ -52,6 +52,8 @@ import org.tyrannyofheaven.bukkit.zPermissions.model.PermissionEntity;
 import org.tyrannyofheaven.bukkit.zPermissions.model.PermissionRegion;
 import org.tyrannyofheaven.bukkit.zPermissions.model.PermissionWorld;
 
+import com.avaje.ebean.cache.ServerCache;
+import com.avaje.ebean.cache.ServerCacheOptions;
 import com.sk89q.worldedit.Vector;
 import com.sk89q.worldguard.bukkit.WorldGuardPlugin;
 import com.sk89q.worldguard.protection.ApplicableRegionSet;
@@ -77,6 +79,15 @@ public class ZPermissionsPlugin extends JavaPlugin {
     // Default timeout for temporary permissions
     private static final int DEFAULT_TEMP_PERMISSION_TIMEOUT = 60;
 
+    // Default max-idle for Avaje bean cache
+    private static final int DEFAULT_CACHE_IDLE = 180;
+
+    // Default TTL for Avaje bean cache
+    private static final int DEFAULT_CACHE_TTL = 600;
+
+    // Default size of Avaje bean cache
+    private static final int DEFAULT_CACHE_SIZE = 1000;
+
     // This plugin's logger
     private final Logger logger = Logger.getLogger(getClass().getName());
 
@@ -97,6 +108,15 @@ public class ZPermissionsPlugin extends JavaPlugin {
 
     // The configured default temporary permission timeout
     private int defaultTempPermissionTimeout;
+
+    // The configured bean cache max-idle
+    private int cacheMaxIdle;
+    
+    // The configured bean cache TTL
+    private int cacheMaxTtl;
+
+    // The configured bean cache size
+    private int cacheSize;
 
     // Track definitions
     private Map<String, List<String>> tracks = new HashMap<String, List<String>>();
@@ -187,6 +207,7 @@ public class ZPermissionsPlugin extends JavaPlugin {
         // Set up TransactionStrategy and DAO
         transactionStrategy = new AvajeTransactionStrategy(getDatabase());
         dao = new AvajePermissionDao(getDatabase());
+        applyCacheSettings();
 
         // Install our commands
         (new ToHCommandExecutor<ZPermissionsPlugin>(this, new RootCommand(this))).registerCommands();
@@ -205,6 +226,22 @@ public class ZPermissionsPlugin extends JavaPlugin {
         refreshPlayers();
         
         log("%s enabled.", getDescription().getVersion());
+    }
+
+    // Apply cache settings to Avaje bean caches
+    private void applyCacheSettings() {
+        if (cacheMaxIdle <= 0 && cacheMaxTtl <= 0 && cacheSize <= 0) return; // nothing to do
+        for (Class<?> clazz : getDatabaseClasses()) {
+            ServerCache beanCache = getDatabase().getServerCacheManager().getBeanCache(clazz);
+            ServerCacheOptions beanCacheOptions = beanCache.getOptions();
+            if (cacheMaxIdle > 0)
+                beanCacheOptions.setMaxIdleSecs(cacheMaxIdle);
+            if (cacheMaxTtl > 0)
+                beanCacheOptions.setMaxSecsToLive(cacheMaxTtl);
+            if (cacheSize > 0)
+                beanCacheOptions.setMaxSize(cacheSize);
+            beanCache.setOptions(beanCacheOptions);
+        }
     }
 
     /**
@@ -547,6 +584,9 @@ public class ZPermissionsPlugin extends JavaPlugin {
             dumpDirectory = new File(value);
 
         defaultTempPermissionTimeout = getConfiguration().getInt("default-temp-permission-timeout", DEFAULT_TEMP_PERMISSION_TIMEOUT);
+        cacheMaxIdle = getConfiguration().getInt("cache-max-idle", DEFAULT_CACHE_IDLE);
+        cacheMaxTtl = getConfiguration().getInt("cache-max-ttl", DEFAULT_CACHE_TTL);
+        cacheSize = getConfiguration().getInt("cache-size", DEFAULT_CACHE_SIZE);
 
         // Read tracks, if any
         ConfigurationNode node = getConfiguration().getNode("tracks");

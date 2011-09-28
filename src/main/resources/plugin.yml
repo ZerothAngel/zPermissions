@@ -35,6 +35,7 @@ permissions:
       zpermissions.promote.*: true
       zpermissions.demote: true
       zpermissions.demote.*: true
+      zpermissions.cache: true
   zpermissions.player:
     description: Allows use of the /permissions player command
   zpermissions.group:
@@ -59,3 +60,5 @@ permissions:
     description: Allows use of the /demote command
   zpermissions.demote.*:
     description: Allows use of /demote on all tracks
+  zpermissions.cache:
+    description: Allows use of the /permissions cache command
