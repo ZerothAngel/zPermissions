@@ -240,9 +240,9 @@ public class AvajeDaoTest {
         getEbeanServer().beginTransaction();
         try {
             // Confirm membership
-            List<PermissionEntity> groups = getDao().getGroups(TEST_PLAYER);
+            List<String> groups = getDao().getGroups(TEST_PLAYER);
             assertEquals(1, groups.size());
-            assertEquals(TEST_GROUP1, groups.get(0).getDisplayName());
+            assertEquals(TEST_GROUP1, groups.get(0));
             
             List<String> players = getDao().getMembers(TEST_GROUP1);
             assertEquals(1, players.size());
@@ -259,11 +259,11 @@ public class AvajeDaoTest {
         getEbeanServer().beginTransaction();
         try {
             // Confirm membership
-            List<PermissionEntity> groups = getDao().getGroups(TEST_PLAYER);
+            List<String> groups = getDao().getGroups(TEST_PLAYER);
             assertEquals(2, groups.size());
             // NB: When priorities are equal, falls back to lexicographical ordering
-            assertEquals(TEST_GROUP1, groups.get(0).getDisplayName());
-            assertEquals(TEST_GROUP2, groups.get(1).getDisplayName());
+            assertEquals(TEST_GROUP1, groups.get(0));
+            assertEquals(TEST_GROUP2, groups.get(1));
             
             List<String> players = getDao().getMembers(TEST_GROUP2);
             assertEquals(1, players.size());
@@ -280,10 +280,10 @@ public class AvajeDaoTest {
         getEbeanServer().beginTransaction();
         try {
             // Confirm new ordering
-            List<PermissionEntity> groups = getDao().getGroups(TEST_PLAYER);
+            List<String> groups = getDao().getGroups(TEST_PLAYER);
             assertEquals(2, groups.size());
-            assertEquals(TEST_GROUP2, groups.get(0).getDisplayName());
-            assertEquals(TEST_GROUP1, groups.get(1).getDisplayName());
+            assertEquals(TEST_GROUP2, groups.get(0));
+            assertEquals(TEST_GROUP1, groups.get(1));
             
             // Remove membership from TEST_GROUP1
             assertTrue(getDao().removeMember(TEST_GROUP1, TEST_PLAYER));
@@ -296,9 +296,9 @@ public class AvajeDaoTest {
         getEbeanServer().beginTransaction();
         try {
             // Confirm membership
-            List<PermissionEntity> groups = getDao().getGroups(TEST_PLAYER);
+            List<String> groups = getDao().getGroups(TEST_PLAYER);
             assertEquals(1, groups.size());
-            assertEquals(TEST_GROUP2, groups.get(0).getDisplayName());
+            assertEquals(TEST_GROUP2, groups.get(0));
 
             assertTrue(getDao().getMembers(TEST_GROUP1).isEmpty());
 
@@ -313,9 +313,9 @@ public class AvajeDaoTest {
         getEbeanServer().beginTransaction();
         try {
             // Confirm membership
-            List<PermissionEntity> groups = getDao().getGroups(TEST_PLAYER);
+            List<String> groups = getDao().getGroups(TEST_PLAYER);
             assertEquals(1, groups.size());
-            assertEquals(TEST_GROUP1, groups.get(0).getDisplayName());
+            assertEquals(TEST_GROUP1, groups.get(0));
 
             // Clean up
             assertTrue(getDao().deleteEntity(TEST_GROUP2, true));
