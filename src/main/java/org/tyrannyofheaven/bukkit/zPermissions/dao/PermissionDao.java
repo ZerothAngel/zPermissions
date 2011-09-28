@@ -43,7 +43,7 @@ public interface PermissionDao {
     
     public boolean removeMember(String groupName, String member);
 
-    public List<PermissionEntity> getGroups(String member);
+    public List<String> getGroups(String member);
 
     public List<String> getMembers(String group);
 

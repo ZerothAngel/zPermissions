@@ -32,7 +32,6 @@ import org.tyrannyofheaven.bukkit.util.command.HelpBuilder;
 import org.tyrannyofheaven.bukkit.util.command.Option;
 import org.tyrannyofheaven.bukkit.util.command.Require;
 import org.tyrannyofheaven.bukkit.util.transaction.TransactionCallbackWithoutResult;
-import org.tyrannyofheaven.bukkit.zPermissions.model.PermissionEntity;
 
 /**
  * Handler for top-level commands:
@@ -101,9 +100,7 @@ public class RootCommand {
             @Override
             public void doInTransactionWithoutResult() throws Exception {
                 Set<String> playerGroupNames = new HashSet<String>();
-                for (PermissionEntity group : plugin.getDao().getGroups(playerName)) {
-                    playerGroupNames.add(group.getName());
-                }
+                playerGroupNames.addAll(plugin.getDao().getGroups(playerName));
         
                 playerGroupNames.retainAll(trackGroupNames);
                 

@@ -47,13 +47,11 @@ public class PlayerCommand extends CommonCommand {
 
     @Command(value="groups", description="List groups this player is a member of")
     public void getGroups(CommandSender sender, @Session("entityName") String name) {
-        List<PermissionEntity> groups = plugin.getDao().getGroups(name);
+        List<String> groups = plugin.getDao().getGroups(name);
 
-        // Add default group if needed and available
+        // Add default group if needed
         if (groups.isEmpty()) {
-            PermissionEntity defaultGroup = plugin.getDao().getEntity(plugin.getDefaultGroup(), true);
-            if (defaultGroup != null)
-                groups.add(defaultGroup);
+            groups.add(plugin.getDefaultGroup());
         }
 
         if (groups.isEmpty()) {
@@ -62,10 +60,10 @@ public class PlayerCommand extends CommonCommand {
         }
         else {
             StringBuilder sb = new StringBuilder();
-            for (Iterator<PermissionEntity> i = groups.iterator(); i.hasNext();) {
-                PermissionEntity group = i.next();
+            for (Iterator<String> i = groups.iterator(); i.hasNext();) {
+                String group = i.next();
                 sb.append(ChatColor.DARK_GREEN);
-                sb.append(group.getDisplayName());
+                sb.append(group);
                 if (i.hasNext()) {
                     sb.append(ChatColor.YELLOW);
                     sb.append(", ");

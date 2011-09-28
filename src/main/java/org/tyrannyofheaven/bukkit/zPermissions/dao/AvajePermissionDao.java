@@ -260,16 +260,16 @@ public class AvajePermissionDao implements PermissionDao {
     }
 
     @Override
-    public List<PermissionEntity> getGroups(String member) {
+    public List<String> getGroups(String member) {
         // NB: No explicit transaction required
         List<Membership> memberships = getEbeanServer().find(Membership.class).where()
             .eq("member", member.toLowerCase())
             .orderBy("group.priority, group.name")
             .findList();
 
-        List<PermissionEntity> groups = new ArrayList<PermissionEntity>();
+        List<String> groups = new ArrayList<String>();
         for (Membership membership : memberships) {
-            groups.add(membership.getGroup());
+            groups.add(membership.getGroup().getDisplayName());
         }
         return groups;
     }

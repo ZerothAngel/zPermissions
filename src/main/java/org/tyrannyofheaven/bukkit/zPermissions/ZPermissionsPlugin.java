@@ -290,10 +290,10 @@ public class ZPermissionsPlugin extends JavaPlugin {
 
     // Resolve a group's permissions. Ancestor permissions should be overridden
     // each successive descendant.
-    private void resolveGroup(Map<String, Boolean> permissions, Set<String> regions, String world, PermissionEntity group) {
-        List<PermissionEntity> ancestry = getDao().getAncestry(group.getDisplayName());
+    private void resolveGroup(Map<String, Boolean> permissions, Set<String> regions, String world, String group) {
+        List<PermissionEntity> ancestry = getDao().getAncestry(group);
 
-        debug("Ancestry for %s: %s", group.getDisplayName(), ancestry);
+        debug("Ancestry for %s: %s", group, ancestry);
         for (PermissionEntity ancestor : ancestry) {
             applyPermissions(permissions, ancestor, regions, world);
             
@@ -313,19 +313,17 @@ public class ZPermissionsPlugin extends JavaPlugin {
             @Override
             public Map<String, Boolean> doInTransaction() throws Exception {
                 // Get this player's groups
-                List<PermissionEntity> groups = getDao().getGroups(player.getName());
+                List<String> groups = getDao().getGroups(player.getName());
                 if (groups.isEmpty()) {
                     // If no groups, use the default group
-                    PermissionEntity defaultGroup = getDao().getEntity(getDefaultGroup(), true);
-                    if (defaultGroup != null)
-                        groups.add(defaultGroup);
+                    groups.add(getDefaultGroup());
                 }
 
                 Map<String, Boolean> permissions = new HashMap<String, Boolean>();
 
                 // Resolve each group in turn (highest priority resolved last)
                 debug("Groups for %s: %s", player.getName(), groups);
-                for (PermissionEntity group : groups) {
+                for (String group : groups) {
                     resolveGroup(permissions, regions, world, group);
                 }
 
