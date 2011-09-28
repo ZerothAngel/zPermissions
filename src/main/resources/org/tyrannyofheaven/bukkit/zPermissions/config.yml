@@ -26,5 +26,23 @@ tracks:
   - somegroup
   - someothergroup
 
+# Max idle in seconds for entries in the database cache. Set to 0 or negative
+# to use Avaje's global setting from ebean.properties.
+# (If ebean.properties doesn't exist, the default is 600.)
+# NOTE: /permissions reload does not update this value
+cache-max-idle: 180
+
+# Max time-to-live in seconds for entries in the database cache. Set to 0 or
+# negative to use Avaje's global setting from ebean.properties.
+# (If ebean.properties doesn't exist, the default is 21600 or 6 hours.)
+# NOTE: /permissions reload does not update this value
+cache-max-ttl: 600
+
+# Maximum size of database cache. Set to 0 or negative to use Avaje's global
+# setting from ebean.properties.
+# (If ebean.properties doesn't exist, the default is 1000.)
+# NOTE: /permissions reload does not update this value
+cache-size: 1000
+
 # Enable debug logging.
 debug: false

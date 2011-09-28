@@ -22,6 +22,8 @@ import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 import javax.persistence.UniqueConstraint;
 
+import com.avaje.ebean.annotation.CacheStrategy;
+
 /**
  * Represents group membership.
  * 
@@ -30,6 +32,7 @@ import javax.persistence.UniqueConstraint;
 @Entity
 @Table(name="memberships")
 @UniqueConstraint(columnNames={"member", "group_id"})
+@CacheStrategy(useBeanCache=true)
 public class Membership {
 
     private Long id;

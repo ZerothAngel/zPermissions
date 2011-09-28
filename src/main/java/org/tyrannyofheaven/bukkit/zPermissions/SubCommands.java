@@ -58,10 +58,14 @@ public class SubCommands {
     // The "/permissions group" handler
     private final GroupCommand groupCommand;
 
+    // The "/permissions cache" handler
+    private final CacheCommand cacheCommand;
+
     SubCommands(ZPermissionsPlugin plugin) {
         this.plugin = plugin;
         playerCommand = new PlayerCommand(plugin);
         groupCommand = new GroupCommand(plugin);
+        cacheCommand = new CacheCommand(plugin);
     }
 
     @Command(value={"player", "pl", "p"}, description="Player-related commands")
@@ -299,6 +303,21 @@ public class SubCommands {
                     e.getPermission(),
                     e.isValue()));
         }
+    }
+
+    @Command(value="cache", description="Cache-related commands")
+    @Require("zpermissions.cache")
+    public Object cache(HelpBuilder helpBuilder, CommandSender sender, String[] args) {
+        if (args.length == 0) {
+            helpBuilder.withCommandSender(sender)
+                .withHandler(cacheCommand)
+                .forCommand("monitor")
+                .forCommand("clear")
+                .show();
+            return null;
+        }
+        
+        return cacheCommand;
     }
 
 }

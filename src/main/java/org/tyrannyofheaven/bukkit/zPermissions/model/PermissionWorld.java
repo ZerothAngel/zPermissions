@@ -20,6 +20,8 @@ import javax.persistence.Id;
 import javax.persistence.Table;
 import javax.persistence.UniqueConstraint;
 
+import com.avaje.ebean.annotation.CacheStrategy;
+
 /**
  * Represents a world that permission entries may be associated with.
  * 
@@ -28,6 +30,7 @@ import javax.persistence.UniqueConstraint;
 @Entity
 @Table(name="worlds")
 @UniqueConstraint(columnNames="name")
+@CacheStrategy(useBeanCache=true)
 public class PermissionWorld {
 
     private Long id;
@@ -56,12 +59,12 @@ public class PermissionWorld {
         if (obj == this) return true;
         if (!(obj instanceof PermissionWorld)) return false;
         PermissionWorld o = (PermissionWorld)obj;
-        return getName().equals(o.getName());
+        return getName() == null ? o.getName() == null : getName().equals(o.getName());
     }
 
     @Override
     public int hashCode() {
-        return getName().hashCode();
+        return getName() == null ? 0 : getName().hashCode();
     }
 
     @Override

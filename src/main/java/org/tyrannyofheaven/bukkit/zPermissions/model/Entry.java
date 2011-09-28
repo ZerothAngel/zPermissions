@@ -23,6 +23,8 @@ import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 import javax.persistence.UniqueConstraint;
 
+import com.avaje.ebean.annotation.CacheStrategy;
+
 /**
  * A permission entry.
  * 
@@ -31,6 +33,7 @@ import javax.persistence.UniqueConstraint;
 @Entity
 @Table(name="entries")
 @UniqueConstraint(columnNames={"entity_id", "region_id", "world_id", "permission"})
+@CacheStrategy(useBeanCache=true)
 public class Entry {
 
     private Long id;
