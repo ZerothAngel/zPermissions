@@ -436,6 +436,8 @@ public class AvajePermissionDao implements PermissionDao {
 
     @Override
     public List<PermissionEntity> getAncestry(String groupName) {
+        checkTransaction();
+
         PermissionEntity group = getEntity(groupName, true, false);
         if (group == null)
             return Collections.emptyList();
@@ -446,7 +448,6 @@ public class AvajePermissionDao implements PermissionDao {
         while (group.getParent() != null) {
             group = group.getParent();
             getEbeanServer().refresh(group); // NB: Required oddity due to caching
-            getEbeanServer().refreshMany(group, "permissions"); // WHYYYY
             ancestry.add(group);
         }
         
@@ -454,6 +455,19 @@ public class AvajePermissionDao implements PermissionDao {
         Collections.reverse(ancestry);
 
         return ancestry;
+    }
+
+    @Override
+    public List<Entry> getEntries(String name, boolean group) {
+        checkTransaction();
+        
+        PermissionEntity entity = getEntity(name, group, false);
+        if (entity == null)
+            return Collections.emptyList();
+
+        return getEbeanServer().find(Entry.class).where()
+            .eq("entity", entity)
+            .findList();
     }
 
 }

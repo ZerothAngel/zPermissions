@@ -17,6 +17,7 @@ package org.tyrannyofheaven.bukkit.zPermissions.dao;
 
 import java.util.List;
 
+import org.tyrannyofheaven.bukkit.zPermissions.model.Entry;
 import org.tyrannyofheaven.bukkit.zPermissions.model.PermissionEntity;
 
 /**
@@ -60,5 +61,7 @@ public interface PermissionDao {
     public boolean deleteEntity(String name, boolean group);
 
     public List<PermissionEntity> getAncestry(String groupName);
+
+    public List<Entry> getEntries(String name, boolean group);
 
 }
