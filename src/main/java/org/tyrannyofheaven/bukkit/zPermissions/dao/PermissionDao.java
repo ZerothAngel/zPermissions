@@ -60,7 +60,7 @@ public interface PermissionDao {
 
     public boolean deleteEntity(String name, boolean group);
 
-    public List<PermissionEntity> getAncestry(String groupName);
+    public List<String> getAncestry(String groupName);
 
     public List<Entry> getEntries(String name, boolean group);
 
