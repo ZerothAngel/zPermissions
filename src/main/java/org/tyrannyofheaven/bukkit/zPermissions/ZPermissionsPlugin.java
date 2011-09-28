@@ -346,7 +346,7 @@ public class ZPermissionsPlugin extends JavaPlugin {
         List<Entry> worldPermissions = new ArrayList<Entry>();
 
         // Apply non-region-specific, non-world-specific permissions first
-        for (Entry e : entity.getPermissions()) {
+        for (Entry e : getDao().getEntries(entity.getName(), entity.isGroup())) { // WHYYY
             if (e.getRegion() == null && e.getWorld() == null) {
                 permissions.put(e.getPermission(), e.isValue());
             }
