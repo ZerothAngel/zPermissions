@@ -317,8 +317,8 @@ public class ZPermissionsPlugin extends JavaPlugin {
 
     // Resolve a player's permissions. Any permissions declared on the player
     // should override group permissions.
-    private Map<String, Boolean> resolvePlayer(final Player player, final Set<String> regions) {
-        final String world = player.getWorld().getName().toLowerCase();
+    private Map<String, Boolean> resolvePlayer(final Player player, final Location location, final Set<String> regions) {
+        final String world = location.getWorld().getName().toLowerCase();
 
         return getTransactionStrategy().execute(new TransactionCallback<Map<String, Boolean>>() {
             @Override
@@ -433,10 +433,12 @@ public class ZPermissionsPlugin extends JavaPlugin {
         if (!force) return;
 
         debug("Updating attachment for %s", player.getName());
+        debug("  location = %s", location);
+        debug("  regions = %s", regions);
 
         // Resolve effective permissions
         PermissionAttachment pa = player.addAttachment(this);
-        for (Map.Entry<String, Boolean> me : resolvePlayer(player, regions).entrySet()) {
+        for (Map.Entry<String, Boolean> me : resolvePlayer(player, location, regions).entrySet()) {
             pa.setPermission(me.getKey(), me.getValue());
         }
 
