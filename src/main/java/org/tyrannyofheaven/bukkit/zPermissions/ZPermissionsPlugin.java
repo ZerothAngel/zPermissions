@@ -94,14 +94,11 @@ public class ZPermissionsPlugin extends JavaPlugin {
     // Internal state kept about each online player
     private final Map<String, PlayerState> playerStates = new HashMap<String, PlayerState>();
 
-    // The configured default group
-    private String defaultGroup;
+    // Permission resolver
+    private final PermissionsResolver resolver = new PermissionsResolver(this);
 
     // The configured default track
     private String defaultTrack;
-
-    // The configured group permission node format
-    private String groupPermissionFormat;
 
     // The configured dump directory
     private File dumpDirectory;
@@ -140,12 +137,17 @@ public class ZPermissionsPlugin extends JavaPlugin {
     }
 
     /**
-     * Retrive this plugin's DAO.
+     * Retrieve this plugin's DAO.
      * 
      * @return the DAO
      */
     PermissionDao getDao() {
         return dao;
+    }
+
+    // Retrieve the PermissionResolver instance
+    PermissionsResolver getResolver() {
+        return resolver;
     }
 
     /* (non-Javadoc)
@@ -288,95 +290,6 @@ public class ZPermissionsPlugin extends JavaPlugin {
         return result;
     }
 
-    // Resolve a group's permissions. Ancestor permissions should be overridden
-    // each successive descendant.
-    private void resolveGroup(Map<String, Boolean> permissions, Set<String> regions, String world, String group) {
-        List<String> ancestry = getDao().getAncestry(group);
-
-        debug("Ancestry for %s: %s", group, ancestry);
-        for (String ancestor : ancestry) {
-            applyPermissions(permissions, ancestor, true, regions, world);
-            
-            // Add group permission, if present
-            if (groupPermissionFormat != null) {
-                permissions.put(String.format(groupPermissionFormat, ancestor), Boolean.TRUE);
-            }
-        }
-    }
-
-    // Resolve a player's permissions. Any permissions declared on the player
-    // should override group permissions.
-    private Map<String, Boolean> resolvePlayer(final Player player, final Location location, final Set<String> regions) {
-        final String world = location.getWorld().getName().toLowerCase();
-
-        return getTransactionStrategy().execute(new TransactionCallback<Map<String, Boolean>>() {
-            @Override
-            public Map<String, Boolean> doInTransaction() throws Exception {
-                // Get this player's groups
-                List<String> groups = getDao().getGroups(player.getName());
-                if (groups.isEmpty()) {
-                    // If no groups, use the default group
-                    groups.add(getDefaultGroup());
-                }
-
-                Map<String, Boolean> permissions = new HashMap<String, Boolean>();
-
-                // Resolve each group in turn (highest priority resolved last)
-                debug("Groups for %s: %s", player.getName(), groups);
-                for (String group : groups) {
-                    resolveGroup(permissions, regions, world, group);
-                }
-
-                // Player-specific permissions overrides all group permissions
-                applyPermissions(permissions, player.getName(), false, regions, world);
-
-                return permissions;
-            }
-        });
-    }
-
-    // Apply an entity's permissions to the permission map. Global permissions
-    // (ones not assigned to any specific world) are applied first. They are
-    // then overidden by any world-specific permissions.
-    private void applyPermissions(Map<String, Boolean> permissions, String name, boolean group, Set<String> regions, String world) {
-        Map<String, Boolean> regionPermissions = new HashMap<String, Boolean>();
-        List<Entry> worldPermissions = new ArrayList<Entry>();
-
-        // Apply non-region-specific, non-world-specific permissions first
-        for (Entry e : getDao().getEntries(name, group)) { // WHYYY
-            if (e.getRegion() == null && e.getWorld() == null) {
-                permissions.put(e.getPermission(), e.isValue());
-            }
-            else if (e.getRegion() != null && e.getWorld() == null) {
-                // Global region-specific (should these really be supported?)
-                if (regions.contains(e.getRegion().getName()))
-                    regionPermissions.put(e.getPermission(), e.isValue());
-            }
-            else if (e.getWorld().getName().equals(world)) {
-                worldPermissions.add(e);
-            }
-        }
-
-        // Then override with world-specific permissions
-        Map<String, Boolean> regionWorldPermissions = new HashMap<String, Boolean>();
-        for (Entry e : worldPermissions) {
-            if (e.getRegion() == null) {
-                // Non region-specific
-                permissions.put(e.getPermission(), e.isValue());
-            }
-            else {
-                if (regions.contains(e.getRegion().getName()))
-                    regionWorldPermissions.put(e.getPermission(), e.isValue());
-            }
-        }
-        
-        // Override with global, region-specific permissions
-        permissions.putAll(regionPermissions);
-
-        // Finally, override with region- and world-specific permissions
-        permissions.putAll(regionWorldPermissions);
-    }
-
     // Remove all state associated with a player, including their attachment
     void removeAttachment(String playerName) {
         PlayerState playerState = null;
@@ -394,7 +307,7 @@ public class ZPermissionsPlugin extends JavaPlugin {
     // Update state about a player, resolving effective permissions and
     // creating/updating their attachment
     void updateAttachment(String playerName, Location location, boolean force) {
-        Set<String> regions = getRegions(location);
+        final Set<String> regions = getRegions(location);
 
         Player player;
         PlayerState playerState = null;
@@ -421,8 +334,18 @@ public class ZPermissionsPlugin extends JavaPlugin {
         debug("  regions = %s", regions);
 
         // Resolve effective permissions
+        final String playerName2 = player.getName(); // prefer the one from Player object
+        final String world = location.getWorld().getName().toLowerCase();
+        Map<String, Boolean> permissions = getTransactionStrategy().execute(new TransactionCallback<Map<String, Boolean>>() {
+            @Override
+            public Map<String, Boolean> doInTransaction() throws Exception {
+                return getResolver().resolvePlayer(playerName2, world, regions);
+            }
+        });
+
+        // Create attachment and set its permissions
         PermissionAttachment pa = player.addAttachment(this);
-        for (Map.Entry<String, Boolean> me : resolvePlayer(player, location, regions).entrySet()) {
+        for (Map.Entry<String, Boolean> me : permissions.entrySet()) {
             pa.setPermission(me.getKey(), me.getValue());
         }
 
@@ -465,7 +388,7 @@ public class ZPermissionsPlugin extends JavaPlugin {
             for (ProtectedRegion pr : ars) {
                 // Ignore global region
                 if (!"__global__".equals(pr.getId())) // NB: Hardcoded and not available as constant in WorldGuard
-                    result.add(pr.getId());
+                    result.add(pr.getId().toLowerCase());
             }
             return result;
         }
@@ -494,15 +417,6 @@ public class ZPermissionsPlugin extends JavaPlugin {
         for (Player player : getServer().getOnlinePlayers()) {
             updateAttachment(player.getName(), player.getLocation(), true);
         }
-    }
-
-    /**
-     * Retrieve the configured default group.
-     * 
-     * @return the default group
-     */
-    String getDefaultGroup() {
-        return defaultGroup;
     }
 
     /**
@@ -545,10 +459,10 @@ public class ZPermissionsPlugin extends JavaPlugin {
     // Read config.yml
     private void readConfig() {
         // Barebones defaults
-        defaultGroup = DEFAULT_GROUP;
+        getResolver().setDefaultGroup(DEFAULT_GROUP);
         defaultTrack = DEFAULT_TRACK;
         dumpDirectory = new File(DEFAULT_DUMP_DIRECTORY);
-        groupPermissionFormat = null;
+        getResolver().setGroupPermissionFormat(null);
         tracks.clear();
         
         String value;
@@ -556,11 +470,11 @@ public class ZPermissionsPlugin extends JavaPlugin {
         // Read values, set accordingly
         value = (String)getConfiguration().getProperty("group-permission");
         if (hasText(value))
-            groupPermissionFormat = value;
+            getResolver().setGroupPermissionFormat(value);
 
         value = (String)getConfiguration().getProperty("default-group");
         if (hasText(value))
-            defaultGroup = value;
+            getResolver().setDefaultGroup(value);
         
         value = (String)getConfiguration().getProperty("default-track");
         if (hasText(value))
