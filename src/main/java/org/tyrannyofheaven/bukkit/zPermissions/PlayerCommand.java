@@ -51,7 +51,7 @@ public class PlayerCommand extends CommonCommand {
 
         // Add default group if needed
         if (groups.isEmpty()) {
-            groups.add(plugin.getDefaultGroup());
+            groups.add(plugin.getResolver().getDefaultGroup());
         }
 
         if (groups.isEmpty()) {

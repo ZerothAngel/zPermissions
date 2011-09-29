@@ -3,5 +3,7 @@ syntax: glob
 .project
 .settings
 target
+ResolverTest*.sql
+ResolverTest*.db
 AvajeDaoTest*.sql
 AvajeDaoTest*.db
