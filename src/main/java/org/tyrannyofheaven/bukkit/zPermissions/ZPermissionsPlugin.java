@@ -155,6 +155,9 @@ public class ZPermissionsPlugin extends JavaPlugin {
      */
     @Override
     public void onDisable() {
+        // Shut off monitor task, if running
+        getServer().getScheduler().cancelTasks(this);
+
         // Clear any player state
 
         // Make copy before clearing
