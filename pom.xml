@@ -35,7 +35,7 @@
     </dependency>
     <dependency>
       <groupId>org.tyrannyofheaven.bukkit</groupId>
-      <artifactId>ToHBukkitUtils</artifactId>
+      <artifactId>ToHPluginUtils</artifactId>
       <version>1.0-SNAPSHOT</version>
     </dependency>
     <dependency>
@@ -116,7 +116,7 @@
           <exclusions>
             <exclusion>
               <groupId>org.tyrannyofheaven.bukkit</groupId>
-              <artifactId>ToHBukkitUtils</artifactId>
+              <artifactId>ToHPluginUtils</artifactId>
             </exclusion>
           </exclusions>
         </configuration>
@@ -150,7 +150,7 @@
 	    </manifest>
             <manifestEntries>
 	      <Implementation-Build>${buildNumber}</Implementation-Build>
-              <Class-Path>lib/ToHBukkitUtils.jar ${project.artifactId}/ToHBukkitUtils.jar ../lib/ToHBukkitUtils.jar ../ToHBukkitUtils.jar</Class-Path>
+              <Class-Path>lib/ToHPluginUtils.jar ${project.artifactId}/ToHPluginUtils.jar ../lib/ToHPluginUtils.jar ../ToHPluginUtils.jar</Class-Path>
             </manifestEntries>
           </archive>
         </configuration>
@@ -175,7 +175,7 @@
 		<configuration>
 		  <artifactSet>
 		    <includes>
-		      <include>org.tyrannyofheaven.bukkit:ToHBukkitUtils</include>
+		      <include>org.tyrannyofheaven.bukkit:ToHPluginUtils</include>
 		    </includes>
 		  </artifactSet>
 		</configuration>
