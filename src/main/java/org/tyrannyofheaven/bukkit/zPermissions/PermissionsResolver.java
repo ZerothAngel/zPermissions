@@ -16,7 +16,9 @@
 package org.tyrannyofheaven.bukkit.zPermissions;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -36,7 +38,7 @@ public class PermissionsResolver {
 
     private final PermissionDao dao;
 
-    private String groupPermissionFormat;
+    private final Set<String> groupPermissionFormats = new HashSet<String>();
 
     private String defaultGroup;
 
@@ -53,13 +55,15 @@ public class PermissionsResolver {
     }
 
     /**
-     * Set group permission format string.
+     * Set group permission format strings.
      * 
-     * @param groupPermissionFormat the group permission format string,
+     * @param groupPermissionFormats the group permission format strings,
      *   suitable for use with {@link String#format(String, Object...)}
      */
-    public void setGroupPermissionFormat(String groupPermissionFormat) {
-        this.groupPermissionFormat = groupPermissionFormat;
+    public void setGroupPermissionFormats(Collection<String> groupPermissionFormats) {
+        this.groupPermissionFormats.clear();
+        if (groupPermissionFormats != null)
+            this.groupPermissionFormats.addAll(groupPermissionFormats);
     }
 
     /**
@@ -76,9 +80,9 @@ public class PermissionsResolver {
         return plugin == null ? dao : plugin.getDao();
     }
 
-    // Get group permission format string
-    private String getGroupPermissionFormat() {
-        return groupPermissionFormat;
+    // Get group permission format strings
+    private Set<String> getGroupPermissionFormats() {
+        return groupPermissionFormats;
     }
 
     /**
@@ -140,9 +144,9 @@ public class PermissionsResolver {
         for (String ancestor : ancestry) {
             applyPermissions(permissions, ancestor, true, regions, world);
             
-            // Add group permission, if present
-            if (getGroupPermissionFormat() != null) {
-                permissions.put(String.format(getGroupPermissionFormat(), ancestor), Boolean.TRUE);
+            // Add group permissions, if present
+            for (String groupPermissionFormat : getGroupPermissionFormats()) {
+                permissions.put(String.format(groupPermissionFormat, ancestor), Boolean.TRUE);
             }
         }
     }

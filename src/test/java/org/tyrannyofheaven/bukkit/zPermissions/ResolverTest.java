@@ -19,6 +19,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -104,7 +105,7 @@ public class ResolverTest {
         dao = new AvajePermissionDao(ebeanServer);
         resolver = new PermissionsResolver(dao);
         resolver.setDefaultGroup(TEST_GROUP1);
-        resolver.setGroupPermissionFormat("group.%s");
+        resolver.setGroupPermissionFormats(Collections.singleton("group.%s"));
     }
 
     private void begin() {
@@ -262,6 +263,7 @@ public class ResolverTest {
         assertPermission(permissions, "basic.perm2"); // default group
         assertPermission(permissions, "basic.perm3", false);
         assertPermission(permissions, "group.Group1");
+        assertPermission(permissions, "group.Group2", false);
         
         begin();
         try {
@@ -281,6 +283,7 @@ public class ResolverTest {
         assertPermission(permissions, "basic.perm1");
         assertPermission(permissions, "basic.perm2", false);
         assertPermission(permissions, "basic.perm3");
+        assertPermission(permissions, "group.Group1", false);
         assertPermission(permissions, "group.Group2");
     }
 

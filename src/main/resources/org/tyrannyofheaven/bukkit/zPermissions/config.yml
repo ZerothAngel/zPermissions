@@ -2,6 +2,8 @@
 # members. This is the name of that permission node. It must be a string
 # suitable for Java's String.format() with one argument: the group name.
 # Omit or leave blank ('') to disable this feature.
+# This may also be a list of strings to automatically assign multiple
+# permissions.
 group-permission: 'group.%s'
 
 # The default group. Players that are not explicitly members of any group
