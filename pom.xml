@@ -178,6 +178,14 @@
 		      <include>org.tyrannyofheaven.bukkit:ToHPluginUtils</include>
 		    </includes>
 		  </artifactSet>
+<!-- Broken due to MSHADE-92
+		  <relocations>
+		    <relocation>
+		      <pattern>org.tyrannyofheaven.bukkit.util</pattern>
+		      <shadedPattern>org.tyrannyofheaven.bukkit.zPermissions.util</shadedPattern>
+		    </relocation>
+		  </relocations>
+-->
 		</configuration>
 	      </execution>
 	    </executions>
