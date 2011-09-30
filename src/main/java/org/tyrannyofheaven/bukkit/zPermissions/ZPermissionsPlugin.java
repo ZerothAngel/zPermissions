@@ -465,15 +465,31 @@ public class ZPermissionsPlugin extends JavaPlugin {
         getResolver().setDefaultGroup(DEFAULT_GROUP);
         defaultTrack = DEFAULT_TRACK;
         dumpDirectory = new File(DEFAULT_DUMP_DIRECTORY);
-        getResolver().setGroupPermissionFormat(null);
+        getResolver().setGroupPermissionFormats(null);
         tracks.clear();
         
         String value;
         
         // Read values, set accordingly
-        value = (String)getConfiguration().getProperty("group-permission");
-        if (hasText(value))
-            getResolver().setGroupPermissionFormat(value);
+        Object strOrList = getConfiguration().getProperty("group-permission");
+        if (strOrList != null) {
+            if (strOrList instanceof String && hasText((String)strOrList)) {
+                getResolver().setGroupPermissionFormats(Collections.singleton((String)strOrList));
+            }
+            else if (strOrList instanceof List<?>) {
+                Set<String> groupPerms = new HashSet<String>();
+                for (Object obj : (List<?>)strOrList) {
+                    if (obj instanceof String) {
+                        groupPerms.add((String)obj);
+                    }
+                    else
+                        warn("group-permission list contains non-string value");
+                }
+                getResolver().setGroupPermissionFormats(groupPerms);
+            }
+            else
+                warn("group-permission must be a string or list of strings");
+        }
 
         value = (String)getConfiguration().getProperty("default-group");
         if (hasText(value))
