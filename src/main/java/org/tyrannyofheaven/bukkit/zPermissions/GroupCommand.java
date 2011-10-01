@@ -15,9 +15,9 @@
  */
 package org.tyrannyofheaven.bukkit.zPermissions;
 
-import static org.tyrannyofheaven.bukkit.util.ToHUtils.colorize;
-import static org.tyrannyofheaven.bukkit.util.ToHUtils.delimitedString;
-import static org.tyrannyofheaven.bukkit.util.ToHUtils.sendMessage;
+import static org.tyrannyofheaven.bukkit.util.ToHMessageUtils.colorize;
+import static org.tyrannyofheaven.bukkit.util.ToHMessageUtils.sendMessage;
+import static org.tyrannyofheaven.bukkit.util.ToHStringUtils.delimitedString;
 
 import java.util.List;
 

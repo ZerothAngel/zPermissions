@@ -24,6 +24,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.logging.Logger;
 
+import org.tyrannyofheaven.bukkit.util.ToHLoggingUtils;
 import org.tyrannyofheaven.bukkit.zPermissions.dao.PermissionDao;
 import org.tyrannyofheaven.bukkit.zPermissions.model.Entry;
 
@@ -99,7 +100,7 @@ public class PermissionsResolver {
         if (plugin == null)
             Logger.getLogger(getClass().getName()).info(String.format(format, args));
         else
-            plugin.debug(format, args);
+            ToHLoggingUtils.debug(plugin, format, args);
     }
 
     /**
