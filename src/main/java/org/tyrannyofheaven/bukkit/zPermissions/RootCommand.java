@@ -15,11 +15,12 @@
  */
 package org.tyrannyofheaven.bukkit.zPermissions;
 
+import static org.tyrannyofheaven.bukkit.util.ToHLoggingUtils.log;
+import static org.tyrannyofheaven.bukkit.util.ToHMessageUtils.colorize;
+import static org.tyrannyofheaven.bukkit.util.ToHMessageUtils.sendMessage;
+import static org.tyrannyofheaven.bukkit.util.ToHStringUtils.delimitedString;
+import static org.tyrannyofheaven.bukkit.util.ToHStringUtils.hasText;
 import static org.tyrannyofheaven.bukkit.util.ToHUtils.assertFalse;
-import static org.tyrannyofheaven.bukkit.util.ToHUtils.colorize;
-import static org.tyrannyofheaven.bukkit.util.ToHUtils.delimitedString;
-import static org.tyrannyofheaven.bukkit.util.ToHUtils.hasText;
-import static org.tyrannyofheaven.bukkit.util.ToHUtils.sendMessage;
 import static org.tyrannyofheaven.bukkit.util.permissions.PermissionUtils.requireOnePermission;
 
 import java.util.HashSet;
@@ -115,7 +116,7 @@ public class RootCommand {
                     if (rankUp) {
                         String group = track.get(0);
                         plugin.getDao().addMember(group, playerName);
-                        plugin.log("%s added %s to %s", sender.getName(), playerName, group);
+                        log(plugin, "%s added %s to %s", sender.getName(), playerName, group);
                         sendMessage(sender, colorize("{YELLOW}Adding {AQUA}%s{YELLOW} to {DARK_GREEN}%s"), playerName, group);
                     }
                     else {
@@ -134,7 +135,7 @@ public class RootCommand {
                     // If now ranked below first rank, remove altogether
                     if (rankIndex < 0) {
                         plugin.getDao().removeMember(oldGroup, playerName);
-                        plugin.log("%s removed %s from %s", sender.getName(), playerName, oldGroup);
+                        log(plugin, "%s removed %s from %s", sender.getName(), playerName, oldGroup);
                         sendMessage(sender, colorize("{YELLOW}Removing {AQUA}%s{YELLOW} from {DARK_GREEN}%s"), playerName, oldGroup);
                     }
                     else {
@@ -147,7 +148,7 @@ public class RootCommand {
                         plugin.getDao().removeMember(oldGroup, playerName);
                         plugin.getDao().addMember(newGroup, playerName);
         
-                        plugin.log("%s %s %s from %s to %s", sender.getName(),
+                        log(plugin, "%s %s %s from %s to %s", sender.getName(),
                                 (rankUp ? "promoted" : "demoted"),
                                 playerName,
                                 oldGroup,

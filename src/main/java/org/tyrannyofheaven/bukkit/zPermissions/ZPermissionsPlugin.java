@@ -15,10 +15,14 @@
  */
 package org.tyrannyofheaven.bukkit.zPermissions;
 
-import static org.tyrannyofheaven.bukkit.util.ToHUtils.colorize;
-import static org.tyrannyofheaven.bukkit.util.ToHUtils.copyResourceToFile;
-import static org.tyrannyofheaven.bukkit.util.ToHUtils.hasText;
-import static org.tyrannyofheaven.bukkit.util.ToHUtils.sendMessage;
+import static org.tyrannyofheaven.bukkit.util.ToHFileUtils.copyResourceToFile;
+import static org.tyrannyofheaven.bukkit.util.ToHLoggingUtils.debug;
+import static org.tyrannyofheaven.bukkit.util.ToHLoggingUtils.error;
+import static org.tyrannyofheaven.bukkit.util.ToHLoggingUtils.log;
+import static org.tyrannyofheaven.bukkit.util.ToHLoggingUtils.warn;
+import static org.tyrannyofheaven.bukkit.util.ToHMessageUtils.colorize;
+import static org.tyrannyofheaven.bukkit.util.ToHMessageUtils.sendMessage;
+import static org.tyrannyofheaven.bukkit.util.ToHStringUtils.hasText;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -39,7 +43,6 @@ import org.bukkit.entity.Player;
 import org.bukkit.permissions.PermissionAttachment;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.util.config.ConfigurationNode;
-import org.tyrannyofheaven.bukkit.util.ToHUtils;
 import org.tyrannyofheaven.bukkit.util.command.ToHCommandExecutor;
 import org.tyrannyofheaven.bukkit.util.transaction.AvajeTransactionStrategy;
 import org.tyrannyofheaven.bukkit.util.transaction.TransactionCallback;
@@ -171,7 +174,7 @@ public class ZPermissionsPlugin extends JavaPlugin {
             playerState.getAttachment().remove();
         }
 
-        log("%s disabled.", getDescription().getVersion());
+        log(this, "%s disabled.", getDescription().getVersion());
     }
 
     /* (non-Javadoc)
@@ -179,12 +182,12 @@ public class ZPermissionsPlugin extends JavaPlugin {
      */
     @Override
     public void onEnable() {
-        log("%s starting...", getDescription().getVersion());
+        log(this, "%s starting...", getDescription().getVersion());
 
         // Create data directory, if needed
         if (!getDataFolder().exists()) {
             if (!getDataFolder().mkdirs()) {
-                ToHUtils.log(this, Level.SEVERE, "Unable to create data folder");
+                error(this, "Unable to create data folder");
             }
         }
 
@@ -204,9 +207,9 @@ public class ZPermissionsPlugin extends JavaPlugin {
             getDatabase().createQuery(Entry.class).findRowCount();
         }
         catch (PersistenceException e) {
-            log("Creating SQL tables...");
+            log(this, "Creating SQL tables...");
             installDDL();
-            log("Done.");
+            log(this, "Done.");
         }
 
         // Set up TransactionStrategy and DAO
@@ -225,12 +228,12 @@ public class ZPermissionsPlugin extends JavaPlugin {
         (new ZPermissionsPlayerListener(this)).registerEvents(regionSupport);
 
         if (regionSupport)
-            log("WorldGuard region support enabled.");
+            log(this, "WorldGuard region support enabled.");
 
         // Make sure everyone currently online has an attachment
         refreshPlayers();
         
-        log("%s enabled.", getDescription().getVersion());
+        log(this, "%s enabled.", getDescription().getVersion());
     }
 
     // Apply cache settings to Avaje bean caches
@@ -247,36 +250,6 @@ public class ZPermissionsPlugin extends JavaPlugin {
                 beanCacheOptions.setMaxSize(cacheSize);
             beanCache.setOptions(beanCacheOptions);
         }
-    }
-
-    /**
-     * Log a message at INFO level.
-     * 
-     * @param format the message format
-     * @param args format args
-     */
-    public void log(String format, Object... args) {
-        ToHUtils.log(this, Level.INFO, format, args);
-    }
-
-    /**
-     * Log a message at WARNING level.
-     * 
-     * @param format the message format
-     * @param args format args
-     */
-    public void warn(String format, Object... args) {
-        ToHUtils.log(this, Level.WARNING, format, args);
-    }
-
-    /**
-     * Log a message at FINE level.
-     * 
-     * @param format the message format
-     * @param args format args
-     */
-    public void debug(String format, Object... args) {
-        ToHUtils.log(this, Level.FINE, format, args);
     }
 
     /* (non-Javadoc)
@@ -299,7 +272,7 @@ public class ZPermissionsPlugin extends JavaPlugin {
         synchronized (playerStates) {
             Player player = getServer().getPlayerExact(playerName);
             if (player != null) {
-                debug("Removing attachment for %s", player.getName());
+                debug(this, "Removing attachment for %s", player.getName());
                 playerState = playerStates.remove(player.getName());
             }
         }
@@ -332,9 +305,9 @@ public class ZPermissionsPlugin extends JavaPlugin {
         // No need to update yet (most likely called by movement-based event)
         if (!force) return;
 
-        debug("Updating attachment for %s", player.getName());
-        debug("  location = %s", location);
-        debug("  regions = %s", regions);
+        debug(this, "Updating attachment for %s", player.getName());
+        debug(this, "  location = %s", location);
+        debug(this, "  regions = %s", regions);
 
         // Resolve effective permissions
         final String playerName2 = player.getName(); // prefer the one from Player object
@@ -407,7 +380,7 @@ public class ZPermissionsPlugin extends JavaPlugin {
     void refreshPlayer(String playerName) {
         Player player = getServer().getPlayerExact(playerName);
         if (player != null) {
-            debug("Refreshing player %s", playerName);
+            debug(this, "Refreshing player %s", playerName);
             updateAttachment(playerName, player.getLocation(), true);
         }
     }
@@ -416,7 +389,7 @@ public class ZPermissionsPlugin extends JavaPlugin {
      * Refresh the attachments of all online players.
      */
     void refreshPlayers() {
-        debug("Refreshing all online players");
+        debug(this, "Refreshing all online players");
         for (Player player : getServer().getOnlinePlayers()) {
             updateAttachment(player.getName(), player.getLocation(), true);
         }
@@ -483,12 +456,12 @@ public class ZPermissionsPlugin extends JavaPlugin {
                         groupPerms.add((String)obj);
                     }
                     else
-                        warn("group-permission list contains non-string value");
+                        warn(this, "group-permission list contains non-string value");
                 }
                 getResolver().setGroupPermissionFormats(groupPerms);
             }
             else
-                warn("group-permission must be a string or list of strings");
+                warn(this, "group-permission must be a string or list of strings");
         }
 
         value = (String)getConfiguration().getProperty("default-group");
@@ -514,14 +487,14 @@ public class ZPermissionsPlugin extends JavaPlugin {
             for (String trackName : node.getKeys()) {
                 List<Object> list = node.getList(trackName);
                 if (list == null) {
-                    warn("Track %s must have a list value", trackName);
+                    warn(this, "Track %s must have a list value", trackName);
                     continue;
                 }
 
                 List<String> members = new ArrayList<String>();
                 for (Object o : list) {
                     if (!(o instanceof String)) {
-                        warn("Track %s contains non-string value", trackName);
+                        warn(this, "Track %s contains non-string value", trackName);
                         continue;
                     }
                     members.add((String)o);

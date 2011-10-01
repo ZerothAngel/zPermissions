@@ -15,8 +15,10 @@
  */
 package org.tyrannyofheaven.bukkit.zPermissions;
 
-import static org.tyrannyofheaven.bukkit.util.ToHUtils.colorize;
-import static org.tyrannyofheaven.bukkit.util.ToHUtils.sendMessage;
+import static org.tyrannyofheaven.bukkit.util.ToHLoggingUtils.debug;
+import static org.tyrannyofheaven.bukkit.util.ToHLoggingUtils.log;
+import static org.tyrannyofheaven.bukkit.util.ToHMessageUtils.colorize;
+import static org.tyrannyofheaven.bukkit.util.ToHMessageUtils.sendMessage;
 
 import org.bukkit.ChatColor;
 import org.bukkit.Server;
@@ -72,14 +74,14 @@ public class CacheCommand implements Runnable {
 
     @Override
     public void run() {
-        plugin.log("Cache statistics:");
+        log(plugin, "Cache statistics:");
         for (Class<?> clazz : plugin.getDatabaseClasses()) {
             ServerCache beanCache = plugin.getDatabase().getServerCacheManager().getBeanCache(clazz);
             ServerCacheOptions beanCacheOptions = beanCache.getOptions();
             ServerCacheStatistics beanCacheStats = beanCache.getStatistics(false);
-            plugin.log("  %s:", clazz.getName());
-            plugin.debug("    (max-idle=%d, max-ttl=%d, max-size=%d)", beanCacheOptions.getMaxIdleSecs(), beanCacheOptions.getMaxSecsToLive(), beanCacheOptions.getMaxSize());
-            plugin.log("    size=%d, hits=%d, misses=%d, ratio=%d", beanCacheStats.getSize(), beanCacheStats.getHitCount(), beanCacheStats.getMissCount(), beanCacheStats.getHitRatio());
+            log(plugin, "  %s:", clazz.getName());
+            debug(plugin, "    (max-idle=%d, max-ttl=%d, max-size=%d)", beanCacheOptions.getMaxIdleSecs(), beanCacheOptions.getMaxSecsToLive(), beanCacheOptions.getMaxSize());
+            log(plugin, "    size=%d, hits=%d, misses=%d, ratio=%d", beanCacheStats.getSize(), beanCacheStats.getHitCount(), beanCacheStats.getMissCount(), beanCacheStats.getHitRatio());
         }
     }
 

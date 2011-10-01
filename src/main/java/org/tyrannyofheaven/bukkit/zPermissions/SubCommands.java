@@ -15,8 +15,9 @@
  */
 package org.tyrannyofheaven.bukkit.zPermissions;
 
-import static org.tyrannyofheaven.bukkit.util.ToHUtils.colorize;
-import static org.tyrannyofheaven.bukkit.util.ToHUtils.sendMessage;
+import static org.tyrannyofheaven.bukkit.util.ToHLoggingUtils.log;
+import static org.tyrannyofheaven.bukkit.util.ToHMessageUtils.colorize;
+import static org.tyrannyofheaven.bukkit.util.ToHMessageUtils.sendMessage;
 import static org.tyrannyofheaven.bukkit.util.permissions.PermissionUtils.requirePermission;
 
 import java.io.File;
@@ -29,7 +30,6 @@ import java.util.logging.Level;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.permissions.PermissionAttachmentInfo;
-import org.tyrannyofheaven.bukkit.util.ToHUtils;
 import org.tyrannyofheaven.bukkit.util.command.Command;
 import org.tyrannyofheaven.bukkit.util.command.CommandSession;
 import org.tyrannyofheaven.bukkit.util.command.HelpBuilder;
@@ -226,7 +226,7 @@ public class SubCommands {
         }
         catch (IOException e) {
             sendMessage(sender, colorize("{RED}Error importing; see server log."));
-            ToHUtils.log(plugin, Level.SEVERE, "Error importing:", e);
+            log(plugin, Level.SEVERE, "Error importing:", e);
         }
     }
     
@@ -288,7 +288,7 @@ public class SubCommands {
         }
         catch (IOException e) {
             sendMessage(sender, colorize("{RED}Error exporting; see server log."));
-            ToHUtils.log(plugin, Level.SEVERE, "Error exporting:", e);
+            log(plugin, Level.SEVERE, "Error exporting:", e);
         }
     }
 
