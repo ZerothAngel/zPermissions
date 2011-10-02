@@ -93,7 +93,6 @@ The rank commands are `/promote`, `/demote`, `/setrank`, and `/unsetrank`.
 
 ## Permissions ##
 
-*   zpermissions.* &mdash; All-inclusive permission. Given to ops by default.
 *   zpermissions.player &mdash; `/permissions player` commands
 *   zpermissions.group &mdash; `/permissions group` commands
 *   zpermissions.list &mdash; `/permissions list` command
@@ -102,6 +101,10 @@ The rank commands are `/promote`, `/demote`, `/setrank`, and `/unsetrank`.
 *   zpermissions.reload &mdash; `/permissions reload` command
 *   zpermissions.export &mdash; `/permissions export` command
 *   zpermissions.import &mdash; `/permissions import` command
+*   zpermissions.cache &mdash; `/permissions cache` command
+
+### Rank Permissions ###
+
 *   zpermissions.promote &mdash; `/promote` command
 *   zpermissions.promote.* &mdash; Allows `/promote` on all tracks
 *   zpermissions.promote.&lt;track> &mdash; Allows `/promote` on a specific
@@ -115,6 +118,13 @@ The rank commands are `/promote`, `/demote`, `/setrank`, and `/unsetrank`.
 *   zpermissions.unsetrank &mdash; `/unsetrank` command
 *   zpermissions.unsetrank.* &mdash; Allows `/unsetrank` on all tracks
 *   zpermissions.unsetrank.&lt;track> &mdash; Allows `/unsetrank` on a specific track
+
+### Meta-Permissions ###
+
+*   zpermissions.* &mdash; All-inclusive permission. Given to ops by default.
+*   zpermissions.rank &mdash; Use of all rank commands
+*   zpermissions.rank.* &mdash; Allows rank commands on all tracks
+*   zpermissions.rank.&lt;track> &mdash; Allows rank commands on a specific track
 
 ## Detailed Command Usage ##
 
