@@ -11,7 +11,7 @@ group-permission: 'group.%s'
 default-group: default
 
 # The default track. When the track name is omitted while using the /promote,
-# /demote, and /setrank commands, this is the track used.
+# /demote, /setrank, and /unsetrank commands, this is the track used.
 default-track: default
 
 # Directory (relative to the server root) where to load/store dumps.

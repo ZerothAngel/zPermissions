@@ -41,6 +41,7 @@ import org.tyrannyofheaven.bukkit.util.transaction.TransactionCallback;
  *   <li>/promote</li>
  *   <li>/demote</li>
  *   <li>/setrank</li>
+ *   <li>/unsetrank</li>
  * </ul>
  * 
  * @author zerothangel
@@ -183,10 +184,9 @@ public class RootCommand {
         rankChange(sender, playerName, trackName, false);
     }
 
-    @Command("setrank")
-    @Require("zpermissions.setrank")
-    public void setrank(final CommandSender sender, @Option("player") final String playerName, @Option("rank") final String rankName, @Option(value="track", optional=true) String trackName) {
-        // TODO lots of duped code, refactor
+    // Set rank to a specified rank on a track
+    private void rankSet(final CommandSender sender, final String playerName, String trackName, final String rankName) {
+        // TODO lots of duped code from rankChange, refactor
 
         // Resolve track
         if (!hasText(trackName))
@@ -199,10 +199,10 @@ public class RootCommand {
         }
 
         requireOnePermission(sender,
-                "zpermissions.setrank.*",
-                String.format("zpermissions.setrank.%s", trackName));
+                String.format("zpermissions.%s.*", rankName == null ? "unsetrank" : "setrank"),
+                String.format("zpermissions.%s.%s", (rankName == null ? "unsetrank" : "setrank"), trackName));
 
-        if (!track.contains(rankName)) {
+        if (rankName != null && !track.contains(rankName)) {
             sendMessage(sender, colorize("{RED}Rank is not in the track."));
             return;
         }
@@ -226,28 +226,39 @@ public class RootCommand {
                     return false;
                 }
                 else if (playerGroupNames.isEmpty()) {
-                    // Not in any groups, just add to new group.
-                    plugin.getDao().addMember(rankName, playerName);
-                    broadcastAdmin(plugin, "%s added %s to %s", sender.getName(), playerName, rankName);
-                    sendMessage(sender, colorize("{YELLOW}Adding {AQUA}%s{YELLOW} to {DARK_GREEN}%s"), playerName, rankName);
+                    if (rankName != null) {
+                        // Not in any groups, just add to new group.
+                        plugin.getDao().addMember(rankName, playerName);
+                        broadcastAdmin(plugin, "%s added %s to %s", sender.getName(), playerName, rankName);
+                        sendMessage(sender, colorize("{YELLOW}Adding {AQUA}%s{YELLOW} to {DARK_GREEN}%s"), playerName, rankName);
+                    }
+                    else {
+                        sendMessage(sender, colorize("{RED}Player is not in any groups in that track."));
+                    }
                     return true;
                 }
                 else {
                     // Remove from old group
                     String oldGroup = playerGroupNames.iterator().next();
-
-                    // Change groups
                     plugin.getDao().removeMember(oldGroup, playerName);
-                    plugin.getDao().addMember(rankName, playerName);
-    
-                    broadcastAdmin(plugin, "%s changed rank of %s from %s to %s", sender.getName(),
-                            playerName,
-                            oldGroup,
-                            rankName);
-                    sendMessage(sender, colorize("{YELLOW}Changing rank of {AQUA}%s{YELLOW} from {DARK_GREEN}%s{YELLOW} to {DARK_GREEN}%s"),
-                            playerName,
-                            oldGroup,
-                            rankName);
+
+                    if (rankName != null) {
+                        // Add to new group
+                        plugin.getDao().addMember(rankName, playerName);
+
+                        broadcastAdmin(plugin, "%s changed rank of %s from %s to %s", sender.getName(),
+                                playerName,
+                                oldGroup,
+                                rankName);
+                        sendMessage(sender, colorize("{YELLOW}Changing rank of {AQUA}%s{YELLOW} from {DARK_GREEN}%s{YELLOW} to {DARK_GREEN}%s"),
+                                playerName,
+                                oldGroup,
+                                rankName);
+                    }
+                    else {
+                        broadcastAdmin(plugin, "%s removed %s from %s", sender.getName(), playerName, oldGroup);
+                        sendMessage(sender, colorize("{YELLOW}Removing {AQUA}%s{YELLOW} from {DARK_GREEN}%s"), playerName, oldGroup);
+                    }
                     return false;
                 }
             }
@@ -256,6 +267,18 @@ public class RootCommand {
         if (check)
             plugin.checkPlayer(sender, playerName);
         plugin.refreshPlayer(playerName);
+    }
+
+    @Command("setrank")
+    @Require("zpermissions.setrank")
+    public void setrank(CommandSender sender, @Option("player") String playerName, @Option("rank") String rankName, @Option(value="track", optional=true) String trackName) {
+        rankSet(sender, playerName, trackName, rankName);
+    }
+
+    @Command("unsetrank")
+    @Require("zpermissions.unsetrank")
+    public void unsetrank(CommandSender sender, @Option("player") String playerName, @Option(value="track", optional=true) String trackName) {
+        rankSet(sender, playerName, trackName, null);
     }
 
 }

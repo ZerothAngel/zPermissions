@@ -17,6 +17,8 @@ commands:
     aliases: rankdown
   setrank:
     description: Set the rank of a player
+  unsetrank:
+    description: Remove a player from a track
 
 permissions:
   zpermissions.*:
@@ -37,6 +39,8 @@ permissions:
       zpermissions.demote.*: true
       zpermissions.setrank: true
       zpermissions.setrank.*: true
+      zpermissions.unsetrank: true
+      zpermissions.unsetrank.*: true
       zpermissions.cache: true
   zpermissions.player:
     description: Allows use of the /permissions player command
@@ -66,5 +70,9 @@ permissions:
     description: Allows use of the /setrank command
   zpermissions.setrank.*:
     description: Allows use of /setrank on all tracks
+  zpermissions.unsetrank:
+    description: Allows use of the /unsetrank command
+  zpermissions.unsetrank.*:
+    description: Allows use of /unsetrank on all tracks
   zpermissions.cache:
     description: Allows use of the /permissions cache command
