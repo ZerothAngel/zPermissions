@@ -179,4 +179,73 @@ public class RootCommand {
         rankChange(sender, playerName, trackName, false);
     }
 
+    @Command("setrank")
+    @Require("zpermissions.setrank")
+    public void setrank(final CommandSender sender, @Option("player") final String playerName, @Option("rank") final String rankName, @Option(value="track", optional=true) String trackName) {
+        // TODO lots of duped code, refactor
+
+        // Resolve track
+        if (!hasText(trackName))
+            trackName = plugin.getDefaultTrack();
+        
+        final List<String> track = plugin.getTrack(trackName);
+        if (track == null || track.isEmpty()) {
+            sendMessage(sender, colorize("{RED}Track has not been defined."));
+            return;
+        }
+
+        requireOnePermission(sender,
+                "zpermissions.setrank.*",
+                String.format("zpermissions.setrank.%s", trackName));
+
+        if (!track.contains(rankName)) {
+            sendMessage(sender, colorize("{RED}Rank is not in the track."));
+            return;
+        }
+
+        // Determine what groups the player and the track have in common
+        final Set<String> trackGroupNames = new HashSet<String>(track);
+
+        // Do everything in one ginormous transaction.
+        plugin.getTransactionStrategy().execute(new TransactionCallbackWithoutResult() {
+            @Override
+            public void doInTransactionWithoutResult() throws Exception {
+                Set<String> playerGroupNames = new HashSet<String>();
+                playerGroupNames.addAll(plugin.getDao().getGroups(playerName));
+        
+                playerGroupNames.retainAll(trackGroupNames);
+                
+                if (playerGroupNames.size() > 1) {
+                    // Hmm, player is member of 2 or more groups in track. Don't know
+                    // what to do, so abort.
+                    sendMessage(sender, colorize("{RED}Player is in more than one group in that track: {DARK_GREEN}%s"), delimitedString(", ", playerGroupNames));
+                    return;
+                }
+                else if (playerGroupNames.isEmpty()) {
+                    // Not in any groups, just add to new group.
+                    plugin.getDao().addMember(rankName, playerName);
+                    log(plugin, "%s added %s to %s", sender.getName(), playerName, rankName);
+                    sendMessage(sender, colorize("{YELLOW}Adding {AQUA}%s{YELLOW} to {DARK_GREEN}%s"), playerName, rankName);
+                }
+                else {
+                    // Remove from old group
+                    String oldGroup = playerGroupNames.iterator().next();
+
+                    // Change groups
+                    plugin.getDao().removeMember(oldGroup, playerName);
+                    plugin.getDao().addMember(rankName, playerName);
+    
+                    log(plugin, "%s changed rank of %s from %s to %s", sender.getName(),
+                            playerName,
+                            oldGroup,
+                            rankName);
+                    sendMessage(sender, colorize("{YELLOW}Changing rank of {AQUA}%s{YELLOW} from {DARK_GREEN}%s{YELLOW} to {DARK_GREEN}%s"),
+                            playerName,
+                            oldGroup,
+                            rankName);
+                }
+            }
+        });
+    }
+
 }
