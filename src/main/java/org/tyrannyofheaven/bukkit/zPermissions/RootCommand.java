@@ -40,6 +40,7 @@ import org.tyrannyofheaven.bukkit.util.transaction.TransactionCallbackWithoutRes
  *   <li>/permissions</li>
  *   <li>/promote</li>
  *   <li>/demote</li>
+ *   <li>/setrank</li>
  * </ul>
  * 
  * @author zerothangel
