@@ -12,14 +12,11 @@ commands:
   promote:
     description: Promote a player up a rank
     aliases: rankup
-    permission: zpermissions.promote
   demote:
     description: Demote a player down a rank
     aliases: rankdown
-    permission: zpermissions.demote
   setrank:
     description: Set the rank of a player
-    permission: zpermissions.setrank
 
 permissions:
   zpermissions.*:
