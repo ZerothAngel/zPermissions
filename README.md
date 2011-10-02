@@ -89,7 +89,7 @@ be specified as:
     to the named region in all worlds), though I'm not sure how useful
     this would be.
 
-The rank commands are `/promote` and `/demote`.
+The rank commands are `/promote`, `/demote`, `/setrank`, and `/unsetrank`.
 
 ## Permissions ##
 
@@ -112,6 +112,9 @@ The rank commands are `/promote` and `/demote`.
 *   zpermissions.setrank &mdash; `/setrank` command
 *   zpermissions.setrank.* &mdash; Allows `/setrank` on all tracks
 *   zpermissions.setrank.&lt;track> &mdash; Allows `/setrank` on a specific track
+*   zpermissions.unsetrank &mdash; `/unsetrank` command
+*   zpermissions.unsetrank.* &mdash; Allows `/unsetrank` on all tracks
+*   zpermissions.unsetrank.&lt;track> &mdash; Allows `/unsetrank` on a specific track
 
 ## Detailed Command Usage ##
 
@@ -185,3 +188,5 @@ The rank commands are `/promote` and `/demote`.
     the track) altogether.
 *   `/setrank <player> <rank> [track]` &mdash; Set the player's rank on the
     given track. If `track` is omitted, the default track is used.
+*   `/unsetrank <player> [track]` &mdash; Remove the player from the given
+    track. If `track` is omitted, the default track is used.
