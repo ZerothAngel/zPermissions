@@ -57,7 +57,6 @@ import org.tyrannyofheaven.bukkit.zPermissions.model.PermissionWorld;
 
 import com.avaje.ebean.cache.ServerCache;
 import com.avaje.ebean.cache.ServerCacheOptions;
-import com.sk89q.worldedit.Vector;
 import com.sk89q.worldguard.bukkit.WorldGuardPlugin;
 import com.sk89q.worldguard.protection.ApplicableRegionSet;
 import com.sk89q.worldguard.protection.managers.RegionManager;
@@ -357,8 +356,7 @@ public class ZPermissionsPlugin extends JavaPlugin {
         WorldGuardPlugin wgp = getWorldGuardPlugin();
         if (wgp != null) {
             RegionManager rm = wgp.getRegionManager(location.getWorld());
-            //ApplicableRegionSet ars = rm.getApplicableRegions(player.getLocation()); FIXME dev worldedit
-            ApplicableRegionSet ars = rm.getApplicableRegions(new Vector(location.getX(), location.getY(), location.getZ()));
+            ApplicableRegionSet ars = rm.getApplicableRegions(location);
 
             Set<String> result = new HashSet<String>();
             for (ProtectedRegion pr : ars) {
