@@ -15,7 +15,7 @@
  */
 package org.tyrannyofheaven.bukkit.zPermissions;
 
-import static org.tyrannyofheaven.bukkit.util.ToHLoggingUtils.log;
+import static org.tyrannyofheaven.bukkit.util.ToHMessageUtils.broadcastAdmin;
 import static org.tyrannyofheaven.bukkit.util.ToHMessageUtils.colorize;
 import static org.tyrannyofheaven.bukkit.util.ToHMessageUtils.sendMessage;
 import static org.tyrannyofheaven.bukkit.util.ToHStringUtils.delimitedString;
@@ -32,7 +32,7 @@ import org.tyrannyofheaven.bukkit.util.command.Command;
 import org.tyrannyofheaven.bukkit.util.command.HelpBuilder;
 import org.tyrannyofheaven.bukkit.util.command.Option;
 import org.tyrannyofheaven.bukkit.util.command.Require;
-import org.tyrannyofheaven.bukkit.util.transaction.TransactionCallbackWithoutResult;
+import org.tyrannyofheaven.bukkit.util.transaction.TransactionCallback;
 
 /**
  * Handler for top-level commands:
@@ -98,9 +98,9 @@ public class RootCommand {
         final Set<String> trackGroupNames = new HashSet<String>(track);
 
         // Do everything in one ginormous transaction.
-        plugin.getTransactionStrategy().execute(new TransactionCallbackWithoutResult() {
+        Boolean check = plugin.getTransactionStrategy().execute(new TransactionCallback<Boolean>() {
             @Override
-            public void doInTransactionWithoutResult() throws Exception {
+            public Boolean doInTransaction() throws Exception {
                 Set<String> playerGroupNames = new HashSet<String>();
                 playerGroupNames.addAll(plugin.getDao().getGroups(playerName));
         
@@ -110,20 +110,20 @@ public class RootCommand {
                     // Hmm, player is member of 2 or more groups in track. Don't know
                     // what to do, so abort.
                     sendMessage(sender, colorize("{RED}Player is in more than one group in that track: {DARK_GREEN}%s"), delimitedString(", ", playerGroupNames));
-                    return;
+                    return false;
                 }
                 else if (playerGroupNames.isEmpty()) {
                     // Player not in any group. Only valid for rankUp
                     if (rankUp) {
                         String group = track.get(0);
                         plugin.getDao().addMember(group, playerName);
-                        log(plugin, "%s added %s to %s", sender.getName(), playerName, group);
+                        broadcastAdmin(plugin, "%s added %s to %s", sender.getName(), playerName, group);
                         sendMessage(sender, colorize("{YELLOW}Adding {AQUA}%s{YELLOW} to {DARK_GREEN}%s"), playerName, group);
                     }
                     else {
                         sendMessage(sender, colorize("{RED}Player is not in any groups in that track."));
-                        return;
                     }
+                    return true;
                 }
                 else {
                     String oldGroup = playerGroupNames.iterator().next();
@@ -136,7 +136,7 @@ public class RootCommand {
                     // If now ranked below first rank, remove altogether
                     if (rankIndex < 0) {
                         plugin.getDao().removeMember(oldGroup, playerName);
-                        log(plugin, "%s removed %s from %s", sender.getName(), playerName, oldGroup);
+                        broadcastAdmin(plugin, "%s removed %s from %s", sender.getName(), playerName, oldGroup);
                         sendMessage(sender, colorize("{YELLOW}Removing {AQUA}%s{YELLOW} from {DARK_GREEN}%s"), playerName, oldGroup);
                     }
                     else {
@@ -149,7 +149,7 @@ public class RootCommand {
                         plugin.getDao().removeMember(oldGroup, playerName);
                         plugin.getDao().addMember(newGroup, playerName);
         
-                        log(plugin, "%s %s %s from %s to %s", sender.getName(),
+                        broadcastAdmin(plugin, "%s %s %s from %s to %s", sender.getName(),
                                 (rankUp ? "promoted" : "demoted"),
                                 playerName,
                                 oldGroup,
@@ -160,11 +160,14 @@ public class RootCommand {
                                 oldGroup,
                                 newGroup);
                     }
+                    
+                    return false;
                 }
             }
         });
         
-        plugin.checkPlayer(sender, playerName);
+        if (check)
+            plugin.checkPlayer(sender, playerName);
         plugin.refreshPlayer(playerName);
     }
 
@@ -208,9 +211,9 @@ public class RootCommand {
         final Set<String> trackGroupNames = new HashSet<String>(track);
 
         // Do everything in one ginormous transaction.
-        plugin.getTransactionStrategy().execute(new TransactionCallbackWithoutResult() {
+        Boolean check = plugin.getTransactionStrategy().execute(new TransactionCallback<Boolean>() {
             @Override
-            public void doInTransactionWithoutResult() throws Exception {
+            public Boolean doInTransaction() throws Exception {
                 Set<String> playerGroupNames = new HashSet<String>();
                 playerGroupNames.addAll(plugin.getDao().getGroups(playerName));
         
@@ -220,13 +223,14 @@ public class RootCommand {
                     // Hmm, player is member of 2 or more groups in track. Don't know
                     // what to do, so abort.
                     sendMessage(sender, colorize("{RED}Player is in more than one group in that track: {DARK_GREEN}%s"), delimitedString(", ", playerGroupNames));
-                    return;
+                    return false;
                 }
                 else if (playerGroupNames.isEmpty()) {
                     // Not in any groups, just add to new group.
                     plugin.getDao().addMember(rankName, playerName);
-                    log(plugin, "%s added %s to %s", sender.getName(), playerName, rankName);
+                    broadcastAdmin(plugin, "%s added %s to %s", sender.getName(), playerName, rankName);
                     sendMessage(sender, colorize("{YELLOW}Adding {AQUA}%s{YELLOW} to {DARK_GREEN}%s"), playerName, rankName);
+                    return true;
                 }
                 else {
                     // Remove from old group
@@ -236,7 +240,7 @@ public class RootCommand {
                     plugin.getDao().removeMember(oldGroup, playerName);
                     plugin.getDao().addMember(rankName, playerName);
     
-                    log(plugin, "%s changed rank of %s from %s to %s", sender.getName(),
+                    broadcastAdmin(plugin, "%s changed rank of %s from %s to %s", sender.getName(),
                             playerName,
                             oldGroup,
                             rankName);
@@ -244,9 +248,14 @@ public class RootCommand {
                             playerName,
                             oldGroup,
                             rankName);
+                    return false;
                 }
             }
         });
+
+        if (check)
+            plugin.checkPlayer(sender, playerName);
+        plugin.refreshPlayer(playerName);
     }
 
 }
