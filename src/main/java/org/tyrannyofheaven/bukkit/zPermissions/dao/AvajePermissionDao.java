@@ -446,8 +446,8 @@ public class AvajePermissionDao implements PermissionDao {
         List<String> ancestry = new ArrayList<String>();
         ancestry.add(group.getDisplayName());
         while (group.getParent() != null) {
-            group = group.getParent();
-            getEbeanServer().refresh(group); // NB: Required oddity due to caching
+            // Very very strange happenings with Avaje force me to do this...
+            group = getEbeanServer().find(PermissionEntity.class, getEbeanServer().getBeanId(group.getParent()));
             ancestry.add(group.getDisplayName());
         }
         
