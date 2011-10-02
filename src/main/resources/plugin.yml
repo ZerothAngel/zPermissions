@@ -33,15 +33,23 @@ permissions:
       zpermissions.reload: true
       zpermissions.export: true
       zpermissions.import: true
-      zpermissions.promote: true
-      zpermissions.promote.*: true
-      zpermissions.demote: true
-      zpermissions.demote.*: true
-      zpermissions.setrank: true
-      zpermissions.setrank.*: true
-      zpermissions.unsetrank: true
-      zpermissions.unsetrank.*: true
       zpermissions.cache: true
+      zpermissions.rank: true
+      zpermissions.rank.*: true
+  zpermissions.rank:
+    description: Allows use of all rank-related commands
+    children:
+      zpermissions.promote: true
+      zpermissions.demote: true
+      zpermissions.setrank: true
+      zpermissions.unsetrank: true
+  zpermissions.rank.*:
+    description: Allows use of rank commands on all tracks
+    children:
+      zpermissions.promote.*: true
+      zpermissions.demote.*: true
+      zpermissions.setrank.*: true
+      zpermissions.unsetrank.*: true
   zpermissions.player:
     description: Allows use of the /permissions player command
   zpermissions.group:
