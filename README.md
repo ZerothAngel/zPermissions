@@ -109,6 +109,9 @@ The rank commands are `/promote` and `/demote`.
 *   zpermissions.demote &mdash; `/demote` command
 *   zpermissions.demote.* &mdash;  Allows `/demote` on all tracks
 *   zpermissions.demote.&lt;track> &mdash; Allows `/demote` on a specific track
+*   zpermissions.setrank &mdash; `/setrank` command
+*   zpermissions.setrank.* &mdash; Allows `/setrank` on all tracks
+*   zpermissions.setrank.&lt;track> &mdash; Allows `/setrank` on a specific track
 
 ## Detailed Command Usage ##
 
@@ -180,3 +183,5 @@ The rank commands are `/promote` and `/demote`.
     track. If `track` is omitted, the default track is used. If the player is in
     the lowest group (the first group), they are removed from the group (and
     the track) altogether.
+*   `/setrank <player> <rank> [track]` &mdash; Set the player's rank on the
+    given track. If `track` is omitted, the default track is used.
