@@ -33,7 +33,7 @@ import org.tyrannyofheaven.bukkit.zPermissions.model.Entry;
  * 
  * @author zerothangel
  */
-public abstract class CommonCommand {
+public abstract class CommonCommands {
 
     // Parent plugin
     protected final ZPermissionsPlugin plugin;
@@ -46,7 +46,7 @@ public abstract class CommonCommand {
      * 
      * @param group true if this is handling groups
      */
-    protected CommonCommand(ZPermissionsPlugin plugin, boolean group) {
+    protected CommonCommands(ZPermissionsPlugin plugin, boolean group) {
         this.plugin = plugin;
         this.group = group;
     }

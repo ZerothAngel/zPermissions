@@ -46,7 +46,7 @@ import org.tyrannyofheaven.bukkit.util.transaction.TransactionCallback;
  * 
  * @author zerothangel
  */
-public class RootCommand {
+public class RootCommands {
 
     // Parent plugin
     private final ZPermissionsPlugin plugin;
@@ -54,7 +54,7 @@ public class RootCommand {
     // Handler for /permissions sub-commands
     private final SubCommands sc;
 
-    RootCommand(ZPermissionsPlugin plugin) {
+    RootCommands(ZPermissionsPlugin plugin) {
         this.plugin = plugin;
         sc = new SubCommands(plugin);
     }

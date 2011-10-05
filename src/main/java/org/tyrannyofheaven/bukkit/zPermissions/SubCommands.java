@@ -53,24 +53,24 @@ public class SubCommands {
     private final ZPermissionsPlugin plugin;
 
     // The "/permissions player" handler
-    private final PlayerCommand playerCommand;
+    private final PlayerCommands playerCommand;
 
     // The "/permissions group" handler
-    private final GroupCommand groupCommand;
+    private final GroupCommands groupCommand;
 
     // The "/permissions cache" handler
-    private final CacheCommand cacheCommand;
+    private final CacheCommands cacheCommand;
 
     SubCommands(ZPermissionsPlugin plugin) {
         this.plugin = plugin;
-        playerCommand = new PlayerCommand(plugin);
-        groupCommand = new GroupCommand(plugin);
-        cacheCommand = new CacheCommand(plugin);
+        playerCommand = new PlayerCommands(plugin);
+        groupCommand = new GroupCommands(plugin);
+        cacheCommand = new CacheCommands(plugin);
     }
 
     @Command(value={"player", "pl", "p"}, description="Player-related commands")
     @Require("zpermissions.player")
-    public PlayerCommand player(HelpBuilder helpBuilder, CommandSender sender, CommandSession session, @Option(value="player", nullable=true) String playerName, String[] args) {
+    public PlayerCommands player(HelpBuilder helpBuilder, CommandSender sender, CommandSession session, @Option(value="player", nullable=true) String playerName, String[] args) {
         if (args.length == 0) {
             // Display sub-command help
             helpBuilder.withCommandSender(sender)
@@ -94,7 +94,7 @@ public class SubCommands {
 
     @Command(value={"group", "gr", "g"}, description="Group-related commands")
     @Require("zpermissions.group")
-    public CommonCommand group(HelpBuilder helpBuilder, CommandSender sender, CommandSession session, @Option(value="group", nullable=true) String groupName, String[] args) {
+    public CommonCommands group(HelpBuilder helpBuilder, CommandSender sender, CommandSession session, @Option(value="group", nullable=true) String groupName, String[] args) {
         if (args.length == 0) {
             // Display sub-command help
             helpBuilder.withCommandSender(sender)

@@ -217,7 +217,7 @@ public class ZPermissionsPlugin extends JavaPlugin {
         applyCacheSettings();
 
         // Install our commands
-        (new ToHCommandExecutor<ZPermissionsPlugin>(this, new RootCommand(this))).registerCommands();
+        (new ToHCommandExecutor<ZPermissionsPlugin>(this, new RootCommands(this))).registerCommands();
 
         // Detect WorldGuard
         worldGuardPlugin = (WorldGuardPlugin)getServer().getPluginManager().getPlugin("WorldGuard");
