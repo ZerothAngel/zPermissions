@@ -37,11 +37,11 @@ import org.tyrannyofheaven.bukkit.zPermissions.model.PermissionEntity;
  * 
  * @author asaddi
  */
-public class PlayerCommand extends CommonCommand {
+public class PlayerCommands extends CommonCommands {
 
     private static final int TICKS_PER_SECOND = 20;
 
-    public PlayerCommand(ZPermissionsPlugin plugin) {
+    public PlayerCommands(ZPermissionsPlugin plugin) {
         super(plugin, false);
     }
 

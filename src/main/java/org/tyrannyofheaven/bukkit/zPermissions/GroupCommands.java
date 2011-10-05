@@ -38,9 +38,9 @@ import org.tyrannyofheaven.bukkit.zPermissions.model.PermissionEntity;
  * 
  * @author asaddi
  */
-public class GroupCommand extends CommonCommand {
+public class GroupCommands extends CommonCommands {
 
-    public GroupCommand(ZPermissionsPlugin plugin) {
+    public GroupCommands(ZPermissionsPlugin plugin) {
         super(plugin, true);
     }
 

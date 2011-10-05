@@ -35,7 +35,7 @@ import com.avaje.ebean.cache.ServerCacheStatistics;
  * 
  * @author asaddi
  */
-public class CacheCommand implements Runnable {
+public class CacheCommands implements Runnable {
 
     private static final int DEFAULT_MONITOR_INTERVAL = 15;
 
@@ -43,7 +43,7 @@ public class CacheCommand implements Runnable {
     
     private final ZPermissionsPlugin plugin;
     
-    CacheCommand(ZPermissionsPlugin plugin) {
+    CacheCommands(ZPermissionsPlugin plugin) {
         this.plugin = plugin;
     }
 
