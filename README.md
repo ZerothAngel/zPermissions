@@ -2,14 +2,16 @@
 
 zPermissions is an SQL database-backed Superperms (aka Bukkit permissions)
 implementation. Notable features are: multi-world support, ranks with multiple
-tracks/ladders, unlimited group inheritance (within reason), and optional
-region-specific permissions using [WorldGuard](http://dev.bukkit.org/server-mods/worldguard/) regions.
+tracks/ladders, group inheritance of unlimited depth (within reason), and
+optional region-specific permissions using
+[WorldGuard](http://dev.bukkit.org/server-mods/worldguard/) regions.
 
 There's no Permissions 2 or 3 support (and none is planned &mdash; ever).
 However, zPermissions works great with [PermissionsBukkit](http://dev.bukkit.org/server-mods/permbukkit/)'s
 SuperpermsBridge.
 
-Lastly, there is currently no build protection as I rely on WorldGuard for that.
+Lastly, there is currently no build protection as I rely on WorldGuard for
+that. zPermissions does permissions and only permissions.
 
 I aim to keep zPermissions a simple, yet feature-rich, Superperms provider.
 
@@ -200,3 +202,18 @@ The rank commands are `/promote`, `/demote`, `/setrank`, and `/unsetrank`.
     given track. If `track` is omitted, the default track is used.
 *   `/unsetrank <player> [track]` &mdash; Remove the player from the given
     track. If `track` is omitted, the default track is used.
+
+## License & Source ##
+
+zPermissions is released under the
+[Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0).
+
+Sources may be found on GitHub:
+
+*   [zPermissions](https://github.com/ZerothAngel/zPermissions)
+*   [ToHPluginUtils](https://github.com/ZerothAngel/ToHPluginUtils)
+
+## To Do ##
+
+*   Commands to clone/copy the permissions for a user or group.
+*   More extensive unit tests.
