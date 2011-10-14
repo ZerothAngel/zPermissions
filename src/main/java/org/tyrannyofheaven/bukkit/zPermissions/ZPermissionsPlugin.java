@@ -15,9 +15,7 @@
  */
 package org.tyrannyofheaven.bukkit.zPermissions;
 
-import static org.tyrannyofheaven.bukkit.util.ToHFileUtils.copyResourceToFile;
 import static org.tyrannyofheaven.bukkit.util.ToHLoggingUtils.debug;
-import static org.tyrannyofheaven.bukkit.util.ToHLoggingUtils.error;
 import static org.tyrannyofheaven.bukkit.util.ToHLoggingUtils.log;
 import static org.tyrannyofheaven.bukkit.util.ToHLoggingUtils.warn;
 import static org.tyrannyofheaven.bukkit.util.ToHMessageUtils.colorize;
@@ -39,10 +37,12 @@ import javax.persistence.PersistenceException;
 
 import org.bukkit.Location;
 import org.bukkit.command.CommandSender;
+import org.bukkit.configuration.ConfigurationSection;
+import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.permissions.PermissionAttachment;
 import org.bukkit.plugin.java.JavaPlugin;
-import org.bukkit.util.config.ConfigurationNode;
+import org.tyrannyofheaven.bukkit.util.ToHFileUtils;
 import org.tyrannyofheaven.bukkit.util.command.ToHCommandExecutor;
 import org.tyrannyofheaven.bukkit.util.transaction.AvajeTransactionStrategy;
 import org.tyrannyofheaven.bukkit.util.transaction.TransactionCallback;
@@ -98,6 +98,9 @@ public class ZPermissionsPlugin extends JavaPlugin {
 
     // Permission resolver
     private final PermissionsResolver resolver = new PermissionsResolver(this);
+
+    // Our own Configuration (don't bother with JavaPlugin's)
+    private FileConfiguration config;
 
     // The configured default track
     private String defaultTrack;
@@ -183,23 +186,13 @@ public class ZPermissionsPlugin extends JavaPlugin {
     public void onEnable() {
         log(this, "%s starting...", getDescription().getVersion());
 
-        // Create data directory, if needed
-        if (!getDataFolder().exists()) {
-            if (!getDataFolder().mkdirs()) {
-                error(this, "Unable to create data folder");
-            }
-        }
-
-        // Create config file, if needed
-        File configFile = new File(getDataFolder(), "config.yml");
-        if (!configFile.exists()) {
-            copyResourceToFile(this, "config.yml", configFile);
-            // Re-load config
-            getConfiguration().load();
-        }
-
         // Read config
+        config = ToHFileUtils.getConfig(this);
+        config.options().header(null);
         readConfig();
+
+        // Upgrade/create config
+        ToHFileUtils.upgradeConfig(this, config);
 
         // Create database schema, if needed
         try {
@@ -442,7 +435,7 @@ public class ZPermissionsPlugin extends JavaPlugin {
         String value;
         
         // Read values, set accordingly
-        Object strOrList = getConfiguration().getProperty("group-permission");
+        Object strOrList = config.get("group-permission");
         if (strOrList != null) {
             if (strOrList instanceof String && hasText((String)strOrList)) {
                 getResolver().setGroupPermissionFormats(Collections.singleton((String)strOrList));
@@ -462,28 +455,28 @@ public class ZPermissionsPlugin extends JavaPlugin {
                 warn(this, "group-permission must be a string or list of strings");
         }
 
-        value = (String)getConfiguration().getProperty("default-group");
+        value = config.getString("default-group");
         if (hasText(value))
             getResolver().setDefaultGroup(value);
         
-        value = (String)getConfiguration().getProperty("default-track");
+        value = config.getString("default-track");
         if (hasText(value))
             defaultTrack = value;
 
-        value = (String)getConfiguration().getProperty("dump-directory");
+        value = config.getString("dump-directory");
         if (hasText(value))
             dumpDirectory = new File(value);
 
-        defaultTempPermissionTimeout = getConfiguration().getInt("default-temp-permission-timeout", DEFAULT_TEMP_PERMISSION_TIMEOUT);
-        cacheMaxIdle = getConfiguration().getInt("cache-max-idle", DEFAULT_CACHE_IDLE);
-        cacheMaxTtl = getConfiguration().getInt("cache-max-ttl", DEFAULT_CACHE_TTL);
-        cacheSize = getConfiguration().getInt("cache-size", DEFAULT_CACHE_SIZE);
+        defaultTempPermissionTimeout = config.getInt("default-temp-permission-timeout", DEFAULT_TEMP_PERMISSION_TIMEOUT);
+        cacheMaxIdle = config.getInt("cache-max-idle", DEFAULT_CACHE_IDLE);
+        cacheMaxTtl = config.getInt("cache-max-ttl", DEFAULT_CACHE_TTL);
+        cacheSize = config.getInt("cache-size", DEFAULT_CACHE_SIZE);
 
         // Read tracks, if any
-        ConfigurationNode node = getConfiguration().getNode("tracks");
+        ConfigurationSection node = config.getConfigurationSection("tracks");
         if (node != null) {
-            for (String trackName : node.getKeys()) {
-                List<Object> list = node.getList(trackName);
+            for (String trackName : node.getKeys(false)) {
+                List<?> list = node.getList(trackName);
                 if (list == null) {
                     warn(this, "Track %s must have a list value", trackName);
                     continue;
@@ -491,27 +484,21 @@ public class ZPermissionsPlugin extends JavaPlugin {
 
                 List<String> members = new ArrayList<String>();
                 for (Object o : list) {
-                    if (!(o instanceof String)) {
-                        warn(this, "Track %s contains non-string value", trackName);
-                        continue;
-                    }
-                    members.add((String)o);
+                    members.add(o.toString());
                 }
                 tracks.put(trackName, members);
             }
         }
         
         // Set debug logging
-        logger.setLevel(null);
-        if (getConfiguration().getBoolean("debug", false))
-            logger.setLevel(Level.FINE);
+        logger.setLevel(config.getBoolean("debug", false) ? Level.FINE : null);
     }
 
     /**
      * Re-read config.yml and refresh attachments of all online players.
      */
     synchronized void reload() {
-        getConfiguration().load();
+        config = ToHFileUtils.getConfig(this);
         readConfig();
         refreshPlayers();
     }
