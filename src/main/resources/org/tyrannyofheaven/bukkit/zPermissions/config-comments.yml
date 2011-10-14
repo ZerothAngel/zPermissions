@@ -1,0 +1,46 @@
+group-permission: |
+  Groups may have a group permission node automatically assigned to their
+  members. This is the name of that permission node. It must be a string
+  suitable for Java's String.format() with one argument: the group name.
+  Omit or leave blank ('') to disable this feature.
+  This may also be a list of strings to automatically assign multiple
+  permissions.
+
+default-group: |
+  The default group. Players that are not explicitly members of any group
+  are placed in this group.
+
+default-track: |
+  The default track. When the track name is omitted while using the /promote,
+  /demote, /setrank, and /unsetrank commands, this is the track used.
+
+dump-directory: |
+  Directory (relative to the server root) where to load/store dumps.
+
+default-temp-permission-timeout: |
+  Default timeout for temporary permissions, in seconds
+
+tracks: |
+  Track definitions. Each key should be the name of the track. The value
+  should be a list of group names in ascending order.
+
+cache-max-idle: |
+  Max idle in seconds for entries in the database cache. Set to 0 or negative
+  to use Avaje's global setting from ebean.properties.
+  (If ebean.properties doesn't exist, the default is 600.)
+  NOTE: /permissions reload does not update this value
+
+cache-max-ttl: |
+  Max time-to-live in seconds for entries in the database cache. Set to 0 or
+  negative to use Avaje's global setting from ebean.properties.
+  (If ebean.properties doesn't exist, the default is 21600 or 6 hours.)
+  NOTE: /permissions reload does not update this value
+
+cache-size: |
+  Maximum size of database cache. Set to 0 or negative to use Avaje's global
+  setting from ebean.properties.
+  (If ebean.properties doesn't exist, the default is 1000.)
+  NOTE: /permissions reload does not update this value
+
+debug: |
+  Enable debug logging.

@@ -1,50 +1,25 @@
-# Groups may have a group permission node automatically assigned to their
-# members. This is the name of that permission node. It must be a string
-# suitable for Java's String.format() with one argument: the group name.
-# Omit or leave blank ('') to disable this feature.
-# This may also be a list of strings to automatically assign multiple
-# permissions.
+config-version: 1
+
 group-permission: 'group.%s'
 
-# The default group. Players that are not explicitly members of any group
-# are placed in this group.
 default-group: default
 
-# The default track. When the track name is omitted while using the /promote,
-# /demote, /setrank, and /unsetrank commands, this is the track used.
 default-track: default
 
-# Directory (relative to the server root) where to load/store dumps.
 dump-directory: zPermissions-dumps
 
-# Default timeout for temporary permissions, in seconds
 default-temp-permission-timeout: 60
 
-# Track definitions. Each key should be the name of the track. The value
-# should be a list of group names in ascending order.
 tracks:
   default:
   - default
   - somegroup
   - someothergroup
 
-# Max idle in seconds for entries in the database cache. Set to 0 or negative
-# to use Avaje's global setting from ebean.properties.
-# (If ebean.properties doesn't exist, the default is 600.)
-# NOTE: /permissions reload does not update this value
 cache-max-idle: 180
 
-# Max time-to-live in seconds for entries in the database cache. Set to 0 or
-# negative to use Avaje's global setting from ebean.properties.
-# (If ebean.properties doesn't exist, the default is 21600 or 6 hours.)
-# NOTE: /permissions reload does not update this value
 cache-max-ttl: 600
 
-# Maximum size of database cache. Set to 0 or negative to use Avaje's global
-# setting from ebean.properties.
-# (If ebean.properties doesn't exist, the default is 1000.)
-# NOTE: /permissions reload does not update this value
 cache-size: 1000
 
-# Enable debug logging.
 debug: false
