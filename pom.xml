@@ -15,6 +15,7 @@
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <bukkit.version>1.9-pre5-R1-SNAPSHOT</bukkit.version>
   </properties>
 
   <repositories>
@@ -33,7 +34,7 @@
     <dependency>
       <groupId>org.bukkit</groupId>
       <artifactId>bukkit</artifactId>
-      <version>0.0.1-SNAPSHOT</version>
+      <version>${bukkit.version}</version>
     </dependency>
     <dependency>
       <groupId>org.tyrannyofheaven.bukkit</groupId>
