@@ -43,6 +43,8 @@ import org.bukkit.entity.Player;
 import org.bukkit.permissions.PermissionAttachment;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.tyrannyofheaven.bukkit.util.ToHFileUtils;
+import org.tyrannyofheaven.bukkit.util.ToHUtils;
+import org.tyrannyofheaven.bukkit.util.VersionInfo;
 import org.tyrannyofheaven.bukkit.util.command.ToHCommandExecutor;
 import org.tyrannyofheaven.bukkit.util.transaction.AvajeTransactionStrategy;
 import org.tyrannyofheaven.bukkit.util.transaction.TransactionCallback;
@@ -92,6 +94,9 @@ public class ZPermissionsPlugin extends JavaPlugin {
 
     // This plugin's logger
     private final Logger logger = Logger.getLogger(getClass().getName());
+
+    // Version info (may include build number)
+    private VersionInfo versionInfo;
 
     // Internal state kept about each online player
     private final Map<String, PlayerState> playerStates = new HashMap<String, PlayerState>();
@@ -155,6 +160,11 @@ public class ZPermissionsPlugin extends JavaPlugin {
         return resolver;
     }
 
+    @Override
+    public void onLoad() {
+        versionInfo = ToHUtils.getVersion(this);
+    }
+
     /* (non-Javadoc)
      * @see org.bukkit.plugin.Plugin#onDisable()
      */
@@ -176,7 +186,7 @@ public class ZPermissionsPlugin extends JavaPlugin {
             playerState.getAttachment().remove();
         }
 
-        log(this, "%s disabled.", getDescription().getVersion());
+        log(this, "%s disabled.", versionInfo.getVersionString());
     }
 
     /* (non-Javadoc)
@@ -184,7 +194,7 @@ public class ZPermissionsPlugin extends JavaPlugin {
      */
     @Override
     public void onEnable() {
-        log(this, "%s starting...", getDescription().getVersion());
+        log(this, "%s starting...", versionInfo.getVersionString());
 
         // Read config
         config = ToHFileUtils.getConfig(this);
@@ -225,7 +235,7 @@ public class ZPermissionsPlugin extends JavaPlugin {
         // Make sure everyone currently online has an attachment
         refreshPlayers();
         
-        log(this, "%s enabled.", getDescription().getVersion());
+        log(this, "%s enabled.", versionInfo.getVersionString());
     }
 
     // Apply cache settings to Avaje bean caches
