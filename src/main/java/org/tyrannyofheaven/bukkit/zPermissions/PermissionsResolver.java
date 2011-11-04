@@ -41,6 +41,8 @@ public class PermissionsResolver {
 
     private final Set<String> groupPermissionFormats = new HashSet<String>();
 
+    private final Set<String> assignedGroupPermissionFormats = new HashSet<String>();
+
     private String defaultGroup;
 
     // For plugin use
@@ -68,6 +70,18 @@ public class PermissionsResolver {
     }
 
     /**
+     * Set group permission format strings for assigned groups.
+     * 
+     * @param assignedGroupPermissionFormats the group permission format strings,
+     *   suitable for use with {@link String#format(String, Object...)}
+     */
+    public void setAssignedGroupPermissionFormats(Collection<String> assignedGroupPermissionFormats) {
+        this.assignedGroupPermissionFormats.clear();
+        if (assignedGroupPermissionFormats != null)
+            this.assignedGroupPermissionFormats.addAll(assignedGroupPermissionFormats);
+    }
+
+    /**
      * Set name of the default group.
      * 
      * @param defaultGroup name of the default group
@@ -84,6 +98,11 @@ public class PermissionsResolver {
     // Get group permission format strings
     private Set<String> getGroupPermissionFormats() {
         return groupPermissionFormats;
+    }
+
+    // Get assigned group permission format strings
+    private Set<String> getAssignedGroupPermissionFormats() {
+        return assignedGroupPermissionFormats;
     }
 
     /**
@@ -140,15 +159,21 @@ public class PermissionsResolver {
     // by each successive descendant.
     private void resolveGroup(Map<String, Boolean> permissions, Set<String> regions, String world, String group) {
         List<String> ancestry = getDao().getAncestry(group);
-
         debug("Ancestry for %s: %s", group, ancestry);
+        
+        // Add assigned group permissions, if present
+        for (String groupPermissionFormat : getAssignedGroupPermissionFormats()) {
+            permissions.put(String.format(groupPermissionFormat, group), Boolean.TRUE);
+        }
+
+        // Apply permission from each ancestor
         for (String ancestor : ancestry) {
-            applyPermissions(permissions, ancestor, true, regions, world);
-            
             // Add group permissions, if present
             for (String groupPermissionFormat : getGroupPermissionFormats()) {
                 permissions.put(String.format(groupPermissionFormat, ancestor), Boolean.TRUE);
             }
+
+            applyPermissions(permissions, ancestor, true, regions, world);
         }
     }
 

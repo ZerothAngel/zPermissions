@@ -106,6 +106,7 @@ public class ResolverTest {
         resolver = new PermissionsResolver(dao);
         resolver.setDefaultGroup(TEST_GROUP1);
         resolver.setGroupPermissionFormats(Collections.singleton("group.%s"));
+        resolver.setAssignedGroupPermissionFormats(Collections.singleton("assignedgroup.%s"));
     }
 
     private void begin() {
@@ -264,6 +265,8 @@ public class ResolverTest {
         assertPermission(permissions, "basic.perm3", false);
         assertPermission(permissions, "group.Group1");
         assertPermission(permissions, "group.Group2", false);
+        assertPermission(permissions, "assignedgroup.Group1");
+        assertPermission(permissions, "assignedgroup.Group2", false);
         
         begin();
         try {
@@ -285,6 +288,8 @@ public class ResolverTest {
         assertPermission(permissions, "basic.perm3");
         assertPermission(permissions, "group.Group1", false);
         assertPermission(permissions, "group.Group2");
+        assertPermission(permissions, "assignedgroup.Group1", false);
+        assertPermission(permissions, "assignedgroup.Group2");
     }
 
     @Test
@@ -319,6 +324,8 @@ public class ResolverTest {
         assertPermission(permissions, "basic.perm3", false);
         assertPermission(permissions, "group.Group1");
         assertPermission(permissions, "group.Group2", false);
+        assertPermission(permissions, "assignedgroup.Group1");
+        assertPermission(permissions, "assignedgroup.Group2", false);
 
         // Switch group
         begin();
@@ -341,6 +348,8 @@ public class ResolverTest {
         assertPermission(permissions, "basic.perm3");
         assertPermission(permissions, "group.Group1");
         assertPermission(permissions, "group.Group2");
+        assertPermission(permissions, "assignedgroup.Group1", false);
+        assertPermission(permissions, "assignedgroup.Group2");
         
         // Switch back
         begin();
@@ -396,6 +405,8 @@ public class ResolverTest {
         assertPermission(permissions, "basic.perm3", false);
         assertPermission(permissions, "group.Group1");
         assertPermission(permissions, "group.Group2", false);
+        assertPermission(permissions, "assignedgroup.Group1");
+        assertPermission(permissions, "assignedgroup.Group2", false);
 
         permissions = resolve(TEST_PLAYER, TEST_WORLD2);
         
@@ -404,6 +415,8 @@ public class ResolverTest {
         assertPermission(permissions, "basic.perm3", false);
         assertPermission(permissions, "group.Group1");
         assertPermission(permissions, "group.Group2", false);
+        assertPermission(permissions, "assignedgroup.Group1");
+        assertPermission(permissions, "assignedgroup.Group2", false);
 
         // Switch group
         begin();
@@ -426,6 +439,8 @@ public class ResolverTest {
         assertPermission(permissions, "basic.perm3", false);
         assertPermission(permissions, "group.Group1");
         assertPermission(permissions, "group.Group2");
+        assertPermission(permissions, "assignedgroup.Group1", false);
+        assertPermission(permissions, "assignedgroup.Group2");
 
         permissions = resolve(TEST_PLAYER, TEST_WORLD2);
 
@@ -434,6 +449,8 @@ public class ResolverTest {
         assertPermission(permissions, "basic.perm3");
         assertPermission(permissions, "group.Group1");
         assertPermission(permissions, "group.Group2");
+        assertPermission(permissions, "assignedgroup.Group1", false);
+        assertPermission(permissions, "assignedgroup.Group2");
     }
 
 }

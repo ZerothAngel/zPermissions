@@ -430,6 +430,7 @@ public class ZPermissionsPlugin extends JavaPlugin {
         defaultTrack = DEFAULT_TRACK;
         dumpDirectory = new File(DEFAULT_DUMP_DIRECTORY);
         getResolver().setGroupPermissionFormats(null);
+        getResolver().setAssignedGroupPermissionFormats(null);
         tracks.clear();
         
         String value;
@@ -437,8 +438,9 @@ public class ZPermissionsPlugin extends JavaPlugin {
         // Read values, set accordingly
         Object strOrList = config.get("group-permission");
         if (strOrList != null) {
-            if (strOrList instanceof String && hasText((String)strOrList)) {
-                getResolver().setGroupPermissionFormats(Collections.singleton((String)strOrList));
+            if (strOrList instanceof String) {
+                if (hasText((String)strOrList))
+                    getResolver().setGroupPermissionFormats(Collections.singleton((String)strOrList));
             }
             else if (strOrList instanceof List<?>) {
                 Set<String> groupPerms = new HashSet<String>();
@@ -453,6 +455,28 @@ public class ZPermissionsPlugin extends JavaPlugin {
             }
             else
                 warn(this, "group-permission must be a string or list of strings");
+        }
+
+        // TODO refactor
+        strOrList = config.get("assigned-group-permission");
+        if (strOrList != null) {
+            if (strOrList instanceof String) {
+                if (hasText((String)strOrList))
+                    getResolver().setAssignedGroupPermissionFormats(Collections.singleton((String)strOrList));
+            }
+            else if (strOrList instanceof List<?>) {
+                Set<String> groupPerms = new HashSet<String>();
+                for (Object obj : (List<?>)strOrList) {
+                    if (obj instanceof String) {
+                        groupPerms.add((String)obj);
+                    }
+                    else
+                        warn(this, "assigned-group-permission list contains non-string value");
+                }
+                getResolver().setAssignedGroupPermissionFormats(groupPerms);
+            }
+            else
+                warn(this, "assigned-group-permission must be a string or list of strings");
         }
 
         value = config.getString("default-group");
