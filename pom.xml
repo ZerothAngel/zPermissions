@@ -10,7 +10,7 @@
   <url>http://maven.apache.org</url>
 
   <scm>
-    <connection>scm:hg:</connection>
+    <connection>scm:git:</connection>
   </scm>
 
   <properties>
