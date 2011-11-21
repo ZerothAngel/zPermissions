@@ -18,7 +18,8 @@ package org.tyrannyofheaven.bukkit.zPermissions;
 import static org.tyrannyofheaven.bukkit.util.ToHUtils.registerEvent;
 
 import org.bukkit.event.Event.Priority;
-import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.event.player.PlayerChangedWorldEvent;
+import org.bukkit.event.player.PlayerLoginEvent;
 import org.bukkit.event.player.PlayerListener;
 import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
@@ -39,18 +40,20 @@ class ZPermissionsPlayerListener extends PlayerListener {
     }
 
     void registerEvents(boolean regionSupport) {
-        registerEvent("PLAYER_JOIN", this, Priority.Monitor, plugin);
+        registerEvent("PLAYER_LOGIN", this, Priority.Lowest, plugin);
         registerEvent("PLAYER_QUIT", this, Priority.Monitor, plugin);
-        registerEvent("PLAYER_TELEPORT", this, Priority.Monitor, plugin);
+        registerEvent("PLAYER_CHANGED_WORLD", this, Priority.Lowest, plugin);
 
-        // Only check PLAYER_MOVE if region support is enabled
-        if (regionSupport)
+        // Only check PLAYER_MOVE/PLAYER_TELEPORT if region support is enabled
+        if (regionSupport) {
             registerEvent("PLAYER_MOVE", this, Priority.Monitor, plugin);
+            registerEvent("PLAYER_TELEPORT", this, Priority.Monitor, plugin);
+        }
     }
 
     @Override
-    public void onPlayerJoin(PlayerJoinEvent event) {
-        plugin.updateAttachment(event.getPlayer().getName(), event.getPlayer().getLocation(), true);
+    public void onPlayerLogin(PlayerLoginEvent event) {
+        plugin.updateAttachment(event.getPlayer(), event.getPlayer().getLocation(), true, true);
     }
 
     @Override
@@ -63,7 +66,7 @@ class ZPermissionsPlayerListener extends PlayerListener {
         if (event.isCancelled()) return;
 
         // Conditionally update if world changed
-        plugin.updateAttachment(event.getPlayer().getName(), event.getTo(), false);
+        plugin.updateAttachment(event.getPlayer(), event.getTo(), false, false);
     }
 
     @Override
@@ -75,8 +78,13 @@ class ZPermissionsPlayerListener extends PlayerListener {
                 event.getFrom().getBlockY() != event.getTo().getBlockY() ||
                 event.getFrom().getBlockZ() != event.getTo().getBlockZ()) {
             // Conditionally update if containing regions changed
-            plugin.updateAttachment(event.getPlayer().getName(), event.getTo(), false);
+            plugin.updateAttachment(event.getPlayer(), event.getTo(), false, false);
         }
+    }
+
+    @Override
+    public void onPlayerChangedWorld(PlayerChangedWorldEvent event) {
+        plugin.updateAttachment(event.getPlayer(), event.getPlayer().getLocation(), false, false);
     }
 
 }
