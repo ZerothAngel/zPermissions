@@ -8,7 +8,7 @@ database: true
 commands:
   permissions:
     description: Top-level command for zPermissions
-    aliases: [perm, p]
+    aliases: [perm, perms, p]
   promote:
     description: Promote a player up a rank
     aliases: rankup

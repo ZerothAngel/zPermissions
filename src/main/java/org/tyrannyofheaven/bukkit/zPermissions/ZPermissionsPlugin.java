@@ -281,21 +281,22 @@ public class ZPermissionsPlugin extends JavaPlugin {
         if (playerState != null)
             playerState.getAttachment().remove(); // potential to call a callback, so do it outside synchronized block
     }
+    
+    void updateAttachment(String playerName, Location location, boolean force) {
+        Player player = getServer().getPlayerExact(playerName);
+        if (player == null) return;
+        updateAttachment(player, location, force, false);
+    }
 
     // Update state about a player, resolving effective permissions and
     // creating/updating their attachment
-    void updateAttachment(String playerName, Location location, boolean force) {
+    void updateAttachment(Player player, Location location, boolean force, boolean ignoreRemoved) {
         final Set<String> regions = getRegions(location);
 
-        Player player;
         PlayerState playerState = null;
         synchronized (playerStates) {
-            player = getServer().getPlayerExact(playerName);
-            if (player != null)
-                playerState = playerStates.get(player.getName());
+            playerState = playerStates.get(player.getName());
         }
-
-        if (player == null) return;
 
         // Check if the player changed regions/worlds or isn't known yet
         if (!force) {
@@ -306,7 +307,7 @@ public class ZPermissionsPlugin extends JavaPlugin {
 
         // No need to update yet (most likely called by movement-based event)
         if (!force) return;
-
+        
         debug(this, "Updating attachment for %s", player.getName());
         debug(this, "  location = %s", location);
         debug(this, "  regions = %s", regions);
@@ -331,7 +332,8 @@ public class ZPermissionsPlugin extends JavaPlugin {
         PermissionAttachment old = null;
         synchronized (playerStates) {
             // NB: Must re-fetch since player could have been removed since first fetch
-            player = getServer().getPlayerExact(playerName);
+            Player newPlayer = getServer().getPlayerExact(player.getName());
+            if ((newPlayer == null && !ignoreRemoved) || newPlayer != null) player = newPlayer;
             if (player != null) {
                 playerState = playerStates.get(player.getName());
                 if (playerState == null) {
