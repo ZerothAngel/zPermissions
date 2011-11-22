@@ -169,6 +169,8 @@ The rank commands are `/promote`, `/demote`, `/setrank`, and `/unsetrank`.
 
 ### Group Commands ###
 
+*   `/permissions group <group> create` &mdash; Create a group. Note that for
+    most commands that manipulate a group, the group must already exist!
 *   `/permissions group <group> get <permission>` &mdash; View a permission
     associated with a group.
 *   `/permissions group <group> set <permission> [value]` &mdash; Set a

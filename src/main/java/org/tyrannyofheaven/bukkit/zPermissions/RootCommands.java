@@ -33,6 +33,7 @@ import org.tyrannyofheaven.bukkit.util.command.HelpBuilder;
 import org.tyrannyofheaven.bukkit.util.command.Option;
 import org.tyrannyofheaven.bukkit.util.command.Require;
 import org.tyrannyofheaven.bukkit.util.transaction.TransactionCallback;
+import org.tyrannyofheaven.bukkit.zPermissions.dao.MissingGroupException;
 
 /**
  * Handler for top-level commands:
@@ -119,7 +120,13 @@ public class RootCommands {
                     // Player not in any group. Only valid for rankUp
                     if (rankUp) {
                         String group = track.get(0);
-                        plugin.getDao().addMember(group, playerName);
+                        try {
+                            plugin.getDao().addMember(group, playerName);
+                        }
+                        catch (MissingGroupException e) {
+                            sendMessage(sender, colorize("{RED}Group {DARK_GREEN}%s{RED} does not exist."), e.getGroupName());
+                            return false;
+                        }
                         broadcastAdmin(plugin, "%s added %s to %s", sender.getName(), playerName, group);
                         sendMessage(sender, colorize("{YELLOW}Adding {AQUA}%s{YELLOW} to {DARK_GREEN}%s"), playerName, group);
                     }
@@ -232,7 +239,13 @@ public class RootCommands {
                 else if (playerGroupNames.isEmpty()) {
                     if (rankName != null) {
                         // Not in any groups, just add to new group.
-                        plugin.getDao().addMember(rankName, playerName);
+                        try {
+                            plugin.getDao().addMember(rankName, playerName);
+                        }
+                        catch (MissingGroupException e) {
+                            sendMessage(sender, colorize("{RED}Group {DARK_GREEN}%s{RED} does not exist."), e.getGroupName());
+                            return false;
+                        }
                         broadcastAdmin(plugin, "%s added %s to %s", sender.getName(), playerName, rankName);
                         sendMessage(sender, colorize("{YELLOW}Adding {AQUA}%s{YELLOW} to {DARK_GREEN}%s"), playerName, rankName);
                     }

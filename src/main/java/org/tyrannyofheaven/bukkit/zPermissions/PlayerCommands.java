@@ -28,6 +28,7 @@ import org.tyrannyofheaven.bukkit.util.command.Command;
 import org.tyrannyofheaven.bukkit.util.command.Option;
 import org.tyrannyofheaven.bukkit.util.command.Session;
 import org.tyrannyofheaven.bukkit.util.transaction.TransactionCallbackWithoutResult;
+import org.tyrannyofheaven.bukkit.zPermissions.dao.MissingGroupException;
 import org.tyrannyofheaven.bukkit.zPermissions.model.Entry;
 import org.tyrannyofheaven.bukkit.zPermissions.model.PermissionEntity;
 
@@ -75,12 +76,18 @@ public class PlayerCommands extends CommonCommands {
 
     @Command(value={"setgroup", "group"}, description="Set this player's singular group")
     public void setGroup(CommandSender sender, final @Session("entityName") String playerName, final @Option("group") String groupName) {
-        plugin.getTransactionStrategy().execute(new TransactionCallbackWithoutResult() {
-            @Override
-            public void doInTransactionWithoutResult() throws Exception {
-                plugin.getDao().setGroup(playerName, groupName);
-            }
-        });
+        try {
+            plugin.getTransactionStrategy().execute(new TransactionCallbackWithoutResult() {
+                @Override
+                public void doInTransactionWithoutResult() throws Exception {
+                    plugin.getDao().setGroup(playerName, groupName);
+                }
+            });
+        }
+        catch (MissingGroupException e) {
+            handleMissingGroup(sender, e);
+            return;
+        }
 
         sendMessage(sender, colorize("{AQUA}%s{YELLOW}'s group set to {DARK_GREEN}%s"), playerName, groupName);
         plugin.checkPlayer(sender, playerName);

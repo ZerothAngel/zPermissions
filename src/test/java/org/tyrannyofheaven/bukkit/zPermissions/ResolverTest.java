@@ -252,8 +252,10 @@ public class ResolverTest {
     public void testBasicGroupResolve() {
         setPermissions(TEST_PLAYER, false,
                 "basic.perm1");
+        assertTrue(getDao().createGroup(TEST_GROUP1));
         setPermissions(TEST_GROUP1, true,
                 "basic.perm2");
+        assertTrue(getDao().createGroup(TEST_GROUP2));
         setPermissions(TEST_GROUP2, true,
                 "basic.perm3");
 
@@ -296,8 +298,10 @@ public class ResolverTest {
     public void testBasicInheritResolve() {
         setPermissions(TEST_PLAYER, false,
                 "basic.perm1");
+        assertTrue(getDao().createGroup(TEST_GROUP1));
         setPermissions(TEST_GROUP1, true,
                 "basic.perm2");
+        assertTrue(getDao().createGroup(TEST_GROUP2));
         setPermissions(TEST_GROUP2, true,
                 "basic.perm3");
 
@@ -377,8 +381,10 @@ public class ResolverTest {
     public void testInheritWorldResolve() {
         setPermissions(TEST_PLAYER, false,
             "basic.perm1");
+        assertTrue(getDao().createGroup(TEST_GROUP1));
         setPermissions(TEST_GROUP1, true,
             TEST_WORLD1 + ":basic.perm2");
+        assertTrue(getDao().createGroup(TEST_GROUP2));
         setPermissions(TEST_GROUP2, true,
             TEST_WORLD2 + ":basic.perm3");
 
