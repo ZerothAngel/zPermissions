@@ -15,6 +15,7 @@
  */
 package org.tyrannyofheaven.bukkit.zPermissions;
 
+import static org.tyrannyofheaven.bukkit.util.ToHMessageUtils.broadcastAdmin;
 import static org.tyrannyofheaven.bukkit.util.ToHMessageUtils.colorize;
 import static org.tyrannyofheaven.bukkit.util.ToHMessageUtils.sendMessage;
 import static org.tyrannyofheaven.bukkit.util.ToHStringUtils.delimitedString;
@@ -29,6 +30,7 @@ import org.tyrannyofheaven.bukkit.util.command.Session;
 import org.tyrannyofheaven.bukkit.util.transaction.TransactionCallback;
 import org.tyrannyofheaven.bukkit.util.transaction.TransactionCallbackWithoutResult;
 import org.tyrannyofheaven.bukkit.zPermissions.dao.DaoException;
+import org.tyrannyofheaven.bukkit.zPermissions.dao.MissingGroupException;
 import org.tyrannyofheaven.bukkit.zPermissions.model.Entry;
 import org.tyrannyofheaven.bukkit.zPermissions.model.PermissionEntity;
 
@@ -44,15 +46,38 @@ public class GroupCommands extends CommonCommands {
         super(plugin, true);
     }
 
-    @Command(value="add", description="Add a player to a group")
-    public void addMember(CommandSender sender, final @Session("entityName") String groupName, final @Option("player") String playerName) {
-        // Add player to group. Will always succeed.
-        plugin.getTransactionStrategy().execute(new TransactionCallbackWithoutResult() {
+    @Command(value="create", description="Create a group")
+    public void create(CommandSender sender, final @Session("entityName") String groupName) {
+        boolean result = plugin.getTransactionStrategy().execute(new TransactionCallback<Boolean>() {
             @Override
-            public void doInTransactionWithoutResult() throws Exception {
-                plugin.getDao().addMember(groupName, playerName);
+            public Boolean doInTransaction() throws Exception {
+                return plugin.getDao().createGroup(groupName);
             }
         });
+        
+        if (result) {
+            broadcastAdmin(plugin, "%s created group %s", sender.getName(), groupName);
+            sendMessage(sender, colorize("{YELLOW}Group {DARK_GREEN}%s{YELLOW} created."), groupName);
+        }
+        else
+            sendMessage(sender, colorize("{RED}Group {DARK_GREEN}%s{RED} already exists."), groupName);
+    }
+
+    @Command(value="add", description="Add a player to a group")
+    public void addMember(CommandSender sender, final @Session("entityName") String groupName, final @Option("player") String playerName) {
+        // Add player to group.
+        try {
+            plugin.getTransactionStrategy().execute(new TransactionCallbackWithoutResult() {
+                @Override
+                public void doInTransactionWithoutResult() throws Exception {
+                    plugin.getDao().addMember(groupName, playerName);
+                }
+            });
+        }
+        catch (MissingGroupException e) {
+            handleMissingGroup(sender, e);
+            return;
+        }
 
         sendMessage(sender, colorize("{AQUA}%s{YELLOW} added to {DARK_GREEN}%s"), playerName, groupName);
         plugin.checkPlayer(sender, playerName);
@@ -111,6 +136,10 @@ public class GroupCommands extends CommonCommands {
                 }
             });
         }
+        catch (MissingGroupException e) {
+            handleMissingGroup(sender, e);
+            return;
+        }
         catch (DaoException e) {
             // Most likely due to inheritance cycle
             sendMessage(sender, colorize("{RED}%s"), e.getMessage());
@@ -124,12 +153,18 @@ public class GroupCommands extends CommonCommands {
     @Command(value={"setpriority", "priority"}, description="Set a group's priority")
     public void setPriority(CommandSender sender, final @Session("entityName") String groupName, final @Option("priority") int priority) {
         // Set the priority. Will not fail, creates group if necessary
-        plugin.getTransactionStrategy().execute(new TransactionCallbackWithoutResult() {
-            @Override
-            public void doInTransactionWithoutResult() throws Exception {
-                plugin.getDao().setPriority(groupName, priority);
-            }
-        });
+        try {
+            plugin.getTransactionStrategy().execute(new TransactionCallbackWithoutResult() {
+                @Override
+                public void doInTransactionWithoutResult() throws Exception {
+                    plugin.getDao().setPriority(groupName, priority);
+                }
+            });
+        }
+        catch (MissingGroupException e) {
+            handleMissingGroup(sender, e);
+            return;
+        }
 
         sendMessage(sender, colorize("{DARK_GREEN}%s{YELLOW}'s priority is now {GREEN}%d"), groupName, priority);
         plugin.refreshPlayers();
@@ -141,7 +176,7 @@ public class GroupCommands extends CommonCommands {
         
         // NB: Can't tell if group doesn't exist or if it has no members.
         if (members.isEmpty())
-            sendMessage(sender, colorize("{YELLOW}Group has no members."));
+            sendMessage(sender, colorize("{YELLOW}Group has no members or does not exist."));
         else {
             sendMessage(sender, colorize("{YELLOW}Members of {DARK_GREEN}%s{YELLOW}: {AQUA}%s"), groupName, delimitedString(ChatColor.YELLOW + ", " + ChatColor.AQUA, members));
         }

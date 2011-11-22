@@ -99,6 +99,7 @@ public class SubCommands {
             // Display sub-command help
             helpBuilder.withCommandSender(sender)
                 .withHandler(groupCommand)
+                .forCommand("create")
                 .forCommand("get")
                 .forCommand("set")
                 .forCommand("unset")
@@ -261,6 +262,7 @@ public class SubCommands {
                         List<PermissionEntity> groups = plugin.getDao().getEntities(true);
                         for (PermissionEntity entity : groups) {
                             out.println(String.format("# Group %s", entity.getDisplayName()));
+                            out.println(String.format("permissions group %s create", entity.getDisplayName()));
                             dumpPermissions(out, entity);
                             out.println(String.format("permissions group %s setpriority %d",
                                     entity.getDisplayName(),

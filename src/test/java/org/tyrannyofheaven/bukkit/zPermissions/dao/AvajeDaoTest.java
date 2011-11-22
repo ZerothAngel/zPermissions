@@ -245,6 +245,7 @@ public class AvajeDaoTest {
             assertTrue(getDao().getGroups(TEST_PLAYER).isEmpty());
             
             // Add to a group
+            assertTrue(getDao().createGroup(TEST_GROUP1));
             getDao().addMember(TEST_GROUP1, TEST_PLAYER);
             getEbeanServer().commitTransaction();
         }
@@ -264,6 +265,7 @@ public class AvajeDaoTest {
             assertTrue(players.contains(TEST_PLAYER.toLowerCase()));
 
             // Add to second group
+            assertTrue(getDao().createGroup(TEST_GROUP2));
             getDao().addMember(TEST_GROUP2, TEST_PLAYER);
             getEbeanServer().commitTransaction();
         }
@@ -351,6 +353,8 @@ public class AvajeDaoTest {
             assertNull(getDao().getEntity(TEST_GROUP2, true));
             
             // Set up inheritance
+            assertTrue(getDao().createGroup(TEST_GROUP1));
+            assertTrue(getDao().createGroup(TEST_GROUP2));
             getDao().setParent(TEST_GROUP1, TEST_GROUP2);
             getEbeanServer().commitTransaction();
         }

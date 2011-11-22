@@ -102,6 +102,14 @@ public class AvajePermissionDao implements PermissionDao {
         return entity;
     }
 
+    // Retrieve the named group, throw exception if it doesn't exist
+    private PermissionEntity getGroup(String name) {
+        PermissionEntity group = getEntity(name, true, false);
+        if (group == null)
+            throw new MissingGroupException(name); // have a bad feeling about this being unchecked
+        return group;
+    }
+    
     // Ensures an explicit transaction is open. Used for DAO methods that perform
     // multiple find/save operations.
     private void checkTransaction() {
@@ -145,8 +153,14 @@ public class AvajePermissionDao implements PermissionDao {
     public void setPermission(String name, boolean group, String region, String world, String permission, boolean value) {
         checkTransaction();
 
-        PermissionEntity owner = getEntity(name, group, true);
-        getEbeanServer().save(owner);
+        PermissionEntity owner;
+        if (group) {
+            owner = getGroup(name);
+        }
+        else {
+            owner = getEntity(name, group, true);
+            getEbeanServer().save(owner);
+        }
 
         PermissionRegion permissionRegion = getRegion(region, true);
         if (permissionRegion != null)
@@ -222,8 +236,7 @@ public class AvajePermissionDao implements PermissionDao {
     public void addMember(String groupName, String member) {
         checkTransaction();
 
-        PermissionEntity group = getEntity(groupName, true, true);
-        getEbeanServer().save(group);
+        PermissionEntity group = getGroup(groupName);
 
         Membership membership = getEbeanServer().find(Membership.class).where()
             .eq("member", member.toLowerCase())
@@ -242,6 +255,7 @@ public class AvajePermissionDao implements PermissionDao {
     public boolean removeMember(String groupName, String member) {
         checkTransaction();
 
+        // Should consider getGroup() instead. But this method already returns false on non-existent group.
         PermissionEntity group = getEntity(groupName, true, false);
 
         if (group != null) {
@@ -287,8 +301,7 @@ public class AvajePermissionDao implements PermissionDao {
     public void setGroup(String playerName, String groupName) {
         checkTransaction();
 
-        PermissionEntity group = getEntity(groupName, true, true);
-        getEbeanServer().save(group);
+        PermissionEntity group = getGroup(groupName);
 
         List<Membership> memberships = getEbeanServer().find(Membership.class).where()
             .eq("member", playerName.toLowerCase())
@@ -326,10 +339,10 @@ public class AvajePermissionDao implements PermissionDao {
     public void setParent(String groupName, String parentName) {
         checkTransaction();
 
-        PermissionEntity group = getEntity(groupName, true, true);
+        PermissionEntity group = getGroup(groupName);
 
         if (parentName != null) {
-            PermissionEntity parent = getEntity(parentName, true, true);
+            PermissionEntity parent = getGroup(parentName);
 
             // Check for a cycle
             PermissionEntity check = parent;
@@ -354,7 +367,7 @@ public class AvajePermissionDao implements PermissionDao {
     public void setPriority(String groupName, int priority) {
         checkTransaction();
 
-        PermissionEntity group = getEntity(groupName, true, true);
+        PermissionEntity group = getGroup(groupName);
 
         group.setPriority(priority);
 
@@ -439,7 +452,7 @@ public class AvajePermissionDao implements PermissionDao {
         checkTransaction();
 
         PermissionEntity group = getEntity(groupName, true, false);
-        if (group == null)
+        if (group == null) // NB only time this will be null is if the default group doesn't exist
             return Collections.emptyList();
 
         // Build list of group ancestors
@@ -462,12 +475,24 @@ public class AvajePermissionDao implements PermissionDao {
         checkTransaction();
         
         PermissionEntity entity = getEntity(name, group, false);
-        if (entity == null)
+        if (entity == null) // NB special consideration for non-existent default group
             return Collections.emptyList();
 
         return getEbeanServer().find(Entry.class).where()
             .eq("entity", entity)
             .findList();
+    }
+
+    @Override
+    public boolean createGroup(String name) {
+        PermissionEntity group = getEntity(name, true, false); // so we know it was created
+        if (group == null) {
+            group = getEntity(name, true, true);
+            getEbeanServer().save(group);
+            return true;
+        }
+        else
+            return false;
     }
 
 }

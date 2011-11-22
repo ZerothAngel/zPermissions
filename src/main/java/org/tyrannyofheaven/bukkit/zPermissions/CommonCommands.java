@@ -25,6 +25,7 @@ import org.tyrannyofheaven.bukkit.util.command.Option;
 import org.tyrannyofheaven.bukkit.util.command.Session;
 import org.tyrannyofheaven.bukkit.util.transaction.TransactionCallback;
 import org.tyrannyofheaven.bukkit.util.transaction.TransactionCallbackWithoutResult;
+import org.tyrannyofheaven.bukkit.zPermissions.dao.MissingGroupException;
 import org.tyrannyofheaven.bukkit.zPermissions.model.Entry;
 
 /**
@@ -80,12 +81,18 @@ public abstract class CommonCommands {
         final WorldPermission wp = new WorldPermission(permission);
     
         // Set permission. Should never fail. World/entity will be created as needed.
-        plugin.getTransactionStrategy().execute(new TransactionCallbackWithoutResult() {
-            @Override
-            public void doInTransactionWithoutResult() throws Exception {
-                plugin.getDao().setPermission(name, group, wp.getRegion(), wp.getWorld(), wp.getPermission(), value == null ? Boolean.TRUE : value);
-            }
-        });
+        try {
+            plugin.getTransactionStrategy().execute(new TransactionCallbackWithoutResult() {
+                @Override
+                public void doInTransactionWithoutResult() throws Exception {
+                    plugin.getDao().setPermission(name, group, wp.getRegion(), wp.getWorld(), wp.getPermission(), value == null ? Boolean.TRUE : value);
+                }
+            });
+        }
+        catch (MissingGroupException e) {
+            handleMissingGroup(sender, e);
+            return;
+        }
     
         sendMessage(sender, colorize("{GOLD}%s{YELLOW} set to {GREEN}%s{YELLOW} for %s%s"), permission, value == null ? Boolean.TRUE : value, group ? ChatColor.DARK_GREEN : ChatColor.AQUA, name);
         if (!group)
@@ -141,6 +148,10 @@ public abstract class CommonCommands {
                 (e.getWorld() == null ? "" : e.getWorld().getName() + colorize("{DARK_GREEN}:{GOLD}")),
                 e.getPermission(),
                 e.isValue());
+    }
+
+    protected void handleMissingGroup(CommandSender sender, MissingGroupException e) {
+        sendMessage(sender, colorize("{RED}Group {DARK_GREEN}%s{RED} does not exist."), e.getGroupName());
     }
 
 }
