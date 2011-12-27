@@ -15,7 +15,7 @@
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <bukkit.version>1.0.0-R1-SNAPSHOT</bukkit.version>
+    <bukkit.version>1.0.1-R1</bukkit.version>
   </properties>
 
   <repositories>
@@ -44,12 +44,12 @@
     <dependency>
       <groupId>com.sk89q</groupId>
       <artifactId>worldguard</artifactId>
-      <version>5.3</version>
+      <version>5.4</version>
     </dependency>
     <dependency>
       <groupId>com.sk89q</groupId>
       <artifactId>worldedit</artifactId>
-      <version>4.7</version>
+      <version>5.0</version>
     </dependency>
     <dependency>
       <groupId>com.h2database</groupId>
