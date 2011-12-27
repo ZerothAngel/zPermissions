@@ -3,7 +3,7 @@
 
   <groupId>org.tyrannyofheaven.bukkit</groupId>
   <artifactId>zPermissions</artifactId>
-  <version>0.9.5-SNAPSHOT</version>
+  <version>0.9.5</version>
   <packaging>jar</packaging>
 
   <name>zPermissions</name>
