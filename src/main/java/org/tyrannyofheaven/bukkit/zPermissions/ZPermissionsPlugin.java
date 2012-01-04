@@ -16,8 +16,10 @@
 package org.tyrannyofheaven.bukkit.zPermissions;
 
 import static org.tyrannyofheaven.bukkit.util.ToHLoggingUtils.debug;
+import static org.tyrannyofheaven.bukkit.util.ToHLoggingUtils.error;
 import static org.tyrannyofheaven.bukkit.util.ToHLoggingUtils.log;
 import static org.tyrannyofheaven.bukkit.util.ToHLoggingUtils.warn;
+import static org.tyrannyofheaven.bukkit.util.ToHMessageUtils.broadcastAdmin;
 import static org.tyrannyofheaven.bukkit.util.ToHMessageUtils.colorize;
 import static org.tyrannyofheaven.bukkit.util.ToHMessageUtils.sendMessage;
 import static org.tyrannyofheaven.bukkit.util.ToHStringUtils.hasText;
@@ -92,6 +94,12 @@ public class ZPermissionsPlugin extends JavaPlugin {
     // Default size of Avaje bean cache
     private static final int DEFAULT_CACHE_SIZE = 1000;
 
+    // Default value for kick-on-error
+    private static final boolean DEFAULT_KICK_ON_ERROR = true;
+
+    // Default value for kick-ops-on-error
+    private static final boolean DEFAULT_KICK_OPS_ON_ERROR = false;
+
     // This plugin's logger
     private final Logger logger = Logger.getLogger(getClass().getName());
 
@@ -124,6 +132,12 @@ public class ZPermissionsPlugin extends JavaPlugin {
 
     // The configured bean cache size
     private int cacheSize;
+
+    // Whether to kick users if there's any problem determining permissions
+    private boolean kickOnError;
+
+    // If kickOnError is true, whether or not to kick operators too
+    private boolean kickOpsOnError;
 
     // Track definitions
     private Map<String, List<String>> tracks = new HashMap<String, List<String>>();
@@ -293,6 +307,47 @@ public class ZPermissionsPlugin extends JavaPlugin {
     // Update state about a player, resolving effective permissions and
     // creating/updating their attachment
     void updateAttachment(Player player, Location location, boolean force, boolean ignoreRemoved) {
+        try {
+            updateAttachmentInternal(player, location, force, ignoreRemoved);
+        }
+        catch (Error e) {
+            throw e; // Never catch errors
+        }
+        catch (Throwable t) {
+            error(this, "Exception while updating attachment for %s", player.getName(), t);
+            broadcastAdmin(this, colorize("{RED}SEVERE error while determining permissions; see server.log!"));
+            
+            // Kick the player, if configured to do so
+            if (kickOnError && (kickOpsOnError || !player.isOp())) {
+                // Probably safer to do this synchronously
+                final String playerName = player.getName();
+                getServer().getScheduler().scheduleSyncDelayedTask(this, new Runnable() {
+                    @Override
+                    public void run() {
+                        Player player = getServer().getPlayerExact(playerName);
+                        if (player != null)
+                            player.kickPlayer("Error determining your permissions");
+                    }
+                });
+            }
+            else {
+                // Ensure player has no attachment
+                removeAttachment(player.getName());
+                sendMessage(player, colorize("{RED}Error determining your permissions; all permissions removed!"));
+            }
+        }
+    }
+
+    // Simulate failures probabilistically
+//    private final java.util.Random failureChance = new java.util.Random();
+//    private void fakeFailureChance() {
+//        if (failureChance.nextDouble() < 0.2)
+//            throw new RuntimeException("Oh noes! An error!");
+//    }
+
+    // Update state about a player, resolving effective permissions and
+    // creating/updating their attachment
+    private void updateAttachmentInternal(Player player, Location location, boolean force, boolean ignoreRemoved) {
         final Set<String> regions = getRegions(location);
 
         PlayerState playerState = null;
@@ -320,6 +375,7 @@ public class ZPermissionsPlugin extends JavaPlugin {
         Map<String, Boolean> permissions = getTransactionStrategy().execute(new TransactionCallback<Map<String, Boolean>>() {
             @Override
             public Map<String, Boolean> doInTransaction() throws Exception {
+//                fakeFailureChance();
                 return getResolver().resolvePlayer(playerName2, world, regions);
             }
         });
@@ -527,7 +583,10 @@ public class ZPermissionsPlugin extends JavaPlugin {
                 tracks.put(trackName, members);
             }
         }
-        
+
+        kickOnError = config.getBoolean("kick-on-error", DEFAULT_KICK_ON_ERROR);
+        kickOpsOnError = config.getBoolean("kick-ops-on-error", DEFAULT_KICK_OPS_ON_ERROR);
+
         // Set debug logging
         logger.setLevel(config.getBoolean("debug", false) ? Level.FINE : null);
     }

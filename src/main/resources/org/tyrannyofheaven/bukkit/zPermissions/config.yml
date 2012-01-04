@@ -1,4 +1,4 @@
-config-version: 2
+config-version: 3
 
 group-permission: 'group.%s'
 
@@ -23,5 +23,9 @@ cache-max-idle: 180
 cache-max-ttl: 600
 
 cache-size: 1000
+
+kick-on-error: true
+
+kick-ops-on-error: false
 
 debug: false
