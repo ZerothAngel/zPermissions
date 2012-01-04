@@ -50,5 +50,14 @@ cache-size: |
   (If ebean.properties doesn't exist, the default is 1000.)
   NOTE: /permissions reload does not update this value
 
+kick-on-error: |
+  If any problems occur while determining a player's permissions (e.g.
+  SQLExceptions, network errors, etc.), kick the player. This may be more
+  desirable to having the user have free reign with indeterminate permissions.
+
+kick-ops-on-error: |
+  Only valid if kick-on-error is true. If a problem occurs while determining
+  an op's permissions, then the op will only be kicked if this is true.
+
 debug: |
   Enable debug logging.
