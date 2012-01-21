@@ -241,7 +241,9 @@ public class ZPermissionsPlugin extends JavaPlugin {
         boolean regionSupport = worldGuardPlugin != null;
 
         // Install our listeners
-        (new ZPermissionsPlayerListener(this)).registerEvents(regionSupport);
+        (new ZPermissionsPlayerListener(this)).registerEvents();
+        if (regionSupport)
+            (new ZPermissionsRegionPlayerListener(this)).registerEvents();
 
         if (regionSupport)
             log(this, "WorldGuard region support enabled.");
