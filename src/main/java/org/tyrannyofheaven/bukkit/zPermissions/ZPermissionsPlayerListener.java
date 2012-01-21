@@ -15,15 +15,12 @@
  */
 package org.tyrannyofheaven.bukkit.zPermissions;
 
-import static org.tyrannyofheaven.bukkit.util.ToHUtils.registerEvent;
-
-import org.bukkit.event.Event.Priority;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
+import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerChangedWorldEvent;
 import org.bukkit.event.player.PlayerLoginEvent;
-import org.bukkit.event.player.PlayerListener;
-import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
-import org.bukkit.event.player.PlayerTeleportEvent;
 
 /**
  * PlayerListener for zPermissions. Simply updates or removes the zPermissions
@@ -31,7 +28,7 @@ import org.bukkit.event.player.PlayerTeleportEvent;
  * 
  * @author asaddi
  */
-class ZPermissionsPlayerListener extends PlayerListener {
+class ZPermissionsPlayerListener implements Listener {
 
     private final ZPermissionsPlugin plugin;
     
@@ -39,50 +36,21 @@ class ZPermissionsPlayerListener extends PlayerListener {
         this.plugin = plugin;
     }
 
-    void registerEvents(boolean regionSupport) {
-        registerEvent("PLAYER_LOGIN", this, Priority.Lowest, plugin);
-        registerEvent("PLAYER_QUIT", this, Priority.Monitor, plugin);
-        registerEvent("PLAYER_CHANGED_WORLD", this, Priority.Lowest, plugin);
-
-        // Only check PLAYER_MOVE/PLAYER_TELEPORT if region support is enabled
-        if (regionSupport) {
-            registerEvent("PLAYER_MOVE", this, Priority.Monitor, plugin);
-            registerEvent("PLAYER_TELEPORT", this, Priority.Monitor, plugin);
-        }
+    void registerEvents() {
+        plugin.getServer().getPluginManager().registerEvents(this, plugin);
     }
 
-    @Override
+    @EventHandler(event=PlayerLoginEvent.class, priority=EventPriority.LOWEST)
     public void onPlayerLogin(PlayerLoginEvent event) {
         plugin.updateAttachment(event.getPlayer(), event.getPlayer().getLocation(), true, true);
     }
 
-    @Override
+    @EventHandler(event=PlayerQuitEvent.class, priority=EventPriority.MONITOR)
     public void onPlayerQuit(PlayerQuitEvent event) {
         plugin.removeAttachment(event.getPlayer().getName());
     }
 
-    @Override
-    public void onPlayerTeleport(PlayerTeleportEvent event) {
-        if (event.isCancelled()) return;
-
-        // Conditionally update if world changed
-        plugin.updateAttachment(event.getPlayer(), event.getTo(), false, false);
-    }
-
-    @Override
-    public void onPlayerMove(PlayerMoveEvent event) {
-        if (event.isCancelled()) return;
-
-        // Only bother if player actually moved to a new block
-        if (event.getFrom().getBlockX() != event.getTo().getBlockX() ||
-                event.getFrom().getBlockY() != event.getTo().getBlockY() ||
-                event.getFrom().getBlockZ() != event.getTo().getBlockZ()) {
-            // Conditionally update if containing regions changed
-            plugin.updateAttachment(event.getPlayer(), event.getTo(), false, false);
-        }
-    }
-
-    @Override
+    @EventHandler(event=PlayerChangedWorldEvent.class, priority=EventPriority.LOWEST)
     public void onPlayerChangedWorld(PlayerChangedWorldEvent event) {
         plugin.updateAttachment(event.getPlayer(), event.getPlayer().getLocation(), false, false);
     }
