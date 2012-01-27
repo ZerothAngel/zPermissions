@@ -39,7 +39,7 @@ public class ZPermissionsRegionPlayerListener implements Listener {
         plugin.getServer().getPluginManager().registerEvents(this, plugin);
     }
 
-    @EventHandler(event=PlayerTeleportEvent.class, priority=EventPriority.MONITOR)
+    @EventHandler(priority=EventPriority.MONITOR)
     public void onPlayerTeleport(PlayerTeleportEvent event) {
         if (event.isCancelled()) return;
 
@@ -47,7 +47,7 @@ public class ZPermissionsRegionPlayerListener implements Listener {
         plugin.updateAttachment(event.getPlayer(), event.getTo(), false, false);
     }
 
-    @EventHandler(event=PlayerMoveEvent.class, priority=EventPriority.MONITOR)
+    @EventHandler(priority=EventPriority.MONITOR)
     public void onPlayerMove(PlayerMoveEvent event) {
         if (event.isCancelled()) return;
 
