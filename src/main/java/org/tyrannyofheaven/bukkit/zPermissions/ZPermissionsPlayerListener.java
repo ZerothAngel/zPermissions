@@ -40,17 +40,17 @@ class ZPermissionsPlayerListener implements Listener {
         plugin.getServer().getPluginManager().registerEvents(this, plugin);
     }
 
-    @EventHandler(event=PlayerLoginEvent.class, priority=EventPriority.LOWEST)
+    @EventHandler(priority=EventPriority.LOWEST)
     public void onPlayerLogin(PlayerLoginEvent event) {
         plugin.updateAttachment(event.getPlayer(), event.getPlayer().getLocation(), true, true);
     }
 
-    @EventHandler(event=PlayerQuitEvent.class, priority=EventPriority.MONITOR)
+    @EventHandler(priority=EventPriority.MONITOR)
     public void onPlayerQuit(PlayerQuitEvent event) {
         plugin.removeAttachment(event.getPlayer().getName());
     }
 
-    @EventHandler(event=PlayerChangedWorldEvent.class, priority=EventPriority.LOWEST)
+    @EventHandler(priority=EventPriority.LOWEST)
     public void onPlayerChangedWorld(PlayerChangedWorldEvent event) {
         plugin.updateAttachment(event.getPlayer(), event.getPlayer().getLocation(), false, false);
     }
