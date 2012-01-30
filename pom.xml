@@ -15,25 +15,15 @@
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <bukkit.version>1.1-R1</bukkit.version>
   </properties>
 
   <repositories>
-    <repository>
-      <id>bukkit-releases</id>
-      <url>http://repo.bukkit.org/content/repositories/releases</url>
-    </repository>
     <repository>
       <id>sk89q-mvn2</id>
       <url>http://mvn2.sk89q.com/repo</url>
     </repository>
   </repositories>
   <dependencies>
-    <dependency>
-      <groupId>org.bukkit</groupId>
-      <artifactId>bukkit</artifactId>
-      <version>${bukkit.version}</version>
-    </dependency>
     <dependency>
       <groupId>org.tyrannyofheaven.bukkit</groupId>
       <artifactId>ToHPluginUtils</artifactId>
