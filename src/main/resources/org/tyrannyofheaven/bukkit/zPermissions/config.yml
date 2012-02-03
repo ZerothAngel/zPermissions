@@ -1,4 +1,4 @@
-config-version: 3
+config-version: 4
 
 group-permission: 'group.%s'
 
@@ -27,5 +27,7 @@ cache-size: 1000
 kick-on-error: true
 
 kick-ops-on-error: false
+
+region-support: true
 
 debug: false

@@ -100,6 +100,9 @@ public class ZPermissionsPlugin extends JavaPlugin {
     // Default value for kick-ops-on-error
     private static final boolean DEFAULT_KICK_OPS_ON_ERROR = false;
 
+    // Default value for region-support
+    private static final boolean DEFAULT_REGION_SUPPORT_ENABLE = true;
+
     // This plugin's logger
     private final Logger logger = Logger.getLogger(getClass().getName());
 
@@ -138,6 +141,9 @@ public class ZPermissionsPlugin extends JavaPlugin {
 
     // If kickOnError is true, whether or not to kick operators too
     private boolean kickOpsOnError;
+
+    // If WorldGuard is present and this is true, enable region support
+    private boolean regionSupportEnable;
 
     // Track definitions
     private Map<String, List<String>> tracks = new HashMap<String, List<String>>();
@@ -238,15 +244,14 @@ public class ZPermissionsPlugin extends JavaPlugin {
 
         // Detect WorldGuard
         worldGuardPlugin = (WorldGuardPlugin)getServer().getPluginManager().getPlugin("WorldGuard");
-        boolean regionSupport = worldGuardPlugin != null;
+        boolean regionSupport = worldGuardPlugin != null && regionSupportEnable;
 
         // Install our listeners
         (new ZPermissionsPlayerListener(this)).registerEvents();
-        if (regionSupport)
+        if (regionSupport) {
             (new ZPermissionsRegionPlayerListener(this)).registerEvents();
-
-        if (regionSupport)
             log(this, "WorldGuard region support enabled.");
+        }
 
         // Make sure everyone currently online has an attachment
         refreshPlayers();
@@ -419,7 +424,7 @@ public class ZPermissionsPlugin extends JavaPlugin {
     // Returns names of regions that contain the location
     private Set<String> getRegions(Location location) {
         WorldGuardPlugin wgp = getWorldGuardPlugin();
-        if (wgp != null) {
+        if (wgp != null && regionSupportEnable) {
             RegionManager rm = wgp.getRegionManager(location.getWorld());
             ApplicableRegionSet ars = rm.getApplicableRegions(location);
 
@@ -588,6 +593,7 @@ public class ZPermissionsPlugin extends JavaPlugin {
 
         kickOnError = config.getBoolean("kick-on-error", DEFAULT_KICK_ON_ERROR);
         kickOpsOnError = config.getBoolean("kick-ops-on-error", DEFAULT_KICK_OPS_ON_ERROR);
+        regionSupportEnable = config.getBoolean("region-support", DEFAULT_REGION_SUPPORT_ENABLE);
 
         // Set debug logging
         logger.setLevel(config.getBoolean("debug", false) ? Level.FINE : null);
