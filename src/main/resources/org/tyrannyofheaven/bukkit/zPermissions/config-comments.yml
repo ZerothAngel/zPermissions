@@ -59,5 +59,10 @@ kick-ops-on-error: |
   Only valid if kick-on-error is true. If a problem occurs while determining
   an op's permissions, then the op will only be kicked if this is true.
 
+region-support: |
+  Whether region-based permissions are enabled. Requires WorldGuard. Setting
+  this to false will save some processing if you use WorldGuard but don't use
+  region-based permissions. Has no effect if WorldGuard is not present.
+
 debug: |
   Enable debug logging.
