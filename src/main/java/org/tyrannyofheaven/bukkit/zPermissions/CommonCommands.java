@@ -58,7 +58,7 @@ public abstract class CommonCommands {
         final WorldPermission wp = new WorldPermission(permission);
 
         // Read entry from DAO, if any
-        Boolean result = plugin.getTransactionStrategy().execute(new TransactionCallback<Boolean>() {
+        Boolean result = plugin.getRetryingTransactionStrategy().execute(new TransactionCallback<Boolean>() {
             @Override
             public Boolean doInTransaction() throws Exception {
                 return plugin.getDao().getPermission(name, group, wp.getRegion(), wp.getWorld(), wp.getPermission());
@@ -80,9 +80,9 @@ public abstract class CommonCommands {
         // Get world/permission
         final WorldPermission wp = new WorldPermission(permission);
     
-        // Set permission. Should never fail. World/entity will be created as needed.
+        // Set permission.
         try {
-            plugin.getTransactionStrategy().execute(new TransactionCallbackWithoutResult() {
+            plugin.getRetryingTransactionStrategy().execute(new TransactionCallbackWithoutResult() {
                 @Override
                 public void doInTransactionWithoutResult() throws Exception {
                     plugin.getDao().setPermission(name, group, wp.getRegion(), wp.getWorld(), wp.getPermission(), value == null ? Boolean.TRUE : value);
@@ -106,7 +106,7 @@ public abstract class CommonCommands {
         final WorldPermission wp = new WorldPermission(permission);
     
         // Delete permission entry.
-        Boolean result = plugin.getTransactionStrategy().execute(new TransactionCallback<Boolean>() {
+        Boolean result = plugin.getRetryingTransactionStrategy().execute(new TransactionCallback<Boolean>() {
             @Override
             public Boolean doInTransaction() throws Exception {
                 return plugin.getDao().unsetPermission(name, group, wp.getRegion(), wp.getWorld(), wp.getPermission());
@@ -126,7 +126,7 @@ public abstract class CommonCommands {
 
     @Command(value="purge", description="Delete this group or player") // doh!
     public void delete(CommandSender sender, final @Session("entityName") String name) {
-        boolean result = plugin.getTransactionStrategy().execute(new TransactionCallback<Boolean>() {
+        boolean result = plugin.getRetryingTransactionStrategy().execute(new TransactionCallback<Boolean>() {
             @Override
             public Boolean doInTransaction() throws Exception {
                 return plugin.getDao().deleteEntity(name, group);

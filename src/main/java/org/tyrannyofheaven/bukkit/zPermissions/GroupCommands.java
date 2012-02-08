@@ -48,7 +48,7 @@ public class GroupCommands extends CommonCommands {
 
     @Command(value="create", description="Create a group")
     public void create(CommandSender sender, final @Session("entityName") String groupName) {
-        boolean result = plugin.getTransactionStrategy().execute(new TransactionCallback<Boolean>() {
+        boolean result = plugin.getRetryingTransactionStrategy().execute(new TransactionCallback<Boolean>() {
             @Override
             public Boolean doInTransaction() throws Exception {
                 return plugin.getDao().createGroup(groupName);
@@ -67,7 +67,7 @@ public class GroupCommands extends CommonCommands {
     public void addMember(CommandSender sender, final @Session("entityName") String groupName, final @Option("player") String playerName) {
         // Add player to group.
         try {
-            plugin.getTransactionStrategy().execute(new TransactionCallbackWithoutResult() {
+            plugin.getRetryingTransactionStrategy().execute(new TransactionCallbackWithoutResult() {
                 @Override
                 public void doInTransactionWithoutResult() throws Exception {
                     plugin.getDao().addMember(groupName, playerName);
@@ -87,7 +87,7 @@ public class GroupCommands extends CommonCommands {
     @Command(value={"remove", "rm"}, description="Remove a player from a group")
     public void removeMember(CommandSender sender, final @Session("entityName") String groupName, final @Option("player") String playerName) {
         // Remove player from group
-        Boolean result = plugin.getTransactionStrategy().execute(new TransactionCallback<Boolean>() {
+        Boolean result = plugin.getRetryingTransactionStrategy().execute(new TransactionCallback<Boolean>() {
             @Override
             public Boolean doInTransaction() throws Exception {
                 return plugin.getDao().removeMember(groupName, playerName);
@@ -129,7 +129,7 @@ public class GroupCommands extends CommonCommands {
     public void setParent(CommandSender sender, final @Session("entityName") String groupName, final @Option(value="parent", optional=true) String parentName) {
         try {
             // Set parent. Creates group and/or parent if missing.
-            plugin.getTransactionStrategy().execute(new TransactionCallbackWithoutResult() {
+            plugin.getRetryingTransactionStrategy().execute(new TransactionCallbackWithoutResult() {
                 @Override
                 public void doInTransactionWithoutResult() throws Exception {
                     plugin.getDao().setParent(groupName, parentName);
@@ -154,7 +154,7 @@ public class GroupCommands extends CommonCommands {
     public void setPriority(CommandSender sender, final @Session("entityName") String groupName, final @Option("priority") int priority) {
         // Set the priority. Will not fail, creates group if necessary
         try {
-            plugin.getTransactionStrategy().execute(new TransactionCallbackWithoutResult() {
+            plugin.getRetryingTransactionStrategy().execute(new TransactionCallbackWithoutResult() {
                 @Override
                 public void doInTransactionWithoutResult() throws Exception {
                     plugin.getDao().setPriority(groupName, priority);
