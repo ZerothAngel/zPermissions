@@ -49,6 +49,7 @@ import org.tyrannyofheaven.bukkit.util.ToHUtils;
 import org.tyrannyofheaven.bukkit.util.VersionInfo;
 import org.tyrannyofheaven.bukkit.util.command.ToHCommandExecutor;
 import org.tyrannyofheaven.bukkit.util.transaction.AvajeTransactionStrategy;
+import org.tyrannyofheaven.bukkit.util.transaction.RetryingAvajeTransactionStrategy;
 import org.tyrannyofheaven.bukkit.util.transaction.TransactionCallback;
 import org.tyrannyofheaven.bukkit.util.transaction.TransactionStrategy;
 import org.tyrannyofheaven.bukkit.zPermissions.dao.AvajePermissionDao;
@@ -103,6 +104,9 @@ public class ZPermissionsPlugin extends JavaPlugin {
     // Default value for region-support
     private static final boolean DEFAULT_REGION_SUPPORT_ENABLE = true;
 
+    // Default max attempts (after the first) to complete a transaction
+    private static final int DEFAULT_TXN_MAX_RETRIES = 1;
+
     // This plugin's logger
     private final Logger logger = Logger.getLogger(getClass().getName());
 
@@ -151,6 +155,13 @@ public class ZPermissionsPlugin extends JavaPlugin {
     // TransactionStrategy implementation
     private TransactionStrategy transactionStrategy;
 
+    // TransactionStrategy that retries failed transactions
+    // FIXME We use a separate TransactionStrategy because not all transactions
+    // might be safe to be retried. Most simple transactions are safe to retry.
+    // The ones that perform calculations or other operations (most notably
+    // the rank commands) will have to be dealt with another way...
+    private TransactionStrategy retryingTransactionStrategy;
+
     // DAO implementation
     private PermissionDao dao;
 
@@ -164,6 +175,15 @@ public class ZPermissionsPlugin extends JavaPlugin {
      */
     TransactionStrategy getTransactionStrategy() {
         return transactionStrategy;
+    }
+
+    /**
+     * Retrieve this plugin's retrying TransactionStrategy
+     * 
+     * @return the retrying TransactionStrategy
+     */
+    TransactionStrategy getRetryingTransactionStrategy() {
+        return retryingTransactionStrategy;
     }
 
     /**
@@ -236,6 +256,7 @@ public class ZPermissionsPlugin extends JavaPlugin {
 
         // Set up TransactionStrategy and DAO
         transactionStrategy = new AvajeTransactionStrategy(getDatabase());
+        retryingTransactionStrategy = new RetryingAvajeTransactionStrategy(getDatabase(), DEFAULT_TXN_MAX_RETRIES); // TODO make configurable?
         dao = new AvajePermissionDao(getDatabase());
         applyCacheSettings();
 
@@ -379,7 +400,7 @@ public class ZPermissionsPlugin extends JavaPlugin {
         // Resolve effective permissions
         final String playerName2 = player.getName(); // prefer the one from Player object
         final String world = location.getWorld().getName().toLowerCase();
-        Map<String, Boolean> permissions = getTransactionStrategy().execute(new TransactionCallback<Map<String, Boolean>>() {
+        Map<String, Boolean> permissions = getRetryingTransactionStrategy().execute(new TransactionCallback<Map<String, Boolean>>() {
             @Override
             public Map<String, Boolean> doInTransaction() throws Exception {
 //                fakeFailureChance();

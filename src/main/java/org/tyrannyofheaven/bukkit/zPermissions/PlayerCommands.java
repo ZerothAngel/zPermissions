@@ -77,7 +77,7 @@ public class PlayerCommands extends CommonCommands {
     @Command(value={"setgroup", "group"}, description="Set this player's singular group")
     public void setGroup(CommandSender sender, final @Session("entityName") String playerName, final @Option("group") String groupName) {
         try {
-            plugin.getTransactionStrategy().execute(new TransactionCallbackWithoutResult() {
+            plugin.getRetryingTransactionStrategy().execute(new TransactionCallbackWithoutResult() {
                 @Override
                 public void doInTransactionWithoutResult() throws Exception {
                     plugin.getDao().setGroup(playerName, groupName);
