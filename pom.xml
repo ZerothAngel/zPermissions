@@ -1,3 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
@@ -33,11 +34,55 @@
       <groupId>com.sk89q</groupId>
       <artifactId>worldguard</artifactId>
       <version>5.5.1</version>
+      <exclusions>
+	<exclusion>
+	  <groupId>com.sk89q</groupId>
+	  <artifactId>commandbook</artifactId>
+	</exclusion>
+	<exclusion>
+	  <groupId>com.nijikokun</groupId>
+	  <artifactId>iconomy</artifactId>
+	</exclusion>
+	<exclusion>
+	  <groupId>org.khelekore</groupId>
+	  <artifactId>prtree</artifactId>
+	</exclusion>
+	<exclusion>
+	  <groupId>net.sf.opencsv</groupId>
+	  <artifactId>opencsv</artifactId>
+	</exclusion>
+      </exclusions>
     </dependency>
     <dependency>
       <groupId>com.sk89q</groupId>
       <artifactId>worldedit</artifactId>
       <version>5.1</version>
+      <exclusions>
+	<exclusion>
+	  <groupId>com.sk89q</groupId>
+	  <artifactId>dummypermscompat</artifactId>
+	</exclusion>
+	<exclusion>
+	  <groupId>de.schlichtherle</groupId>
+	  <artifactId>truezip</artifactId>
+	</exclusion>
+	<exclusion>
+	  <groupId>rhino</groupId>
+	  <artifactId>js</artifactId>
+	</exclusion>
+	<exclusion>
+	  <groupId>com.sk89q</groupId>
+	  <artifactId>jchronic</artifactId>
+	</exclusion>
+	<exclusion>
+	  <groupId>org.spout</groupId>
+	  <artifactId>spoutapi</artifactId>
+	</exclusion>
+	<exclusion>
+	  <groupId>net.sf.trove4j</groupId>
+	  <artifactId>trove4j</artifactId>
+	</exclusion>
+      </exclusions>
     </dependency>
     <dependency>
       <groupId>com.h2database</groupId>
@@ -79,40 +124,6 @@
           <target>1.6</target>
         </configuration>
       </plugin>
-      <!--
-      <plugin>
-        <groupId>com.pyx4me</groupId>
-        <artifactId>proguard-maven-plugin</artifactId>
-	<version>2.0.4</version>
-        <executions>
-          <execution>
-            <phase>package</phase>
-            <goals>
-              <goal>proguard</goal>
-            </goals>
-          </execution>
-        </executions>
-        <configuration>
-          <options>
-	    <option>-renamesourcefileattribute SourceFile</option>
-	    <option>-keepattributes SourceFile,LineNumberTable</option>
-            <option>-keepattributes Signature,*Annotation*</option>
-	    <option>-keep @javax.persistence.Entity class * { *; }</option>
-            <option>-keepclassmembers class * { @org.tyrannyofheaven.bukkit.util.command.Command *; }</option>
-            <option>-keep public class * extends org.bukkit.plugin.java.JavaPlugin</option>
-          </options>
-          <libs>
-            <lib>${java.home}/../Classes/classes.jar</lib>
-          </libs>
-          <exclusions>
-            <exclusion>
-              <groupId>org.tyrannyofheaven.bukkit</groupId>
-              <artifactId>ToHPluginUtils</artifactId>
-            </exclusion>
-          </exclusions>
-        </configuration>
-      </plugin>
-      -->
       <plugin>
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>buildnumber-maven-plugin</artifactId>
@@ -164,7 +175,7 @@
 	  <plugin>
 	    <groupId>org.apache.maven.plugins</groupId>
 	    <artifactId>maven-shade-plugin</artifactId>
-	    <version>1.4</version>
+	    <version>1.5</version>
 	    <executions>
 	      <execution>
 		<phase>package</phase>
@@ -177,18 +188,50 @@
 		      <include>org.tyrannyofheaven.bukkit:ToHPluginUtils</include>
 		    </includes>
 		  </artifactSet>
-<!-- Broken due to MSHADE-92
 		  <relocations>
 		    <relocation>
 		      <pattern>org.tyrannyofheaven.bukkit.util</pattern>
 		      <shadedPattern>org.tyrannyofheaven.bukkit.zPermissions.util</shadedPattern>
 		    </relocation>
 		  </relocations>
--->
 		</configuration>
 	      </execution>
 	    </executions>
 	  </plugin>
+	  <!--
+	  <plugin>
+	    <groupId>com.github.wvengen</groupId>
+	    <artifactId>proguard-maven-plugin</artifactId>
+	    <version>2.0.5</version>
+	    <executions>
+	      <execution>
+		<phase>package</phase>
+		<goals>
+		  <goal>proguard</goal>
+		</goals>
+	      </execution>
+	    </executions>
+	    <configuration>
+	      <options>
+		<option>-dontobfuscate</option>
+		<option>-keepattributes SourceFile,LineNumberTable</option>
+		<option>-keepattributes Signature,*Annotation*</option>
+		<option>-keep @javax.persistence.Entity class * { *; }</option>
+		<option>-keepclassmembers class * { @org.tyrannyofheaven.bukkit.util.command.Command *; }</option>
+		<option>-keep public class * extends org.bukkit.plugin.java.JavaPlugin</option>
+	      </options>
+	      <libs>
+		<lib>${java.home}/../Classes/classes.jar</lib>
+	      </libs>
+	      <exclusions>
+		<exclusion>
+		  <groupId>org.tyrannyofheaven.bukkit</groupId>
+		  <artifactId>ToHPluginUtils</artifactId>
+		</exclusion>
+	      </exclusions>
+	    </configuration>
+	  </plugin>
+	  -->
 	</plugins>
       </build>
     </profile>
