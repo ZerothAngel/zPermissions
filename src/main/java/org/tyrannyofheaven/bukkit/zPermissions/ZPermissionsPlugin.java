@@ -43,6 +43,7 @@ import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.permissions.PermissionAttachment;
+import org.bukkit.plugin.ServicePriority;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.tyrannyofheaven.bukkit.util.ToHFileUtils;
 import org.tyrannyofheaven.bukkit.util.ToHUtils;
@@ -59,6 +60,7 @@ import org.tyrannyofheaven.bukkit.zPermissions.model.Membership;
 import org.tyrannyofheaven.bukkit.zPermissions.model.PermissionEntity;
 import org.tyrannyofheaven.bukkit.zPermissions.model.PermissionRegion;
 import org.tyrannyofheaven.bukkit.zPermissions.model.PermissionWorld;
+import org.tyrannyofheaven.bukkit.zPermissions.service.ZPermissionsServiceImpl;
 
 import com.avaje.ebean.cache.ServerCache;
 import com.avaje.ebean.cache.ServerCacheOptions;
@@ -273,6 +275,9 @@ public class ZPermissionsPlugin extends JavaPlugin {
             (new ZPermissionsRegionPlayerListener(this)).registerEvents();
             log(this, "WorldGuard region support enabled.");
         }
+
+        // Set up service API
+        getServer().getServicesManager().register(ZPermissionsService.class, new ZPermissionsServiceImpl(getResolver(), getDao(), getRetryingTransactionStrategy()), this, ServicePriority.Normal);
 
         // Make sure everyone currently online has an attachment
         refreshPlayers();
