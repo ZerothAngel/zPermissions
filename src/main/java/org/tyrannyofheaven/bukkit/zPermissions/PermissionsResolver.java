@@ -155,6 +155,25 @@ public class PermissionsResolver {
         return permissions;
     }
 
+    /**
+     * Resolve a group's permissions. The permissions from the group's furthest
+     * ancestor are applied first, followed by each succeeding ancestor. (And
+     * finally ending with the group itself.)
+     * 
+     * @param groupName the group's name
+     * @param world the destination world name in lowercase
+     * @param regions the name of the regions containing the destination, all
+     *   in lowercase
+     * @return effective permissions for this group
+     */
+    public Map<String, Boolean> resolveGroup(String groupName, String world, Set<String> regions) {
+        Map<String, Boolean> permissions = new HashMap<String, Boolean>();
+
+        resolveGroup(permissions, regions, world, groupName);
+
+        return permissions;
+    }
+
     // Resolve a group's permissions. Ancestor permissions should be overridden
     // by each successive descendant.
     private void resolveGroup(Map<String, Boolean> permissions, Set<String> regions, String world, String group) {
