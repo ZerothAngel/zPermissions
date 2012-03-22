@@ -453,7 +453,7 @@ public class AvajePermissionDao implements PermissionDao {
 
         PermissionEntity group = getEntity(groupName, true, false);
         if (group == null) // NB only time this will be null is if the default group doesn't exist
-            return Collections.emptyList();
+            return new ArrayList<String>();
 
         // Build list of group ancestors
         List<String> ancestry = new ArrayList<String>();
