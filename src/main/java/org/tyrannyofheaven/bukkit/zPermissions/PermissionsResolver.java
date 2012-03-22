@@ -178,6 +178,10 @@ public class PermissionsResolver {
     // by each successive descendant.
     private void resolveGroup(Map<String, Boolean> permissions, Set<String> regions, String world, String group) {
         List<String> ancestry = getDao().getAncestry(group);
+        if (ancestry.isEmpty()) {
+            // This only happens when the default group does not exist
+            ancestry.add(getDefaultGroup());
+        }
         debug("Ancestry for %s: %s", group, ancestry);
         
         // Add assigned group permissions, if present

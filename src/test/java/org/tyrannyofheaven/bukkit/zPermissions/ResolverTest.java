@@ -249,6 +249,16 @@ public class ResolverTest {
     }
 
     @Test
+    public void testDefaultGroupResolve() {
+        Map<String, Boolean> permissions = resolve(TEST_PLAYER, TEST_WORLD1);
+        
+        assertPermission(permissions, "group.Group1");
+        assertPermission(permissions, "group.Group2", false);
+        assertPermission(permissions, "assignedgroup.Group1");
+        assertPermission(permissions, "assignedgroup.Group2", false);
+    }
+
+    @Test
     public void testBasicGroupResolve() {
         setPermissions(TEST_PLAYER, false,
                 "basic.perm1");
