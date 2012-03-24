@@ -24,6 +24,7 @@ import java.util.Map;
 import java.util.Set;
 
 import org.tyrannyofheaven.bukkit.util.transaction.TransactionCallback;
+import org.tyrannyofheaven.bukkit.util.transaction.TransactionCallbackWithoutResult;
 import org.tyrannyofheaven.bukkit.util.transaction.TransactionStrategy;
 import org.tyrannyofheaven.bukkit.zPermissions.PermissionsResolver;
 import org.tyrannyofheaven.bukkit.zPermissions.ZPermissionsService;
@@ -82,10 +83,10 @@ public class ZPermissionsServiceImpl implements ZPermissionsService {
     }
 
     /* (non-Javadoc)
-     * @see org.tyrannyofheaven.bukkit.zPermissions.ZPermissionsService#getPlayerGroups(java.lang.String)
+     * @see org.tyrannyofheaven.bukkit.zPermissions.ZPermissionsService#getPlayerAssignedGroups(java.lang.String)
      */
     @Override
-    public List<String> getPlayerGroups(String playerName) {
+    public List<String> getPlayerAssignedGroups(String playerName) {
         if (!hasText(playerName))
             throw new IllegalArgumentException("playerName must have a value");
 
@@ -94,6 +95,36 @@ public class ZPermissionsServiceImpl implements ZPermissionsService {
         Collections.reverse(groups);
         // The first group of the returned list is the highest priority
         return groups;
+    }
+
+    /* (non-Javadoc)
+     * @see org.tyrannyofheaven.bukkit.zPermissions.ZPermissionsService#getPlayerGroups(java.lang.String)
+     */
+    @Override
+    public Set<String> getPlayerGroups(final String playerName) {
+        if (!hasText(playerName))
+            throw new IllegalArgumentException("playerName must have a value");
+
+        final Set<String> result = new HashSet<String>();
+
+        getTransactionStrategy().execute(new TransactionCallbackWithoutResult() {
+            @Override
+            public void doInTransactionWithoutResult() throws Exception {
+                for (String group : getDao().getGroups(playerName)) {
+                    // Get ancestors
+                    List<String> ancestors = getDao().getAncestry(group);
+                    if (ancestors.isEmpty()) {
+                        // Non-existant default group
+                        ancestors.add(getResolver().getDefaultGroup());
+                    }
+
+                    // NB: ancestors will include group as well
+                    result.addAll(ancestors);
+                }
+            }
+        });
+
+        return result;
     }
 
     /* (non-Javadoc)
