@@ -57,14 +57,23 @@ public interface ZPermissionsService {
     public Map<String, Boolean> getPlayerPermissions(String worldName, Set<String> regionNames, String playerName);
     
     /**
-     * Retrieve all groups which a player is a member of. The groups are
+     * Retrieve groups which a player is explicitly assigned. The groups are
      * returned in priority order, with the highest priority first. (This can
      * possibly be considered the player's "primary" group.)
      * 
      * @param playerName the player's name
-     * @return the names of groups which the player is a member
+     * @return the names of groups which the player is assigned to
      */
-    public List<String> getPlayerGroups(String playerName);
+    public List<String> getPlayerAssignedGroups(String playerName);
+
+    /**
+     * Retrieve groups which a player is a member of. This includes all
+     * assigned groups as well as their ancestor groups.
+     * 
+     * @param playerName the player's name
+     * @return the names of groups which the player is a member of
+     */
+    public Set<String> getPlayerGroups(String playerName);
 
     /**
      * Retrieve names of all groups.

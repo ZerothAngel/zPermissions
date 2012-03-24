@@ -110,7 +110,7 @@ public class PermissionsResolver {
      * 
      * @return the default group
      */
-    String getDefaultGroup() {
+    public String getDefaultGroup() {
         return defaultGroup;
     }
 
