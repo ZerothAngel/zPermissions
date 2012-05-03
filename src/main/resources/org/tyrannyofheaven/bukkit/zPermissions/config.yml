@@ -1,8 +1,10 @@
-config-version: 4
+config-version: 5
 
 group-permission: 'group.%s'
 
 assigned-group-permission: ''
+
+assigned-groups-can-include-default: true
 
 default-group: default
 

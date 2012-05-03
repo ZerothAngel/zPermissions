@@ -45,6 +45,8 @@ public class PermissionsResolver {
 
     private String defaultGroup;
 
+    private boolean includeDefaultInAssigned = true;
+
     // For plugin use
     PermissionsResolver(ZPermissionsPlugin plugin) {
         this.plugin = plugin;
@@ -112,6 +114,22 @@ public class PermissionsResolver {
      */
     public String getDefaultGroup() {
         return defaultGroup;
+    }
+
+    // Returns whether or not default group should be included in assigned permissions
+    private boolean isIncludeDefaultInAssigned() {
+        return includeDefaultInAssigned;
+    }
+
+    /**
+     * Sets whether not the default group should be included in assigned permissions.
+     * If false, the default group will never be listed as an assigned permission,
+     * even if it is explicitly assigned.
+     * 
+     * @param includeDefaultInAssigned false if the default group should never be included in assigned permissions
+     */
+    public void setIncludeDefaultInAssigned(boolean includeDefaultInAssigned) {
+        this.includeDefaultInAssigned = includeDefaultInAssigned;
     }
 
     // Output debug message
@@ -184,9 +202,11 @@ public class PermissionsResolver {
         }
         debug("Ancestry for %s: %s", group, ancestry);
         
-        // Add assigned group permissions, if present
-        for (String groupPermissionFormat : getAssignedGroupPermissionFormats()) {
-            permissions.put(String.format(groupPermissionFormat, group), Boolean.TRUE);
+        if (!getDefaultGroup().equalsIgnoreCase(group) || isIncludeDefaultInAssigned()) {
+            // Add assigned group permissions, if present
+            for (String groupPermissionFormat : getAssignedGroupPermissionFormats()) {
+                permissions.put(String.format(groupPermissionFormat, group), Boolean.TRUE);
+            }
         }
 
         // Apply permission from each ancestor
