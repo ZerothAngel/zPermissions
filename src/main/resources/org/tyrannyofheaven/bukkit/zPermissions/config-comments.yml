@@ -14,6 +14,10 @@ assigned-group-permission: |
   This may also be a list of strings to automatically assign multiple
   permissions.
 
+assigned-groups-can-include-default: |
+  Set to false if you want your assigned-group-permission (above) to never
+  include the default group.
+
 default-group: |
   The default group. Players that are not explicitly members of any group
   are placed in this group.

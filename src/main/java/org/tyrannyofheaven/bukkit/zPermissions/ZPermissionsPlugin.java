@@ -106,6 +106,9 @@ public class ZPermissionsPlugin extends JavaPlugin {
     // Default value for region-support
     private static final boolean DEFAULT_REGION_SUPPORT_ENABLE = true;
 
+    // Default value for assigned-groups-can-include-default
+    private static final boolean DEFAULT_ASSIGNED_GROUPS_CAN_INCLUDE_DEFAULT = true;
+
     // Default max attempts (after the first) to complete a transaction
     private static final int DEFAULT_TXN_MAX_RETRIES = 1;
 
@@ -581,6 +584,8 @@ public class ZPermissionsPlugin extends JavaPlugin {
             else
                 warn(this, "assigned-group-permission must be a string or list of strings");
         }
+
+        getResolver().setIncludeDefaultInAssigned(config.getBoolean("assigned-groups-can-include-default", DEFAULT_ASSIGNED_GROUPS_CAN_INCLUDE_DEFAULT));
 
         value = config.getString("default-group");
         if (hasText(value))

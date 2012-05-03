@@ -26,6 +26,7 @@ import java.util.Map;
 import java.util.Set;
 
 import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 import org.tyrannyofheaven.bukkit.zPermissions.dao.AvajePermissionDao;
 import org.tyrannyofheaven.bukkit.zPermissions.dao.PermissionDao;
@@ -167,6 +168,11 @@ public class ResolverTest {
         return permissions;
     }
 
+    @Before
+    public void setUp() {
+        resolver.setIncludeDefaultInAssigned(true);
+    }
+
     @After
     public void tearDown() {
         // Purge database
@@ -250,11 +256,21 @@ public class ResolverTest {
 
     @Test
     public void testDefaultGroupResolve() {
-        Map<String, Boolean> permissions = resolve(TEST_PLAYER, TEST_WORLD1);
+        Map<String, Boolean> permissions;
+        permissions = resolve(TEST_PLAYER, TEST_WORLD1);
         
         assertPermission(permissions, "group.Group1");
         assertPermission(permissions, "group.Group2", false);
         assertPermission(permissions, "assignedgroup.Group1");
+        assertPermission(permissions, "assignedgroup.Group2", false);
+        
+        resolver.setIncludeDefaultInAssigned(false);
+
+        permissions = resolve(TEST_PLAYER, TEST_WORLD1);
+        
+        assertPermission(permissions, "group.Group1");
+        assertPermission(permissions, "group.Group2", false);
+        assertPermission(permissions, "assignedgroup.Group1", false);
         assertPermission(permissions, "assignedgroup.Group2", false);
     }
 
@@ -275,6 +291,16 @@ public class ResolverTest {
         Map<String, Boolean> permissions;
         permissions = resolve(TEST_PLAYER, TEST_WORLD1);
 
+        assertPermission(permissions, "group.Group1", false);
+        assertPermission(permissions, "group.Group2");
+        assertPermission(permissions, "assignedgroup.Group1", false);
+        assertPermission(permissions, "assignedgroup.Group2");
+
+        // Shouldn't change outcome
+        resolver.setIncludeDefaultInAssigned(false);
+
+        permissions = resolve(TEST_PLAYER, TEST_WORLD1);
+        
         assertPermission(permissions, "group.Group1", false);
         assertPermission(permissions, "group.Group2");
         assertPermission(permissions, "assignedgroup.Group1", false);
@@ -318,6 +344,15 @@ public class ResolverTest {
         assertPermission(permissions, "group.Group1");
         assertPermission(permissions, "group.Group2");
         assertPermission(permissions, "assignedgroup.Group1");
+        assertPermission(permissions, "assignedgroup.Group2");
+
+        resolver.setIncludeDefaultInAssigned(false);
+
+        permissions = resolve(TEST_PLAYER, TEST_WORLD1);
+        
+        assertPermission(permissions, "group.Group1");
+        assertPermission(permissions, "group.Group2");
+        assertPermission(permissions, "assignedgroup.Group1", false);
         assertPermission(permissions, "assignedgroup.Group2");
     }
 
@@ -373,6 +408,15 @@ public class ResolverTest {
         assertPermission(permissions, "group.Group1");
         assertPermission(permissions, "group.Group2");
         assertPermission(permissions, "assignedgroup.Group1");
+        assertPermission(permissions, "assignedgroup.Group2");
+
+        resolver.setIncludeDefaultInAssigned(false);
+
+        permissions = resolve(TEST_PLAYER, TEST_WORLD1);
+        
+        assertPermission(permissions, "group.Group1");
+        assertPermission(permissions, "group.Group2");
+        assertPermission(permissions, "assignedgroup.Group1", false);
         assertPermission(permissions, "assignedgroup.Group2");
     }
 
