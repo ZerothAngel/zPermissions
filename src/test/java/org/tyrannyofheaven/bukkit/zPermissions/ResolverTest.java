@@ -259,6 +259,124 @@ public class ResolverTest {
     }
 
     @Test
+    public void testNoDefaultAssignedGroupResolve() {
+        // Non-existent default group
+        assertTrue(getDao().createGroup(TEST_GROUP2));
+        
+        begin();
+        try {
+            getDao().setGroup(TEST_PLAYER, TEST_GROUP2);
+            commit();
+        }
+        finally {
+            end ();
+        }
+
+        Map<String, Boolean> permissions;
+        permissions = resolve(TEST_PLAYER, TEST_WORLD1);
+
+        assertPermission(permissions, "group.Group1", false);
+        assertPermission(permissions, "group.Group2");
+        assertPermission(permissions, "assignedgroup.Group1", false);
+        assertPermission(permissions, "assignedgroup.Group2");
+    }
+
+    @Test
+    public void testDefaultAssignedGroupResolve() {
+        assertTrue(getDao().createGroup(TEST_GROUP1));
+        assertTrue(getDao().createGroup(TEST_GROUP2));
+        
+        begin();
+        try {
+            getDao().setGroup(TEST_PLAYER, TEST_GROUP2);
+            commit();
+        }
+        finally {
+            end ();
+        }
+
+        Map<String, Boolean> permissions;
+        permissions = resolve(TEST_PLAYER, TEST_WORLD1);
+
+        assertPermission(permissions, "group.Group1", false);
+        assertPermission(permissions, "group.Group2");
+        assertPermission(permissions, "assignedgroup.Group1", false);
+        assertPermission(permissions, "assignedgroup.Group2");
+        
+        // Explicitly add to default group
+        begin();
+        try {
+            getDao().addMember(TEST_GROUP1, TEST_PLAYER);
+            commit();
+        }
+        finally {
+            end();
+        }
+
+        permissions = resolve(TEST_PLAYER, TEST_WORLD1);
+
+        assertPermission(permissions, "group.Group1");
+        assertPermission(permissions, "group.Group2");
+        assertPermission(permissions, "assignedgroup.Group1");
+        assertPermission(permissions, "assignedgroup.Group2");
+    }
+
+    @Test
+    public void testDefaultAssignedGroupResolveInherited() {
+        assertTrue(getDao().createGroup(TEST_GROUP1));
+        assertTrue(getDao().createGroup(TEST_GROUP2));
+        
+        // Set up parent/child relationship
+        begin();
+        try {
+            getDao().setParent(TEST_GROUP2, TEST_GROUP1);
+            commit();
+        }
+        finally {
+            end();
+        }
+        // Confirm
+        PermissionEntity entity = getDao().getEntity(TEST_GROUP2, true);
+        assertNotNull(entity);
+        assertNotNull(entity.getParent());
+        assertEquals(TEST_GROUP1, entity.getParent().getDisplayName());
+
+        begin();
+        try {
+            getDao().setGroup(TEST_PLAYER, TEST_GROUP2);
+            commit();
+        }
+        finally {
+            end ();
+        }
+
+        Map<String, Boolean> permissions;
+        permissions = resolve(TEST_PLAYER, TEST_WORLD1);
+
+        assertPermission(permissions, "group.Group1");
+        assertPermission(permissions, "group.Group2");
+        assertPermission(permissions, "assignedgroup.Group1", false);
+        assertPermission(permissions, "assignedgroup.Group2");
+
+        // Explicitly add to default group
+        begin();
+        try {
+            getDao().addMember(TEST_GROUP1, TEST_PLAYER);
+            commit();
+        }
+        finally {
+            end();
+        }
+
+        permissions = resolve(TEST_PLAYER, TEST_WORLD1);
+
+        assertPermission(permissions, "group.Group1");
+        assertPermission(permissions, "group.Group2");
+        assertPermission(permissions, "assignedgroup.Group1");
+        assertPermission(permissions, "assignedgroup.Group2");
+    }
+
+    @Test
     public void testBasicGroupResolve() {
         setPermissions(TEST_PLAYER, false,
                 "basic.perm1");
