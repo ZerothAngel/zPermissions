@@ -15,7 +15,6 @@
  */
 package org.tyrannyofheaven.bukkit.zPermissions;
 
-import static org.tyrannyofheaven.bukkit.util.ToHMessageUtils.broadcastAdmin;
 import static org.tyrannyofheaven.bukkit.util.ToHMessageUtils.colorize;
 import static org.tyrannyofheaven.bukkit.util.ToHMessageUtils.sendMessage;
 import static org.tyrannyofheaven.bukkit.util.ToHStringUtils.delimitedString;
@@ -28,6 +27,8 @@ import java.util.List;
 import java.util.Set;
 
 import org.bukkit.command.CommandSender;
+import org.tyrannyofheaven.bukkit.util.ToHLoggingUtils;
+import org.tyrannyofheaven.bukkit.util.ToHMessageUtils;
 import org.tyrannyofheaven.bukkit.util.command.Command;
 import org.tyrannyofheaven.bukkit.util.command.HelpBuilder;
 import org.tyrannyofheaven.bukkit.util.command.Option;
@@ -80,8 +81,17 @@ public class RootCommands {
         return sc;
     }
 
+    // Audit record of change. If quiet, only log to server log rather than
+    // broadcasting to admins.
+    private void broadcastAdmin(boolean quiet, String format, Object... args) {
+        if (!quiet)
+            ToHMessageUtils.broadcastAdmin(plugin, format, args);
+        else
+            ToHLoggingUtils.log(plugin, format, args);
+    }
+
     // Perform the actual promotion/demotion
-    private void rankChange(final CommandSender sender, final String playerName, String trackName, final boolean rankUp) {
+    private void rankChange(final CommandSender sender, final String playerName, String trackName, final boolean rankUp, final boolean quiet) {
         // Resolve track
         if (!hasText(trackName))
             trackName = plugin.getDefaultTrack();
@@ -127,8 +137,9 @@ public class RootCommands {
                             sendMessage(sender, colorize("{RED}Group {DARK_GREEN}%s{RED} does not exist."), e.getGroupName());
                             return false;
                         }
-                        broadcastAdmin(plugin, "%s added %s to %s", sender.getName(), playerName, group);
-                        sendMessage(sender, colorize("{YELLOW}Adding {AQUA}%s{YELLOW} to {DARK_GREEN}%s"), playerName, group);
+                        broadcastAdmin(quiet, "%s added %s to %s", sender.getName(), playerName, group);
+                        if (!quiet)
+                            sendMessage(sender, colorize("{YELLOW}Adding {AQUA}%s{YELLOW} to {DARK_GREEN}%s"), playerName, group);
                     }
                     else {
                         sendMessage(sender, colorize("{RED}Player is not in any groups in that track."));
@@ -146,8 +157,9 @@ public class RootCommands {
                     // If now ranked below first rank, remove altogether
                     if (rankIndex < 0) {
                         plugin.getDao().removeMember(oldGroup, playerName);
-                        broadcastAdmin(plugin, "%s removed %s from %s", sender.getName(), playerName, oldGroup);
-                        sendMessage(sender, colorize("{YELLOW}Removing {AQUA}%s{YELLOW} from {DARK_GREEN}%s"), playerName, oldGroup);
+                        broadcastAdmin(quiet, "%s removed %s from %s", sender.getName(), playerName, oldGroup);
+                        if (!quiet)
+                            sendMessage(sender, colorize("{YELLOW}Removing {AQUA}%s{YELLOW} from {DARK_GREEN}%s"), playerName, oldGroup);
                     }
                     else {
                         // Constrain rank to [1..track.size() - 1]
@@ -159,16 +171,17 @@ public class RootCommands {
                         plugin.getDao().removeMember(oldGroup, playerName);
                         plugin.getDao().addMember(newGroup, playerName);
         
-                        broadcastAdmin(plugin, "%s %s %s from %s to %s", sender.getName(),
+                        broadcastAdmin(quiet, "%s %s %s from %s to %s", sender.getName(),
                                 (rankUp ? "promoted" : "demoted"),
                                 playerName,
                                 oldGroup,
                                 newGroup);
-                        sendMessage(sender, colorize("{YELLOW}%s {AQUA}%s{YELLOW} from {DARK_GREEN}%s{YELLOW} to {DARK_GREEN}%s"),
-                                (rankUp ? "Promoting" : "Demoting"),
-                                playerName,
-                                oldGroup,
-                                newGroup);
+                        if (!quiet)
+                            sendMessage(sender, colorize("{YELLOW}%s {AQUA}%s{YELLOW} from {DARK_GREEN}%s{YELLOW} to {DARK_GREEN}%s"),
+                                    (rankUp ? "Promoting" : "Demoting"),
+                                    playerName,
+                                    oldGroup,
+                                    newGroup);
                     }
                     
                     return false;
@@ -176,25 +189,25 @@ public class RootCommands {
             }
         });
         
-        if (check)
+        if (check && !quiet)
             plugin.checkPlayer(sender, playerName);
         plugin.refreshPlayer(playerName);
     }
 
     @Command("promote")
     @Require("zpermissions.promote")
-    public void promote(CommandSender sender, @Option("player") String playerName, @Option(value="track", optional=true) String trackName) {
-        rankChange(sender, playerName, trackName, true);
+    public void promote(CommandSender sender, @Option("-q") boolean quiet, @Option("player") String playerName, @Option(value="track", optional=true) String trackName) {
+        rankChange(sender, playerName, trackName, true, quiet);
     }
 
     @Command("demote")
     @Require("zpermissions.demote")
-    public void demote(CommandSender sender, @Option("player") String playerName, @Option(value="track", optional=true) String trackName) {
-        rankChange(sender, playerName, trackName, false);
+    public void demote(CommandSender sender, @Option("-q") boolean quiet, @Option("player") String playerName, @Option(value="track", optional=true) String trackName) {
+        rankChange(sender, playerName, trackName, false, quiet);
     }
 
     // Set rank to a specified rank on a track
-    private void rankSet(final CommandSender sender, final String playerName, String trackName, final String rankName) {
+    private void rankSet(final CommandSender sender, final String playerName, String trackName, final String rankName, final boolean quiet) {
         // TODO lots of duped code from rankChange, refactor
 
         // Resolve track
@@ -246,8 +259,9 @@ public class RootCommands {
                             sendMessage(sender, colorize("{RED}Group {DARK_GREEN}%s{RED} does not exist."), e.getGroupName());
                             return false;
                         }
-                        broadcastAdmin(plugin, "%s added %s to %s", sender.getName(), playerName, rankName);
-                        sendMessage(sender, colorize("{YELLOW}Adding {AQUA}%s{YELLOW} to {DARK_GREEN}%s"), playerName, rankName);
+                        broadcastAdmin(quiet, "%s added %s to %s", sender.getName(), playerName, rankName);
+                        if (!quiet)
+                            sendMessage(sender, colorize("{YELLOW}Adding {AQUA}%s{YELLOW} to {DARK_GREEN}%s"), playerName, rankName);
                     }
                     else {
                         sendMessage(sender, colorize("{RED}Player is not in any groups in that track."));
@@ -263,39 +277,41 @@ public class RootCommands {
                         // Add to new group
                         plugin.getDao().addMember(rankName, playerName);
 
-                        broadcastAdmin(plugin, "%s changed rank of %s from %s to %s", sender.getName(),
+                        broadcastAdmin(quiet, "%s changed rank of %s from %s to %s", sender.getName(),
                                 playerName,
                                 oldGroup,
                                 rankName);
-                        sendMessage(sender, colorize("{YELLOW}Changing rank of {AQUA}%s{YELLOW} from {DARK_GREEN}%s{YELLOW} to {DARK_GREEN}%s"),
-                                playerName,
-                                oldGroup,
-                                rankName);
+                        if (!quiet)
+                            sendMessage(sender, colorize("{YELLOW}Changing rank of {AQUA}%s{YELLOW} from {DARK_GREEN}%s{YELLOW} to {DARK_GREEN}%s"),
+                                    playerName,
+                                    oldGroup,
+                                    rankName);
                     }
                     else {
-                        broadcastAdmin(plugin, "%s removed %s from %s", sender.getName(), playerName, oldGroup);
-                        sendMessage(sender, colorize("{YELLOW}Removing {AQUA}%s{YELLOW} from {DARK_GREEN}%s"), playerName, oldGroup);
+                        broadcastAdmin(quiet, "%s removed %s from %s", sender.getName(), playerName, oldGroup);
+                        if (!quiet)
+                            sendMessage(sender, colorize("{YELLOW}Removing {AQUA}%s{YELLOW} from {DARK_GREEN}%s"), playerName, oldGroup);
                     }
                     return false;
                 }
             }
         });
 
-        if (check)
+        if (check && !quiet)
             plugin.checkPlayer(sender, playerName);
         plugin.refreshPlayer(playerName);
     }
 
     @Command("setrank")
     @Require("zpermissions.setrank")
-    public void setrank(CommandSender sender, @Option("player") String playerName, @Option("rank") String rankName, @Option(value="track", optional=true) String trackName) {
-        rankSet(sender, playerName, trackName, rankName);
+    public void setrank(CommandSender sender, @Option("-q") boolean quiet, @Option("player") String playerName, @Option("rank") String rankName, @Option(value="track", optional=true) String trackName) {
+        rankSet(sender, playerName, trackName, rankName, quiet);
     }
 
     @Command("unsetrank")
     @Require("zpermissions.unsetrank")
-    public void unsetrank(CommandSender sender, @Option("player") String playerName, @Option(value="track", optional=true) String trackName) {
-        rankSet(sender, playerName, trackName, null);
+    public void unsetrank(CommandSender sender, @Option("-q") boolean quiet, @Option("player") String playerName, @Option(value="track", optional=true) String trackName) {
+        rankSet(sender, playerName, trackName, null, quiet);
     }
 
 }
