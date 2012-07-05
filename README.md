@@ -92,6 +92,9 @@ be specified as:
     this would be.
 
 The rank commands are `/promote`, `/demote`, `/setrank`, and `/unsetrank`.
+The rank commands have an option `-q` to operate silently, e.g. when being
+called by automated processes. They will, however, still log their actions
+to the server log for security audit purposes.
 
 ## Permissions ##
 
