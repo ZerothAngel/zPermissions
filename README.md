@@ -15,6 +15,8 @@ that. zPermissions does permissions and only permissions.
 
 I aim to keep zPermissions a simple, yet feature-rich, Superperms provider.
 
+Please post bugs and/or feature requests as [dev.bukkit.org tickets](http://dev.bukkit.org/server-mods/zpermissions/tickets/).
+
 ## Features ##
 
 *   Uses Bukkit database to store permissions (i.e. settings in bukkit.yml). Note however,
@@ -217,6 +219,11 @@ Sources may be found on GitHub:
 
 *   [zPermissions](https://github.com/ZerothAngel/zPermissions)
 *   [ToHPluginUtils](https://github.com/ZerothAngel/ToHPluginUtils)
+
+Development builds may be found on my continous integration site:
+
+*   [zPermissions](http://ci.tyrannyofheaven.org/job/zPermissions/lastSuccessfulBuild/org.tyrannyofheaven.bukkit$zPermissions/) (Requires ToHPluginUtils.jar)
+*   [zPermissions-standlone](http://ci.tyrannyofheaven.org/job/zPermissions-standalone/lastSuccessfulBuild/org.tyrannyofheaven.bukkit$zPermissions/) (includes ToHPluginUtils, like the version distributed on dev.bukkit.org)
 
 ## To Do ##
 
