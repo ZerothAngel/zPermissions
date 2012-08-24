@@ -22,8 +22,6 @@ import static org.tyrannyofheaven.bukkit.util.permissions.PermissionUtils.requir
 
 import java.io.File;
 import java.io.IOException;
-import java.io.PrintWriter;
-import java.util.Date;
 import java.util.List;
 import java.util.logging.Level;
 
@@ -38,8 +36,6 @@ import org.tyrannyofheaven.bukkit.util.command.ParseException;
 import org.tyrannyofheaven.bukkit.util.command.Require;
 import org.tyrannyofheaven.bukkit.util.command.reader.CommandReader;
 import org.tyrannyofheaven.bukkit.util.transaction.TransactionCallback;
-import org.tyrannyofheaven.bukkit.util.transaction.TransactionCallbackWithoutResult;
-import org.tyrannyofheaven.bukkit.zPermissions.model.Entry;
 import org.tyrannyofheaven.bukkit.zPermissions.model.PermissionEntity;
 
 /**
@@ -243,68 +239,12 @@ public class SubCommands {
                     return;
                 }
             }
-            final PrintWriter out = new PrintWriter(outFile);
-            try {
-                plugin.getTransactionStrategy().execute(new TransactionCallbackWithoutResult() {
-                    @Override
-                    public void doInTransactionWithoutResult() throws Exception {
-                        // Header
-                        out.println(String.format("# Dumped by %s %s on %s",
-                                plugin.getDescription().getName(),
-                                plugin.getDescription().getVersion(),
-                                new Date()));
-                        // Dump players first
-                        List<PermissionEntity> players = plugin.getDao().getEntities(false);
-                        for (PermissionEntity entity : players) {
-                            out.println(String.format("# Player %s", entity.getDisplayName()));
-                            dumpPermissions(out, entity);
-                        }
-                        // Dump groups
-                        List<PermissionEntity> groups = plugin.getDao().getEntities(true);
-                        for (PermissionEntity entity : groups) {
-                            out.println(String.format("# Group %s", entity.getDisplayName()));
-                            out.println(String.format("permissions group %s create", entity.getDisplayName()));
-                            dumpPermissions(out, entity);
-                            out.println(String.format("permissions group %s setpriority %d",
-                                    entity.getDisplayName(),
-                                    entity.getPriority()));
-                            if (entity.getParent() != null) {
-                                out.println(String.format("permissions group %s setparent %s",
-                                        entity.getDisplayName(),
-                                        entity.getParent().getDisplayName()));
-                            }
-                            // Dump memberships
-                            for (String playerName : plugin.getDao().getMembers(entity.getName())) {
-                                out.println(String.format("permissions group %s add %s",
-                                        entity.getDisplayName(),
-                                        playerName));
-                            }
-                        }
-                    }
-                });
-                
-                sendMessage(sender, colorize("{YELLOW}Export completed."));
-            }
-            finally {
-                out.close();
-            }
+            plugin.getModelDumper().dump(outFile);
+            sendMessage(sender, colorize("{YELLOW}Export completed."));
         }
         catch (IOException e) {
             sendMessage(sender, colorize("{RED}Error exporting; see server log."));
             log(plugin, Level.SEVERE, "Error exporting:", e);
-        }
-    }
-
-    // Dump permissions for a player or group
-    private void dumpPermissions(final PrintWriter out, PermissionEntity entity) {
-        for (Entry e : entity.getPermissions()) {
-            out.println(String.format("permissions %s %s set %s%s%s %s",
-                    (entity.isGroup() ? "group" : "player"),
-                    entity.getDisplayName(),
-                    (e.getRegion() == null ? "" : e.getRegion().getName() + "/"),
-                    (e.getWorld() == null ? "" : e.getWorld().getName() + ":"),
-                    e.getPermission(),
-                    e.isValue()));
         }
     }
 

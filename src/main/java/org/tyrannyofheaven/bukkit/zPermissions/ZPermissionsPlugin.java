@@ -124,6 +124,9 @@ public class ZPermissionsPlugin extends JavaPlugin {
     // Permission resolver
     private final PermissionsResolver resolver = new PermissionsResolver(this);
 
+    // Model dumper
+    private final ModelDumper modelDumper = new ModelDumper(this);
+
     // Our own Configuration (don't bother with JavaPlugin's)
     private FileConfiguration config;
 
@@ -203,6 +206,11 @@ public class ZPermissionsPlugin extends JavaPlugin {
     // Retrieve the PermissionResolver instance
     PermissionsResolver getResolver() {
         return resolver;
+    }
+
+    // Retrieve ModelDumper instance
+    ModelDumper getModelDumper() {
+        return modelDumper;
     }
 
     @Override
