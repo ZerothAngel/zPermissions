@@ -5,6 +5,7 @@ description: Superperms implementation with Bukkit database backend
 author: ZerothAngel
 database: true
 softdepend: [WorldGuard]
+load: STARTUP
 
 commands:
   permissions:
