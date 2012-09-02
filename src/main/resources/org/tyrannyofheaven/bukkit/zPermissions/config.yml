@@ -1,4 +1,6 @@
-config-version: 5
+config-version: 6
+
+database-support: true
 
 group-permission: 'group.%s'
 

@@ -49,11 +49,8 @@ import org.tyrannyofheaven.bukkit.util.ToHFileUtils;
 import org.tyrannyofheaven.bukkit.util.ToHUtils;
 import org.tyrannyofheaven.bukkit.util.VersionInfo;
 import org.tyrannyofheaven.bukkit.util.command.ToHCommandExecutor;
-import org.tyrannyofheaven.bukkit.util.transaction.AvajeTransactionStrategy;
-import org.tyrannyofheaven.bukkit.util.transaction.RetryingAvajeTransactionStrategy;
 import org.tyrannyofheaven.bukkit.util.transaction.TransactionCallback;
 import org.tyrannyofheaven.bukkit.util.transaction.TransactionStrategy;
-import org.tyrannyofheaven.bukkit.zPermissions.dao.AvajePermissionDao;
 import org.tyrannyofheaven.bukkit.zPermissions.dao.PermissionDao;
 import org.tyrannyofheaven.bukkit.zPermissions.model.Entry;
 import org.tyrannyofheaven.bukkit.zPermissions.model.Membership;
@@ -112,6 +109,12 @@ public class ZPermissionsPlugin extends JavaPlugin {
     // Default max attempts (after the first) to complete a transaction
     private static final int DEFAULT_TXN_MAX_RETRIES = 1;
 
+    // Default database support
+    private static final boolean DEFAULT_DATABASE_SUPPORT = true;
+
+    // Filename of file-based storage
+    private static final String FILE_STORAGE_FILENAME = "data.yml";
+
     // This plugin's logger
     private final Logger logger = Logger.getLogger(getClass().getName());
 
@@ -160,18 +163,11 @@ public class ZPermissionsPlugin extends JavaPlugin {
     // Track definitions
     private Map<String, List<String>> tracks = new HashMap<String, List<String>>();
 
-    // TransactionStrategy implementation
-    private TransactionStrategy transactionStrategy;
+    // Whether or not to use the database (Avaje) storage strategy
+    private boolean databaseSupport;
 
-    // TransactionStrategy that retries failed transactions
-    // FIXME We use a separate TransactionStrategy because not all transactions
-    // might be safe to be retried. Most simple transactions are safe to retry.
-    // The ones that perform calculations or other operations (most notably
-    // the rank commands) will have to be dealt with another way...
-    private TransactionStrategy retryingTransactionStrategy;
-
-    // DAO implementation
-    private PermissionDao dao;
+    // Strategy for permissions storage
+    private StorageStrategy storageStrategy;
 
     // WorldGuard, if present
     private WorldGuardPlugin worldGuardPlugin;
@@ -182,16 +178,20 @@ public class ZPermissionsPlugin extends JavaPlugin {
      * @return the TransactionStrategy
      */
     TransactionStrategy getTransactionStrategy() {
-        return transactionStrategy;
+        return storageStrategy.getTransactionStrategy();
     }
 
     /**
      * Retrieve this plugin's retrying TransactionStrategy
+     * FIXME We use a separate TransactionStrategy because not all transactions
+     * might be safe to be retried. Most simple transactions are safe to retry.
+     * The ones that perform calculations or other operations (most notably
+     * the rank commands) will have to be dealt with another way...
      * 
      * @return the retrying TransactionStrategy
      */
     TransactionStrategy getRetryingTransactionStrategy() {
-        return retryingTransactionStrategy;
+        return storageStrategy.getRetryingTransactionStrategy();
     }
 
     /**
@@ -200,7 +200,7 @@ public class ZPermissionsPlugin extends JavaPlugin {
      * @return the DAO
      */
     PermissionDao getDao() {
-        return dao;
+        return storageStrategy.getDao();
     }
 
     // Retrieve the PermissionResolver instance
@@ -225,6 +225,9 @@ public class ZPermissionsPlugin extends JavaPlugin {
     public void onDisable() {
         // Shut off monitor task, if running
         getServer().getScheduler().cancelTasks(this);
+
+        // Ensure storage is shut down properly
+        storageStrategy.shutdown();
 
         // Clear any player state
 
@@ -257,21 +260,31 @@ public class ZPermissionsPlugin extends JavaPlugin {
         // Upgrade/create config
         ToHFileUtils.upgradeConfig(this, config);
 
-        // Create database schema, if needed
-        try {
-            getDatabase().createQuery(Entry.class).findRowCount();
-        }
-        catch (PersistenceException e) {
-            log(this, "Creating SQL tables...");
-            installDDL();
-            log(this, "Done.");
-        }
-
         // Set up TransactionStrategy and DAO
-        transactionStrategy = new AvajeTransactionStrategy(getDatabase());
-        retryingTransactionStrategy = new RetryingAvajeTransactionStrategy(getDatabase(), DEFAULT_TXN_MAX_RETRIES); // TODO make configurable?
-        dao = new AvajePermissionDao(getDatabase());
-        applyCacheSettings();
+        if (getDescription().isDatabaseEnabled() && databaseSupport) {
+            log(this, "Using database storage strategy.");
+            storageStrategy = new AvajeStorageStrategy(this, DEFAULT_TXN_MAX_RETRIES); // TODO make configurable?
+        }
+        else {
+            log(this, "Using file-based storage strategy.");
+            storageStrategy = new MemoryStorageStrategy(this, new File(getDataFolder(), FILE_STORAGE_FILENAME));
+        }
+        
+        // Initialize storage strategy
+        try {
+            storageStrategy.init();
+        }
+        catch (Exception e) {
+            error(this, "Exception initializing storage strategy:", e);
+            
+            log(this, Level.WARNING, "This error is often casued by using the default bukkit.yml database settings.");
+            log(this, Level.WARNING, "This plugin is NOT compatible with SQLite.");
+            log(this, Level.WARNING, "Edit bukkit.yml to switch databases or disable database support in config.yml.");
+            // The following might be a bad idea. We'll see how it goes...
+            log(this, Level.WARNING, "Falling back to file-based storage strategy.");
+            storageStrategy = new MemoryStorageStrategy(this, new File(getDataFolder(), FILE_STORAGE_FILENAME));
+            storageStrategy.init();
+        }
 
         // Install our commands
         (new ToHCommandExecutor<ZPermissionsPlugin>(this, new RootCommands(this))).registerCommands();
@@ -296,8 +309,23 @@ public class ZPermissionsPlugin extends JavaPlugin {
         log(this, "%s enabled.", versionInfo.getVersionString());
     }
 
+    // Must be here instead of AvajeStorageStrategy because installDDL()
+    // is protected
+    void createDatabaseSchema() {
+        // Create database schema, if needed
+        try {
+            getDatabase().createQuery(Entry.class).findRowCount();
+        }
+        catch (PersistenceException e) {
+            log(this, "Creating SQL tables...");
+            installDDL();
+            log(this, "Done.");
+        }
+    }
+
     // Apply cache settings to Avaje bean caches
-    private void applyCacheSettings() {
+    // Arguably should be in AvajeStorageStrategy
+    void applyCacheSettings() {
         if (cacheMaxIdle <= 0 && cacheMaxTtl <= 0 && cacheSize <= 0) return; // nothing to do
         for (Class<?> clazz : getDatabaseClasses()) {
             ServerCache beanCache = getDatabase().getServerCacheManager().getBeanCache(clazz);
@@ -540,6 +568,7 @@ public class ZPermissionsPlugin extends JavaPlugin {
     // Read config.yml
     private void readConfig() {
         // Barebones defaults
+        databaseSupport = config.getBoolean("database-support", DEFAULT_DATABASE_SUPPORT);
         getResolver().setDefaultGroup(DEFAULT_GROUP);
         defaultTrack = DEFAULT_TRACK;
         dumpDirectory = new File(DEFAULT_DUMP_DIRECTORY);
