@@ -15,6 +15,8 @@
  */
 package org.tyrannyofheaven.bukkit.zPermissions;
 
+import static org.tyrannyofheaven.bukkit.util.ToHStringUtils.hasText;
+
 /**
  * Holder/parser for world-specific permissions as specified on the command-line.
  * Permissions with no world specifier assume the world is null (i.e. global
@@ -22,7 +24,7 @@ package org.tyrannyofheaven.bukkit.zPermissions;
  * 
  * @author zerothangel
  */
-class WorldPermission {
+public class WorldPermission {
 
     private final String region;
 
@@ -30,7 +32,7 @@ class WorldPermission {
     
     private final String permission;
 
-    WorldPermission(String worldPermission) {
+    public WorldPermission(String worldPermission) {
         // Pull out region, if present
         String[] parts = worldPermission.split("/", 2);
         if (parts.length == 1) {
@@ -53,6 +55,19 @@ class WorldPermission {
             world = parts[0];
             permission = parts[1];
         }
+    }
+
+    public WorldPermission(String region, String world, String permission) {
+        if (!hasText(region))
+            region = null;
+        if (!hasText(world))
+            world = null;
+        if (!hasText(permission))
+            throw new IllegalArgumentException("permission must have a value");
+        
+        this.region = region;
+        this.world = world;
+        this.permission = permission;
     }
 
     /**
@@ -79,6 +94,14 @@ class WorldPermission {
      */
     public String getPermission() {
         return permission;
+    }
+
+    @Override
+    public String toString() {
+        return String.format("%s%s%s",
+                (getRegion() == null ? "" : getRegion() + "/"),
+                (getWorld() == null ? "" : getWorld() + ":"),
+                getPermission());
     }
 
 }

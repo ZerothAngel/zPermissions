@@ -1,3 +1,8 @@
+database-support: |
+  Enable database support (also requires "database" option in plugin.yml
+  to be true). Disabling database support switches zPermissions to its
+  flat-file-based permissions store WHICH IS TOTALLY EXPERIMENTAL.
+
 group-permission: |
   Groups may have a group permission node automatically assigned to their
   members. This is the name of that permission node. It must be a string
