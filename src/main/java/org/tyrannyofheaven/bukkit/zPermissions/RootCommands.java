@@ -56,6 +56,21 @@ public class RootCommands {
     // Handler for /permissions sub-commands
     private final SubCommands sc;
 
+    private static enum BroadcastScope {
+        DEFAULT(true), QUIET(false), LOUD(true), QUIET_LOUD(false);
+        
+        private final boolean shouldEcho;
+        
+        private BroadcastScope(boolean shouldEcho) {
+            this.shouldEcho = shouldEcho;
+        }
+        
+        public boolean isShouldEcho() {
+            return shouldEcho;
+        }
+
+    }
+
     RootCommands(ZPermissionsPlugin plugin) {
         this.plugin = plugin;
         sc = new SubCommands(plugin);
@@ -83,15 +98,17 @@ public class RootCommands {
 
     // Audit record of change. If quiet, only log to server log rather than
     // broadcasting to admins.
-    private void broadcastAdmin(boolean quiet, String format, Object... args) {
-        if (!quiet)
+    private void announce(BroadcastScope scope, String format, Object... args) {
+        if (scope == BroadcastScope.DEFAULT)
             ToHMessageUtils.broadcastAdmin(plugin, format, args);
-        else
+        else if (scope == BroadcastScope.QUIET)
             ToHLoggingUtils.log(plugin, format, args);
+        else
+            ToHMessageUtils.broadcastMessage(plugin, format, args);
     }
 
     // Perform the actual promotion/demotion
-    private void rankChange(final CommandSender sender, final String playerName, String trackName, final boolean rankUp, final boolean quiet) {
+    private void rankChange(final CommandSender sender, final String playerName, String trackName, final boolean rankUp, final BroadcastScope scope) {
         // Resolve track
         if (!hasText(trackName))
             trackName = plugin.getDefaultTrack();
@@ -137,8 +154,8 @@ public class RootCommands {
                             sendMessage(sender, colorize("{RED}Group {DARK_GREEN}%s{RED} does not exist."), e.getGroupName());
                             return false;
                         }
-                        broadcastAdmin(quiet, "%s added %s to %s", sender.getName(), playerName, group);
-                        if (!quiet)
+                        announce(scope, "%s added %s to %s", sender.getName(), playerName, group);
+                        if (scope.isShouldEcho())
                             sendMessage(sender, colorize("{YELLOW}Adding {AQUA}%s{YELLOW} to {DARK_GREEN}%s"), playerName, group);
                     }
                     else {
@@ -157,8 +174,8 @@ public class RootCommands {
                     // If now ranked below first rank, remove altogether
                     if (rankIndex < 0) {
                         plugin.getDao().removeMember(oldGroup, playerName);
-                        broadcastAdmin(quiet, "%s removed %s from %s", sender.getName(), playerName, oldGroup);
-                        if (!quiet)
+                        announce(scope, "%s removed %s from %s", sender.getName(), playerName, oldGroup);
+                        if (scope.isShouldEcho())
                             sendMessage(sender, colorize("{YELLOW}Removing {AQUA}%s{YELLOW} from {DARK_GREEN}%s"), playerName, oldGroup);
                     }
                     else {
@@ -171,12 +188,12 @@ public class RootCommands {
                         plugin.getDao().removeMember(oldGroup, playerName);
                         plugin.getDao().addMember(newGroup, playerName);
         
-                        broadcastAdmin(quiet, "%s %s %s from %s to %s", sender.getName(),
+                        announce(scope, "%s %s %s from %s to %s", sender.getName(),
                                 (rankUp ? "promoted" : "demoted"),
                                 playerName,
                                 oldGroup,
                                 newGroup);
-                        if (!quiet)
+                        if (scope.isShouldEcho())
                             sendMessage(sender, colorize("{YELLOW}%s {AQUA}%s{YELLOW} from {DARK_GREEN}%s{YELLOW} to {DARK_GREEN}%s"),
                                     (rankUp ? "Promoting" : "Demoting"),
                                     playerName,
@@ -189,25 +206,36 @@ public class RootCommands {
             }
         });
         
-        if (check && !quiet)
+        if (check && scope.isShouldEcho())
             plugin.checkPlayer(sender, playerName);
         plugin.refreshPlayer(playerName);
     }
 
+    private BroadcastScope determineScope(boolean quiet, boolean loud) {
+        if (!(quiet || loud))
+            return BroadcastScope.DEFAULT;
+        else if (quiet && loud)
+            return BroadcastScope.QUIET_LOUD;
+        else if (quiet)
+            return BroadcastScope.QUIET;
+        else
+            return BroadcastScope.LOUD;
+    }
+
     @Command("promote")
     @Require("zpermissions.promote")
-    public void promote(CommandSender sender, @Option("-q") boolean quiet, @Option("player") String playerName, @Option(value="track", optional=true) String trackName) {
-        rankChange(sender, playerName, trackName, true, quiet);
+    public void promote(CommandSender sender, @Option("-q") boolean quiet, @Option("-Q") boolean loud, @Option("player") String playerName, @Option(value="track", optional=true) String trackName) {
+        rankChange(sender, playerName, trackName, true, determineScope(quiet, loud));
     }
 
     @Command("demote")
     @Require("zpermissions.demote")
-    public void demote(CommandSender sender, @Option("-q") boolean quiet, @Option("player") String playerName, @Option(value="track", optional=true) String trackName) {
-        rankChange(sender, playerName, trackName, false, quiet);
+    public void demote(CommandSender sender, @Option("-q") boolean quiet, @Option("-Q") boolean loud, @Option("player") String playerName, @Option(value="track", optional=true) String trackName) {
+        rankChange(sender, playerName, trackName, false, determineScope(quiet, loud));
     }
 
     // Set rank to a specified rank on a track
-    private void rankSet(final CommandSender sender, final String playerName, String trackName, final String rankName, final boolean quiet) {
+    private void rankSet(final CommandSender sender, final String playerName, String trackName, final String rankName, final BroadcastScope scope) {
         // TODO lots of duped code from rankChange, refactor
 
         // Resolve track
@@ -259,8 +287,8 @@ public class RootCommands {
                             sendMessage(sender, colorize("{RED}Group {DARK_GREEN}%s{RED} does not exist."), e.getGroupName());
                             return false;
                         }
-                        broadcastAdmin(quiet, "%s added %s to %s", sender.getName(), playerName, rankName);
-                        if (!quiet)
+                        announce(scope, "%s added %s to %s", sender.getName(), playerName, rankName);
+                        if (scope.isShouldEcho())
                             sendMessage(sender, colorize("{YELLOW}Adding {AQUA}%s{YELLOW} to {DARK_GREEN}%s"), playerName, rankName);
                     }
                     else {
@@ -277,19 +305,19 @@ public class RootCommands {
                         // Add to new group
                         plugin.getDao().addMember(rankName, playerName);
 
-                        broadcastAdmin(quiet, "%s changed rank of %s from %s to %s", sender.getName(),
+                        announce(scope, "%s changed rank of %s from %s to %s", sender.getName(),
                                 playerName,
                                 oldGroup,
                                 rankName);
-                        if (!quiet)
+                        if (scope.isShouldEcho())
                             sendMessage(sender, colorize("{YELLOW}Changing rank of {AQUA}%s{YELLOW} from {DARK_GREEN}%s{YELLOW} to {DARK_GREEN}%s"),
                                     playerName,
                                     oldGroup,
                                     rankName);
                     }
                     else {
-                        broadcastAdmin(quiet, "%s removed %s from %s", sender.getName(), playerName, oldGroup);
-                        if (!quiet)
+                        announce(scope, "%s removed %s from %s", sender.getName(), playerName, oldGroup);
+                        if (scope.isShouldEcho())
                             sendMessage(sender, colorize("{YELLOW}Removing {AQUA}%s{YELLOW} from {DARK_GREEN}%s"), playerName, oldGroup);
                     }
                     return false;
@@ -297,21 +325,21 @@ public class RootCommands {
             }
         });
 
-        if (check && !quiet)
+        if (check && scope.isShouldEcho())
             plugin.checkPlayer(sender, playerName);
         plugin.refreshPlayer(playerName);
     }
 
     @Command("setrank")
     @Require("zpermissions.setrank")
-    public void setrank(CommandSender sender, @Option("-q") boolean quiet, @Option("player") String playerName, @Option("rank") String rankName, @Option(value="track", optional=true) String trackName) {
-        rankSet(sender, playerName, trackName, rankName, quiet);
+    public void setrank(CommandSender sender, @Option("-q") boolean quiet, @Option("-Q") boolean loud, @Option("player") String playerName, @Option("rank") String rankName, @Option(value="track", optional=true) String trackName) {
+        rankSet(sender, playerName, trackName, rankName, determineScope(quiet, loud));
     }
 
     @Command("unsetrank")
     @Require("zpermissions.unsetrank")
-    public void unsetrank(CommandSender sender, @Option("-q") boolean quiet, @Option("player") String playerName, @Option(value="track", optional=true) String trackName) {
-        rankSet(sender, playerName, trackName, null, quiet);
+    public void unsetrank(CommandSender sender, @Option("-q") boolean quiet, @Option("-Q") boolean loud, @Option("player") String playerName, @Option(value="track", optional=true) String trackName) {
+        rankSet(sender, playerName, trackName, null, determineScope(quiet, loud));
     }
 
 }
