@@ -50,7 +50,7 @@ The permission nodes in the `get`, `set`, and `unset` sub-commands may be specif
 *   &lt;world>:&lt;permission> &mdash; To make a permission world-specific, prefix it with the world name followed by a colon.
 *   &lt;region>/&lt;world>:&lt;permission> &mdash; Region-specific permissions take the above and prefix it with the region name followed by a forward-slash. For now, you may also omit the world name (so it applies to the named region in all worlds), though I'm not sure how useful this would be.
 
-The rank commands are `/promote`, `/demote`, `/setrank`, and `/unsetrank`. The rank commands have an option `-q` to operate silently, e.g. when being called by automated processes. They will, however, still log their actions to the server log for security audit purposes.
+The rank commands are `/promote`, `/demote`, `/setrank`, and `/unsetrank` and will normally broadcast changes to all admins. The rank commands have an option `-q` to operate silently, e.g. when being called by automated processes. They will, however, still log their actions to the server log for security audit purposes. Opposite of `-q`, they will also take `-Q` which causes the rank commands to broadcast changes to all users.
 
 ## Permissions ##
 
