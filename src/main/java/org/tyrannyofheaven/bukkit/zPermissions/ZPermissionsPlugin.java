@@ -658,6 +658,14 @@ public class ZPermissionsPlugin extends JavaPlugin {
                 tracks.put(trackName, members);
             }
         }
+        // Set up default track if none are defined
+        if (tracks.isEmpty()) {
+            List<String> members = new ArrayList<String>();
+            members.add("default");
+            members.add("somegroup");
+            members.add("someothergroup");
+            tracks.put("default", members);
+        }
 
         kickOnError = config.getBoolean("kick-on-error", DEFAULT_KICK_ON_ERROR);
         kickOpsOnError = config.getBoolean("kick-ops-on-error", DEFAULT_KICK_OPS_ON_ERROR);
