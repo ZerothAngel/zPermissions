@@ -185,8 +185,15 @@ public class RootCommands {
                         String newGroup = track.get(rankIndex);
         
                         // Change groups
-                        plugin.getDao().removeMember(oldGroup, playerName);
-                        plugin.getDao().addMember(newGroup, playerName);
+                        try {
+                            plugin.getDao().addMember(newGroup, playerName);
+                        }
+                        catch (MissingGroupException e) {
+                            sendMessage(sender, colorize("{RED}Group {DARK_GREEN}%s{RED} does not exist."), e.getGroupName());
+                            return false;
+                        }
+                        if (!oldGroup.equalsIgnoreCase(newGroup))
+                            plugin.getDao().removeMember(oldGroup, playerName);
         
                         announce(scope, "%s %s %s from %s to %s", sender.getName(),
                                 (rankUp ? "promoted" : "demoted"),
@@ -297,13 +304,22 @@ public class RootCommands {
                     return true;
                 }
                 else {
-                    // Remove from old group
+                    // Name of current (old) group
                     String oldGroup = playerGroupNames.iterator().next();
-                    plugin.getDao().removeMember(oldGroup, playerName);
 
                     if (rankName != null) {
                         // Add to new group
-                        plugin.getDao().addMember(rankName, playerName);
+                        try {
+                            plugin.getDao().addMember(rankName, playerName);
+                        }
+                        catch (MissingGroupException e) {
+                            sendMessage(sender, colorize("{RED}Group {DARK_GREEN}%s{RED} does not exist."), e.getGroupName());
+                            return false;
+                        }
+
+                        // Remove from old group
+                        if (!oldGroup.equalsIgnoreCase(rankName))
+                            plugin.getDao().removeMember(oldGroup, playerName);
 
                         announce(scope, "%s changed rank of %s from %s to %s", sender.getName(),
                                 playerName,
@@ -316,6 +332,9 @@ public class RootCommands {
                                     rankName);
                     }
                     else {
+                        // Remove from old group
+                        plugin.getDao().removeMember(oldGroup, playerName);
+
                         announce(scope, "%s removed %s from %s", sender.getName(), playerName, oldGroup);
                         if (scope.isShouldEcho())
                             sendMessage(sender, colorize("{YELLOW}Removing {AQUA}%s{YELLOW} from {DARK_GREEN}%s"), playerName, oldGroup);
