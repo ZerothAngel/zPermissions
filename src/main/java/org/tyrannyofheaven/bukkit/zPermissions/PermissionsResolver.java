@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -158,19 +159,19 @@ public class PermissionsResolver {
             // If no groups, use the default group
             groups.add(getDefaultGroup());
         }
-    
-        Map<String, Boolean> permissions = new HashMap<String, Boolean>();
+ 
+        List<Entry> entries = new ArrayList<Entry>();
     
         // Resolve each group in turn (highest priority resolved last)
         debug("Groups for %s: %s", playerName, groups);
         for (String group : groups) {
-            resolveGroup(permissions, regions, world, group);
+            resolveGroup(entries, group);
         }
     
         // Player-specific permissions overrides all group permissions
-        applyPermissions(permissions, playerName, false, regions, world);
+        entries.addAll(getDao().getEntries(playerName, false));
     
-        return permissions;
+        return applyPermissions(entries, regions, world);
     }
 
     /**
@@ -185,16 +186,14 @@ public class PermissionsResolver {
      * @return effective permissions for this group
      */
     public Map<String, Boolean> resolveGroup(String groupName, String world, Set<String> regions) {
-        Map<String, Boolean> permissions = new HashMap<String, Boolean>();
-
-        resolveGroup(permissions, regions, world, groupName);
-
-        return permissions;
+        List<Entry> entries = new ArrayList<Entry>();
+        resolveGroup(entries, groupName);
+        return applyPermissions(entries, regions, world);
     }
 
     // Resolve a group's permissions. Ancestor permissions should be overridden
     // by each successive descendant.
-    private void resolveGroup(Map<String, Boolean> permissions, Set<String> regions, String world, String group) {
+    private void resolveGroup(List<Entry> entries, String group) {
         List<String> ancestry = getDao().getAncestry(group);
         if (ancestry.isEmpty()) {
             // This only happens when the default group does not exist
@@ -205,7 +204,10 @@ public class PermissionsResolver {
         if (!getDefaultGroup().equalsIgnoreCase(group) || isIncludeDefaultInAssigned()) {
             // Add assigned group permissions, if present
             for (String groupPermissionFormat : getAssignedGroupPermissionFormats()) {
-                permissions.put(String.format(groupPermissionFormat, group), Boolean.TRUE);
+                Entry groupPerm = new Entry();
+                groupPerm.setPermission(String.format(groupPermissionFormat, group));
+                groupPerm.setValue(true);
+                entries.add(groupPerm);
             }
         }
 
@@ -213,22 +215,27 @@ public class PermissionsResolver {
         for (String ancestor : ancestry) {
             // Add group permissions, if present
             for (String groupPermissionFormat : getGroupPermissionFormats()) {
-                permissions.put(String.format(groupPermissionFormat, ancestor), Boolean.TRUE);
+                Entry groupPerm = new Entry();
+                groupPerm.setPermission(String.format(groupPermissionFormat, ancestor));
+                groupPerm.setValue(true);
+                entries.add(groupPerm);
             }
 
-            applyPermissions(permissions, ancestor, true, regions, world);
+            entries.addAll(getDao().getEntries(ancestor, true)); // WHYYYY
         }
     }
 
     // Apply an entity's permissions to the permission map. Universal permissions
     // (ones not assigned to any specific world) are applied first. They are
     // then overridden by any world-specific permissions.
-    private void applyPermissions(Map<String, Boolean> permissions, String name, boolean group, Set<String> regions, String world) {
-        Map<String, Boolean> regionPermissions = new HashMap<String, Boolean>();
+    private Map<String, Boolean> applyPermissions(List<Entry> entries, Set<String> regions, String world) {
+        Map<String, Boolean> permissions = new LinkedHashMap<String, Boolean>();
+
+        Map<String, Boolean> regionPermissions = new LinkedHashMap<String, Boolean>();
         List<Entry> worldPermissions = new ArrayList<Entry>();
 
         // Apply non-region-specific, non-world-specific permissions first
-        for (Entry e : getDao().getEntries(name, group)) { // WHYYY
+        for (Entry e : entries) {
             if (e.getRegion() == null && e.getWorld() == null) {
                 permissions.put(e.getPermission(), e.isValue());
             }
@@ -260,6 +267,8 @@ public class PermissionsResolver {
 
         // Finally, override with region- and world-specific permissions
         permissions.putAll(regionWorldPermissions);
+        
+        return permissions;
     }
 
 }

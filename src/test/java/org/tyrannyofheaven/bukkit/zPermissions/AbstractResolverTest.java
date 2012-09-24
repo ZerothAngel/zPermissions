@@ -71,6 +71,32 @@ public abstract class AbstractResolverTest {
         }
     }
 
+    private void setPermissionsFalse(String name, boolean group, String... perms) {
+        begin();
+        try {
+            for (String perm : perms) {
+                WorldPermission wp = new WorldPermission(perm);
+                getDao().setPermission(name, group, wp.getRegion(), wp.getWorld(), wp.getPermission(), false);
+            }
+            commit();
+        }
+        finally {
+            end();
+        }
+    }
+
+    private boolean createGroup(String name) {
+        begin();
+        try {
+            boolean result = getDao().createGroup(name);
+            commit();
+            return result;
+        }
+        finally {
+            end();
+        }
+    }
+
     private Map<String, Boolean> resolve(String player, String world, String... regions) {
         if (regions == null)
             regions = new String[0];
@@ -202,7 +228,7 @@ public abstract class AbstractResolverTest {
     @Test
     public void testNoDefaultAssignedGroupResolve() {
         // Non-existent default group
-        assertTrue(getDao().createGroup(TEST_GROUP2));
+        assertTrue(createGroup(TEST_GROUP2));
         
         begin();
         try {
@@ -234,8 +260,8 @@ public abstract class AbstractResolverTest {
 
     @Test
     public void testDefaultAssignedGroupResolve() {
-        assertTrue(getDao().createGroup(TEST_GROUP1));
-        assertTrue(getDao().createGroup(TEST_GROUP2));
+        assertTrue(createGroup(TEST_GROUP1));
+        assertTrue(createGroup(TEST_GROUP2));
         
         begin();
         try {
@@ -283,8 +309,8 @@ public abstract class AbstractResolverTest {
 
     @Test
     public void testDefaultAssignedGroupResolveInherited() {
-        assertTrue(getDao().createGroup(TEST_GROUP1));
-        assertTrue(getDao().createGroup(TEST_GROUP2));
+        assertTrue(createGroup(TEST_GROUP1));
+        assertTrue(createGroup(TEST_GROUP2));
         
         // Set up parent/child relationship
         begin();
@@ -349,10 +375,10 @@ public abstract class AbstractResolverTest {
     public void testBasicGroupResolve() {
         setPermissions(TEST_PLAYER, false,
                 "basic.perm1");
-        assertTrue(getDao().createGroup(TEST_GROUP1));
+        assertTrue(createGroup(TEST_GROUP1));
         setPermissions(TEST_GROUP1, true,
                 "basic.perm2");
-        assertTrue(getDao().createGroup(TEST_GROUP2));
+        assertTrue(createGroup(TEST_GROUP2));
         setPermissions(TEST_GROUP2, true,
                 "basic.perm3");
     
@@ -395,10 +421,10 @@ public abstract class AbstractResolverTest {
     public void testBasicInheritResolve() {
         setPermissions(TEST_PLAYER, false,
                 "basic.perm1");
-        assertTrue(getDao().createGroup(TEST_GROUP1));
+        assertTrue(createGroup(TEST_GROUP1));
         setPermissions(TEST_GROUP1, true,
                 "basic.perm2");
-        assertTrue(getDao().createGroup(TEST_GROUP2));
+        assertTrue(createGroup(TEST_GROUP2));
         setPermissions(TEST_GROUP2, true,
                 "basic.perm3");
     
@@ -478,10 +504,10 @@ public abstract class AbstractResolverTest {
     public void testInheritWorldResolve() {
         setPermissions(TEST_PLAYER, false,
             "basic.perm1");
-        assertTrue(getDao().createGroup(TEST_GROUP1));
+        assertTrue(createGroup(TEST_GROUP1));
         setPermissions(TEST_GROUP1, true,
             TEST_WORLD1 + ":basic.perm2");
-        assertTrue(getDao().createGroup(TEST_GROUP2));
+        assertTrue(createGroup(TEST_GROUP2));
         setPermissions(TEST_GROUP2, true,
             TEST_WORLD2 + ":basic.perm3");
     
@@ -553,6 +579,261 @@ public abstract class AbstractResolverTest {
         assertPermission(permissions, "group.Group1");
         assertPermission(permissions, "group.Group2");
         assertPermission(permissions, "assignedgroup.Group1", false);
+        assertPermission(permissions, "assignedgroup.Group2");
+    }
+
+    @Test
+    public void testInheritDifferentScopeResolve() {
+        setPermissions(TEST_PLAYER, false,
+                "basic.perm1");
+        assertTrue(createGroup(TEST_GROUP1));
+        setPermissionsFalse(TEST_GROUP1, true,
+                TEST_WORLD2 + ":basic.perm2");
+        assertTrue(createGroup(TEST_GROUP2));
+        setPermissions(TEST_GROUP2, true,
+                "basic.perm2");
+    
+        // Set up parent/child relationship
+        begin();
+        try {
+            getDao().setParent(TEST_GROUP2, TEST_GROUP1);
+            commit();
+        }
+        finally {
+            end();
+        }
+        // Confirm
+        PermissionEntity entity = getDao().getEntity(TEST_GROUP2, true);
+        assertNotNull(entity);
+        assertNotNull(entity.getParent());
+        assertEquals(TEST_GROUP1, entity.getParent().getDisplayName());
+    
+        // Switch group
+        begin();
+        try {
+            getDao().setGroup(TEST_PLAYER, TEST_GROUP2);
+            commit();
+        }
+        finally {
+            end ();
+        }
+        // Confirm
+        List<String> groups = getDao().getGroups(TEST_PLAYER);
+        assertEquals(1, groups.size());
+        assertEquals(TEST_GROUP2, groups.get(0));
+    
+        Map<String, Boolean> permissions;
+        permissions = resolve(TEST_PLAYER, TEST_WORLD1);
+    
+        assertPermission(permissions, "basic.perm1");
+        assertPermission(permissions, "basic.perm2");
+        assertPermission(permissions, "group.Group1");
+        assertPermission(permissions, "group.Group2");
+        assertPermission(permissions, "assignedgroup.Group1", false);
+        assertPermission(permissions, "assignedgroup.Group2");
+
+        // Other world
+        permissions = resolve(TEST_PLAYER, TEST_WORLD2);
+        
+        assertPermission(permissions, "basic.perm1");
+        assertPermission(permissions, "basic.perm2", false);
+        assertPermission(permissions, "group.Group1");
+        assertPermission(permissions, "group.Group2");
+        assertPermission(permissions, "assignedgroup.Group1", false);
+        assertPermission(permissions, "assignedgroup.Group2");
+    }
+
+    // Same idea, but permission is swapped. Should work under old resolver.
+    @Test
+    public void testInheritDifferentScopeResolve2() {
+        setPermissions(TEST_PLAYER, false,
+                "basic.perm1");
+        assertTrue(createGroup(TEST_GROUP1));
+        setPermissions(TEST_GROUP1, true,
+                "basic.perm2");
+        assertTrue(createGroup(TEST_GROUP2));
+        setPermissionsFalse(TEST_GROUP2, true,
+                TEST_WORLD2 + ":basic.perm2");
+    
+        // Set up parent/child relationship
+        begin();
+        try {
+            getDao().setParent(TEST_GROUP2, TEST_GROUP1);
+            commit();
+        }
+        finally {
+            end();
+        }
+        // Confirm
+        PermissionEntity entity = getDao().getEntity(TEST_GROUP2, true);
+        assertNotNull(entity);
+        assertNotNull(entity.getParent());
+        assertEquals(TEST_GROUP1, entity.getParent().getDisplayName());
+    
+        // Switch group
+        begin();
+        try {
+            getDao().setGroup(TEST_PLAYER, TEST_GROUP2);
+            commit();
+        }
+        finally {
+            end ();
+        }
+        // Confirm
+        List<String> groups = getDao().getGroups(TEST_PLAYER);
+        assertEquals(1, groups.size());
+        assertEquals(TEST_GROUP2, groups.get(0));
+    
+        Map<String, Boolean> permissions;
+        permissions = resolve(TEST_PLAYER, TEST_WORLD1);
+    
+        assertPermission(permissions, "basic.perm1");
+        assertPermission(permissions, "basic.perm2");
+        assertPermission(permissions, "group.Group1");
+        assertPermission(permissions, "group.Group2");
+        assertPermission(permissions, "assignedgroup.Group1", false);
+        assertPermission(permissions, "assignedgroup.Group2");
+
+        // Other world
+        permissions = resolve(TEST_PLAYER, TEST_WORLD2);
+        
+        assertPermission(permissions, "basic.perm1");
+        assertPermission(permissions, "basic.perm2", false);
+        assertPermission(permissions, "group.Group1");
+        assertPermission(permissions, "group.Group2");
+        assertPermission(permissions, "assignedgroup.Group1", false);
+        assertPermission(permissions, "assignedgroup.Group2");
+    }
+
+    @Test
+    public void testAssignDifferentScopeResolve() {
+        setPermissions(TEST_PLAYER, false,
+                "basic.perm1");
+        assertTrue(createGroup(TEST_GROUP1));
+        setPermissionsFalse(TEST_GROUP1, true,
+                TEST_WORLD2 + ":basic.perm2");
+        assertTrue(createGroup(TEST_GROUP2));
+        setPermissions(TEST_GROUP2, true,
+                "basic.perm2");
+    
+        // Set up priorities
+        begin();
+        try {
+            getDao().setPriority(TEST_GROUP1, 100);
+            commit();
+        }
+        finally {
+            end();
+        }
+    
+        // Add groups
+        begin();
+        try {
+            getDao().addMember(TEST_GROUP1, TEST_PLAYER);
+            commit();
+        }
+        finally {
+            end ();
+        }
+        begin();
+        try {
+            getDao().addMember(TEST_GROUP2, TEST_PLAYER);
+            commit();
+        }
+        finally {
+            end ();
+        }
+        // Confirm
+        List<String> groups = getDao().getGroups(TEST_PLAYER);
+        assertEquals(2, groups.size());
+        assertTrue(groups.contains(TEST_GROUP1));
+        assertTrue(groups.contains(TEST_GROUP2));
+    
+        Map<String, Boolean> permissions;
+        permissions = resolve(TEST_PLAYER, TEST_WORLD1);
+    
+        assertPermission(permissions, "basic.perm1");
+        assertPermission(permissions, "basic.perm2");
+        assertPermission(permissions, "group.Group1");
+        assertPermission(permissions, "group.Group2");
+        assertPermission(permissions, "assignedgroup.Group1");
+        assertPermission(permissions, "assignedgroup.Group2");
+
+        // Other world
+        permissions = resolve(TEST_PLAYER, TEST_WORLD2);
+        
+        assertPermission(permissions, "basic.perm1");
+        assertPermission(permissions, "basic.perm2", false);
+        assertPermission(permissions, "group.Group1");
+        assertPermission(permissions, "group.Group2");
+        assertPermission(permissions, "assignedgroup.Group1");
+        assertPermission(permissions, "assignedgroup.Group2");
+    }
+
+    // Same thing, but swapped priorities. Will fail unless precedence
+    // resolution is global.
+    @Test
+    public void testAssignDifferentScopeResolve2() {
+        setPermissions(TEST_PLAYER, false,
+                "basic.perm1");
+        assertTrue(createGroup(TEST_GROUP1));
+        setPermissionsFalse(TEST_GROUP1, true,
+                TEST_WORLD2 + ":basic.perm2");
+        assertTrue(createGroup(TEST_GROUP2));
+        setPermissions(TEST_GROUP2, true,
+                "basic.perm2");
+    
+        // Set up priorities
+        begin();
+        try {
+            getDao().setPriority(TEST_GROUP2, 100);
+            commit();
+        }
+        finally {
+            end();
+        }
+    
+        // Add groups
+        begin();
+        try {
+            getDao().addMember(TEST_GROUP1, TEST_PLAYER);
+            commit();
+        }
+        finally {
+            end ();
+        }
+        begin();
+        try {
+            getDao().addMember(TEST_GROUP2, TEST_PLAYER);
+            commit();
+        }
+        finally {
+            end ();
+        }
+        // Confirm
+        List<String> groups = getDao().getGroups(TEST_PLAYER);
+        assertEquals(2, groups.size());
+        assertTrue(groups.contains(TEST_GROUP1));
+        assertTrue(groups.contains(TEST_GROUP2));
+    
+        Map<String, Boolean> permissions;
+        permissions = resolve(TEST_PLAYER, TEST_WORLD1);
+    
+        assertPermission(permissions, "basic.perm1");
+        assertPermission(permissions, "basic.perm2");
+        assertPermission(permissions, "group.Group1");
+        assertPermission(permissions, "group.Group2");
+        assertPermission(permissions, "assignedgroup.Group1");
+        assertPermission(permissions, "assignedgroup.Group2");
+
+        // Other world
+        permissions = resolve(TEST_PLAYER, TEST_WORLD2);
+        
+        assertPermission(permissions, "basic.perm1");
+        assertPermission(permissions, "basic.perm2", false);
+        assertPermission(permissions, "group.Group1");
+        assertPermission(permissions, "group.Group2");
+        assertPermission(permissions, "assignedgroup.Group1");
         assertPermission(permissions, "assignedgroup.Group2");
     }
 

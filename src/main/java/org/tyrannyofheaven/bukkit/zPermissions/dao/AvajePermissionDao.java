@@ -485,6 +485,8 @@ public class AvajePermissionDao implements PermissionDao {
 
     @Override
     public boolean createGroup(String name) {
+        checkTransaction();
+
         PermissionEntity group = getEntity(name, true, false); // so we know it was created
         if (group == null) {
             group = getEntity(name, true, true);
