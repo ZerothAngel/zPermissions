@@ -17,7 +17,6 @@ package org.tyrannyofheaven.bukkit.zPermissions;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -250,7 +249,7 @@ public class PermissionsResolver {
         }
 
         // Then override with world-specific permissions
-        Map<String, Boolean> regionWorldPermissions = new HashMap<String, Boolean>();
+        Map<String, Boolean> regionWorldPermissions = new LinkedHashMap<String, Boolean>();
         for (Entry e : worldPermissions) {
             if (e.getRegion() == null) {
                 // Non region-specific
