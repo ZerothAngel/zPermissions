@@ -474,7 +474,7 @@ public class AvajePermissionDao implements PermissionDao {
     public List<String> getAncestry(String groupName) {
         checkTransaction();
 
-        PermissionEntity group = getEbeanServer().createQuery(PermissionEntity.class, "find PermissionEntity fetch parent (displayName, parent) where group = true and name = :groupName")
+        PermissionEntity group = getEbeanServer().createQuery(PermissionEntity.class, "find PermissionEntity where group = true and name = :groupName")
                 .setParameter("groupName", groupName.toLowerCase())
                 .setUseQueryCache(true)
                 .findUnique();
@@ -485,7 +485,11 @@ public class AvajePermissionDao implements PermissionDao {
         List<String> ancestry = new ArrayList<String>();
         ancestry.add(group.getDisplayName());
         while (group.getParent() != null) {
-            group = group.getParent();
+            // Very very strange happenings with Avaje force me to do this...
+            group = getEbeanServer().createQuery(PermissionEntity.class, "find PermissionEntity where group = true and id = :groupId")
+                    .setParameter("groupId", getEbeanServer().getBeanId(group.getParent()))
+                    .setUseQueryCache(true)
+                    .findUnique();
             ancestry.add(group.getDisplayName());
         }
         
