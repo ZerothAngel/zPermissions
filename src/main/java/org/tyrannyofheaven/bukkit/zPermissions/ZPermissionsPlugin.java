@@ -60,6 +60,7 @@ import org.tyrannyofheaven.bukkit.zPermissions.model.PermissionWorld;
 import org.tyrannyofheaven.bukkit.zPermissions.service.ZPermissionsServiceImpl;
 
 import com.avaje.ebean.cache.ServerCache;
+import com.avaje.ebean.cache.ServerCacheManager;
 import com.avaje.ebean.cache.ServerCacheOptions;
 import com.sk89q.worldguard.bukkit.WorldGuardPlugin;
 import com.sk89q.worldguard.protection.ApplicableRegionSet;
@@ -323,21 +324,27 @@ public class ZPermissionsPlugin extends JavaPlugin {
         }
     }
 
-    // Apply cache settings to Avaje bean caches
+    // Apply cache settings to Avaje bean and query caches
     // Arguably should be in AvajeStorageStrategy
     void applyCacheSettings() {
         if (cacheMaxIdle <= 0 && cacheMaxTtl <= 0 && cacheSize <= 0) return; // nothing to do
+        ServerCacheManager serverCacheManager = getDatabase().getServerCacheManager();
         for (Class<?> clazz : getDatabaseClasses()) {
-            ServerCache beanCache = getDatabase().getServerCacheManager().getBeanCache(clazz);
-            ServerCacheOptions beanCacheOptions = beanCache.getOptions();
-            if (cacheMaxIdle > 0)
-                beanCacheOptions.setMaxIdleSecs(cacheMaxIdle);
-            if (cacheMaxTtl > 0)
-                beanCacheOptions.setMaxSecsToLive(cacheMaxTtl);
-            if (cacheSize > 0)
-                beanCacheOptions.setMaxSize(cacheSize);
-            beanCache.setOptions(beanCacheOptions);
+            applyCacheSettings(serverCacheManager.getBeanCache(clazz));
+            applyCacheSettings(serverCacheManager.getQueryCache(clazz));
         }
+    }
+
+    // Apply cache settings to the given Avaje ServerCache
+    private void applyCacheSettings(ServerCache cache) {
+        ServerCacheOptions beanCacheOptions = cache.getOptions();
+        if (cacheMaxIdle > 0)
+            beanCacheOptions.setMaxIdleSecs(cacheMaxIdle);
+        if (cacheMaxTtl > 0)
+            beanCacheOptions.setMaxSecsToLive(cacheMaxTtl);
+        if (cacheSize > 0)
+            beanCacheOptions.setMaxSize(cacheSize);
+        cache.setOptions(beanCacheOptions);
     }
 
     /* (non-Javadoc)

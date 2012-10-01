@@ -26,6 +26,7 @@ import org.tyrannyofheaven.bukkit.zPermissions.model.PermissionRegion;
 import org.tyrannyofheaven.bukkit.zPermissions.model.PermissionWorld;
 
 import com.avaje.ebean.EbeanServer;
+import com.avaje.ebean.cache.ServerCache;
 
 /**
  * DAO implementation using Avaje Ebeans.
@@ -43,6 +44,11 @@ public class AvajePermissionDao implements PermissionDao {
     // Retrieve associated EbeanServer
     private EbeanServer getEbeanServer() {
         return ebean;
+    }
+
+    private void clearQueryCache(Class<?> clazz) {
+        ServerCache cache = getEbeanServer().getServerCacheManager().getQueryCache(clazz);
+        cache.clear();
     }
 
     // Retrieve named region, optionally creating it
@@ -193,6 +199,7 @@ public class AvajePermissionDao implements PermissionDao {
         found.setValue(value);
 
         getEbeanServer().save(found);
+        clearQueryCache(Entry.class);
     }
 
     @Override
@@ -226,6 +233,7 @@ public class AvajePermissionDao implements PermissionDao {
         if (entry != null) {
             getEbeanServer().delete(entry);
             cleanWorldsAndRegions();
+            clearQueryCache(Entry.class);
             return true;
         }
         
@@ -248,6 +256,7 @@ public class AvajePermissionDao implements PermissionDao {
             membership.setMember(member.toLowerCase());
             membership.setGroup(group);
             getEbeanServer().save(membership);
+            clearQueryCache(Membership.class);
         }
     }
 
@@ -266,6 +275,7 @@ public class AvajePermissionDao implements PermissionDao {
 
             if (membership != null) {
                 getEbeanServer().delete(membership);
+                clearQueryCache(Membership.class);
                 return true;
             }
         }
@@ -276,9 +286,9 @@ public class AvajePermissionDao implements PermissionDao {
     @Override
     public List<String> getGroups(String member) {
         // NB: No explicit transaction required
-        List<Membership> memberships = getEbeanServer().find(Membership.class).where()
-            .eq("member", member.toLowerCase())
-            .orderBy("group.priority, group.name")
+        List<Membership> memberships = getEbeanServer().createQuery(Membership.class, "find Membership fetch group (priority, name, displayName) where member = :member order by group.priority, group.name")
+            .setParameter("member", member.toLowerCase())
+            .setUseQueryCache(true)
             .findList();
 
         List<String> groups = new ArrayList<String>();
@@ -325,11 +335,14 @@ public class AvajePermissionDao implements PermissionDao {
             found.setGroup(group);
             getEbeanServer().save(found);
         }
+        clearQueryCache(Membership.class);
     }
 
     @Override
     public List<PermissionEntity> getEntities(boolean group) {
         // NB: No explicit transaction required
+        // FIXME: Candidate for query cache optimization, but usage in ModelDumper
+        // requires proper invalidation in all DAO methods that touch PermissionEntity.
         return getEbeanServer().find(PermissionEntity.class).where()
             .eq("group", group)
             .findList();
@@ -361,6 +374,7 @@ public class AvajePermissionDao implements PermissionDao {
             group.setParent(null);
         }
         getEbeanServer().save(group);
+        clearQueryCache(PermissionEntity.class);
     }
 
     @Override
@@ -372,6 +386,7 @@ public class AvajePermissionDao implements PermissionDao {
         group.setPriority(priority);
 
         getEbeanServer().save(group);
+        clearQueryCache(Membership.class);
     }
 
     // Iterate over each world/region, deleting any that are unused
@@ -408,6 +423,9 @@ public class AvajePermissionDao implements PermissionDao {
                 // Delete group's entity
                 getEbeanServer().delete(entity); // should cascade to entries and memberships
                 cleanWorldsAndRegions();
+                clearQueryCache(Membership.class);
+                clearQueryCache(PermissionEntity.class);
+                clearQueryCache(Entry.class);
                 return true;
             }
         }
@@ -419,11 +437,13 @@ public class AvajePermissionDao implements PermissionDao {
                 .eq("member", name.toLowerCase())
                 .findList();
             getEbeanServer().delete(memberships);
+            clearQueryCache(Membership.class);
 
             if (entity != null) {
                 // Delete player's entity
                 getEbeanServer().delete(entity); // should cascade to entries
                 cleanWorldsAndRegions();
+                clearQueryCache(Entry.class);
             }
             
             return !memberships.isEmpty() || entity != null;
@@ -435,10 +455,10 @@ public class AvajePermissionDao implements PermissionDao {
     @Override
     public List<String> getMembers(String group) {
         // No explicit transaction required
-        List<Membership> memberships = getEbeanServer().find(Membership.class).where()
-            .eq("group.name", group.toLowerCase())
-            .orderBy("member")
-            .findList();
+        List<Membership> memberships = getEbeanServer().createQuery(Membership.class, "find Membership where group.name = :groupName order by member")
+                .setParameter("groupName", group.toLowerCase())
+                .setUseQueryCache(true)
+                .findList();
         
         List<String> result = new ArrayList<String>(memberships.size());
         for (Membership membership : memberships) {
@@ -451,7 +471,10 @@ public class AvajePermissionDao implements PermissionDao {
     public List<String> getAncestry(String groupName) {
         checkTransaction();
 
-        PermissionEntity group = getEntity(groupName, true, false);
+        PermissionEntity group = getEbeanServer().createQuery(PermissionEntity.class, "find PermissionEntity fetch parent (displayName, parent) where group = true and name = :groupName")
+                .setParameter("groupName", groupName.toLowerCase())
+                .setUseQueryCache(true)
+                .findUnique();
         if (group == null) // NB only time this will be null is if the default group doesn't exist
             return new ArrayList<String>();
 
@@ -459,8 +482,7 @@ public class AvajePermissionDao implements PermissionDao {
         List<String> ancestry = new ArrayList<String>();
         ancestry.add(group.getDisplayName());
         while (group.getParent() != null) {
-            // Very very strange happenings with Avaje force me to do this...
-            group = getEbeanServer().find(PermissionEntity.class, getEbeanServer().getBeanId(group.getParent()));
+            group = group.getParent();
             ancestry.add(group.getDisplayName());
         }
         
@@ -474,12 +496,10 @@ public class AvajePermissionDao implements PermissionDao {
     public List<Entry> getEntries(String name, boolean group) {
         checkTransaction();
         
-        PermissionEntity entity = getEntity(name, group, false);
-        if (entity == null) // NB special consideration for non-existent default group
-            return Collections.emptyList();
-
-        return getEbeanServer().find(Entry.class).where()
-            .eq("entity", entity)
+        return getEbeanServer().createQuery(Entry.class, "find Entry where entity.name = :name and entity.group = :group")
+            .setParameter("name", name.toLowerCase())
+            .setParameter("group", group)
+            .setUseQueryCache(true)
             .findList();
     }
 
@@ -491,6 +511,7 @@ public class AvajePermissionDao implements PermissionDao {
         if (group == null) {
             group = getEntity(name, true, true);
             getEbeanServer().save(group);
+            clearQueryCache(PermissionEntity.class);
             return true;
         }
         else
