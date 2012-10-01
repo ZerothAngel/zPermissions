@@ -129,14 +129,14 @@ public class SubCommands {
             throw new ParseException("<what> should be 'groups' or 'players'");
         }
 
-        List<PermissionEntity> entities = plugin.getDao().getEntities(group);
+        List<String> entityNames = plugin.getDao().getEntityNames(group);
 
-        if (entities.isEmpty()) {
+        if (entityNames.isEmpty()) {
             sendMessage(sender, colorize("{YELLOW}No %s found."), group ? "groups" : "players");
         }
         else {
-            for (PermissionEntity entity : entities) {
-                sendMessage(sender, colorize("{DARK_GREEN}- %s"), entity.getDisplayName());
+            for (String entityName : entityNames) {
+                sendMessage(sender, colorize("{DARK_GREEN}- %s"), entityName);
             }
         }
     }

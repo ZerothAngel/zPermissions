@@ -164,8 +164,12 @@ public class AvajePermissionDao implements PermissionDao {
             owner = getGroup(name);
         }
         else {
-            owner = getEntity(name, group, true);
-            getEbeanServer().save(owner);
+            owner = getEntity(name, group, false); // so we know it was created
+            if (owner == null) {
+                owner = getEntity(name, group, true);
+                getEbeanServer().save(owner);
+                clearQueryCache(PermissionEntity.class);
+            }
         }
 
         PermissionRegion permissionRegion = getRegion(region, true);
@@ -341,8 +345,6 @@ public class AvajePermissionDao implements PermissionDao {
     @Override
     public List<PermissionEntity> getEntities(boolean group) {
         // NB: No explicit transaction required
-        // FIXME: Candidate for query cache optimization, but usage in ModelDumper
-        // requires proper invalidation in all DAO methods that touch PermissionEntity.
         return getEbeanServer().find(PermissionEntity.class).where()
             .eq("group", group)
             .findList();
@@ -443,6 +445,7 @@ public class AvajePermissionDao implements PermissionDao {
                 // Delete player's entity
                 getEbeanServer().delete(entity); // should cascade to entries
                 cleanWorldsAndRegions();
+                clearQueryCache(PermissionEntity.class);
                 clearQueryCache(Entry.class);
             }
             
@@ -516,6 +519,19 @@ public class AvajePermissionDao implements PermissionDao {
         }
         else
             return false;
+    }
+
+    @Override
+    public List<String> getEntityNames(boolean group) {
+        List<PermissionEntity> entities = getEbeanServer().createQuery(PermissionEntity.class, "find PermissionEntity where group = :group")
+                .setParameter("group", group)
+                .setUseQueryCache(true)
+                .findList();
+        List<String> result = new ArrayList<String>(entities.size());
+        for (PermissionEntity entity : entities) {
+            result.add(entity.getDisplayName());
+        }
+        return result;
     }
 
 }

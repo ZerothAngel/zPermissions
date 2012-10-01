@@ -29,7 +29,6 @@ import org.tyrannyofheaven.bukkit.util.transaction.TransactionStrategy;
 import org.tyrannyofheaven.bukkit.zPermissions.PermissionsResolver;
 import org.tyrannyofheaven.bukkit.zPermissions.ZPermissionsService;
 import org.tyrannyofheaven.bukkit.zPermissions.dao.PermissionDao;
-import org.tyrannyofheaven.bukkit.zPermissions.model.PermissionEntity;
 
 /**
  * Simple implementation of {@link ZPermissionsService}.
@@ -75,8 +74,8 @@ public class ZPermissionsServiceImpl implements ZPermissionsService {
     public Set<String> getAllGroups() {
         Set<String> groups = new HashSet<String>();
         
-        for (PermissionEntity group : getDao().getEntities(true)) {
-            groups.add(group.getDisplayName());
+        for (String groupName : getDao().getEntityNames(true)) {
+            groups.add(groupName);
         }
 
         return groups;
@@ -190,8 +189,8 @@ public class ZPermissionsServiceImpl implements ZPermissionsService {
     public Set<String> getAllPlayers() {
         Set<String> players = new HashSet<String>();
         
-        for (PermissionEntity entity : getDao().getEntities(false)) {
-            players.add(entity.getDisplayName());
+        for (String playerName : getDao().getEntityNames(false)) {
+            players.add(playerName);
         }
 
         return players;
