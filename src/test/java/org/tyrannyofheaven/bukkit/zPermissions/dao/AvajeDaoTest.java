@@ -285,7 +285,13 @@ public class AvajeDaoTest {
             List<String> players = getDao().getMembers(TEST_GROUP2);
             assertEquals(1, players.size());
             assertTrue(players.contains(TEST_PLAYER.toLowerCase()));
+        }
+        finally {
+            getEbeanServer().endTransaction();
+        }
 
+        getEbeanServer().beginTransaction();
+        try {
             // Give TEST_GROUP1 a higher priority
             getDao().setPriority(TEST_GROUP1, 100);
             getEbeanServer().commitTransaction();

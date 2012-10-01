@@ -44,6 +44,7 @@ public interface PermissionDao {
     
     public boolean removeMember(String groupName, String member);
 
+    // NB: Resolver critical path
     public List<String> getGroups(String member);
 
     public List<String> getMembers(String group);
@@ -60,8 +61,10 @@ public interface PermissionDao {
 
     public boolean deleteEntity(String name, boolean group);
 
+    // NB: Resolver critical path
     public List<String> getAncestry(String groupName);
 
+    // NB: Resolver critical path
     public List<Entry> getEntries(String name, boolean group);
 
     public boolean createGroup(String name);
