@@ -22,6 +22,7 @@ import java.io.IOException;
 import java.io.Reader;
 import java.io.Writer;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -515,6 +516,20 @@ public class MemoryPermissionDao implements PermissionDao {
         }
         else
             return false;
+    }
+
+    @Override
+    public List<String> getEntityNames(boolean group) {
+        Collection<PermissionEntity> entities;
+        if (group)
+            entities = groups.values();
+        else
+            entities = players.values();
+        List<String> result = new ArrayList<String>(entities.size());
+        for (PermissionEntity entity : entities) {
+            result.add(entity.getDisplayName());
+        }
+        return result;
     }
 
     /**

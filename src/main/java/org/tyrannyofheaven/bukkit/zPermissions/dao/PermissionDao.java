@@ -68,5 +68,7 @@ public interface PermissionDao {
     public List<Entry> getEntries(String name, boolean group);
 
     public boolean createGroup(String name);
+    
+    public List<String> getEntityNames(boolean group);
 
 }
