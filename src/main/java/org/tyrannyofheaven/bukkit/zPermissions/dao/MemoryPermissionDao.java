@@ -641,7 +641,7 @@ public class MemoryPermissionDao implements PermissionDao {
                 group.setParent(getEntity(parent, true, true));
             for (String member : members) {
                 Membership membership = new Membership();
-                membership.setMember(member);
+                membership.setMember(member.toLowerCase());
                 membership.setGroup(group);
                 group.getMemberships().add(membership);
             }
