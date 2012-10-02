@@ -92,6 +92,11 @@ public class MemoryPermissionDao implements PermissionDao {
         return permissionRegion;
     }
 
+    // For unit testing
+    PermissionRegion getRegion(String region) {
+        return regions.get(region.toLowerCase());
+    }
+
     private PermissionWorld getWorld(String world, boolean create) {
         PermissionWorld permissionWorld = null;
         if (world != null) {
@@ -110,6 +115,11 @@ public class MemoryPermissionDao implements PermissionDao {
             }
         }
         return permissionWorld;
+    }
+
+    // For unit testing
+    PermissionWorld getWorld(String world) {
+        return worlds.get(world.toLowerCase());
     }
 
     private PermissionEntity getEntity(String name, boolean group, boolean create) {
@@ -142,6 +152,8 @@ public class MemoryPermissionDao implements PermissionDao {
     @Override
     public Boolean getPermission(String name, boolean group, String region, String world, String permission) {
         PermissionEntity entity = getEntity(name, group, false);
+        if (entity == null)
+            return null;
 
         PermissionRegion permissionRegion;
         try {
@@ -211,6 +223,8 @@ public class MemoryPermissionDao implements PermissionDao {
     @Override
     public boolean unsetPermission(String name, boolean group, String region, String world, String permission) {
         PermissionEntity entity = getEntity(name, group, false);
+        if (entity == null)
+            return false;
 
         PermissionRegion permissionRegion;
         try {
