@@ -67,10 +67,12 @@ public class CacheCommands implements Runnable {
                         (interval == 1 ? "" : "s")) : ""));
     }
     
-    @Command(value="clear", description="Clear cache")
-    public void clear(CommandSender sender) {
+    @Command(value="clear", description="Clear cache, optionally refreshing online players")
+    public void clear(CommandSender sender, @Option(value={"-r", "--reload"}) boolean reload) {
         plugin.getDatabase().getServerCacheManager().clearAll();
         sendMessage(sender, colorize("{YELLOW}Cache cleared."));
+        if (reload)
+            plugin.refreshPlayers();
     }
 
     @Override
