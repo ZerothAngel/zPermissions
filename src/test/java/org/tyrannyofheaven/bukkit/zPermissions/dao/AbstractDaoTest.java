@@ -106,6 +106,10 @@ public abstract class AbstractDaoTest {
         try {
             // Verify it's gone
             assertNull(getDao().getPermission(TEST_PLAYER, false, null, null, TEST_PERMISSION));
+            
+            // Clean up
+            assertTrue(getDao().deleteEntity(TEST_PLAYER, false));
+            commit();
         }
         finally {
             end();
@@ -152,6 +156,10 @@ public abstract class AbstractDaoTest {
             
             // Should be gone from world table too
             assertNull(getWorld(TEST_WORLD));
+
+            // Clean up
+            assertTrue(getDao().deleteEntity(TEST_PLAYER, false));
+            commit();
         }
         finally {
             end();
@@ -199,6 +207,10 @@ public abstract class AbstractDaoTest {
             
             // Should be gone from region table too
             assertNull(getRegion(TEST_REGION));
+
+            // Clean up
+            assertTrue(getDao().deleteEntity(TEST_PLAYER, false));
+            commit();
         }
         finally {
             end();
@@ -383,6 +395,102 @@ public abstract class AbstractDaoTest {
         finally {
             end();
         }
+    }
+
+    @Test
+    public void testGetEntities() {
+        begin();
+        try {
+            // Confirm no entities are present
+            assertNull(getDao().getEntity(TEST_PLAYER, false));
+            assertNull(getDao().getEntity(TEST_GROUP1, true));
+            assertNull(getDao().getEntity(TEST_GROUP2, true));
+            
+            // Confirm lists are empty
+            assertTrue(getDao().getEntities(false).isEmpty());
+            assertTrue(getDao().getEntities(true).isEmpty());
+            assertTrue(getDao().getEntityNames(false).isEmpty());
+            assertTrue(getDao().getEntityNames(true).isEmpty());
+            
+            // Add a player
+            getDao().setPermission(TEST_PLAYER, false, null, null, TEST_PERMISSION, true);
+            commit();
+        }
+        finally {
+            end();
+        }
+        
+        // Confirm
+        begin();
+        try {
+            List<PermissionEntity> entities = getDao().getEntities(false);
+            assertEquals(1, entities.size());
+            assertEquals(TEST_PLAYER, entities.get(0).getDisplayName());
+            assertFalse(entities.get(0).isGroup());
+
+            List<String> names = getDao().getEntityNames(false);
+            assertEquals(1, names.size());
+            assertEquals(TEST_PLAYER, names.get(0));
+
+            // Confirm groups still empty
+            // Add a group
+            getDao().createGroup(TEST_GROUP1);
+            commit();
+        }
+        finally {
+            end();
+        }
+        
+        // Confirm group
+        begin();
+        try {
+            List<PermissionEntity> entities = getDao().getEntities(true);
+            assertEquals(1, entities.size());
+            assertEquals(TEST_GROUP1, entities.get(0).getDisplayName());
+            assertTrue(entities.get(0).isGroup());
+
+            List<String> names = getDao().getEntityNames(true);
+            assertEquals(1, names.size());
+            assertEquals(TEST_GROUP1, names.get(0));
+
+            // Add another group
+            getDao().createGroup(TEST_GROUP2);
+            commit();
+        }
+        finally {
+            end();
+        }
+
+        // Confirm groups
+        begin();
+        try {
+            List<PermissionEntity> entities = getDao().getEntities(true);
+            assertEquals(2, entities.size());
+            assertNotNull(findEntity(entities, TEST_GROUP1, true));
+            assertNotNull(findEntity(entities, TEST_GROUP2, true));
+
+            List<String> names = getDao().getEntityNames(true);
+            assertEquals(2, names.size());
+            assertTrue(names.contains(TEST_GROUP1));
+            assertTrue(names.contains(TEST_GROUP2));
+
+            // Clean up
+            assertTrue(getDao().deleteEntity(TEST_PLAYER, false));
+            assertTrue(getDao().deleteEntity(TEST_GROUP2, true));
+            assertTrue(getDao().deleteEntity(TEST_GROUP1, true));
+            commit();
+        }
+        finally {
+            end();
+        }
+    }
+
+    private PermissionEntity findEntity(List<PermissionEntity> entities, String name, boolean group) {
+        for (PermissionEntity entity : entities) {
+            if (entity.isGroup() == group && entity.getName().equals(name.toLowerCase()))
+                return entity;
+        }
+        return null;
     }
 
 }
