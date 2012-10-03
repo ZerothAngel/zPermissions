@@ -39,18 +39,14 @@ public class ZPermissionsRegionPlayerListener implements Listener {
         plugin.getServer().getPluginManager().registerEvents(this, plugin);
     }
 
-    @EventHandler(priority=EventPriority.MONITOR)
+    @EventHandler(priority=EventPriority.MONITOR, ignoreCancelled=true)
     public void onPlayerTeleport(PlayerTeleportEvent event) {
-        if (event.isCancelled()) return;
-
         // Conditionally update if world changed
         plugin.updateAttachment(event.getPlayer(), event.getTo(), false, false);
     }
 
-    @EventHandler(priority=EventPriority.MONITOR)
+    @EventHandler(priority=EventPriority.MONITOR, ignoreCancelled=true)
     public void onPlayerMove(PlayerMoveEvent event) {
-        if (event.isCancelled()) return;
-
         // Only bother if player actually moved to a new block
         if (event.getFrom().getBlockX() != event.getTo().getBlockX() ||
                 event.getFrom().getBlockY() != event.getTo().getBlockY() ||
