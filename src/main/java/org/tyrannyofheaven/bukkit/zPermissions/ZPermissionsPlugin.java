@@ -29,6 +29,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -46,11 +47,13 @@ import org.bukkit.permissions.PermissionAttachment;
 import org.bukkit.plugin.ServicePriority;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.tyrannyofheaven.bukkit.util.ToHFileUtils;
+import org.tyrannyofheaven.bukkit.util.ToHStringUtils;
 import org.tyrannyofheaven.bukkit.util.ToHUtils;
 import org.tyrannyofheaven.bukkit.util.VersionInfo;
 import org.tyrannyofheaven.bukkit.util.command.ToHCommandExecutor;
 import org.tyrannyofheaven.bukkit.util.transaction.TransactionCallback;
 import org.tyrannyofheaven.bukkit.util.transaction.TransactionStrategy;
+import org.tyrannyofheaven.bukkit.zPermissions.PermissionsResolver.ResolverResult;
 import org.tyrannyofheaven.bukkit.zPermissions.dao.PermissionDao;
 import org.tyrannyofheaven.bukkit.zPermissions.model.Entry;
 import org.tyrannyofheaven.bukkit.zPermissions.model.Membership;
@@ -114,7 +117,7 @@ public class ZPermissionsPlugin extends JavaPlugin {
     private static final boolean DEFAULT_DATABASE_SUPPORT = true;
 
     // Default number of ticks to wait between attachment refreshes of all players
-    private static final int DEFAULT_BULK_REFRESH_DELAY = 0;
+    private static final int DEFAULT_BULK_REFRESH_DELAY = 5;
 
     // Default opaque inheritance
     private static final boolean DEFAULT_OPAQUE_INHERITANCE = true;
@@ -452,9 +455,9 @@ public class ZPermissionsPlugin extends JavaPlugin {
 
         // Resolve effective permissions
         final String world = location.getWorld().getName().toLowerCase();
-        Map<String, Boolean> permissions = getRetryingTransactionStrategy().execute(new TransactionCallback<Map<String, Boolean>>() {
+        ResolverResult resolverResult = getRetryingTransactionStrategy().execute(new TransactionCallback<ResolverResult>() {
             @Override
-            public Map<String, Boolean> doInTransaction() throws Exception {
+            public ResolverResult doInTransaction() throws Exception {
 //                fakeFailureChance();
                 return getResolver().resolvePlayer(player.getName(), world, regions);
             }
@@ -462,7 +465,7 @@ public class ZPermissionsPlugin extends JavaPlugin {
 
         // Create attachment and set its permissions
         PermissionAttachment pa = player.addAttachment(this);
-        for (Map.Entry<String, Boolean> me : permissions.entrySet()) {
+        for (Map.Entry<String, Boolean> me : resolverResult.getPermissions().entrySet()) {
             pa.setPermission(me.getKey(), me.getValue());
         }
 
@@ -471,7 +474,7 @@ public class ZPermissionsPlugin extends JavaPlugin {
         playerState = playerStates.get(player.getName());
         if (playerState == null) {
             // Doesn't exist yet, add it
-            playerState = new PlayerState(pa, regions, location.getWorld().getName());
+            playerState = new PlayerState(pa, regions, location.getWorld().getName(), resolverResult.getGroups());
             playerStates.put(player.getName(), playerState);
         }
         else if (playerState != null) {
@@ -480,6 +483,7 @@ public class ZPermissionsPlugin extends JavaPlugin {
             playerState.getRegions().clear();
             playerState.getRegions().addAll(regions);
             playerState.setWorld(location.getWorld().getName());
+            playerState.setGroups(resolverResult.getGroups());
         }
         
         // Remove old attachment, if there was one
@@ -528,6 +532,28 @@ public class ZPermissionsPlugin extends JavaPlugin {
         for (Player player : getServer().getOnlinePlayers()) {
             toRefresh.add(player.getName().toLowerCase());
         }
+        refreshTask.start(toRefresh);
+    }
+
+    /**
+     * Refresh all players who are members of the given group.
+     * 
+     * @param groupName the affected group
+     */
+    void refreshAffectedPlayers(String groupName) {
+        groupName = groupName.toLowerCase();
+        Set<String> toRefresh = new HashSet<String>();
+        for (Map.Entry<String, PlayerState> me : playerStates.entrySet()) {
+            if (me.getValue().getGroups().contains(groupName)) {
+                toRefresh.add(me.getKey());
+            }
+        }
+        
+        if (toRefresh.isEmpty())
+            return; // Nothing to do
+
+        if (logger.isLoggable(Level.FINE))
+            debug(this, "Refreshing players: %s", ToHStringUtils.delimitedString(", ", toRefresh));
         refreshTask.start(toRefresh);
     }
 
@@ -728,10 +754,13 @@ public class ZPermissionsPlugin extends JavaPlugin {
 
         private String world;
 
-        public PlayerState(PermissionAttachment attachment, Set<String> regions, String world) {
+        private final Set<String> groups = new LinkedHashSet<String>();
+
+        public PlayerState(PermissionAttachment attachment, Set<String> regions, String world, Set<String> groups) {
             setAttachment(attachment);
             getRegions().addAll(regions);
             setWorld(world);
+            setGroups(groups);
         }
 
         public PermissionAttachment getAttachment() {
@@ -754,10 +783,20 @@ public class ZPermissionsPlugin extends JavaPlugin {
             return world;
         }
 
+        public Set<String> getGroups() {
+            return Collections.unmodifiableSet(groups);
+        }
+
         public void setWorld(String world) {
             if (world == null)
                 throw new IllegalArgumentException("world cannot be null");
             this.world = world;
+        }
+
+        public void setGroups(Set<String> groups) {
+            for (String group : groups) {
+                this.groups.add(group.toLowerCase());
+            }
         }
 
     }

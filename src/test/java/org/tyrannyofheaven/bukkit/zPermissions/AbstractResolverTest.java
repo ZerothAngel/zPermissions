@@ -111,7 +111,7 @@ public abstract class AbstractResolverTest {
             for (String region : regions) {
                 regionSet.add(region.toLowerCase());
             }
-            permissions = getResolver().resolvePlayer(player, world.toLowerCase(), regionSet);
+            permissions = getResolver().resolvePlayer(player, world.toLowerCase(), regionSet).getPermissions();
             commit(); // even though read-only, this is what the plugin does
         }
         finally {

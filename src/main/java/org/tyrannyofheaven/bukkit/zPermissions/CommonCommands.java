@@ -100,7 +100,7 @@ public abstract class CommonCommands {
             plugin.refreshPlayer(name);
         }
         else {
-            plugin.refreshPlayers();
+            plugin.refreshAffectedPlayers(name);
         }
     }
 
@@ -120,7 +120,7 @@ public abstract class CommonCommands {
         if (result) {
             sendMessage(sender, colorize("{GOLD}%s{YELLOW} unset for %s%s"), permission, group ? ChatColor.DARK_GREEN : ChatColor.AQUA, name);
             if (group)
-                plugin.refreshPlayers();
+                plugin.refreshAffectedPlayers(name);
             else
                 plugin.refreshPlayer(name);
         }
@@ -146,7 +146,7 @@ public abstract class CommonCommands {
                     (group ? ChatColor.DARK_GREEN : ChatColor.AQUA),
                     name);
             if (group)
-                plugin.refreshPlayers();
+                plugin.refreshAffectedPlayers(name);
             else
                 plugin.refreshPlayer(name);
         }
