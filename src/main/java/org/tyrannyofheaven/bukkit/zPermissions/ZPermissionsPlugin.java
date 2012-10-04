@@ -684,7 +684,19 @@ public class ZPermissionsPlugin extends JavaPlugin {
     void reload() {
         config = ToHFileUtils.getConfig(this);
         readConfig();
-        refreshPlayers();
+        refresh(new Runnable() {
+            @Override
+            public void run() {
+                refreshPlayers();
+            }
+        });
+    }
+
+    /**
+     * Refresh permissions store
+     */
+    void refresh(Runnable finishTask) {
+        storageStrategy.refresh(finishTask);
     }
 
     // Returns WorldGuardPlugin or null if not present
