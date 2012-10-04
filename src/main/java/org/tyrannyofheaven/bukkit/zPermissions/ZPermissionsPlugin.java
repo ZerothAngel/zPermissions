@@ -232,16 +232,11 @@ public class ZPermissionsPlugin extends JavaPlugin {
 
         // Clear any player state
 
-        // Make copy before clearing
-        Map<String, PlayerState> copy; 
-        synchronized (playerStates) {
-            copy = new HashMap<String, PlayerState>(playerStates);
-            playerStates.clear();
-        }
         // Remove attachments
-        for (PlayerState playerState : copy.values()) {
+        for (PlayerState playerState : playerStates.values()) {
             playerState.getAttachment().remove();
         }
+        playerStates.clear();
 
         log(this, "%s disabled.", versionInfo.getVersionString());
     }
@@ -363,16 +358,14 @@ public class ZPermissionsPlugin extends JavaPlugin {
 
     // Remove all state associated with a player, including their attachment
     void removeAttachment(String playerName) {
+        Player player = getServer().getPlayerExact(playerName);
         PlayerState playerState = null;
-        synchronized (playerStates) {
-            Player player = getServer().getPlayerExact(playerName);
-            if (player != null) {
-                debug(this, "Removing attachment for %s", player.getName());
-                playerState = playerStates.remove(player.getName());
-            }
+        if (player != null) {
+            debug(this, "Removing attachment for %s", player.getName());
+            playerState = playerStates.remove(player.getName());
         }
         if (playerState != null)
-            playerState.getAttachment().remove(); // potential to call a callback, so do it outside synchronized block
+            playerState.getAttachment().remove(); // potential to call a callback
     }
     
     // Update state about a player, resolving effective permissions and
@@ -380,14 +373,14 @@ public class ZPermissionsPlugin extends JavaPlugin {
     void updateAttachment(String playerName, Location location, boolean force) {
         Player player = getServer().getPlayerExact(playerName);
         if (player == null) return;
-        updateAttachment(player, location, force, false);
+        updateAttachment(player, location, force);
     }
 
     // Update state about a player, resolving effective permissions and
     // creating/updating their attachment
-    void updateAttachment(Player player, Location location, boolean force, boolean ignoreRemoved) {
+    void updateAttachment(Player player, Location location, boolean force) {
         try {
-            updateAttachmentInternal(player, location, force, ignoreRemoved);
+            updateAttachmentInternal(player, location, force);
         }
         catch (Error e) {
             throw e; // Never catch errors
@@ -426,13 +419,10 @@ public class ZPermissionsPlugin extends JavaPlugin {
 
     // Update state about a player, resolving effective permissions and
     // creating/updating their attachment
-    private void updateAttachmentInternal(Player player, Location location, boolean force, boolean ignoreRemoved) {
+    private void updateAttachmentInternal(final Player player, Location location, boolean force) {
         final Set<String> regions = getRegions(location);
 
-        PlayerState playerState = null;
-        synchronized (playerStates) {
-            playerState = playerStates.get(player.getName());
-        }
+        PlayerState playerState = playerStates.get(player.getName());
 
         // Check if the player changed regions/worlds or isn't known yet
         if (!force) {
@@ -449,13 +439,12 @@ public class ZPermissionsPlugin extends JavaPlugin {
         debug(this, "  regions = %s", regions);
 
         // Resolve effective permissions
-        final String playerName2 = player.getName(); // prefer the one from Player object
         final String world = location.getWorld().getName().toLowerCase();
         Map<String, Boolean> permissions = getRetryingTransactionStrategy().execute(new TransactionCallback<Map<String, Boolean>>() {
             @Override
             public Map<String, Boolean> doInTransaction() throws Exception {
 //                fakeFailureChance();
-                return getResolver().resolvePlayer(playerName2, world, regions);
+                return getResolver().resolvePlayer(player.getName(), world, regions);
             }
         });
 
@@ -467,25 +456,18 @@ public class ZPermissionsPlugin extends JavaPlugin {
 
         // Update state
         PermissionAttachment old = null;
-        synchronized (playerStates) {
-            // NB: Must re-fetch since player could have been removed since first fetch
-            Player newPlayer = getServer().getPlayerExact(player.getName());
-            if ((newPlayer == null && !ignoreRemoved) || newPlayer != null) player = newPlayer;
-            if (player != null) {
-                playerState = playerStates.get(player.getName());
-                if (playerState == null) {
-                    // Doesn't exist yet, add it
-                    playerState = new PlayerState(pa, regions, location.getWorld().getName());
-                    playerStates.put(player.getName(), playerState);
-                }
-                else if (playerState != null) {
-                    // Update values
-                    old = playerState.setAttachment(pa);
-                    playerState.getRegions().clear();
-                    playerState.getRegions().addAll(regions);
-                    playerState.setWorld(location.getWorld().getName());
-                }
-            }
+        playerState = playerStates.get(player.getName());
+        if (playerState == null) {
+            // Doesn't exist yet, add it
+            playerState = new PlayerState(pa, regions, location.getWorld().getName());
+            playerStates.put(player.getName(), playerState);
+        }
+        else if (playerState != null) {
+            // Update values
+            old = playerState.setAttachment(pa);
+            playerState.getRegions().clear();
+            playerState.getRegions().addAll(regions);
+            playerState.setWorld(location.getWorld().getName());
         }
         
         // Remove old attachment, if there was one
