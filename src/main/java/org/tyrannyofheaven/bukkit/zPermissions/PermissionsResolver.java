@@ -17,6 +17,7 @@ package org.tyrannyofheaven.bukkit.zPermissions;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -44,6 +45,8 @@ public class PermissionsResolver {
     private final Set<String> assignedGroupPermissionFormats = new HashSet<String>();
 
     private String defaultGroup;
+
+    private boolean opaqueInheritance = true;
 
     private boolean includeDefaultInAssigned = true;
 
@@ -116,6 +119,14 @@ public class PermissionsResolver {
         return defaultGroup;
     }
 
+    private boolean isOpaqueInheritance() {
+        return opaqueInheritance;
+    }
+
+    public void setOpaqueInheritance(boolean opaqueInheritance) {
+        this.opaqueInheritance = opaqueInheritance;
+    }
+
     // Returns whether or not default group should be included in assigned permissions
     private boolean isIncludeDefaultInAssigned() {
         return includeDefaultInAssigned;
@@ -159,14 +170,18 @@ public class PermissionsResolver {
             groups.add(getDefaultGroup());
         }
  
-        List<Entry> entries = new ArrayList<Entry>();
-    
         // Resolve each group in turn (highest priority resolved last)
         debug("Groups for %s: %s", playerName, groups);
+
+        List<String> resolveOrder = new ArrayList<String>();
         for (String group : groups) {
-            resolveGroup(entries, group);
+            calculateResolutionOrder(resolveOrder, group);
         }
-    
+        debug("Resolution order for %s: %s", playerName, resolveOrder);
+
+        List<Entry> entries = new ArrayList<Entry>();
+        resolveGroupHelper(entries, groups, resolveOrder);
+        
         // Player-specific permissions overrides all group permissions
         entries.addAll(getDao().getEntries(playerName, false));
     
@@ -185,14 +200,17 @@ public class PermissionsResolver {
      * @return effective permissions for this group
      */
     public Map<String, Boolean> resolveGroup(String groupName, String world, Set<String> regions) {
+        List<String> resolveOrder = new ArrayList<String>();
+        calculateResolutionOrder(resolveOrder, groupName);
+
         List<Entry> entries = new ArrayList<Entry>();
-        resolveGroup(entries, groupName);
+        resolveGroupHelper(entries, Collections.singletonList(groupName), resolveOrder);
+
         return applyPermissions(entries, regions, world);
     }
 
-    // Resolve a group's permissions. Ancestor permissions should be overridden
-    // by each successive descendant.
-    private void resolveGroup(List<Entry> entries, String group) {
+    // Determine the order in which groups should be resolved
+    private void calculateResolutionOrder(List<String> resolveOrder, String group) {
         List<String> ancestry = getDao().getAncestry(group);
         if (ancestry.isEmpty()) {
             // This only happens when the default group does not exist
@@ -200,27 +218,46 @@ public class PermissionsResolver {
         }
         debug("Ancestry for %s: %s", group, ancestry);
         
-        if (!getDefaultGroup().equalsIgnoreCase(group) || isIncludeDefaultInAssigned()) {
-            // Add assigned group permissions, if present
-            for (String groupPermissionFormat : getAssignedGroupPermissionFormats()) {
+        for (String ancestor : ancestry) {
+            if (isOpaqueInheritance()) {
+                // Last appearance wins
+                resolveOrder.remove(ancestor);
+                resolveOrder.add(ancestor);
+            }
+            else {
+                // First appearance wins
+                if (!resolveOrder.contains(ancestor))
+                    resolveOrder.add(ancestor);
+            }
+        }
+    }
+
+    // Add ancillary permissions and permissions from each resolved group
+    private void resolveGroupHelper(List<Entry> entries, List<String> assignedGroups, List<String> resolveOrder) {
+        Set<String> assigned = new HashSet<String>(assignedGroups); // for contains()
+
+        for (String group : resolveOrder) {
+            if (assigned.contains(group)) {
+                if (!getDefaultGroup().equalsIgnoreCase(group) || isIncludeDefaultInAssigned()) {
+                    // Add assigned group permissions, if present
+                    for (String groupPermissionFormat : getAssignedGroupPermissionFormats()) {
+                        Entry groupPerm = new Entry();
+                        groupPerm.setPermission(String.format(groupPermissionFormat, group));
+                        groupPerm.setValue(true);
+                        entries.add(groupPerm);
+                    }
+                }
+            }
+
+            // Add group permissions, if present
+            for (String groupPermissionFormat : getGroupPermissionFormats()) {
                 Entry groupPerm = new Entry();
                 groupPerm.setPermission(String.format(groupPermissionFormat, group));
                 groupPerm.setValue(true);
                 entries.add(groupPerm);
             }
-        }
 
-        // Apply permission from each ancestor
-        for (String ancestor : ancestry) {
-            // Add group permissions, if present
-            for (String groupPermissionFormat : getGroupPermissionFormats()) {
-                Entry groupPerm = new Entry();
-                groupPerm.setPermission(String.format(groupPermissionFormat, ancestor));
-                groupPerm.setValue(true);
-                entries.add(groupPerm);
-            }
-
-            entries.addAll(getDao().getEntries(ancestor, true)); // WHYYYY
+            entries.addAll(getDao().getEntries(group, true));
         }
     }
 
