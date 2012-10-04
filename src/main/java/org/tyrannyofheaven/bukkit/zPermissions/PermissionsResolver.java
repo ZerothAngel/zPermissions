@@ -20,6 +20,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -162,7 +163,7 @@ public class PermissionsResolver {
      *   in lowercase
      * @return effective permissions for this player
      */
-    public Map<String, Boolean> resolvePlayer(String playerName, String world, Set<String> regions) {
+    public ResolverResult resolvePlayer(String playerName, String world, Set<String> regions) {
         // Get this player's groups
         List<String> groups = getDao().getGroups(playerName);
         if (groups.isEmpty()) {
@@ -185,7 +186,7 @@ public class PermissionsResolver {
         // Player-specific permissions overrides all group permissions
         entries.addAll(getDao().getEntries(playerName, false));
     
-        return applyPermissions(entries, regions, world);
+        return new ResolverResult(applyPermissions(entries, regions, world), new LinkedHashSet<String>(resolveOrder));
     }
 
     /**
@@ -305,6 +306,27 @@ public class PermissionsResolver {
         permissions.putAll(regionWorldPermissions);
         
         return permissions;
+    }
+
+    public static class ResolverResult {
+        
+        private final Map<String, Boolean> permissions;
+        
+        private final Set<String> groups;
+        
+        private ResolverResult(Map<String, Boolean> permissions, Set<String> groups) {
+            this.permissions = permissions;
+            this.groups = groups;
+        }
+
+        public Map<String, Boolean> getPermissions() {
+            return permissions;
+        }
+
+        public Set<String> getGroups() {
+            return groups;
+        }
+        
     }
 
 }

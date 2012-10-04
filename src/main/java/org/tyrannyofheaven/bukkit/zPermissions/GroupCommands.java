@@ -147,7 +147,7 @@ public class GroupCommands extends CommonCommands {
         }
 
         sendMessage(sender, colorize("{DARK_GREEN}%s{YELLOW}'s parent is now {DARK_GREEN}%s"), groupName, parentName);
-        plugin.refreshPlayers();
+        plugin.refreshAffectedPlayers(groupName);
     }
 
     @Command(value={"setpriority", "priority"}, description="Set a group's priority")
@@ -167,7 +167,7 @@ public class GroupCommands extends CommonCommands {
         }
 
         sendMessage(sender, colorize("{DARK_GREEN}%s{YELLOW}'s priority is now {GREEN}%d"), groupName, priority);
-        plugin.refreshPlayers();
+        plugin.refreshAffectedPlayers(groupName);
     }
 
     @Command(value="members", description="List members of a group")

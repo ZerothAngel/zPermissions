@@ -175,7 +175,7 @@ public class ZPermissionsServiceImpl implements ZPermissionsService {
         Map<String, Boolean> permissions = getTransactionStrategy().execute(new TransactionCallback<Map<String, Boolean>>() {
             @Override
             public Map<String, Boolean> doInTransaction() throws Exception {
-                return getResolver().resolvePlayer(playerName.toLowerCase(), worldName.toLowerCase(), regions);
+                return getResolver().resolvePlayer(playerName.toLowerCase(), worldName.toLowerCase(), regions).getPermissions();
             }
         });
 
