@@ -42,7 +42,7 @@ class ZPermissionsPlayerListener implements Listener {
 
     @EventHandler(priority=EventPriority.LOWEST)
     public void onPlayerLogin(PlayerLoginEvent event) {
-        plugin.updateAttachment(event.getPlayer(), event.getPlayer().getLocation(), true, true);
+        plugin.updateAttachment(event.getPlayer(), event.getPlayer().getLocation(), true);
     }
 
     @EventHandler(priority=EventPriority.MONITOR)
@@ -52,7 +52,7 @@ class ZPermissionsPlayerListener implements Listener {
 
     @EventHandler(priority=EventPriority.LOWEST)
     public void onPlayerChangedWorld(PlayerChangedWorldEvent event) {
-        plugin.updateAttachment(event.getPlayer(), event.getPlayer().getLocation(), false, false);
+        plugin.updateAttachment(event.getPlayer(), event.getPlayer().getLocation(), false);
     }
 
 }

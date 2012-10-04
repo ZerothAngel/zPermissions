@@ -42,7 +42,7 @@ public class ZPermissionsRegionPlayerListener implements Listener {
     @EventHandler(priority=EventPriority.MONITOR, ignoreCancelled=true)
     public void onPlayerTeleport(PlayerTeleportEvent event) {
         // Conditionally update if world changed
-        plugin.updateAttachment(event.getPlayer(), event.getTo(), false, false);
+        plugin.updateAttachment(event.getPlayer(), event.getTo(), false);
     }
 
     @EventHandler(priority=EventPriority.MONITOR, ignoreCancelled=true)
@@ -52,7 +52,7 @@ public class ZPermissionsRegionPlayerListener implements Listener {
                 event.getFrom().getBlockY() != event.getTo().getBlockY() ||
                 event.getFrom().getBlockZ() != event.getTo().getBlockZ()) {
             // Conditionally update if containing regions changed
-            plugin.updateAttachment(event.getPlayer(), event.getTo(), false, false);
+            plugin.updateAttachment(event.getPlayer(), event.getTo(), false);
         }
     }
 
