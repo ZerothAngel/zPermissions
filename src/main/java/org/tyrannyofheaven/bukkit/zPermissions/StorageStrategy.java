@@ -30,6 +30,8 @@ public interface StorageStrategy {
     
     public void shutdown();
     
+    public void refresh(Runnable finishTask);
+
     public PermissionDao getDao();
     
     public TransactionStrategy getTransactionStrategy();

@@ -76,6 +76,13 @@ public class MemoryStorageStrategy implements StorageStrategy, TransactionStrate
     }
 
     @Override
+    public void refresh(Runnable finishTask) {
+        // Do nothing
+        if (finishTask != null)
+            finishTask.run();
+    }
+
+    @Override
     public PermissionDao getDao() {
         return dao;
     }

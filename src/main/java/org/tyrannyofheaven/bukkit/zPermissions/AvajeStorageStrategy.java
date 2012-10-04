@@ -15,10 +15,12 @@
  */
 package org.tyrannyofheaven.bukkit.zPermissions;
 
+import org.bukkit.Bukkit;
 import org.tyrannyofheaven.bukkit.util.transaction.AvajeTransactionStrategy;
 import org.tyrannyofheaven.bukkit.util.transaction.RetryingAvajeTransactionStrategy;
+import org.tyrannyofheaven.bukkit.util.transaction.TransactionCallbackWithoutResult;
 import org.tyrannyofheaven.bukkit.util.transaction.TransactionStrategy;
-import org.tyrannyofheaven.bukkit.zPermissions.dao.AvajePermissionDao;
+import org.tyrannyofheaven.bukkit.zPermissions.dao.AvajePermissionDao2;
 import org.tyrannyofheaven.bukkit.zPermissions.dao.PermissionDao;
 
 public class AvajeStorageStrategy implements StorageStrategy {
@@ -32,7 +34,7 @@ public class AvajeStorageStrategy implements StorageStrategy {
     private final ZPermissionsPlugin plugin;
 
     AvajeStorageStrategy(ZPermissionsPlugin plugin, int maxRetries) {
-        dao = new AvajePermissionDao(plugin.getDatabase());
+        dao = new AvajePermissionDao2(plugin.getDatabase());
         transactionStrategy = new AvajeTransactionStrategy(plugin.getDatabase());
         retryingTransactionStrategy = new RetryingAvajeTransactionStrategy(plugin.getDatabase(), maxRetries);
         this.plugin = plugin;
@@ -43,11 +45,34 @@ public class AvajeStorageStrategy implements StorageStrategy {
         plugin.createDatabaseSchema();
         plugin.applyCacheSettings();
 //        plugin.getDatabase().getAdminLogging().setDebugGeneratedSql(true);
+        refreshInternal(); // synchronously
     }
 
     @Override
     public void shutdown() {
         // Nothing to do
+    }
+
+    @Override
+    public void refresh(final Runnable finishTask) {
+        Bukkit.getScheduler().scheduleAsyncDelayedTask(plugin, new Runnable() {
+            @Override
+            public void run() {
+                refreshInternal();
+                
+                if (finishTask != null)
+                    Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, finishTask);
+            }
+        });
+    }
+
+    private void refreshInternal() {
+        getRetryingTransactionStrategy().execute(new TransactionCallbackWithoutResult() {
+            @Override
+            public void doInTransactionWithoutResult() throws Exception {
+                ((AvajePermissionDao2)dao).load();
+            }
+        });
     }
 
     @Override

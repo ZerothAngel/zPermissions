@@ -71,8 +71,14 @@ public class CacheCommands implements Runnable {
     public void clear(CommandSender sender, @Option(value={"-r", "--reload"}) boolean reload) {
         plugin.getDatabase().getServerCacheManager().clearAll();
         sendMessage(sender, colorize("{YELLOW}Cache cleared."));
-        if (reload)
-            plugin.refreshPlayers();
+        if (reload) {
+            plugin.refresh(new Runnable() {
+                @Override
+                public void run() {
+                    plugin.refreshPlayers();
+                }
+            });
+        }
     }
 
     @Override
