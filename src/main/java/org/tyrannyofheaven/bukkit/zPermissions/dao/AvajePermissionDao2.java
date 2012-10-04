@@ -2,7 +2,10 @@ package org.tyrannyofheaven.bukkit.zPermissions.dao;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.concurrent.Executor;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -20,12 +23,28 @@ public class AvajePermissionDao2 extends BaseMemoryPermissionDao {
 
     private final EbeanServer ebeanServer;
 
-    public AvajePermissionDao2(EbeanServer ebeanServer) {
+    private final Executor executor;
+
+    public AvajePermissionDao2(EbeanServer ebeanServer, Executor executor) {
         this.ebeanServer = ebeanServer;
+        if (executor != null)
+            this.executor = executor;
+        else {
+            this.executor = new Executor() {
+                @Override
+                public void execute(Runnable command) {
+                    command.run();
+                }
+            };
+        }
     }
 
     private EbeanServer getEbeanServer() {
         return ebeanServer;
+    }
+
+    private Executor getExecutor() {
+        return executor;
     }
 
     @Override
@@ -125,291 +144,395 @@ public class AvajePermissionDao2 extends BaseMemoryPermissionDao {
 
     @Override
     protected void createRegion(PermissionRegion region) {
-        PermissionRegion dbRegion = getEbeanServer().find(PermissionRegion.class).where()
-                .eq("name", region.getName().toLowerCase())
-                .findUnique();
-        if (dbRegion == null) {
-            dbRegion = new PermissionRegion();
-            dbRegion.setName(region.getName().toLowerCase());
-            getEbeanServer().save(dbRegion);
-        }
+        final String name = region.getName();
+
+        getExecutor().execute(new Runnable() {
+            @Override
+            public void run() {
+                PermissionRegion dbRegion = getEbeanServer().find(PermissionRegion.class).where()
+                        .eq("name", name.toLowerCase())
+                        .findUnique();
+                if (dbRegion == null) {
+                    dbRegion = new PermissionRegion();
+                    dbRegion.setName(name.toLowerCase());
+                    getEbeanServer().save(dbRegion);
+                }
+            }
+        });
     }
 
     @Override
     protected void createWorld(PermissionWorld world) {
-        PermissionWorld dbWorld = getEbeanServer().find(PermissionWorld.class).where()
-                .eq("name", world.getName().toLowerCase())
-                .findUnique();
-        if (dbWorld == null) {
-            dbWorld = new PermissionWorld();
-            dbWorld.setName(world.getName().toLowerCase());
-            getEbeanServer().save(dbWorld);
-        }
+        final String name = world.getName();
+
+        getExecutor().execute(new Runnable() {
+            @Override
+            public void run() {
+                PermissionWorld dbWorld = getEbeanServer().find(PermissionWorld.class).where()
+                        .eq("name", name.toLowerCase())
+                        .findUnique();
+                if (dbWorld == null) {
+                    dbWorld = new PermissionWorld();
+                    dbWorld.setName(name.toLowerCase());
+                    getEbeanServer().save(dbWorld);
+                }
+            }
+        });
     }
 
     @Override
     protected void createEntity(PermissionEntity entity) {
-        PermissionEntity dbEntity = getEbeanServer().find(PermissionEntity.class).where()
-                .eq("name", entity.getName().toLowerCase())
-                .eq("group", entity.isGroup())
-                .findUnique();
-        if (dbEntity == null) {
-            dbEntity = new PermissionEntity();
-            dbEntity.setName(entity.getName().toLowerCase());
-            dbEntity.setGroup(entity.isGroup());
-            dbEntity.setDisplayName(entity.getDisplayName());
-            // NB assumes name/group/displayName are only attributes that need saving
-            getEbeanServer().save(dbEntity);
-        }
+        final String name = entity.getDisplayName();
+        final boolean group = entity.isGroup();
+
+        executor.execute(new Runnable() {
+            @Override
+            public void run() {
+                PermissionEntity dbEntity = getEbeanServer().find(PermissionEntity.class).where()
+                        .eq("name", name.toLowerCase())
+                        .eq("group", group)
+                        .findUnique();
+                if (dbEntity == null) {
+                    dbEntity = new PermissionEntity();
+                    dbEntity.setName(name.toLowerCase());
+                    dbEntity.setGroup(group);
+                    dbEntity.setDisplayName(name);
+                    // NB assumes name/group/displayName are only attributes that need saving
+                    getEbeanServer().save(dbEntity);
+                }
+            }
+        });
     }
 
     @Override
     protected void createOrUpdateEntry(Entry entry) {
-        // Locate dependent objects
-        PermissionEntity entity = getEbeanServer().find(PermissionEntity.class).where()
-                .eq("name", entry.getEntity().getName().toLowerCase())
-                .eq("group", entry.getEntity().isGroup())
-                .findUnique();
-        if (entity == null) {
-            entity = inconsistentEntity(entry.getEntity().getDisplayName(), entry.getEntity().isGroup());
-        }
+        final String name = entry.getEntity().getDisplayName();
+        final boolean group = entry.getEntity().isGroup();
+        final String regionName = entry.getRegion() == null ? null : entry.getRegion().getName();
+        final String worldName = entry.getWorld() == null ? null : entry.getWorld().getName();
+        final String permission = entry.getPermission();
+        final boolean value = entry.isValue();
 
-        PermissionRegion region = null;
-        if (entry.getRegion() != null) {
-            region = getEbeanServer().find(PermissionRegion.class).where()
-                    .eq("name", entry.getRegion().getName().toLowerCase())
-                    .findUnique();
-            if (region == null) {
-                region = inconsistentRegion(entry.getRegion().getName());
+        getExecutor().execute(new Runnable() {
+            @Override
+            public void run() {
+                // Locate dependent objects
+                PermissionEntity entity = getEbeanServer().find(PermissionEntity.class).where()
+                        .eq("name", name.toLowerCase())
+                        .eq("group", group)
+                        .findUnique();
+                if (entity == null) {
+                    entity = inconsistentEntity(name, group);
+                }
+
+                PermissionRegion region = null;
+                if (regionName != null) {
+                    region = getEbeanServer().find(PermissionRegion.class).where()
+                            .eq("name", regionName.toLowerCase())
+                            .findUnique();
+                    if (region == null) {
+                        region = inconsistentRegion(regionName);
+                    }
+                }
+                
+                PermissionWorld world = null;
+                if (worldName != null) {
+                    world = getEbeanServer().find(PermissionWorld.class).where()
+                            .eq("name", worldName)
+                            .findUnique();
+                    if (world == null) {
+                        world = inconsistentWorld(worldName);
+                    }
+                }
+                
+                Entry dbEntry = getEbeanServer().find(Entry.class).where()
+                        .eq("entity", entity)
+                        .eq("region", region)
+                        .eq("world", world)
+                        .eq("permission", permission.toLowerCase())
+                        .findUnique();
+                if (dbEntry == null) {
+                    dbEntry = new Entry();
+                    dbEntry.setEntity(entity);
+                    dbEntry.setRegion(region);
+                    dbEntry.setWorld(world);
+                    dbEntry.setPermission(permission.toLowerCase());
+                }
+                
+                dbEntry.setValue(value);
+                getEbeanServer().save(dbEntry);
             }
-        }
-        
-        PermissionWorld world = null;
-        if (entry.getWorld() != null) {
-            world = getEbeanServer().find(PermissionWorld.class).where()
-                    .eq("name", entry.getWorld().getName().toLowerCase())
-                    .findUnique();
-            if (world == null) {
-                world = inconsistentWorld(entry.getWorld().getName());
-            }
-        }
-        
-        Entry dbEntry = getEbeanServer().find(Entry.class).where()
-                .eq("entity", entity)
-                .eq("region", region)
-                .eq("world", world)
-                .eq("permission", entry.getPermission().toLowerCase())
-                .findUnique();
-        if (dbEntry == null) {
-            dbEntry = new Entry();
-            dbEntry.setEntity(entity);
-            dbEntry.setRegion(region);
-            dbEntry.setWorld(world);
-            dbEntry.setPermission(entry.getPermission().toLowerCase());
-        }
-        
-        dbEntry.setValue(entry.isValue());
-        getEbeanServer().save(dbEntry);
+        });
     }
 
     @Override
     protected void deleteEntry(Entry entry) {
-        // Locate dependent objects
-        PermissionEntity entity = getEbeanServer().find(PermissionEntity.class).where()
-                .eq("name", entry.getEntity().getName().toLowerCase())
-                .eq("group", entry.getEntity().isGroup())
-                .findUnique();
-        if (entity == null) {
-            databaseInconsistency();
-            return;
-        }
+        final String name = entry.getEntity().getDisplayName();
+        final boolean group = entry.getEntity().isGroup();
+        final String regionName = entry.getRegion() == null ? null : entry.getRegion().getName();
+        final String worldName = entry.getWorld() == null ? null : entry.getWorld().getName();
+        final String permission = entry.getPermission();
 
-        PermissionRegion region = null;
-        if (entry.getRegion() != null) {
-            region = getEbeanServer().find(PermissionRegion.class).where()
-                    .eq("name", entry.getRegion().getName().toLowerCase())
-                    .findUnique();
-            if (region == null) {
-                databaseInconsistency();
-                return;
-            }
-        }
-        
-        PermissionWorld world = null;
-        if (entry.getWorld() != null) {
-            world = getEbeanServer().find(PermissionWorld.class).where()
-                    .eq("name", entry.getWorld().getName().toLowerCase())
-                    .findUnique();
-            if (world == null) {
-                databaseInconsistency();
-                return;
-            }
-        }
-        
-        Entry dbEntry = getEbeanServer().find(Entry.class).where()
-                .eq("entity", entity)
-                .eq("region", region)
-                .eq("world", world)
-                .eq("permission", entry.getPermission().toLowerCase())
-                .findUnique();
-        if (dbEntry == null) {
-            databaseInconsistency();
-            return;
-        }
+        getExecutor().execute(new Runnable() {
+            @Override
+            public void run() {
+                // Locate dependent objects
+                PermissionEntity entity = getEbeanServer().find(PermissionEntity.class).where()
+                        .eq("name", name.toLowerCase())
+                        .eq("group", group)
+                        .findUnique();
+                if (entity == null) {
+                    databaseInconsistency();
+                    return;
+                }
 
-        getEbeanServer().delete(dbEntry);
+                PermissionRegion region = null;
+                if (regionName != null) {
+                    region = getEbeanServer().find(PermissionRegion.class).where()
+                            .eq("name", regionName)
+                            .findUnique();
+                    if (region == null) {
+                        databaseInconsistency();
+                        return;
+                    }
+                }
+                
+                PermissionWorld world = null;
+                if (worldName != null) {
+                    world = getEbeanServer().find(PermissionWorld.class).where()
+                            .eq("name", worldName)
+                            .findUnique();
+                    if (world == null) {
+                        databaseInconsistency();
+                        return;
+                    }
+                }
+                
+                Entry dbEntry = getEbeanServer().find(Entry.class).where()
+                        .eq("entity", entity)
+                        .eq("region", region)
+                        .eq("world", world)
+                        .eq("permission", permission.toLowerCase())
+                        .findUnique();
+                if (dbEntry == null) {
+                    databaseInconsistency();
+                    return;
+                }
+
+                getEbeanServer().delete(dbEntry);
+            }
+        });
     }
 
     @Override
     protected void createMembership(Membership membership) {
-        // Locate dependent object
-        PermissionEntity group = getEbeanServer().find(PermissionEntity.class).where()
-                .eq("name", membership.getGroup().getName().toLowerCase())
-                .eq("group", true)
-                .findUnique();
-        if (group == null) {
-            group = inconsistentEntity(membership.getGroup().getDisplayName(), true);
-        }
+        final String name = membership.getGroup().getDisplayName();
+        final String member = membership.getMember();
 
-        Membership dbMembership = getEbeanServer().find(Membership.class).where()
-                .eq("group", group)
-                .eq("member", membership.getMember().toLowerCase())
-                .findUnique();
-        if (dbMembership == null) {
-            dbMembership = new Membership();
-            dbMembership.setGroup(group);
-            dbMembership.setMember(membership.getMember().toLowerCase());
-            getEbeanServer().save(dbMembership);
-        }
+        getExecutor().execute(new Runnable() {
+            @Override
+            public void run() {
+                // Locate dependent object
+                PermissionEntity group = getEbeanServer().find(PermissionEntity.class).where()
+                        .eq("name", name.toLowerCase())
+                        .eq("group", true)
+                        .findUnique();
+                if (group == null) {
+                    group = inconsistentEntity(name, true);
+                }
+
+                Membership dbMembership = getEbeanServer().find(Membership.class).where()
+                        .eq("group", group)
+                        .eq("member", member)
+                        .findUnique();
+                if (dbMembership == null) {
+                    dbMembership = new Membership();
+                    dbMembership.setGroup(group);
+                    dbMembership.setMember(member);
+                    getEbeanServer().save(dbMembership);
+                }
+            }
+        });
     }
 
     @Override
     protected void deleteEntity(PermissionEntity entity) {
-        PermissionEntity dbEntity = getEbeanServer().find(PermissionEntity.class).where()
-                .eq("name", entity.getName().toLowerCase())
-                .eq("group", entity.isGroup())
-                .findUnique();
-        if (dbEntity == null) {
-            databaseInconsistency();
-            return;
-        }
-        
-        if (dbEntity.isGroup()) {
-            // Break parent/child relationship
-            for (PermissionEntity child : dbEntity.getChildren()) {
-                child.setParent(null);
-                getEbeanServer().save(child);
-            }
-        }
+        final String name = entity.getDisplayName();
+        final boolean group = entity.isGroup();
 
-        getEbeanServer().delete(dbEntity);
+        getExecutor().execute(new Runnable() {
+            @Override
+            public void run() {
+                PermissionEntity dbEntity = getEbeanServer().find(PermissionEntity.class).where()
+                        .eq("name", name.toLowerCase())
+                        .eq("group", group)
+                        .findUnique();
+                if (dbEntity == null) {
+                    databaseInconsistency();
+                    return;
+                }
+                
+                if (dbEntity.isGroup()) {
+                    // Break parent/child relationship
+                    for (PermissionEntity child : dbEntity.getChildren()) {
+                        child.setParent(null);
+                        getEbeanServer().save(child);
+                    }
+                }
+
+                getEbeanServer().delete(dbEntity);
+            }
+        });
     }
 
     @Override
     protected void deleteMembership(Membership membership) {
-        // Locate dependent object
-        PermissionEntity group = getEbeanServer().find(PermissionEntity.class).where()
-                .eq("name", membership.getGroup().getName().toLowerCase())
-                .eq("group", true)
-                .findUnique();
-        if (group == null) {
-            databaseInconsistency();
-            return;
-        }
+        final String name = membership.getGroup().getDisplayName();
+        final String member = membership.getMember();
 
-        Membership dbMembership = getEbeanServer().find(Membership.class).where()
-                .eq("group", group)
-                .eq("member", membership.getMember().toLowerCase())
-                .findUnique();
-        if (dbMembership == null) {
-            databaseInconsistency();
-            return;
-        }
-        
-        getEbeanServer().delete(dbMembership);
+        getExecutor().execute(new Runnable() {
+            @Override
+            public void run() {
+                // Locate dependent object
+                PermissionEntity group = getEbeanServer().find(PermissionEntity.class).where()
+                        .eq("name", name.toLowerCase())
+                        .eq("group", true)
+                        .findUnique();
+                if (group == null) {
+                    databaseInconsistency();
+                    return;
+                }
+
+                Membership dbMembership = getEbeanServer().find(Membership.class).where()
+                        .eq("group", group)
+                        .eq("member", member.toLowerCase())
+                        .findUnique();
+                if (dbMembership == null) {
+                    databaseInconsistency();
+                    return;
+                }
+                
+                getEbeanServer().delete(dbMembership);
+            }
+        });
     }
 
     @Override
     protected void setEntityParent(PermissionEntity entity, PermissionEntity parent) {
-        PermissionEntity dbParent = null;
-        if (parent != null) {
-            dbParent = getEbeanServer().find(PermissionEntity.class).where()
-                    .eq("name", parent.getName().toLowerCase())
-                    .eq("group", true)
-                    .findUnique();
-            if (dbParent == null) {
-                dbParent = inconsistentEntity(parent.getDisplayName(), true);
+        final String name = entity.getDisplayName();
+        final String parentName = parent == null ? null : parent.getDisplayName();
+
+        getExecutor().execute(new Runnable() {
+            @Override
+            public void run() {
+                PermissionEntity dbParent = null;
+                if (parentName != null) {
+                    dbParent = getEbeanServer().find(PermissionEntity.class).where()
+                            .eq("name", parentName.toLowerCase())
+                            .eq("group", true)
+                            .findUnique();
+                    if (dbParent == null) {
+                        dbParent = inconsistentEntity(parentName, true);
+                    }
+                }
+                
+                PermissionEntity dbEntity = getEbeanServer().find(PermissionEntity.class).where()
+                        .eq("name", name.toLowerCase())
+                        .eq("group", true)
+                        .findUnique();
+                if (dbEntity == null) {
+                    dbEntity = inconsistentEntity(name, true);
+                }
+                
+                dbEntity.setParent(dbParent);
+                getEbeanServer().save(dbEntity);
             }
-        }
-        
-        PermissionEntity dbEntity = getEbeanServer().find(PermissionEntity.class).where()
-                .eq("name", entity.getName().toLowerCase())
-                .eq("group", true)
-                .findUnique();
-        if (dbEntity == null) {
-            dbEntity = inconsistentEntity(entity.getDisplayName(), true);
-        }
-        
-        dbEntity.setParent(dbParent);
-        getEbeanServer().save(dbEntity);
+        });
     }
 
     @Override
-    protected void setEntityPriority(PermissionEntity entity, int priority) {
-        PermissionEntity dbEntity = getEbeanServer().find(PermissionEntity.class).where()
-                .eq("name", entity.getName().toLowerCase())
-                .eq("group", true)
-                .findUnique();
-        if (dbEntity == null) {
-            dbEntity = inconsistentEntity(entity.getDisplayName(), true);
-        }
+    protected void setEntityPriority(PermissionEntity entity, final int priority) {
+        final String name = entity.getDisplayName();
 
-        dbEntity.setPriority(priority);
-        getEbeanServer().save(dbEntity);
+        getExecutor().execute(new Runnable() {
+            @Override
+            public void run() {
+                PermissionEntity dbEntity = getEbeanServer().find(PermissionEntity.class).where()
+                        .eq("name", name.toLowerCase())
+                        .eq("group", true)
+                        .findUnique();
+                if (dbEntity == null) {
+                    dbEntity = inconsistentEntity(name, true);
+                }
+
+                dbEntity.setPriority(priority);
+                getEbeanServer().save(dbEntity);
+            }
+        });
     }
 
     @Override
     protected void deleteRegions(Collection<PermissionRegion> regions) {
-        boolean inconsistent = false;
-
-        List<PermissionRegion> dbRegions = new ArrayList<PermissionRegion>(regions.size());
+        final Set<String> regionNames = new HashSet<String>(regions.size());
         for (PermissionRegion region : regions) {
-            PermissionRegion dbRegion = getEbeanServer().find(PermissionRegion.class).where()
-                    .eq("name", region.getName().toLowerCase())
-                    .findUnique();
-            if (dbRegion == null)
-                inconsistent = true;
-            else
-                dbRegions.add(dbRegion);
+            regionNames.add(region.getName());
         }
 
-        if (inconsistent)
-            databaseInconsistency();
+        getExecutor().execute(new Runnable() {
+            @Override
+            public void run() {
+                boolean inconsistent = false;
 
-        if (!dbRegions.isEmpty())
-            getEbeanServer().delete(dbRegions);
+                List<PermissionRegion> dbRegions = new ArrayList<PermissionRegion>(regionNames.size());
+                for (String regionName : regionNames) {
+                    PermissionRegion dbRegion = getEbeanServer().find(PermissionRegion.class).where()
+                            .eq("name", regionName.toLowerCase())
+                            .findUnique();
+                    if (dbRegion == null)
+                        inconsistent = true;
+                    else
+                        dbRegions.add(dbRegion);
+                }
+
+                if (inconsistent)
+                    databaseInconsistency();
+
+                if (!dbRegions.isEmpty())
+                    getEbeanServer().delete(dbRegions);
+            }
+        });
     }
 
     @Override
     protected void deleteWorlds(Collection<PermissionWorld> worlds) {
-        boolean inconsistent = false;
-
-        List<PermissionWorld> dbWorlds = new ArrayList<PermissionWorld>(worlds.size());
+        final Set<String> worldNames = new HashSet<String>(worlds.size());
         for (PermissionWorld world : worlds) {
-            PermissionWorld dbWorld = getEbeanServer().find(PermissionWorld.class).where()
-                    .eq("name", world.getName().toLowerCase())
-                    .findUnique();
-            if (dbWorld == null)
-                inconsistent = true;
-            else
-                dbWorlds.add(dbWorld);
+            worldNames.add(world.getName());
         }
 
-        if (inconsistent)
-            databaseInconsistency();
+        getExecutor().execute(new Runnable() {
+            @Override
+            public void run() {
+                boolean inconsistent = false;
 
-        if (!dbWorlds.isEmpty())
-            getEbeanServer().delete(dbWorlds);
+                List<PermissionWorld> dbWorlds = new ArrayList<PermissionWorld>(worldNames.size());
+                for (String worldName : worldNames) {
+                    PermissionWorld dbWorld = getEbeanServer().find(PermissionWorld.class).where()
+                            .eq("name", worldName.toLowerCase())
+                            .findUnique();
+                    if (dbWorld == null)
+                        inconsistent = true;
+                    else
+                        dbWorlds.add(dbWorld);
+                }
+
+                if (inconsistent)
+                    databaseInconsistency();
+
+                if (!dbWorlds.isEmpty())
+                    getEbeanServer().delete(dbWorlds);
+            }
+        });
     }
 
     public void load() {
@@ -430,15 +553,15 @@ public class AvajePermissionDao2 extends BaseMemoryPermissionDao {
 
         // Create full copies to force lazy-loads
         for (PermissionEntity player : players) {
-            PermissionEntity newPlayer = getEntity(player.getDisplayName(), false, true);
+            PermissionEntity newPlayer = getEntityLoader(player.getDisplayName(), false);
             loadPermissions(player.getPermissions(), newPlayer);
         }
         for (PermissionEntity group : groups) {
-            PermissionEntity newGroup = getEntity(group.getDisplayName(), true, true);
+            PermissionEntity newGroup = getEntityLoader(group.getDisplayName(), true);
             loadPermissions(group.getPermissions(), newGroup);
             newGroup.setPriority(group.getPriority());
             if (group.getParent() != null) {
-                PermissionEntity parentEntity = getEntity(group.getParent().getDisplayName(), true, true);
+                PermissionEntity parentEntity = getEntityLoader(group.getParent().getDisplayName(), true);
                 newGroup.setParent(parentEntity);
                 parentEntity.getChildren().add(newGroup);
             }
@@ -451,18 +574,59 @@ public class AvajePermissionDao2 extends BaseMemoryPermissionDao {
         }
     }
 
+    private PermissionEntity getEntityLoader(String name, boolean group) {
+        PermissionEntity entity;
+        if (group)
+            entity = getGroups().get(name.toLowerCase());
+        else
+            entity = getPlayers().get(name.toLowerCase());
+        if (entity == null) {
+            entity = new PermissionEntity();
+            entity.setName(name.toLowerCase());
+            entity.setGroup(group);
+            entity.setDisplayName(name);
+            if (group)
+                getGroups().put(name.toLowerCase(), entity);
+            else
+                getPlayers().put(name.toLowerCase(), entity);
+        }
+        return entity;
+    }
+
     private void loadPermissions(Collection<Entry> permissions, PermissionEntity entity) {
         for (Entry entry : permissions) {
             Entry newEntry = new Entry();
 
-            newEntry.setRegion(entry.getRegion() == null ? null : getRegion(entry.getRegion().getName(), true));
-            newEntry.setWorld(entry.getWorld() == null ? null : getWorld(entry.getWorld().getName(), true));
+            newEntry.setRegion(entry.getRegion() == null ? null : getRegionLoader(entry.getRegion().getName()));
+            newEntry.setWorld(entry.getWorld() == null ? null : getWorldLoader(entry.getWorld().getName()));
             newEntry.setPermission(entry.getPermission());
             newEntry.setValue(entry.isValue());
 
             newEntry.setEntity(entity);
             entity.getPermissions().add(newEntry);
         }
+    }
+
+    private PermissionRegion getRegionLoader(String name) {
+        name = name.toLowerCase();
+        PermissionRegion region = getRegions().get(name);
+        if (region == null) {
+            region = new PermissionRegion();
+            region.setName(name);
+            getRegions().put(name, region);
+        }
+        return region;
+    }
+    
+    private PermissionWorld getWorldLoader(String name) {
+        name = name.toLowerCase();
+        PermissionWorld world = getWorlds().get(name);
+        if (world == null) {
+            world = new PermissionWorld();
+            world.setName(name);
+            getWorlds().put(name, world);
+        }
+        return world;
     }
 
     private void databaseInconsistency() {

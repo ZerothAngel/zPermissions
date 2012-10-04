@@ -60,7 +60,7 @@ public class NewAvajeDaoTest extends AbstractDaoTest {
             }
         }
 
-        setDao(new AvajePermissionDao2(ebeanServer));
+        setDao(new AvajePermissionDao2(ebeanServer, null));
     }
 
     EbeanServer getEbeanServer() {
