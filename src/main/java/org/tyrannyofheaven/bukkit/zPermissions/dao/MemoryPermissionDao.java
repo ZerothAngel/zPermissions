@@ -164,8 +164,11 @@ public class MemoryPermissionDao extends BaseMemoryPermissionDao {
             PermissionEntity group = getEntity(name, true, true);
             loadPermissions(permissions, group);
             group.setPriority(priority.intValue());
-            if (parent != null)
-                group.setParent(getEntity(parent, true, true));
+            if (parent != null) {
+                PermissionEntity parentEntity = getEntity(parent, true, true);
+                group.setParent(parentEntity);
+                parentEntity.getChildren().add(group);
+            }
             for (String member : members) {
                 Membership membership = new Membership();
                 membership.setMember(member.toLowerCase());
