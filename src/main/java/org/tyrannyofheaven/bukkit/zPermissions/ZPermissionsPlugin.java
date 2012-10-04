@@ -25,6 +25,7 @@ import static org.tyrannyofheaven.bukkit.util.ToHMessageUtils.sendMessage;
 import static org.tyrannyofheaven.bukkit.util.ToHStringUtils.hasText;
 
 import java.io.File;
+import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -465,8 +466,33 @@ public class ZPermissionsPlugin extends JavaPlugin {
 
         // Create attachment and set its permissions
         PermissionAttachment pa = player.addAttachment(this);
-        for (Map.Entry<String, Boolean> me : resolverResult.getPermissions().entrySet()) {
-            pa.setPermission(me.getKey(), me.getValue());
+        boolean succeeded = false;
+        try {
+            Field perms = pa.getClass().getDeclaredField("permissions");
+            perms.setAccessible(true);
+            @SuppressWarnings("unchecked")
+            Map<String, Boolean> privatePerms = (Map<String, Boolean>)perms.get(pa);
+            privatePerms.putAll(resolverResult.getPermissions());
+            pa.getPermissible().recalculatePermissions();
+            succeeded = true;
+        }
+        catch (SecurityException e) {
+            // Do nothing
+        }
+        catch (NoSuchFieldException e) {
+            // Do nothing
+        }
+        catch (IllegalArgumentException e) {
+            // Do nothing
+        }
+        catch (IllegalAccessException e) {
+            // Do nothing
+        }
+        if (!succeeded) {
+            // The slow, but legal way
+            for (Map.Entry<String, Boolean> me : resolverResult.getPermissions().entrySet()) {
+                pa.setPermission(me.getKey(), me.getValue());
+            }
         }
 
         // Update state
