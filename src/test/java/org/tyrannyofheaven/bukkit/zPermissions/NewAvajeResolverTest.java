@@ -64,7 +64,7 @@ public class NewAvajeResolverTest extends AbstractResolverTest {
             }
         }
 
-        dao = new AvajePermissionDao2(ebeanServer);
+        dao = new AvajePermissionDao2(ebeanServer, null);
         resolver = new PermissionsResolver(dao);
         resolver.setDefaultGroup(TEST_GROUP1);
         resolver.setGroupPermissionFormats(Collections.singleton("group.%s"));
