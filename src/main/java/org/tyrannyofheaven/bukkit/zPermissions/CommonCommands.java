@@ -95,9 +95,13 @@ public abstract class CommonCommands {
         }
     
         sendMessage(sender, colorize("{GOLD}%s{YELLOW} set to {GREEN}%s{YELLOW} for %s%s"), permission, value == null ? Boolean.TRUE : value, group ? ChatColor.DARK_GREEN : ChatColor.AQUA, name);
-        if (!group)
+        if (!group) {
             plugin.checkPlayer(sender, name);
-        plugin.refreshPlayers();
+            plugin.refreshPlayer(name);
+        }
+        else {
+            plugin.refreshPlayers();
+        }
     }
 
     @Command(value="unset", description="Remove a permission")
@@ -115,7 +119,10 @@ public abstract class CommonCommands {
 
         if (result) {
             sendMessage(sender, colorize("{GOLD}%s{YELLOW} unset for %s%s"), permission, group ? ChatColor.DARK_GREEN : ChatColor.AQUA, name);
-            plugin.refreshPlayers();
+            if (group)
+                plugin.refreshPlayers();
+            else
+                plugin.refreshPlayer(name);
         }
         else {
             sendMessage(sender, colorize("%s%s{RED} does not set {GOLD}%s"), group ? ChatColor.DARK_GREEN : ChatColor.AQUA, name, permission);
@@ -133,11 +140,16 @@ public abstract class CommonCommands {
             }
         });
         
-        if (result)
+        if (result) {
             sendMessage(sender, colorize("{YELLOW}%s %s%s{YELLOW} deleted"),
                     (group ? "Group" : "Player"),
                     (group ? ChatColor.DARK_GREEN : ChatColor.AQUA),
                     name);
+            if (group)
+                plugin.refreshPlayers();
+            else
+                plugin.refreshPlayer(name);
+        }
         else
             sendMessage(sender, colorize("{RED}%s not found."), group ? "Group" : "Player");
     }

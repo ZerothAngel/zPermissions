@@ -113,6 +113,9 @@ public class ZPermissionsPlugin extends JavaPlugin {
     // Default database support
     private static final boolean DEFAULT_DATABASE_SUPPORT = true;
 
+    // Default number of ticks to wait between attachment refreshes of all players
+    private static final int DEFAULT_BULK_REFRESH_DELAY = 0;
+
     // Filename of file-based storage
     private static final String FILE_STORAGE_FILENAME = "data.yml";
 
@@ -130,6 +133,9 @@ public class ZPermissionsPlugin extends JavaPlugin {
 
     // Model dumper
     private final ModelDumper modelDumper = new ModelDumper(this);
+
+    // Multi-user refreshing
+    private final RefreshTask refreshTask = new RefreshTask(this);
 
     // Our own Configuration (don't bother with JavaPlugin's)
     private FileConfiguration config;
@@ -224,7 +230,10 @@ public class ZPermissionsPlugin extends JavaPlugin {
      */
     @Override
     public void onDisable() {
-        // Shut off monitor task, if running
+        // Kill pending refresh, if any
+        refreshTask.stop();
+
+        // Really shut off all async tasks
         getServer().getScheduler().cancelTasks(this);
 
         // Ensure storage is shut down properly
@@ -512,9 +521,11 @@ public class ZPermissionsPlugin extends JavaPlugin {
      */
     void refreshPlayers() {
         debug(this, "Refreshing all online players");
+        Set<String> toRefresh = new HashSet<String>();
         for (Player player : getServer().getOnlinePlayers()) {
-            updateAttachment(player.getName(), player.getLocation(), true);
+            toRefresh.add(player.getName().toLowerCase());
         }
+        refreshTask.start(toRefresh);
     }
 
     /**
@@ -660,6 +671,9 @@ public class ZPermissionsPlugin extends JavaPlugin {
         kickOpsOnError = config.getBoolean("kick-ops-on-error", DEFAULT_KICK_OPS_ON_ERROR);
         regionSupportEnable = config.getBoolean("region-support", DEFAULT_REGION_SUPPORT_ENABLE);
 
+        // FIXME currently hidden option
+        refreshTask.setDelay(config.getInt("bulk-refresh-delay", DEFAULT_BULK_REFRESH_DELAY));
+
         // Set debug logging
         logger.setLevel(config.getBoolean("debug", false) ? Level.FINE : null);
     }
@@ -667,7 +681,7 @@ public class ZPermissionsPlugin extends JavaPlugin {
     /**
      * Re-read config.yml and refresh attachments of all online players.
      */
-    synchronized void reload() {
+    void reload() {
         config = ToHFileUtils.getConfig(this);
         readConfig();
         refreshPlayers();
