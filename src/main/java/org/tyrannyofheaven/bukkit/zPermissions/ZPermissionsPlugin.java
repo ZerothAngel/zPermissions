@@ -116,6 +116,9 @@ public class ZPermissionsPlugin extends JavaPlugin {
     // Default number of ticks to wait between attachment refreshes of all players
     private static final int DEFAULT_BULK_REFRESH_DELAY = 0;
 
+    // Default opaque inheritance
+    private static final boolean DEFAULT_OPAQUE_INHERITANCE = true;
+
     // Filename of file-based storage
     private static final String FILE_STORAGE_FILENAME = "data.yml";
 
@@ -622,6 +625,7 @@ public class ZPermissionsPlugin extends JavaPlugin {
                 warn(this, "assigned-group-permission must be a string or list of strings");
         }
 
+        getResolver().setOpaqueInheritance(config.getBoolean("opaque-inheritance", DEFAULT_OPAQUE_INHERITANCE)); // FIXME currently hidden
         getResolver().setIncludeDefaultInAssigned(config.getBoolean("assigned-groups-can-include-default", DEFAULT_ASSIGNED_GROUPS_CAN_INCLUDE_DEFAULT));
 
         value = config.getString("default-group");
