@@ -461,12 +461,13 @@ public class ZPermissionsPlugin extends JavaPlugin {
         boolean created = false;
 
         if (playerState != null) {
+            // Re-use old attachment
             pa = playerState.getAttachment();
-            created = true;
         }
         else {
             // Create brand new one, if needed
             pa = player.addAttachment(this);
+            created = true;
         }
 
         boolean succeeded = false;
