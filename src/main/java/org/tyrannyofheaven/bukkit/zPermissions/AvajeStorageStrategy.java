@@ -19,10 +19,9 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import org.bukkit.Bukkit;
+import org.tyrannyofheaven.bukkit.util.transaction.AsyncTransactionStrategy;
 import org.tyrannyofheaven.bukkit.util.transaction.RetryingAvajeTransactionStrategy;
-import org.tyrannyofheaven.bukkit.util.transaction.TransactionCallback;
 import org.tyrannyofheaven.bukkit.util.transaction.TransactionCallbackWithoutResult;
-import org.tyrannyofheaven.bukkit.util.transaction.TransactionException;
 import org.tyrannyofheaven.bukkit.util.transaction.TransactionStrategy;
 import org.tyrannyofheaven.bukkit.zPermissions.dao.AvajePermissionDao2;
 import org.tyrannyofheaven.bukkit.zPermissions.dao.PermissionDao;
@@ -32,29 +31,26 @@ import org.tyrannyofheaven.bukkit.zPermissions.dao.PermissionDao;
  * 
  * @author zerothangel
  */
-public class AvajeStorageStrategy implements StorageStrategy, TransactionStrategy {
-
-    private final TransactionExecutor transactionExecutor;
+public class AvajeStorageStrategy implements StorageStrategy {
 
     private final PermissionDao dao;
+
+    private final AsyncTransactionStrategy transactionStrategy;
 
     private final TransactionStrategy retryingTransactionStrategy;
 
     private final ZPermissionsPlugin plugin;
 
-    private final int maxRetries;
-
     private final ExecutorService executorService;
 
     AvajeStorageStrategy(ZPermissionsPlugin plugin, int maxRetries) {
-        transactionExecutor = new TransactionExecutor(new RetryingAvajeTransactionStrategy(plugin.getDatabase(), maxRetries));
-        dao = new AvajePermissionDao2(plugin.getDatabase(), transactionExecutor);
-        retryingTransactionStrategy = new RetryingAvajeTransactionStrategy(plugin.getDatabase(), maxRetries);
-        this.plugin = plugin;
-        this.maxRetries = maxRetries;
-        
         // Following will be used to actually execute async
         executorService = Executors.newSingleThreadExecutor();
+
+        transactionStrategy = new AsyncTransactionStrategy(new RetryingAvajeTransactionStrategy(plugin.getDatabase(), maxRetries), executorService);
+        dao = new AvajePermissionDao2(plugin.getDatabase(), transactionStrategy.getExecutor());
+        retryingTransactionStrategy = new RetryingAvajeTransactionStrategy(plugin.getDatabase(), maxRetries);
+        this.plugin = plugin;
     }
 
     @Override
@@ -100,45 +96,12 @@ public class AvajeStorageStrategy implements StorageStrategy, TransactionStrateg
 
     @Override
     public TransactionStrategy getTransactionStrategy() {
-        return this;
+        return transactionStrategy;
     }
 
     @Override
     public TransactionStrategy getRetryingTransactionStrategy() {
-        return this;
-    }
-
-    @Override
-    public <T> T execute(TransactionCallback<T> callback) {
-        if (callback == null)
-            throw new IllegalArgumentException("callback cannot be null");
-        try {
-            // Start collecting runnables
-            transactionExecutor.begin(maxRetries); // always use maxRetries since these are only writes
-            boolean success = false; // so we know we executed callback successfully
-            try {
-                T result = callback.doInTransaction();
-                success = true;
-                return result;
-            }
-            finally {
-                TransactionRunnable transactionRunnable = transactionExecutor.end();
-                if (!transactionRunnable.isEmpty() && success) {
-                    // Got something, execute it async
-                    executorService.execute(transactionRunnable);
-                }
-            }
-        }
-        catch (Error e) {
-            throw e;
-        }
-        catch (RuntimeException e) {
-            // No need to wrap these, just re-throw
-            throw e;
-        }
-        catch (Throwable t) {
-            throw new TransactionException(t);
-        }
+        return transactionStrategy;
     }
 
 }
