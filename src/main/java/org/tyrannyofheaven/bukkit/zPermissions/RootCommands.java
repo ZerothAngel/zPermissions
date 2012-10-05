@@ -90,6 +90,7 @@ public class RootCommands {
                 .forCommand("reload")
                 .forCommand("import")
                 .forCommand("export")
+                .forCommand("refresh")
                 .show();
             return null;
         }

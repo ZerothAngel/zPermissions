@@ -33,6 +33,7 @@ permissions:
       zpermissions.check: true
       zpermissions.check.other: true
       zpermissions.reload: true
+      zpermissions.refresh: true
       zpermissions.export: true
       zpermissions.import: true
       zpermissions.cache: true
@@ -64,6 +65,8 @@ permissions:
     description: Allows use of the /permissions check command on others
   zpermissions.reload:
     description: Allows use of the /permissions reload command
+  zpermissions.refresh:
+    description: Allows use of the /permissions refresh command
   zpermissions.export:
     description: Allows use of the /permissions export command
   zpermissions.import:
