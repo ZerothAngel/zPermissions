@@ -386,14 +386,6 @@ public class ZPermissionsPlugin extends JavaPlugin {
     
     // Update state about a player, resolving effective permissions and
     // creating/updating their attachment
-    void updateAttachment(String playerName, Location location, boolean force) {
-        Player player = getServer().getPlayerExact(playerName);
-        if (player == null) return;
-        updateAttachment(player, location, force);
-    }
-
-    // Update state about a player, resolving effective permissions and
-    // creating/updating their attachment
     void updateAttachment(Player player, Location location, boolean force) {
         try {
             updateAttachmentInternal(player, location, force);
@@ -544,8 +536,8 @@ public class ZPermissionsPlugin extends JavaPlugin {
     void refreshPlayer(String playerName) {
         Player player = getServer().getPlayerExact(playerName);
         if (player != null) {
-            debug(this, "Refreshing player %s", playerName);
-            updateAttachment(playerName, player.getLocation(), true);
+            debug(this, "Refreshing player %s", player.getName());
+            updateAttachment(player, player.getLocation(), true);
         }
     }
 
