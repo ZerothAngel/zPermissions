@@ -550,6 +550,7 @@ public class AvajePermissionDao2 extends BaseMemoryPermissionDao {
         getGroups().clear();
         getRegions().clear();
         getWorlds().clear();
+        getReverseMembershipMap().clear();
 
         // Create full copies to force lazy-loads
         for (PermissionEntity player : players) {
@@ -570,6 +571,8 @@ public class AvajePermissionDao2 extends BaseMemoryPermissionDao {
                 newMembership.setMember(membership.getMember());
                 newMembership.setGroup(newGroup);
                 newGroup.getMemberships().add(newMembership);
+                
+                rememberMembership(newGroup, newMembership);
             }
         }
     }

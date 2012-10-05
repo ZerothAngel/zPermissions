@@ -146,6 +146,7 @@ public class MemoryPermissionDao extends BaseMemoryPermissionDao {
         getWorlds().clear();
         getPlayers().clear();
         getGroups().clear();
+        getReverseMembershipMap().clear();
 
         for (Map<String, Object> playerMap : (List<Map<String, Object>>)input.get("players")) {
             String name = (String)playerMap.get("name");
@@ -174,6 +175,8 @@ public class MemoryPermissionDao extends BaseMemoryPermissionDao {
                 membership.setMember(member.toLowerCase());
                 membership.setGroup(group);
                 group.getMemberships().add(membership);
+                
+                rememberMembership(group, membership);
             }
         }
     }

@@ -319,9 +319,75 @@ public abstract class AbstractDaoTest {
             List<String> groups = getDao().getGroups(TEST_PLAYER);
             assertEquals(1, groups.size());
             assertEquals(TEST_GROUP1, groups.get(0));
-    
+            
+            // Purge final group
+            assertTrue(getDao().deleteEntity(TEST_GROUP1, true));
+            commit();
+        }
+        finally {
+            end();
+        }
+        
+        begin();
+        try {
+            // Confirm
+            List<String> groups = getDao().getGroups(TEST_PLAYER);
+            assertTrue(groups.isEmpty());
+
             // Clean up
             assertTrue(getDao().deleteEntity(TEST_GROUP2, true));
+            commit();
+        }
+        finally {
+            end();
+        }
+    }
+
+    @Test
+    public void testMembershipPlayerDelete() {
+        begin();
+        try {
+            // Should not be in any groups
+            assertTrue(getDao().getGroups(TEST_PLAYER).isEmpty());
+            
+            // Add to a group
+            assertTrue(getDao().createGroup(TEST_GROUP1));
+            getDao().addMember(TEST_GROUP1, TEST_PLAYER);
+            commit();
+        }
+        finally {
+            end();
+        }
+    
+        begin();
+        try {
+            // Confirm membership
+            List<String> groups = getDao().getGroups(TEST_PLAYER);
+            assertEquals(1, groups.size());
+            assertEquals(TEST_GROUP1, groups.get(0));
+            
+            List<String> players = getDao().getMembers(TEST_GROUP1);
+            assertEquals(1, players.size());
+            assertTrue(players.contains(TEST_PLAYER.toLowerCase()));
+
+            // Delete player
+            assertTrue(getDao().deleteEntity(TEST_PLAYER, false));
+            commit();
+        }
+        finally {
+            end();
+        }
+        
+        begin();
+        try {
+            // Confirm membership
+            List<String> groups = getDao().getGroups(TEST_PLAYER);
+            assertTrue(groups.isEmpty());
+            
+            List<String> players = getDao().getMembers(TEST_GROUP1);
+            assertTrue(players.isEmpty());
+
+            // Clean up
             assertTrue(getDao().deleteEntity(TEST_GROUP1, true));
             commit();
         }
