@@ -182,6 +182,18 @@ public class SubCommands {
         sendMessage(sender, colorize("{WHITE}config.yml{YELLOW} reloaded"));
     }
 
+    @Command(value="refresh", description="Re-read permissions from storage")
+    @Require("zpermissions.refresh")
+    public void refresh(CommandSender sender) {
+        plugin.refresh(new Runnable() {
+            @Override
+            public void run() {
+                plugin.refreshPlayers();
+            }
+        });
+        sendMessage(sender, colorize("{YELLOW}Refresh queued."));
+    }
+
     // Ensure filename doesn't have any funny characters
     private File sanitizeFilename(File dir, String filename) {
         String[] parts = filename.split(File.separatorChar == '\\' ? "\\\\" : File.separator);
