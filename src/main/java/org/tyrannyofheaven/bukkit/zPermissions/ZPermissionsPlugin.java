@@ -457,13 +457,25 @@ public class ZPermissionsPlugin extends JavaPlugin {
         });
 
         // Create attachment and set its permissions
-        PermissionAttachment pa = player.addAttachment(this);
+        PermissionAttachment pa;
+        boolean created = false;
+
+        if (playerState != null) {
+            pa = playerState.getAttachment();
+            created = true;
+        }
+        else {
+            // Create brand new one, if needed
+            pa = player.addAttachment(this);
+        }
+
         boolean succeeded = false;
         try {
             Field perms = pa.getClass().getDeclaredField("permissions");
             perms.setAccessible(true);
             @SuppressWarnings("unchecked")
             Map<String, Boolean> privatePerms = (Map<String, Boolean>)perms.get(pa);
+            privatePerms.clear();
             privatePerms.putAll(resolverResult.getPermissions());
             pa.getPermissible().recalculatePermissions();
             succeeded = true;
@@ -482,6 +494,10 @@ public class ZPermissionsPlugin extends JavaPlugin {
         }
         if (!succeeded) {
             // The slow, but legal way
+            warn(this, "Setting permissions the slow way. Is zPermissions up-to-date?");
+            if (!created)
+                pa = player.addAttachment(this); // create new one to start from clean slate
+            // Set each permission individually... which unfortunately calls recalculatePermissions each time
             for (Map.Entry<String, Boolean> me : resolverResult.getPermissions().entrySet()) {
                 pa.setPermission(me.getKey(), me.getValue());
             }
@@ -504,8 +520,8 @@ public class ZPermissionsPlugin extends JavaPlugin {
             playerState.setGroups(resolverResult.getGroups());
         }
         
-        // Remove old attachment, if there was one
-        if (old != null)
+        // Remove old attachment, if there was one and it's different (avoids recalculatePermissions call)
+        if (old != null && old != pa)
             old.remove();
     }
 
