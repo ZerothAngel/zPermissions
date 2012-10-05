@@ -582,25 +582,6 @@ public class AvajePermissionDao2 extends BaseMemoryPermissionDao {
         }
     }
 
-    private PermissionEntity getEntityLoader(String name, boolean group) {
-        PermissionEntity entity;
-        if (group)
-            entity = getGroups().get(name.toLowerCase());
-        else
-            entity = getPlayers().get(name.toLowerCase());
-        if (entity == null) {
-            entity = new PermissionEntity();
-            entity.setName(name.toLowerCase());
-            entity.setGroup(group);
-            entity.setDisplayName(name);
-            if (group)
-                getGroups().put(name.toLowerCase(), entity);
-            else
-                getPlayers().put(name.toLowerCase(), entity);
-        }
-        return entity;
-    }
-
     private void loadPermissions(Collection<Entry> permissions, PermissionEntity entity) {
         for (Entry entry : permissions) {
             Entry newEntry = new Entry();
@@ -613,28 +594,6 @@ public class AvajePermissionDao2 extends BaseMemoryPermissionDao {
             newEntry.setEntity(entity);
             entity.getPermissions().add(newEntry);
         }
-    }
-
-    private PermissionRegion getRegionLoader(String name) {
-        name = name.toLowerCase();
-        PermissionRegion region = getRegions().get(name);
-        if (region == null) {
-            region = new PermissionRegion();
-            region.setName(name);
-            getRegions().put(name, region);
-        }
-        return region;
-    }
-    
-    private PermissionWorld getWorldLoader(String name) {
-        name = name.toLowerCase();
-        PermissionWorld world = getWorlds().get(name);
-        if (world == null) {
-            world = new PermissionWorld();
-            world.setName(name);
-            getWorlds().put(name, world);
-        }
-        return world;
     }
 
     private void databaseInconsistency() {
