@@ -17,7 +17,7 @@ package org.tyrannyofheaven.bukkit.zPermissions;
 
 import java.util.concurrent.Executor;
 
-import com.avaje.ebean.EbeanServer;
+import org.tyrannyofheaven.bukkit.util.transaction.TransactionStrategy;
 
 /**
  * Simple Executor implementation that simply queues up Runnables within a
@@ -27,12 +27,12 @@ import com.avaje.ebean.EbeanServer;
  */
 public class TransactionExecutor implements Executor {
 
-    private final EbeanServer ebeanServer;
-    
+    private final TransactionStrategy transactionStrategy;
+
     private TransactionRunnable currentTransactionRunnable;
 
-    public TransactionExecutor(EbeanServer ebeanServer) {
-        this.ebeanServer = ebeanServer;
+    public TransactionExecutor(TransactionStrategy transactionStrategy) {
+        this.transactionStrategy = transactionStrategy;
     }
 
     @Override
@@ -45,7 +45,7 @@ public class TransactionExecutor implements Executor {
     public void begin(int maxRetries) {
         if (currentTransactionRunnable != null)
             throw new IllegalStateException("Existing TransactionRunnable found");
-        currentTransactionRunnable = new TransactionRunnable(ebeanServer, maxRetries);
+        currentTransactionRunnable = new TransactionRunnable(transactionStrategy);
     }
 
     public TransactionRunnable end() {

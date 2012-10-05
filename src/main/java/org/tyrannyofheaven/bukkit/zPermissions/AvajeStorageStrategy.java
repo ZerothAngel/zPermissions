@@ -47,7 +47,7 @@ public class AvajeStorageStrategy implements StorageStrategy, TransactionStrateg
     private final ExecutorService executorService;
 
     AvajeStorageStrategy(ZPermissionsPlugin plugin, int maxRetries) {
-        transactionExecutor = new TransactionExecutor(plugin.getDatabase());
+        transactionExecutor = new TransactionExecutor(new RetryingAvajeTransactionStrategy(plugin.getDatabase(), maxRetries));
         dao = new AvajePermissionDao2(plugin.getDatabase(), transactionExecutor);
         retryingTransactionStrategy = new RetryingAvajeTransactionStrategy(plugin.getDatabase(), maxRetries);
         this.plugin = plugin;

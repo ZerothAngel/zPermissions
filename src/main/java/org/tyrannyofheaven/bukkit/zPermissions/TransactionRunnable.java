@@ -20,11 +20,8 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import javax.persistence.PersistenceException;
-
-import org.tyrannyofheaven.bukkit.util.transaction.TransactionException;
-
-import com.avaje.ebean.EbeanServer;
+import org.tyrannyofheaven.bukkit.util.transaction.TransactionCallback;
+import org.tyrannyofheaven.bukkit.util.transaction.TransactionStrategy;
 
 /**
  * A Runnable that holds a sequence of writing Runnables to be executed
@@ -32,23 +29,16 @@ import com.avaje.ebean.EbeanServer;
  * 
  * @author asaddi
  */
-public class TransactionRunnable implements Runnable {
+public class TransactionRunnable implements Runnable, TransactionCallback<Object> {
 
     private final Logger logger = Logger.getLogger(getClass().getName());
 
-    private final EbeanServer ebeanServer;
+    private final TransactionStrategy transactionStrategy;
 
     private final List<Runnable> runnables = new ArrayList<Runnable>();
 
-    private int maxRetries;
-
-    public TransactionRunnable(EbeanServer ebeanServer) {
-        this(ebeanServer, 0);
-    }
-
-    public TransactionRunnable(EbeanServer ebeanServer, int maxRetries) {
-        this.ebeanServer = ebeanServer;
-        this.maxRetries = maxRetries;
+    public TransactionRunnable(TransactionStrategy transactionStrategy) {
+        this.transactionStrategy = transactionStrategy;
     }
 
     public void addRunnable(Runnable runnable) {
@@ -59,10 +49,10 @@ public class TransactionRunnable implements Runnable {
         return runnables.isEmpty();
     }
 
-    private EbeanServer getEbeanServer() {
-        return ebeanServer;
+    private TransactionStrategy getTransactionStrategy() {
+        return transactionStrategy;
     }
-    
+
     private List<Runnable> getRunnables() {
         return runnables;
     }
@@ -70,50 +60,22 @@ public class TransactionRunnable implements Runnable {
     @Override
     public void run() {
         try {
-            runWithRetry();
+            getTransactionStrategy().execute(this);
         }
         catch (Error e) {
             throw e;
         }
         catch (Throwable t) {
-            logger.log(Level.SEVERE, "Error writing to database", t);
+            logger.log(Level.SEVERE, "Error executing transaction", t);
         }
     }
 
-    private void runWithRetry() {
-        PersistenceException savedPE = null;
-        for (int attempt = -1; attempt < maxRetries; attempt++) { // yeah, really hope Runnables are re-runnable...
-            try {
-                getEbeanServer().beginTransaction();
-                try {
-                    for (Runnable runnable : getRunnables()) {
-                        runnable.run();
-                    }
-                    getEbeanServer().commitTransaction();
-                    return;
-                }
-                finally {
-                    getEbeanServer().endTransaction();
-                }
-            }
-            catch (Error e) {
-                throw e;
-            }
-            catch (PersistenceException e) {
-                savedPE = e;
-                continue;
-            }
-            catch (RuntimeException e) {
-                // No need to wrap these, just re-throw
-                throw e;
-            }
-            catch (Throwable t) {
-                throw new TransactionException(t);
-            }
+    @Override
+    public Object doInTransaction() throws Exception {
+        for (Runnable runnable : getRunnables()) {
+            runnable.run();
         }
-
-        // At this point, we've run out of attempts
-        throw savedPE;
+        return null;
     }
 
 }
