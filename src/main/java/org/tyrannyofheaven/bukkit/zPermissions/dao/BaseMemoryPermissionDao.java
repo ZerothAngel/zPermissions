@@ -17,6 +17,11 @@ import org.tyrannyofheaven.bukkit.zPermissions.model.PermissionEntity;
 import org.tyrannyofheaven.bukkit.zPermissions.model.PermissionRegion;
 import org.tyrannyofheaven.bukkit.zPermissions.model.PermissionWorld;
 
+/**
+ * Base implementation of a fully in-memory DAO.
+ * 
+ * @author zerothangel
+ */
 public abstract class BaseMemoryPermissionDao implements PermissionDao {
 
     private final Map<String, PermissionRegion> regions = new HashMap<String, PermissionRegion>();

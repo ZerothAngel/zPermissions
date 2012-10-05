@@ -47,7 +47,7 @@ class ZPermissionsPlayerListener implements Listener {
 
     @EventHandler(priority=EventPriority.MONITOR)
     public void onPlayerQuit(PlayerQuitEvent event) {
-        plugin.removeAttachment(event.getPlayer().getName());
+        plugin.removeAttachment(event.getPlayer());
     }
 
     @EventHandler(priority=EventPriority.LOWEST)

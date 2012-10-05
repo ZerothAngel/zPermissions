@@ -19,6 +19,12 @@ import java.util.concurrent.Executor;
 
 import com.avaje.ebean.EbeanServer;
 
+/**
+ * Simple Executor implementation that simply queues up Runnables within a
+ * TransactionRunnable.
+ * 
+ * @author zerothangel
+ */
 public class TransactionExecutor implements Executor {
 
     private final EbeanServer ebeanServer;

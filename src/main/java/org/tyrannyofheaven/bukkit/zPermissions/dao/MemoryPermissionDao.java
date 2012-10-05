@@ -39,6 +39,11 @@ import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.constructor.SafeConstructor;
 import org.yaml.snakeyaml.representer.Representer;
 
+/**
+ * Flat-file based PermissionDao implementation.
+ * 
+ * @author zerothangel
+ */
 public class MemoryPermissionDao extends BaseMemoryPermissionDao {
 
     private boolean dirty;

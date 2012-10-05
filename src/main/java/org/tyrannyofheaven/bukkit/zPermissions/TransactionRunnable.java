@@ -26,6 +26,12 @@ import org.tyrannyofheaven.bukkit.util.transaction.TransactionException;
 
 import com.avaje.ebean.EbeanServer;
 
+/**
+ * A Runnable that holds a sequence of writing Runnables to be executed
+ * transactionally.
+ * 
+ * @author zerothangel
+ */
 public class TransactionRunnable implements Runnable {
 
     private final Logger logger = Logger.getLogger(getClass().getName());

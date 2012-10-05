@@ -31,6 +31,12 @@ import org.tyrannyofheaven.bukkit.util.transaction.TransactionCallbackWithoutRes
 import org.tyrannyofheaven.bukkit.zPermissions.model.Entry;
 import org.tyrannyofheaven.bukkit.zPermissions.model.PermissionEntity;
 
+/**
+ * Creates a dump file containing commands that can re-create the persistent
+ * state.
+ * 
+ * @author zerothangel
+ */
 public class ModelDumper {
 
     private final ZPermissionsPlugin plugin;
