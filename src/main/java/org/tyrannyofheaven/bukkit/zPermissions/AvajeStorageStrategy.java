@@ -27,6 +27,11 @@ import org.tyrannyofheaven.bukkit.util.transaction.TransactionStrategy;
 import org.tyrannyofheaven.bukkit.zPermissions.dao.AvajePermissionDao2;
 import org.tyrannyofheaven.bukkit.zPermissions.dao.PermissionDao;
 
+/**
+ * StorageStrategy for AvajePermissionDao2.
+ * 
+ * @author asaddi
+ */
 public class AvajeStorageStrategy implements StorageStrategy, TransactionStrategy {
 
     private final TransactionExecutor transactionExecutor;

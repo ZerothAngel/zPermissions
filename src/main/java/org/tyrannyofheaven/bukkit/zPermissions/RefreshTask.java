@@ -28,6 +28,12 @@ import java.util.Set;
 
 import org.bukkit.Bukkit;
 
+/**
+ * Periodically calls {@link ZPermissionsPlugin#refreshPlayer(String)} on the
+ * given queue of players.
+ * 
+ * @author asaddi
+ */
 public class RefreshTask implements Runnable {
 
     private final ZPermissionsPlugin plugin;

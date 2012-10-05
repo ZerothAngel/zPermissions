@@ -28,6 +28,11 @@ import org.tyrannyofheaven.bukkit.util.transaction.TransactionStrategy;
 import org.tyrannyofheaven.bukkit.zPermissions.dao.MemoryPermissionDao;
 import org.tyrannyofheaven.bukkit.zPermissions.dao.PermissionDao;
 
+/**
+ * StorageStrategy for MemoryPermissionDao.
+ * 
+ * @author asaddi
+ */
 public class MemoryStorageStrategy implements StorageStrategy, TransactionStrategy, Runnable {
 
     private static final int SAVE_DELAY = 200; // 10 seconds

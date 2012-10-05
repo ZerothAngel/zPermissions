@@ -373,13 +373,10 @@ public class ZPermissionsPlugin extends JavaPlugin {
     }
 
     // Remove all state associated with a player, including their attachment
-    void removeAttachment(String playerName) {
-        Player player = getServer().getPlayerExact(playerName);
+    void removeAttachment(Player player) {
         PlayerState playerState = null;
-        if (player != null) {
-            debug(this, "Removing attachment for %s", player.getName());
-            playerState = playerStates.remove(player.getName());
-        }
+        debug(this, "Removing attachment for %s", player.getName());
+        playerState = playerStates.remove(player.getName());
         if (playerState != null)
             playerState.getAttachment().remove(); // potential to call a callback
     }
@@ -412,7 +409,7 @@ public class ZPermissionsPlugin extends JavaPlugin {
             }
             else {
                 // Ensure player has no attachment
-                removeAttachment(player.getName());
+                removeAttachment(player);
                 sendMessage(player, colorize("{RED}Error determining your permissions; all permissions removed!"));
             }
         }

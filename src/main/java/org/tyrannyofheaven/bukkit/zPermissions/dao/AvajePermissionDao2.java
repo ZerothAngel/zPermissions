@@ -17,6 +17,11 @@ import org.tyrannyofheaven.bukkit.zPermissions.model.PermissionWorld;
 
 import com.avaje.ebean.EbeanServer;
 
+/**
+ * Avaje PermissionDao implementation that keeps everything in memory.
+ * 
+ * @author asaddi
+ */
 public class AvajePermissionDao2 extends BaseMemoryPermissionDao {
 
     private final Logger logger = Logger.getLogger(getClass().getName());
@@ -633,7 +638,7 @@ public class AvajePermissionDao2 extends BaseMemoryPermissionDao {
     }
 
     private void databaseInconsistency() {
-        logger.log(Level.WARNING, "Database inconsistency detected; please do a /permissions reload");
+        logger.log(Level.WARNING, "Possible database inconsistency detected; please do a /permissions refresh");
     }
 
     private PermissionEntity inconsistentEntity(String name, boolean group) {
