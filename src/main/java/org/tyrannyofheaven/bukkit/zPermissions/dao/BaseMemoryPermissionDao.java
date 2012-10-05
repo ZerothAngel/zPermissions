@@ -149,8 +149,9 @@ public abstract class BaseMemoryPermissionDao implements PermissionDao {
         }
     
         for (Entry entry : entity.getPermissions()) {
-            if (entry.getRegion() == permissionRegion && entry.getWorld() == permissionWorld &&
-                    entry.getPermission().equalsIgnoreCase(permission)) {
+            if (entry.getPermission().equalsIgnoreCase(permission) &&
+                (permissionRegion == null ? entry.getRegion() == null : permissionRegion.equals(entry.getRegion())) &&
+                (permissionWorld == null ? entry.getWorld() == null : permissionWorld.equals(entry.getWorld()))) {
                 return entry.isValue();
             }
         }
@@ -223,8 +224,9 @@ public abstract class BaseMemoryPermissionDao implements PermissionDao {
     
         for (Iterator<Entry> i = entity.getPermissions().iterator(); i.hasNext();) {
             Entry entry = i.next();
-            if (entry.getRegion() == permissionRegion && entry.getWorld() == permissionWorld &&
-                    entry.getPermission().equalsIgnoreCase(permission)) {
+            if (entry.getPermission().equalsIgnoreCase(permission) &&
+                    (permissionRegion == null ? entry.getRegion() == null : permissionRegion.equals(entry.getRegion())) &&
+                    (permissionWorld == null ? entry.getWorld() == null : permissionWorld.equals(entry.getWorld()))) {
                 i.remove();
                 deleteEntry(entry);
                 cleanWorldsAndRegions();

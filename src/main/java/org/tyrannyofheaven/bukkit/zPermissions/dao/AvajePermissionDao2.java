@@ -545,7 +545,7 @@ public class AvajePermissionDao2 extends BaseMemoryPermissionDao {
         load(players, groups);
     }
 
-    synchronized public void load(List<PermissionEntity> players, List<PermissionEntity> groups) {
+    synchronized private void load(List<PermissionEntity> players, List<PermissionEntity> groups) {
         getPlayers().clear();
         getGroups().clear();
         getRegions().clear();
