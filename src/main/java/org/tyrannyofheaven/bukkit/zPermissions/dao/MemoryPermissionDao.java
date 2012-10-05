@@ -156,7 +156,7 @@ public class MemoryPermissionDao extends BaseMemoryPermissionDao {
         for (Map<String, Object> playerMap : (List<Map<String, Object>>)input.get("players")) {
             String name = (String)playerMap.get("name");
             Map<String, Boolean> permissions = (Map<String, Boolean>)playerMap.get("permissions");
-            PermissionEntity player = getEntity(name, false, true);
+            PermissionEntity player = getEntityLoader(name, false);
             loadPermissions(permissions, player);
         }
         
@@ -167,11 +167,11 @@ public class MemoryPermissionDao extends BaseMemoryPermissionDao {
             String parent = (String)groupMap.get("parent");
             List<String> members = (List<String>)groupMap.get("members");
             
-            PermissionEntity group = getEntity(name, true, true);
+            PermissionEntity group = getEntityLoader(name, true);
             loadPermissions(permissions, group);
             group.setPriority(priority.intValue());
             if (parent != null) {
-                PermissionEntity parentEntity = getEntity(parent, true, true);
+                PermissionEntity parentEntity = getEntityLoader(parent, true);
                 group.setParent(parentEntity);
                 parentEntity.getChildren().add(group);
             }
@@ -205,7 +205,7 @@ public class MemoryPermissionDao extends BaseMemoryPermissionDao {
             WorldPermission wp = new WorldPermission(me.getKey());
             entry.setRegion(wp.getRegion() == null ? null : getRegion(wp.getRegion(), true));
             entry.setWorld(wp.getWorld() == null ? null : getWorld(wp.getWorld(), true));
-            entry.setPermission(wp.getPermission());
+            entry.setPermission(wp.getPermission().toLowerCase());
             entry.setValue(me.getValue());
 
             entry.setEntity(entity);

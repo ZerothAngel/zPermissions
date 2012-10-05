@@ -109,20 +109,21 @@ public abstract class BaseMemoryPermissionDao implements PermissionDao {
     }
 
     protected PermissionEntity getEntity(String name, boolean group, boolean create) {
+        String lname = name.toLowerCase();
         PermissionEntity entity;
         if (group)
-            entity = groups.get(name.toLowerCase());
+            entity = groups.get(lname);
         else
-            entity = players.get(name.toLowerCase());
+            entity = players.get(lname);
         if (entity == null && create) {
             entity = new PermissionEntity();
-            entity.setName(name.toLowerCase());
+            entity.setName(lname);
             entity.setGroup(group);
             entity.setDisplayName(name);
             if (group)
-                groups.put(name.toLowerCase(), entity);
+                groups.put(lname, entity);
             else
-                players.put(name.toLowerCase(), entity);
+                players.put(lname, entity);
             createEntity(entity);
         }
         return entity;
@@ -232,10 +233,12 @@ public abstract class BaseMemoryPermissionDao implements PermissionDao {
         catch (IllegalArgumentException e) {
             return false;
         }
-    
+
+        permission = permission.toLowerCase();
+
         for (Iterator<Entry> i = entity.getPermissions().iterator(); i.hasNext();) {
             Entry entry = i.next();
-            if (entry.getPermission().equalsIgnoreCase(permission) &&
+            if (entry.getPermission().equals(permission) &&
                     (permissionRegion == null ? entry.getRegion() == null : permissionRegion.equals(entry.getRegion())) &&
                     (permissionWorld == null ? entry.getWorld() == null : permissionWorld.equals(entry.getWorld()))) {
                 i.remove();
@@ -251,15 +254,17 @@ public abstract class BaseMemoryPermissionDao implements PermissionDao {
 
     @Override
     public void addMember(String groupName, String member) {
+        member = member.toLowerCase();
+
         PermissionEntity group = getGroup(groupName);
     
         for (Membership membership : group.getMemberships()) {
-            if (membership.getMember().equalsIgnoreCase(member))
+            if (membership.getMember().equals(member))
                 return;
         }
     
         Membership membership = new Membership();
-        membership.setMember(member.toLowerCase());
+        membership.setMember(member);
         membership.setGroup(group);
         
         group.getMemberships().add(membership);
@@ -273,11 +278,12 @@ public abstract class BaseMemoryPermissionDao implements PermissionDao {
 
     @Override
     public boolean removeMember(String groupName, String member) {
+        member = member.toLowerCase();
         PermissionEntity group = getGroup(groupName);
         
         for (Iterator<Membership> i = group.getMemberships().iterator(); i.hasNext();) {
             Membership membership = i.next();
-            if (membership.getMember().equalsIgnoreCase(member)) {
+            if (membership.getMember().equals(member)) {
                 i.remove();
                 deleteMembership(membership);
                 forgetMembership(group, membership);
@@ -343,15 +349,16 @@ public abstract class BaseMemoryPermissionDao implements PermissionDao {
 
     @Override
     public void setGroup(String playerName, String groupName) {
+        playerName = playerName.toLowerCase();
         PermissionEntity group = getGroup(groupName);
     
         Membership found = null;
-        Set<PermissionEntity> groups = reverseMembershipMap.get(playerName.toLowerCase());
+        Set<PermissionEntity> groups = reverseMembershipMap.get(playerName);
         if (groups != null) {
             for (PermissionEntity groupEntity : groups) {
                 for (Iterator<Membership> i = groupEntity.getMemberships().iterator(); i.hasNext();) {
                     Membership membership = i.next();
-                    if (membership.getMember().equalsIgnoreCase(playerName)) {
+                    if (membership.getMember().equals(playerName)) {
                         if (!membership.getGroup().equals(group)) {
                             i.remove();
                             deleteMembership(membership);
@@ -367,7 +374,7 @@ public abstract class BaseMemoryPermissionDao implements PermissionDao {
     
         if (found == null) {
             found = new Membership();
-            found.setMember(playerName.toLowerCase());
+            found.setMember(playerName);
             found.setGroup(group);
             
             group.getMemberships().add(found);
@@ -375,7 +382,7 @@ public abstract class BaseMemoryPermissionDao implements PermissionDao {
             createMembership(found);
         }
         
-        reverseMembershipMap.remove(playerName.toLowerCase());
+        reverseMembershipMap.remove(playerName);
         rememberMembership(group, found);
     }
 
@@ -476,7 +483,7 @@ public abstract class BaseMemoryPermissionDao implements PermissionDao {
                 }
     
                 // Delete group's entity
-                groups.remove(entity.getName().toLowerCase());
+                groups.remove(entity.getName());
                 deleteEntity(entity);
                 cleanWorldsAndRegions();
                 forgetMembershipGroup(entity);
@@ -485,16 +492,17 @@ public abstract class BaseMemoryPermissionDao implements PermissionDao {
         }
         else {
             // Deleting a player
+            name = name.toLowerCase();
     
             boolean found = false;
     
             // Delete memberships
-            Set<PermissionEntity> groups = reverseMembershipMap.get(name.toLowerCase());
+            Set<PermissionEntity> groups = reverseMembershipMap.get(name);
             if (groups != null) {
                 for (PermissionEntity groupEntity : groups) {
                     for (Iterator<Membership> i = groupEntity.getMemberships().iterator(); i.hasNext();) {
                         Membership membership = i.next();
-                        if (membership.getMember().equalsIgnoreCase(name)) {
+                        if (membership.getMember().equals(name)) {
                             i.remove();
                             deleteMembership(membership);
                             found = true;
@@ -503,12 +511,12 @@ public abstract class BaseMemoryPermissionDao implements PermissionDao {
                     }
                 }
     
-                reverseMembershipMap.remove(name.toLowerCase());
+                reverseMembershipMap.remove(name);
             }
 
             if (entity != null) {
                 // Delete player's entity
-                players.remove(entity.getName().toLowerCase());
+                players.remove(entity.getName());
                 deleteEntity(entity);
                 cleanWorldsAndRegions();
             }
@@ -596,6 +604,48 @@ public abstract class BaseMemoryPermissionDao implements PermissionDao {
         for (Set<PermissionEntity> groups : reverseMembershipMap.values()) {
             groups.remove(group);
         }
+    }
+
+    protected PermissionEntity getEntityLoader(String name, boolean group) {
+        String lname = name.toLowerCase();
+        PermissionEntity entity;
+        if (group)
+            entity = groups.get(lname);
+        else
+            entity = players.get(lname);
+        if (entity == null) {
+            entity = new PermissionEntity();
+            entity.setName(lname);
+            entity.setGroup(group);
+            entity.setDisplayName(name);
+            if (group)
+                groups.put(lname, entity);
+            else
+                players.put(lname, entity);
+        }
+        return entity;
+    }
+
+    protected PermissionRegion getRegionLoader(String name) {
+        name = name.toLowerCase();
+        PermissionRegion region = regions.get(name);
+        if (region == null) {
+            region = new PermissionRegion();
+            region.setName(name);
+            regions.put(name, region);
+        }
+        return region;
+    }
+
+    protected PermissionWorld getWorldLoader(String name) {
+        name = name.toLowerCase();
+        PermissionWorld world = worlds.get(name);
+        if (world == null) {
+            world = new PermissionWorld();
+            world.setName(name);
+            worlds.put(name, world);
+        }
+        return world;
     }
 
 }
