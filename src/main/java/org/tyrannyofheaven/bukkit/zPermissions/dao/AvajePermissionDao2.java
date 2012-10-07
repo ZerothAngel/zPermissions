@@ -32,16 +32,12 @@ public class AvajePermissionDao2 extends BaseMemoryPermissionDao {
 
     public AvajePermissionDao2(EbeanServer ebeanServer, Executor executor) {
         this.ebeanServer = ebeanServer;
-        if (executor != null)
-            this.executor = executor;
-        else {
-            this.executor = new Executor() {
-                @Override
-                public void execute(Runnable command) {
-                    command.run();
-                }
-            };
-        }
+        this.executor = executor != null ? executor : new Executor() {
+            @Override
+            public void execute(Runnable command) {
+                command.run();
+            }
+        };
     }
 
     private EbeanServer getEbeanServer() {
@@ -550,24 +546,20 @@ public class AvajePermissionDao2 extends BaseMemoryPermissionDao {
         load(players, groups);
     }
 
-    synchronized private void load(List<PermissionEntity> players, List<PermissionEntity> groups) {
-        getPlayers().clear();
-        getGroups().clear();
-        getRegions().clear();
-        getWorlds().clear();
-        getReverseMembershipMap().clear();
+    private void load(List<PermissionEntity> players, List<PermissionEntity> groups) {
+        MemoryState memoryState = new MemoryState();
 
         // Create full copies to force lazy-loads
         for (PermissionEntity player : players) {
-            PermissionEntity newPlayer = getEntityLoader(player.getDisplayName(), false);
-            loadPermissions(player.getPermissions(), newPlayer);
+            PermissionEntity newPlayer = getEntity(memoryState, player.getDisplayName(), false);
+            loadPermissions(memoryState, player.getPermissions(), newPlayer);
         }
         for (PermissionEntity group : groups) {
-            PermissionEntity newGroup = getEntityLoader(group.getDisplayName(), true);
-            loadPermissions(group.getPermissions(), newGroup);
+            PermissionEntity newGroup = getEntity(memoryState, group.getDisplayName(), true);
+            loadPermissions(memoryState, group.getPermissions(), newGroup);
             newGroup.setPriority(group.getPriority());
             if (group.getParent() != null) {
-                PermissionEntity parentEntity = getEntityLoader(group.getParent().getDisplayName(), true);
+                PermissionEntity parentEntity = getEntity(memoryState, group.getParent().getDisplayName(), true);
                 newGroup.setParent(parentEntity);
                 parentEntity.getChildren().add(newGroup);
             }
@@ -577,17 +569,21 @@ public class AvajePermissionDao2 extends BaseMemoryPermissionDao {
                 newMembership.setGroup(newGroup);
                 newGroup.getMemberships().add(newMembership);
                 
-                rememberMembership(newGroup, newMembership);
+                rememberMembership(memoryState, newGroup, newMembership);
             }
+        }
+        
+        synchronized (this) {
+            setMemoryState(memoryState);
         }
     }
 
-    private void loadPermissions(Collection<Entry> permissions, PermissionEntity entity) {
+    private void loadPermissions(MemoryState memoryState, Collection<Entry> permissions, PermissionEntity entity) {
         for (Entry entry : permissions) {
             Entry newEntry = new Entry();
 
-            newEntry.setRegion(entry.getRegion() == null ? null : getRegionLoader(entry.getRegion().getName()));
-            newEntry.setWorld(entry.getWorld() == null ? null : getWorldLoader(entry.getWorld().getName()));
+            newEntry.setRegion(entry.getRegion() == null ? null : getRegion(memoryState, entry.getRegion().getName()));
+            newEntry.setWorld(entry.getWorld() == null ? null : getWorld(memoryState, entry.getWorld().getName()));
             newEntry.setPermission(entry.getPermission());
             newEntry.setValue(entry.isValue());
 

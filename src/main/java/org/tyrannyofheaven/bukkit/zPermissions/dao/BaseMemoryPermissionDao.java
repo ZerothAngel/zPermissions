@@ -24,46 +24,44 @@ import org.tyrannyofheaven.bukkit.zPermissions.model.PermissionWorld;
  */
 public abstract class BaseMemoryPermissionDao implements PermissionDao {
 
-    private final Map<String, PermissionRegion> regions = new HashMap<String, PermissionRegion>();
+    private MemoryState memoryState = new MemoryState();
 
-    private final Map<String, PermissionWorld> worlds = new HashMap<String, PermissionWorld>();
-
-    private final Map<String, PermissionEntity> players = new HashMap<String, PermissionEntity>();
-
-    private final Map<String, PermissionEntity> groups = new HashMap<String, PermissionEntity>();
-
-    private final Map<String, Set<PermissionEntity>> reverseMembershipMap = new HashMap<String, Set<PermissionEntity>>();
+    protected MemoryState setMemoryState(MemoryState memoryState) {
+        MemoryState old = this.memoryState;
+        this.memoryState = memoryState;
+        return old;
+    }
 
     protected Map<String, PermissionRegion> getRegions() {
-        return regions;
+        return memoryState.getRegions();
     }
 
     protected Map<String, PermissionWorld> getWorlds() {
-        return worlds;
+        return memoryState.getWorlds();
     }
 
     protected Map<String, PermissionEntity> getPlayers() {
-        return players;
+        return memoryState.getPlayers();
     }
 
     protected Map<String, PermissionEntity> getGroups() {
-        return groups;
+        return memoryState.getGroups();
     }
 
     protected Map<String, Set<PermissionEntity>> getReverseMembershipMap() {
-        return reverseMembershipMap;
+        return memoryState.getReverseMembershipMap();
     }
 
     protected PermissionRegion getRegion(String region, boolean create) {
         PermissionRegion permissionRegion = null;
         if (region != null) {
             region = region.toLowerCase();
-            permissionRegion = regions.get(region);
+            permissionRegion = getRegions().get(region);
             if (permissionRegion == null) {
                 if (create) {
                     permissionRegion = new PermissionRegion();
                     permissionRegion.setName(region);
-                    regions.put(region, permissionRegion);
+                    getRegions().put(region, permissionRegion);
                     createRegion(permissionRegion);
                 }
                 else {
@@ -78,19 +76,19 @@ public abstract class BaseMemoryPermissionDao implements PermissionDao {
 
     // For unit testing
     PermissionRegion getRegion(String region) {
-        return regions.get(region.toLowerCase());
+        return getRegions().get(region.toLowerCase());
     }
 
     protected PermissionWorld getWorld(String world, boolean create) {
         PermissionWorld permissionWorld = null;
         if (world != null) {
             world = world.toLowerCase();
-            permissionWorld = worlds.get(world);
+            permissionWorld = getWorlds().get(world);
             if (permissionWorld == null) {
                 if (create) {
                     permissionWorld = new PermissionWorld();
                     permissionWorld.setName(world);
-                    worlds.put(world, permissionWorld);
+                    getWorlds().put(world, permissionWorld);
                     createWorld(permissionWorld);
                 }
                 else {
@@ -105,25 +103,25 @@ public abstract class BaseMemoryPermissionDao implements PermissionDao {
 
     // For unit testing
     PermissionWorld getWorld(String world) {
-        return worlds.get(world.toLowerCase());
+        return getWorlds().get(world.toLowerCase());
     }
 
     protected PermissionEntity getEntity(String name, boolean group, boolean create) {
         String lname = name.toLowerCase();
         PermissionEntity entity;
         if (group)
-            entity = groups.get(lname);
+            entity = getGroups().get(lname);
         else
-            entity = players.get(lname);
+            entity = getPlayers().get(lname);
         if (entity == null && create) {
             entity = new PermissionEntity();
             entity.setName(lname);
             entity.setGroup(group);
             entity.setDisplayName(name);
             if (group)
-                groups.put(lname, entity);
+                getGroups().put(lname, entity);
             else
-                players.put(lname, entity);
+                getPlayers().put(lname, entity);
             createEntity(entity);
         }
         return entity;
@@ -296,7 +294,7 @@ public abstract class BaseMemoryPermissionDao implements PermissionDao {
     @Override
     public List<String> getGroups(String member) {
         List<PermissionEntity> groupsEntities = new ArrayList<PermissionEntity>();
-        Set<PermissionEntity> groups = reverseMembershipMap.get(member.toLowerCase());
+        Set<PermissionEntity> groups = getReverseMembershipMap().get(member.toLowerCase());
         if (groups != null)
             groupsEntities.addAll(groups);
     
@@ -334,17 +332,17 @@ public abstract class BaseMemoryPermissionDao implements PermissionDao {
     @Override
     public PermissionEntity getEntity(String name, boolean group) {
         if (group)
-            return groups.get(name.toLowerCase());
+            return getGroups().get(name.toLowerCase());
         else
-            return players.get(name.toLowerCase());
+            return getPlayers().get(name.toLowerCase());
     }
 
     @Override
     public List<PermissionEntity> getEntities(boolean group) {
         if (group)
-            return new ArrayList<PermissionEntity>(groups.values());
+            return new ArrayList<PermissionEntity>(getGroups().values());
         else
-            return new ArrayList<PermissionEntity>(players.values());
+            return new ArrayList<PermissionEntity>(getPlayers().values());
     }
 
     @Override
@@ -353,7 +351,7 @@ public abstract class BaseMemoryPermissionDao implements PermissionDao {
         PermissionEntity group = getGroup(groupName);
     
         Membership found = null;
-        Set<PermissionEntity> groups = reverseMembershipMap.get(playerName);
+        Set<PermissionEntity> groups = getReverseMembershipMap().get(playerName);
         if (groups != null) {
             for (PermissionEntity groupEntity : groups) {
                 for (Iterator<Membership> i = groupEntity.getMemberships().iterator(); i.hasNext();) {
@@ -382,7 +380,7 @@ public abstract class BaseMemoryPermissionDao implements PermissionDao {
             createMembership(found);
         }
         
-        reverseMembershipMap.remove(playerName);
+        getReverseMembershipMap().remove(playerName);
         rememberMembership(group, found);
     }
 
@@ -431,8 +429,8 @@ public abstract class BaseMemoryPermissionDao implements PermissionDao {
         Set<PermissionWorld> usedWorlds = new HashSet<PermissionWorld>();
         
         List<PermissionEntity> entities = new ArrayList<PermissionEntity>();
-        entities.addAll(groups.values());
-        entities.addAll(players.values());
+        entities.addAll(getGroups().values());
+        entities.addAll(getPlayers().values());
         
         for (PermissionEntity entity : entities) {
             for (Entry entry : entity.getPermissions()) {
@@ -444,19 +442,19 @@ public abstract class BaseMemoryPermissionDao implements PermissionDao {
         }
         
         // Determine what needs to be deleted
-        Set<PermissionRegion> regionsToDelete = new HashSet<PermissionRegion>(regions.values());
+        Set<PermissionRegion> regionsToDelete = new HashSet<PermissionRegion>(getRegions().values());
         regionsToDelete.removeAll(usedRegions);
-        Set<PermissionWorld> worldsToDelete = new HashSet<PermissionWorld>(worlds.values());
+        Set<PermissionWorld> worldsToDelete = new HashSet<PermissionWorld>(getWorlds().values());
         worldsToDelete.removeAll(usedWorlds);
         
         // Re-build lists
-        regions.clear();
+        getRegions().clear();
         for (PermissionRegion region : usedRegions) {
-            regions.put(region.getName(), region);
+            getRegions().put(region.getName(), region);
         }
-        worlds.clear();
+        getWorlds().clear();
         for (PermissionWorld world : usedWorlds) {
-            worlds.put(world.getName(), world);
+            getWorlds().put(world.getName(), world);
         }
         
         // Tell underlying DAO about deleted regions/worlds
@@ -483,7 +481,7 @@ public abstract class BaseMemoryPermissionDao implements PermissionDao {
                 }
     
                 // Delete group's entity
-                groups.remove(entity.getName());
+                getGroups().remove(entity.getName());
                 deleteEntity(entity);
                 cleanWorldsAndRegions();
                 forgetMembershipGroup(entity);
@@ -497,7 +495,7 @@ public abstract class BaseMemoryPermissionDao implements PermissionDao {
             boolean found = false;
     
             // Delete memberships
-            Set<PermissionEntity> groups = reverseMembershipMap.get(name);
+            Set<PermissionEntity> groups = getReverseMembershipMap().get(name);
             if (groups != null) {
                 for (PermissionEntity groupEntity : groups) {
                     for (Iterator<Membership> i = groupEntity.getMemberships().iterator(); i.hasNext();) {
@@ -511,12 +509,12 @@ public abstract class BaseMemoryPermissionDao implements PermissionDao {
                     }
                 }
     
-                reverseMembershipMap.remove(name);
+                getReverseMembershipMap().remove(name);
             }
 
             if (entity != null) {
                 // Delete player's entity
-                players.remove(entity.getName());
+                getPlayers().remove(entity.getName());
                 deleteEntity(entity);
                 cleanWorldsAndRegions();
             }
@@ -575,9 +573,9 @@ public abstract class BaseMemoryPermissionDao implements PermissionDao {
     public List<String> getEntityNames(boolean group) {
         Collection<PermissionEntity> entities;
         if (group)
-            entities = groups.values();
+            entities = getGroups().values();
         else
-            entities = players.values();
+            entities = getPlayers().values();
         List<String> result = new ArrayList<String>(entities.size());
         for (PermissionEntity entity : entities) {
             result.add(entity.getDisplayName());
@@ -586,66 +584,109 @@ public abstract class BaseMemoryPermissionDao implements PermissionDao {
     }
 
     protected void rememberMembership(PermissionEntity group, Membership membership) {
-        Set<PermissionEntity> groups = reverseMembershipMap.get(membership.getMember());
+        Set<PermissionEntity> groups = getReverseMembershipMap().get(membership.getMember());
         if (groups == null) {
             groups = new HashSet<PermissionEntity>();
-            reverseMembershipMap.put(membership.getMember(), groups);
+            getReverseMembershipMap().put(membership.getMember(), groups);
         }
         groups.add(group);
     }
 
     private void forgetMembership(PermissionEntity group, Membership membership) {
-        Set<PermissionEntity> groups = reverseMembershipMap.get(membership.getMember());
+        Set<PermissionEntity> groups = getReverseMembershipMap().get(membership.getMember());
         if (groups != null)
             groups.remove(group);
     }
 
     private void forgetMembershipGroup(PermissionEntity group) {
-        for (Set<PermissionEntity> groups : reverseMembershipMap.values()) {
+        for (Set<PermissionEntity> groups : getReverseMembershipMap().values()) {
             groups.remove(group);
         }
     }
 
-    protected PermissionEntity getEntityLoader(String name, boolean group) {
+    protected static PermissionEntity getEntity(MemoryState memoryState, String name, boolean group) {
         String lname = name.toLowerCase();
         PermissionEntity entity;
         if (group)
-            entity = groups.get(lname);
+            entity = memoryState.getGroups().get(lname);
         else
-            entity = players.get(lname);
+            entity = memoryState.getPlayers().get(lname);
         if (entity == null) {
             entity = new PermissionEntity();
             entity.setName(lname);
             entity.setGroup(group);
             entity.setDisplayName(name);
             if (group)
-                groups.put(lname, entity);
+                memoryState.getGroups().put(lname, entity);
             else
-                players.put(lname, entity);
+                memoryState.getPlayers().put(lname, entity);
         }
         return entity;
     }
 
-    protected PermissionRegion getRegionLoader(String name) {
+    protected static PermissionRegion getRegion(MemoryState memoryState, String name) {
         name = name.toLowerCase();
-        PermissionRegion region = regions.get(name);
+        PermissionRegion region = memoryState.getRegions().get(name);
         if (region == null) {
             region = new PermissionRegion();
             region.setName(name);
-            regions.put(name, region);
+            memoryState.getRegions().put(name, region);
         }
         return region;
     }
 
-    protected PermissionWorld getWorldLoader(String name) {
+    protected static PermissionWorld getWorld(MemoryState memoryState, String name) {
         name = name.toLowerCase();
-        PermissionWorld world = worlds.get(name);
+        PermissionWorld world = memoryState.getWorlds().get(name);
         if (world == null) {
             world = new PermissionWorld();
             world.setName(name);
-            worlds.put(name, world);
+            memoryState.getWorlds().put(name, world);
         }
         return world;
+    }
+
+    protected static void rememberMembership(MemoryState memoryState, PermissionEntity group, Membership membership) {
+        Set<PermissionEntity> groups = memoryState.getReverseMembershipMap().get(membership.getMember());
+        if (groups == null) {
+            groups = new HashSet<PermissionEntity>();
+            memoryState.getReverseMembershipMap().put(membership.getMember(), groups);
+        }
+        groups.add(group);
+    }
+
+    protected static class MemoryState {
+        
+        private final Map<String, PermissionRegion> regions = new HashMap<String, PermissionRegion>();
+
+        private final Map<String, PermissionWorld> worlds = new HashMap<String, PermissionWorld>();
+
+        private final Map<String, PermissionEntity> players = new HashMap<String, PermissionEntity>();
+
+        private final Map<String, PermissionEntity> groups = new HashMap<String, PermissionEntity>();
+
+        private final Map<String, Set<PermissionEntity>> reverseMembershipMap = new HashMap<String, Set<PermissionEntity>>();
+
+        public Map<String, PermissionRegion> getRegions() {
+            return regions;
+        }
+
+        public Map<String, PermissionWorld> getWorlds() {
+            return worlds;
+        }
+
+        public Map<String, PermissionEntity> getPlayers() {
+            return players;
+        }
+
+        public Map<String, PermissionEntity> getGroups() {
+            return groups;
+        }
+
+        public Map<String, Set<PermissionEntity>> getReverseMembershipMap() {
+            return reverseMembershipMap;
+        }
+
     }
 
 }
