@@ -147,17 +147,13 @@ public class MemoryPermissionDao extends BaseMemoryPermissionDao {
     // Load state of entire system from (YAML-friendly) map
     @SuppressWarnings("unchecked")
     private void load(Map<String, Object> input) {
-        getRegions().clear();
-        getWorlds().clear();
-        getPlayers().clear();
-        getGroups().clear();
-        getReverseMembershipMap().clear();
+        MemoryState memoryState = new MemoryState();
 
         for (Map<String, Object> playerMap : (List<Map<String, Object>>)input.get("players")) {
             String name = (String)playerMap.get("name");
             Map<String, Boolean> permissions = (Map<String, Boolean>)playerMap.get("permissions");
-            PermissionEntity player = getEntityLoader(name, false);
-            loadPermissions(permissions, player);
+            PermissionEntity player = getEntity(memoryState, name, false);
+            loadPermissions(memoryState, permissions, player);
         }
         
         for (Map<String, Object> groupMap : (List<Map<String, Object>>)input.get("groups")) {
@@ -167,11 +163,11 @@ public class MemoryPermissionDao extends BaseMemoryPermissionDao {
             String parent = (String)groupMap.get("parent");
             List<String> members = (List<String>)groupMap.get("members");
             
-            PermissionEntity group = getEntityLoader(name, true);
-            loadPermissions(permissions, group);
+            PermissionEntity group = getEntity(memoryState, name, true);
+            loadPermissions(memoryState, permissions, group);
             group.setPriority(priority.intValue());
             if (parent != null) {
-                PermissionEntity parentEntity = getEntityLoader(parent, true);
+                PermissionEntity parentEntity = getEntity(memoryState, parent, true);
                 group.setParent(parentEntity);
                 parentEntity.getChildren().add(group);
             }
@@ -181,9 +177,11 @@ public class MemoryPermissionDao extends BaseMemoryPermissionDao {
                 membership.setGroup(group);
                 group.getMemberships().add(membership);
                 
-                rememberMembership(group, membership);
+                rememberMembership(memoryState, group, membership);
             }
         }
+        
+        setMemoryState(memoryState);
     }
 
     // Create a map that describes permissions for a PermissionEntity
@@ -198,13 +196,13 @@ public class MemoryPermissionDao extends BaseMemoryPermissionDao {
     }
 
     // Load permissions for a PermissionEntity from a map
-    private void loadPermissions(Map<String, Boolean> input, PermissionEntity entity) {
+    private void loadPermissions(MemoryState memoryState, Map<String, Boolean> input, PermissionEntity entity) {
         for (Map.Entry<String, Boolean> me : input.entrySet()) {
             Entry entry = new Entry();
 
             WorldPermission wp = new WorldPermission(me.getKey());
-            entry.setRegion(wp.getRegion() == null ? null : getRegion(wp.getRegion(), true));
-            entry.setWorld(wp.getWorld() == null ? null : getWorld(wp.getWorld(), true));
+            entry.setRegion(wp.getRegion() == null ? null : getRegion(memoryState, wp.getRegion()));
+            entry.setWorld(wp.getWorld() == null ? null : getWorld(memoryState, wp.getWorld()));
             entry.setPermission(wp.getPermission().toLowerCase());
             entry.setValue(me.getValue());
 
