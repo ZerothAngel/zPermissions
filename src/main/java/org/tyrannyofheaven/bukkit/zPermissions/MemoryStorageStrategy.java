@@ -110,7 +110,7 @@ public class MemoryStorageStrategy implements StorageStrategy, TransactionStrate
             T result = callback.doInTransaction();
             // Schedule a save if dirty and no pending save
             if (dao.isDirty() && saveTask < 0) {
-                saveTask = plugin.getServer().getScheduler().scheduleSyncDelayedTask(plugin, this, SAVE_DELAY);
+                saveTask = plugin.getServer().getScheduler().scheduleAsyncDelayedTask(plugin, this, SAVE_DELAY);
                 if (saveTask < 0)
                     log(plugin, Level.SEVERE, "Error scheduling permissions database save task");
             }
