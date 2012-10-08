@@ -52,7 +52,7 @@ public class MemoryPermissionDao extends BaseMemoryPermissionDao {
 
     private boolean dirty;
 
-    public boolean isDirty() {
+    public synchronized boolean isDirty() {
         return dirty;
     }
 
@@ -60,12 +60,97 @@ public class MemoryPermissionDao extends BaseMemoryPermissionDao {
         setDirty(true);
     }
 
-    public void setDirty(boolean dirty) {
+    public synchronized void setDirty(boolean dirty) {
         this.dirty = dirty;
     }
 
-    public void clearDirty() {
+    public synchronized void clearDirty() {
         this.dirty = false;
+    }
+
+    @Override
+    public synchronized Boolean getPermission(String name, boolean group, String region, String world, String permission) {
+        return super.getPermission(name, group, region, world, permission);
+    }
+
+    @Override
+    public synchronized void setPermission(String name, boolean group, String region, String world, String permission, boolean value) {
+        super.setPermission(name, group, region, world, permission, value);
+    }
+
+    @Override
+    public synchronized boolean unsetPermission(String name, boolean group, String region, String world, String permission) {
+        return super.unsetPermission(name, group, region, world, permission);
+    }
+
+    @Override
+    public synchronized void addMember(String groupName, String member) {
+        super.addMember(groupName, member);
+    }
+
+    @Override
+    public synchronized boolean removeMember(String groupName, String member) {
+        return super.removeMember(groupName, member);
+    }
+
+    @Override
+    public synchronized List<String> getGroups(String member) {
+        return super.getGroups(member);
+    }
+
+    @Override
+    public synchronized List<String> getMembers(String group) {
+        return super.getMembers(group);
+    }
+
+    @Override
+    public synchronized PermissionEntity getEntity(String name, boolean group) {
+        return super.getEntity(name, group);
+    }
+
+    @Override
+    public synchronized List<PermissionEntity> getEntities(boolean group) {
+        return super.getEntities(group);
+    }
+
+    @Override
+    public synchronized void setGroup(String playerName, String groupName) {
+        super.setGroup(playerName, groupName);
+    }
+
+    @Override
+    public synchronized void setParent(String groupName, String parentName) {
+        super.setParent(groupName, parentName);
+    }
+
+    @Override
+    public synchronized void setPriority(String groupName, int priority) {
+        super.setPriority(groupName, priority);
+    }
+
+    @Override
+    public synchronized boolean deleteEntity(String name, boolean group) {
+        return super.deleteEntity(name, group);
+    }
+
+    @Override
+    public synchronized List<String> getAncestry(String groupName) {
+        return super.getAncestry(groupName);
+    }
+
+    @Override
+    public synchronized List<Entry> getEntries(String name, boolean group) {
+        return super.getEntries(name, group);
+    }
+
+    @Override
+    public synchronized boolean createGroup(String name) {
+        return super.createGroup(name);
+    }
+
+    @Override
+    public synchronized List<String> getEntityNames(boolean group) {
+        return super.getEntityNames(group);
     }
 
     /**
@@ -77,6 +162,11 @@ public class MemoryPermissionDao extends BaseMemoryPermissionDao {
     public void save(File file) throws IOException {
         if (!isDirty()) return;
 
+        Map<String, Object> dump;
+        synchronized (this) {
+            dump = dump();
+        }
+
         File newFile = new File(file.getParentFile(), file.getName() + ".new");
 
         // Write out file
@@ -86,7 +176,7 @@ public class MemoryPermissionDao extends BaseMemoryPermissionDao {
         Writer out = new FileWriter(newFile);
         try {
             out.write("# DO NOT EDIT -- file is written to periodically!\n");
-            yaml.dump(dump(), out);
+            yaml.dump(dump, out);
         }
         finally {
             out.close();
@@ -210,7 +300,9 @@ public class MemoryPermissionDao extends BaseMemoryPermissionDao {
             }
         }
         
-        setMemoryState(memoryState);
+        synchronized (this) {
+            setMemoryState(memoryState);
+        }
     }
 
     // Create a map that describes permissions for a PermissionEntity
