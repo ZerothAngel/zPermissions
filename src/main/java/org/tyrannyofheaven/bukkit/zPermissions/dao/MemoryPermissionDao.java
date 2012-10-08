@@ -27,6 +27,8 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import org.tyrannyofheaven.bukkit.zPermissions.WorldPermission;
 import org.tyrannyofheaven.bukkit.zPermissions.model.Entry;
@@ -45,6 +47,8 @@ import org.yaml.snakeyaml.representer.Representer;
  * @author zerothangel
  */
 public class MemoryPermissionDao extends BaseMemoryPermissionDao {
+
+    private Logger logger = Logger.getLogger(getClass().getName());
 
     private boolean dirty;
 
@@ -73,17 +77,42 @@ public class MemoryPermissionDao extends BaseMemoryPermissionDao {
     public void save(File file) throws IOException {
         if (!isDirty()) return;
 
+        File newFile = new File(file.getParentFile(), file.getName() + ".new");
+
+        // Write out file
         DumperOptions options = new DumperOptions();
         options.setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK);
         Yaml yaml = new Yaml(new SafeConstructor(), new Representer(), options);
-        Writer out = new FileWriter(file);
+        Writer out = new FileWriter(newFile);
         try {
+            out.write("# DO NOT EDIT -- file is written to periodically!\n");
             yaml.dump(dump(), out);
-            clearDirty();
         }
         finally {
             out.close();
         }
+
+        File backupFile = new File(file.getParentFile(), file.getName() + "~");
+
+        // Delete old backup (might be necessary on some platforms)
+        if (backupFile.exists() && !backupFile.delete()) {
+            logger.log(Level.WARNING, "Error deleting configuration " + backupFile);
+            // Continue despite failure
+        }
+
+        // Back up old config
+        if (file.exists() && !file.renameTo(backupFile)) {
+            logger.log(Level.SEVERE, String.format("Error renaming %s to %s", file, backupFile));
+            return; // no backup, abort
+        }
+
+        // Rename new file to config
+        if (!newFile.renameTo(file)) {
+            logger.log(Level.SEVERE, String.format("Error renaming %s to %s", newFile, file));
+            return;
+        }
+
+        clearDirty();
     }
 
     /**
@@ -124,8 +153,8 @@ public class MemoryPermissionDao extends BaseMemoryPermissionDao {
         List<Map<String, Object>> groups = new ArrayList<Map<String, Object>>();
         for (PermissionEntity group : getGroups().values()) {
             Map<String, Object> groupMap = new LinkedHashMap<String, Object>();
-            groupMap.put("name", group.getName());
-            groupMap.put("permissions", (Object)dumpPermissions(group));
+            groupMap.put("name", group.getDisplayName());
+            groupMap.put("permissions", dumpPermissions(group));
             groupMap.put("priority", group.getPriority());
             if (group.getParent() != null)
                 groupMap.put("parent", group.getParent().getDisplayName());
@@ -189,7 +218,7 @@ public class MemoryPermissionDao extends BaseMemoryPermissionDao {
         Map<String, Boolean> result = new HashMap<String, Boolean>();
         for (Entry e : entity.getPermissions()) {
             WorldPermission wp = new WorldPermission(e.getRegion() == null ? null : e.getRegion().getName(),
-                    e.getRegion() == null ? null : e.getRegion().getName(), e.getPermission());
+                    e.getWorld() == null ? null : e.getWorld().getName(), e.getPermission());
             result.put(wp.toString(), e.isValue());
         }
         return result;
