@@ -56,7 +56,6 @@ public class AvajeStorageStrategy implements StorageStrategy {
     @Override
     public void init() {
         plugin.createDatabaseSchema();
-        plugin.applyCacheSettings();
 //        plugin.getDatabase().getAdminLogging().setDebugGeneratedSql(true);
         refreshInternal(); // synchronously
     }
@@ -79,8 +78,7 @@ public class AvajeStorageStrategy implements StorageStrategy {
         });
     }
 
-    // Might share TransactionStrategy, so synchronize
-    synchronized private void refreshInternal() {
+    private void refreshInternal() {
         retryingTransactionStrategy.execute(new TransactionCallbackWithoutResult() {
             @Override
             public void doInTransactionWithoutResult() throws Exception {

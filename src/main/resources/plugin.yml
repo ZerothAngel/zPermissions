@@ -36,7 +36,6 @@ permissions:
       zpermissions.refresh: true
       zpermissions.export: true
       zpermissions.import: true
-      zpermissions.cache: true
       zpermissions.rank: true
       zpermissions.rank.*: true
   zpermissions.rank:
@@ -87,5 +86,3 @@ permissions:
     description: Allows use of the /unsetrank command
   zpermissions.unsetrank.*:
     description: Allows use of /unsetrank on all tracks
-  zpermissions.cache:
-    description: Allows use of the /permissions cache command

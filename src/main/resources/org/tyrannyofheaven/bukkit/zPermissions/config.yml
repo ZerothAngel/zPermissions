@@ -1,6 +1,8 @@
-config-version: 6
+config-version: 7
 
 database-support: true
+
+region-support: true
 
 group-permission: 'group.%s'
 
@@ -22,16 +24,8 @@ tracks:
   - somegroup
   - someothergroup
 
-cache-max-idle: 180
-
-cache-max-ttl: 600
-
-cache-size: 1000
-
 kick-on-error: true
 
 kick-ops-on-error: false
-
-region-support: true
 
 debug: false
