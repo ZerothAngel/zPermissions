@@ -39,12 +39,14 @@ import java.util.logging.Logger;
 
 import javax.persistence.PersistenceException;
 
+import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.permissions.PermissionAttachment;
+import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.ServicePriority;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.tyrannyofheaven.bukkit.util.ToHFileUtils;
@@ -111,6 +113,9 @@ public class ZPermissionsPlugin extends JavaPlugin {
     // Default opaque inheritance
     private static final boolean DEFAULT_OPAQUE_INHERITANCE = true;
 
+    // Default auto-refresh interval
+    private static final int DEFAULT_AUTO_REFRESH_INTERVAL = -1;
+
     // Filename of file-based storage
     private static final String FILE_STORAGE_FILENAME = "data.yml";
 
@@ -161,6 +166,12 @@ public class ZPermissionsPlugin extends JavaPlugin {
 
     // Maximum number of times to retry transactions (so total attempts is +1)
     private int txnMaxRetries;
+
+    // Interval for auto-refresh
+    private int autoRefreshInterval;
+
+    // Task ID for auto-refresh task
+    private int autoRefreshTaskId = -1;
 
     // Strategy for permissions storage
     private StorageStrategy storageStrategy;
@@ -299,7 +310,10 @@ public class ZPermissionsPlugin extends JavaPlugin {
 
         // Make sure everyone currently online has an attachment
         refreshPlayers();
-        
+
+        // Start auto-refresh task, if one is configured
+        startAutoRefreshTask();
+
         log(this, "%s enabled.", versionInfo.getVersionString());
     }
 
@@ -692,6 +706,7 @@ public class ZPermissionsPlugin extends JavaPlugin {
 
         // FIXME currently hidden option
         refreshTask.setDelay(config.getInt("bulk-refresh-delay", DEFAULT_BULK_REFRESH_DELAY));
+        autoRefreshInterval = config.getInt("auto-refresh-interval", DEFAULT_AUTO_REFRESH_INTERVAL);
 
         // Set debug logging
         logger.setLevel(config.getBoolean("debug", false) ? Level.FINE : null);
@@ -703,6 +718,7 @@ public class ZPermissionsPlugin extends JavaPlugin {
     void reload() {
         config = ToHFileUtils.getConfig(this);
         readConfig();
+        startAutoRefreshTask();
         refresh(new Runnable() {
             @Override
             public void run() {
@@ -731,6 +747,32 @@ public class ZPermissionsPlugin extends JavaPlugin {
     void checkPlayer(CommandSender sender, String playerName) {
         if (getServer().getPlayerExact(playerName) == null) {
             sendMessage(sender, colorize("{GRAY}(Player not online, make sure the name is correct)"));
+        }
+    }
+
+    // Cancel existing auto-refresh task and start a new one if autoRefreshInterval is valid
+    private void startAutoRefreshTask() {
+        // Cancel previous task, if any
+        if (autoRefreshTaskId > -1) {
+            Bukkit.getScheduler().cancelTask(autoRefreshTaskId);
+            autoRefreshTaskId = -1;
+        }
+        // Start up new task at new interval
+        if (autoRefreshInterval > 0) {
+            final Plugin plugin = this;
+            autoRefreshTaskId = Bukkit.getScheduler().scheduleSyncRepeatingTask(this, new Runnable() {
+                @Override
+                public void run() {
+                    debug(plugin, "Starting auto-refresh...");
+                    refresh(new Runnable() {
+                        @Override
+                        public void run() {
+                            // This is executed after the storage refresh is done.
+                            refreshPlayers();
+                        }
+                    });
+                }
+            }, autoRefreshInterval * 20 * 60, autoRefreshInterval * 20 * 60); // FIXME magic numbers
         }
     }
 

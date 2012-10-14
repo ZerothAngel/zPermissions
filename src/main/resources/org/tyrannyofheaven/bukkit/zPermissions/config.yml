@@ -28,4 +28,6 @@ kick-on-error: true
 
 kick-ops-on-error: false
 
+auto-refresh-interval: -1
+
 debug: false
