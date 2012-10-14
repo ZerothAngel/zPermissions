@@ -1,14 +1,33 @@
 # For Plugin Developers #
 
+## If you really must have an API... ##
+
+Since 0.9.8, zPermissions has provided an API for common, read-only operations. It was originally developed with [Vault](http://dev.bukkit.org/server-mods/vault/) in mind, but of course, anyone can use it.
+
+The API methods are exposed via the [ZPermissionsService](https://github.com/ZerothAngel/zPermissions/blob/master/src/main/java/org/tyrannyofheaven/bukkit/zPermissions/ZPermissionsService.java) interface.
+
+First, you will need to add zPermissions-X.Y.Z.jar to your build path somehow. (Sorry Maven users, I currently don't have a Maven repository.)
+
+Next, to get an actual implementation of this interface, your plugin should do something like the following:
+
+    ZPermissionsService zPermissionsService = Bukkit.getServicesManager().load(ZPermissionsService.class);
+	if (zPermissionsService == null) {
+	    // zPermissions not found, do something else
+	}
+
+Ideally, you would do the lookup once (e.g. store the result in an instance or static variable) and, in addition to your plugin's onEnable(), possibly also perform the check inside a PluginEnableEvent handler. But the above is the general gist of it.
+
+Note that if you are only checking for ZPermissionsService in your plugin's onEnable() method then you will need to add a line like the following to your plugin.yml:
+
+    softdepend: [zPermissions]
+
+Finally, if you look at the actual interface, you'll see that it only covers read-only operations. Operations that modify the state of zPermissions are still **only supported via the command line.** So you would probably use something like Bukkit.dispatchCommand().
+
+What follows is the old (and of course, still supported!), non-zPermissions-specific Bukkit-only method of interacting with zPermissions...
+
 ## Checking Group Membership ##
 
-**There is no public API**
-
-Let me say that again.
-
-**THERE IS NO PUBLIC API** :P
-
-However, as far as checking group membership, I strongly advocate the method hinted at by Dinnerbone in his [Permissions FAQ](http://forums.bukkit.org/threads/permissions-faq.25080/). Namely, using permissions to denote group membership.
+As far as checking group membership, I strongly advocate the method hinted at by Dinnerbone in his [Permissions FAQ](http://forums.bukkit.org/threads/permissions-faq.25080/). Namely, using permissions to denote group membership.
 
 zPermissions follows the convention put forth by the developers of WorldEdit, WorldGuard, etc., that is, check group membership by checking for a specific permission of the form:
 
@@ -22,7 +41,7 @@ Despite zPermissions doing this automatically, the beautiful thing about this co
 
 ## Enumerating a Player's Groups ##
 
-As above, zPermissions provides no public method to enumerate a player's groups. However, this can be easily done using only the Bukkit permissions API. For example:
+This can be easily done using only the Bukkit permissions API. For example:
 
     private static final String GROUP_PREFIX = "group.";
 
@@ -42,7 +61,7 @@ It is **STRONGLY** recommended that you actually make `GROUP_PREFIX` configurabl
 
 ## Changing Group Membership / Promoting / Demoting ##
 
-And this is where the line ends. :P I have no plans to provide any sort of public API for changing group memberships. I absolutely abhor writing to implementations (see what it's like for a modern plugin to support the half dozen or so economy plugins... although that might be a bad example due to the existence of the Register API :P).
+I have no plans to provide any sort of public API for changing group memberships. I absolutely abhor writing to implementations (see what it's like for a modern plugin to support the half dozen or so economy plugins... although that might be a bad example due to the existence of Vault/Register API :P).
 
 Unless Bukkit someday provides a groups management API (which seems like a bad idea, as it would be dictating an implementation detail to Superperms providers), the only supported method to programmatically modify group memberships in zPermissions **is through the command line**.
 
