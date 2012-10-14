@@ -159,6 +159,9 @@ public class ZPermissionsPlugin extends JavaPlugin {
     // Whether or not to use the database (Avaje) storage strategy
     private boolean databaseSupport;
 
+    // Maximum number of times to retry transactions (so total attempts is +1)
+    private int txnMaxRetries;
+
     // Strategy for permissions storage
     private StorageStrategy storageStrategy;
 
@@ -254,7 +257,7 @@ public class ZPermissionsPlugin extends JavaPlugin {
         // Set up TransactionStrategy and DAO
         if (getDescription().isDatabaseEnabled() && databaseSupport) {
             log(this, "Using database storage strategy.");
-            storageStrategy = new AvajeStorageStrategy(this, DEFAULT_TXN_MAX_RETRIES); // TODO make configurable?
+            storageStrategy = new AvajeStorageStrategy(this, txnMaxRetries); // TODO make configurable?
         }
         else {
             log(this, "Using file-based storage strategy.");
@@ -655,6 +658,7 @@ public class ZPermissionsPlugin extends JavaPlugin {
             dumpDirectory = new File(value);
 
         defaultTempPermissionTimeout = config.getInt("default-temp-permission-timeout", DEFAULT_TEMP_PERMISSION_TIMEOUT);
+        txnMaxRetries = config.getInt("txn-max-retries", DEFAULT_TXN_MAX_RETRIES); // FIXME hidden
 
         // Read tracks, if any
         ConfigurationSection node = config.getConfigurationSection("tracks");
