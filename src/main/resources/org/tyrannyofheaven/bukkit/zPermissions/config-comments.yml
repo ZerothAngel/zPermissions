@@ -55,5 +55,10 @@ region-support: |
   this to false will save some processing if you use WorldGuard but don't use
   region-based permissions. Has no effect if WorldGuard is not present.
 
+auto-refresh-interval: |
+  Interval, in minutes, in which to automatically refresh permissions from
+  the database. Set to a non-positive number to disable. Has no effect on
+  the flat-file storage method.
+
 debug: |
   Enable debug logging.
