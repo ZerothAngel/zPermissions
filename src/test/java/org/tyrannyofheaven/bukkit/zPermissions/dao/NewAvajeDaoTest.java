@@ -33,10 +33,10 @@ public class NewAvajeDaoTest extends AbstractDaoTest {
     public NewAvajeDaoTest() {
         // Bleh. But Avaje doesn't like being initialized more than once.
         // And Maven instantiates this class for each test.
-        synchronized (AvajeDaoTest.class) {
+        synchronized (NewAvajeDaoTest.class) {
             if (ebeanServer == null) {
                 ServerConfig config = new ServerConfig();
-                config.setName(AvajeDaoTest.class.getSimpleName());
+                config.setName(NewAvajeDaoTest.class.getSimpleName());
                 config.setDefaultServer(false);
 
                 DataSourceConfig dataSourceConfig = new DataSourceConfig();

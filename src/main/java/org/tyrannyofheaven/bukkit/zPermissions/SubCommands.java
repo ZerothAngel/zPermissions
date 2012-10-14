@@ -54,14 +54,10 @@ public class SubCommands {
     // The "/permissions group" handler
     private final GroupCommands groupCommand;
 
-    // The "/permissions cache" handler
-    private final CacheCommands cacheCommand;
-
     SubCommands(ZPermissionsPlugin plugin) {
         this.plugin = plugin;
         playerCommand = new PlayerCommands(plugin);
         groupCommand = new GroupCommands(plugin);
-        cacheCommand = new CacheCommands(plugin);
     }
 
     @Command(value={"player", "pl", "p"}, description="Player-related commands")
@@ -258,21 +254,6 @@ public class SubCommands {
             sendMessage(sender, colorize("{RED}Error exporting; see server log."));
             log(plugin, Level.SEVERE, "Error exporting:", e);
         }
-    }
-
-    @Command(value="cache", description="Cache-related commands")
-    @Require("zpermissions.cache")
-    public Object cache(HelpBuilder helpBuilder, CommandSender sender, String[] args) {
-        if (args.length == 0) {
-            helpBuilder.withCommandSender(sender)
-                .withHandler(cacheCommand)
-                .forCommand("monitor")
-                .forCommand("clear")
-                .show();
-            return null;
-        }
-        
-        return cacheCommand;
     }
 
 }

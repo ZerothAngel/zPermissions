@@ -63,9 +63,6 @@ import org.tyrannyofheaven.bukkit.zPermissions.model.PermissionRegion;
 import org.tyrannyofheaven.bukkit.zPermissions.model.PermissionWorld;
 import org.tyrannyofheaven.bukkit.zPermissions.service.ZPermissionsServiceImpl;
 
-import com.avaje.ebean.cache.ServerCache;
-import com.avaje.ebean.cache.ServerCacheManager;
-import com.avaje.ebean.cache.ServerCacheOptions;
 import com.sk89q.worldguard.bukkit.WorldGuardPlugin;
 import com.sk89q.worldguard.protection.ApplicableRegionSet;
 import com.sk89q.worldguard.protection.managers.RegionManager;
@@ -89,15 +86,6 @@ public class ZPermissionsPlugin extends JavaPlugin {
 
     // Default timeout for temporary permissions
     private static final int DEFAULT_TEMP_PERMISSION_TIMEOUT = 60;
-
-    // Default max-idle for Avaje bean cache
-    private static final int DEFAULT_CACHE_IDLE = 180;
-
-    // Default TTL for Avaje bean cache
-    private static final int DEFAULT_CACHE_TTL = 600;
-
-    // Default size of Avaje bean cache
-    private static final int DEFAULT_CACHE_SIZE = 1000;
 
     // Default value for kick-on-error
     private static final boolean DEFAULT_KICK_ON_ERROR = true;
@@ -155,15 +143,6 @@ public class ZPermissionsPlugin extends JavaPlugin {
 
     // The configured default temporary permission timeout
     private int defaultTempPermissionTimeout;
-
-    // The configured bean cache max-idle
-    private int cacheMaxIdle;
-    
-    // The configured bean cache TTL
-    private int cacheMaxTtl;
-
-    // The configured bean cache size
-    private int cacheSize;
 
     // Whether to kick users if there's any problem determining permissions
     private boolean kickOnError;
@@ -333,29 +312,6 @@ public class ZPermissionsPlugin extends JavaPlugin {
             installDDL();
             log(this, "Done.");
         }
-    }
-
-    // Apply cache settings to Avaje bean and query caches
-    // Arguably should be in AvajeStorageStrategy
-    void applyCacheSettings() {
-        if (cacheMaxIdle <= 0 && cacheMaxTtl <= 0 && cacheSize <= 0) return; // nothing to do
-        ServerCacheManager serverCacheManager = getDatabase().getServerCacheManager();
-        for (Class<?> clazz : getDatabaseClasses()) {
-            applyCacheSettings(serverCacheManager.getBeanCache(clazz));
-            applyCacheSettings(serverCacheManager.getQueryCache(clazz));
-        }
-    }
-
-    // Apply cache settings to the given Avaje ServerCache
-    private void applyCacheSettings(ServerCache cache) {
-        ServerCacheOptions beanCacheOptions = cache.getOptions();
-        if (cacheMaxIdle > 0)
-            beanCacheOptions.setMaxIdleSecs(cacheMaxIdle);
-        if (cacheMaxTtl > 0)
-            beanCacheOptions.setMaxSecsToLive(cacheMaxTtl);
-        if (cacheSize > 0)
-            beanCacheOptions.setMaxSize(cacheSize);
-        cache.setOptions(beanCacheOptions);
     }
 
     /* (non-Javadoc)
@@ -699,9 +655,6 @@ public class ZPermissionsPlugin extends JavaPlugin {
             dumpDirectory = new File(value);
 
         defaultTempPermissionTimeout = config.getInt("default-temp-permission-timeout", DEFAULT_TEMP_PERMISSION_TIMEOUT);
-        cacheMaxIdle = config.getInt("cache-max-idle", DEFAULT_CACHE_IDLE);
-        cacheMaxTtl = config.getInt("cache-max-ttl", DEFAULT_CACHE_TTL);
-        cacheSize = config.getInt("cache-size", DEFAULT_CACHE_SIZE);
 
         // Read tracks, if any
         ConfigurationSection node = config.getConfigurationSection("tracks");

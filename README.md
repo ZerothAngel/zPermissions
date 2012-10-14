@@ -63,7 +63,6 @@ The rank commands are `/promote`, `/demote`, `/setrank`, and `/unsetrank` and wi
 *   zpermissions.refresh &mdash; `/permissions refresh` command
 *   zpermissions.export &mdash; `/permissions export` command
 *   zpermissions.import &mdash; `/permissions import` command
-*   zpermissions.cache &mdash; `/permissions cache` command
 
 ### Rank Permissions ###
 
