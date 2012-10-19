@@ -75,7 +75,7 @@ public class PlayerCommands extends CommonCommands {
     }
 
     @Command(value={"setgroup", "group"}, description="Set this player's singular group")
-    public void setGroup(CommandSender sender, final @Session("entityName") String playerName, final @Option("group") String groupName) {
+    public void setGroup(CommandSender sender, final @Session("entityName") String playerName, final @Option(value="group", completer="group") String groupName) {
         try {
             plugin.getRetryingTransactionStrategy().execute(new TransactionCallbackWithoutResult() {
                 @Override

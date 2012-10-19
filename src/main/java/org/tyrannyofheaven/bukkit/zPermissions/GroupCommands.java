@@ -64,7 +64,7 @@ public class GroupCommands extends CommonCommands {
     }
 
     @Command(value="add", description="Add a player to a group")
-    public void addMember(CommandSender sender, final @Session("entityName") String groupName, final @Option("player") String playerName) {
+    public void addMember(CommandSender sender, final @Session("entityName") String groupName, final @Option(value="player", completer="player") String playerName) {
         // Add player to group.
         try {
             plugin.getRetryingTransactionStrategy().execute(new TransactionCallbackWithoutResult() {
@@ -85,7 +85,7 @@ public class GroupCommands extends CommonCommands {
     }
 
     @Command(value={"remove", "rm"}, description="Remove a player from a group")
-    public void removeMember(CommandSender sender, final @Session("entityName") String groupName, final @Option("player") String playerName) {
+    public void removeMember(CommandSender sender, final @Session("entityName") String groupName, final @Option(value="player", completer="player") String playerName) {
         // Remove player from group
         Boolean result = plugin.getRetryingTransactionStrategy().execute(new TransactionCallback<Boolean>() {
             @Override
@@ -126,7 +126,7 @@ public class GroupCommands extends CommonCommands {
     }
 
     @Command(value={"setparent", "parent"}, description="Set a group's parent")
-    public void setParent(CommandSender sender, final @Session("entityName") String groupName, final @Option(value="parent", optional=true) String parentName) {
+    public void setParent(CommandSender sender, final @Session("entityName") String groupName, final @Option(value="parent", optional=true, completer="group") String parentName) {
         try {
             // Set parent. Creates group and/or parent if missing.
             plugin.getRetryingTransactionStrategy().execute(new TransactionCallbackWithoutResult() {

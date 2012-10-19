@@ -30,6 +30,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -159,7 +160,7 @@ public class ZPermissionsPlugin extends JavaPlugin {
     private boolean regionSupportEnable;
 
     // Track definitions
-    private Map<String, List<String>> tracks = new HashMap<String, List<String>>();
+    private Map<String, List<String>> tracks = new LinkedHashMap<String, List<String>>();
 
     // Whether or not to use the database (Avaje) storage strategy
     private boolean databaseSupport;
@@ -292,7 +293,11 @@ public class ZPermissionsPlugin extends JavaPlugin {
         }
 
         // Install our commands
-        (new ToHCommandExecutor<ZPermissionsPlugin>(this, new RootCommands(this))).registerCommands();
+        (new ToHCommandExecutor<ZPermissionsPlugin>(this, new RootCommands(this)))
+            .registerTypeCompleter("group", new GroupTypeCompleter(getDao()))
+            .registerTypeCompleter("track", new TrackTypeCompleter(this))
+            .registerTypeCompleter("dump-dir", new DirTypeCompleter(this))
+            .registerCommands();
 
         // Detect WorldGuard
         worldGuardPlugin = (WorldGuardPlugin)getServer().getPluginManager().getPlugin("WorldGuard");
@@ -579,6 +584,15 @@ public class ZPermissionsPlugin extends JavaPlugin {
      */
     List<String> getTrack(String trackName) {
         return tracks.get(trackName);
+    }
+
+    /**
+     * Retrieve names of all tracks.
+     * 
+     * @return names of all tracks
+     */
+    List<String> getTracks() {
+        return new ArrayList<String>(tracks.keySet());
     }
 
     /**

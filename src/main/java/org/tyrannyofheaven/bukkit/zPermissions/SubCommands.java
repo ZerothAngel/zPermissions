@@ -62,7 +62,7 @@ public class SubCommands {
 
     @Command(value={"player", "pl", "p"}, description="Player-related commands")
     @Require("zpermissions.player")
-    public PlayerCommands player(HelpBuilder helpBuilder, CommandSender sender, CommandSession session, @Option(value="player", nullable=true) String playerName, String[] args) {
+    public PlayerCommands player(HelpBuilder helpBuilder, CommandSender sender, CommandSession session, @Option(value="player", nullable=true, completer="player") String playerName, String[] args) {
         if (args.length == 0) {
             // Display sub-command help
             helpBuilder.withCommandSender(sender)
@@ -86,7 +86,7 @@ public class SubCommands {
 
     @Command(value={"group", "gr", "g"}, description="Group-related commands")
     @Require("zpermissions.group")
-    public CommonCommands group(HelpBuilder helpBuilder, CommandSender sender, CommandSession session, @Option(value="group", nullable=true) String groupName, String[] args) {
+    public CommonCommands group(HelpBuilder helpBuilder, CommandSender sender, CommandSession session, @Option(value="group", nullable=true, completer="group") String groupName, String[] args) {
         if (args.length == 0) {
             // Display sub-command help
             helpBuilder.withCommandSender(sender)
@@ -113,7 +113,7 @@ public class SubCommands {
 
     @Command(value={"list", "ls"}, description="List players or groups in the database")
     @Require("zpermissions.list")
-    public void list(CommandSender sender, @Option("what") String what) {
+    public void list(CommandSender sender, @Option(value="what", completer="constant:groups players") String what) {
         boolean group;
         if ("groups".startsWith(what)) {
             group = true;
@@ -139,7 +139,7 @@ public class SubCommands {
 
     @Command(value="check", description="Check against effective permissions")
     @Require("zpermissions.check")
-    public void check(CommandSender sender, @Option("permission") String permission, @Option(value="player", optional=true) String playerName) {
+    public void check(CommandSender sender, @Option("permission") String permission, @Option(value="player", optional=true, completer="player") String playerName) {
         Player player;
         if (playerName == null) {
             // No player specified
@@ -202,7 +202,7 @@ public class SubCommands {
 
     @Command(value={"import", "restore"}, description="Import a dump of the database")
     @Require("zpermissions.import")
-    public void import_command(final CommandSender sender, @Option("filename") String filename) {
+    public void import_command(final CommandSender sender, @Option(value="filename", completer="dump-dir") String filename) {
         File inFile = sanitizeFilename(plugin.getDumpDirectory(), filename);
         try {
             // Ensure database is empty
@@ -238,7 +238,7 @@ public class SubCommands {
     
     @Command(value={"export", "dump"}, description="Export a dump of the database")
     @Require("zpermissions.export")
-    public void export(CommandSender sender, @Option("filename") String filename) {
+    public void export(CommandSender sender, @Option(value="filename", completer="dump-dir") String filename) {
         File outFile = sanitizeFilename(plugin.getDumpDirectory(), filename);
         try {
             if (!plugin.getDumpDirectory().exists()) {

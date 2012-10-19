@@ -232,13 +232,13 @@ public class RootCommands {
 
     @Command("promote")
     @Require("zpermissions.promote")
-    public void promote(CommandSender sender, @Option("-q") boolean quiet, @Option("-Q") boolean loud, @Option("player") String playerName, @Option(value="track", optional=true) String trackName) {
+    public void promote(CommandSender sender, @Option("-q") boolean quiet, @Option("-Q") boolean loud, @Option(value="player", completer="player") String playerName, @Option(value="track", optional=true, completer="track") String trackName) {
         rankChange(sender, playerName, trackName, true, determineScope(quiet, loud));
     }
 
     @Command("demote")
     @Require("zpermissions.demote")
-    public void demote(CommandSender sender, @Option("-q") boolean quiet, @Option("-Q") boolean loud, @Option("player") String playerName, @Option(value="track", optional=true) String trackName) {
+    public void demote(CommandSender sender, @Option("-q") boolean quiet, @Option("-Q") boolean loud, @Option(value="player", completer="player") String playerName, @Option(value="track", optional=true, completer="track") String trackName) {
         rankChange(sender, playerName, trackName, false, determineScope(quiet, loud));
     }
 
@@ -352,13 +352,13 @@ public class RootCommands {
 
     @Command("setrank")
     @Require("zpermissions.setrank")
-    public void setrank(CommandSender sender, @Option("-q") boolean quiet, @Option("-Q") boolean loud, @Option("player") String playerName, @Option("rank") String rankName, @Option(value="track", optional=true) String trackName) {
+    public void setrank(CommandSender sender, @Option("-q") boolean quiet, @Option("-Q") boolean loud, @Option(value="player", completer="player") String playerName, @Option("rank") String rankName, @Option(value="track", optional=true, completer="track") String trackName) {
         rankSet(sender, playerName, trackName, rankName, determineScope(quiet, loud));
     }
 
     @Command("unsetrank")
     @Require("zpermissions.unsetrank")
-    public void unsetrank(CommandSender sender, @Option("-q") boolean quiet, @Option("-Q") boolean loud, @Option("player") String playerName, @Option(value="track", optional=true) String trackName) {
+    public void unsetrank(CommandSender sender, @Option("-q") boolean quiet, @Option("-Q") boolean loud, @Option(value="player", completer="player") String playerName, @Option(value="track", optional=true, completer="track") String trackName) {
         rankSet(sender, playerName, trackName, null, determineScope(quiet, loud));
     }
 
