@@ -58,7 +58,9 @@ region-support: |
 auto-refresh-interval: |
   Interval, in minutes, in which to automatically refresh permissions from
   the database. Set to a non-positive number to disable. Has no effect on
-  the flat-file storage method.
+  the flat-file storage method. DO NOT SET IT TOO LOW. Otherwise you run
+  the risk of refreshes overlapping or permissions changes inexplicably
+  being "forgotten."
 
 debug: |
   Enable debug logging.

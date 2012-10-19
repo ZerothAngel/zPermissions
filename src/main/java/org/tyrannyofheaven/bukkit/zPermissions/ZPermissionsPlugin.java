@@ -777,11 +777,12 @@ public class ZPermissionsPlugin extends JavaPlugin {
             autoRefreshTaskId = Bukkit.getScheduler().scheduleSyncRepeatingTask(this, new Runnable() {
                 @Override
                 public void run() {
-                    debug(plugin, "Starting auto-refresh...");
+                    log(plugin, "Refreshing from database...");
                     refresh(new Runnable() {
                         @Override
                         public void run() {
                             // This is executed after the storage refresh is done.
+                            log(plugin, "Refresh done.");
                             refreshPlayers();
                         }
                     });
