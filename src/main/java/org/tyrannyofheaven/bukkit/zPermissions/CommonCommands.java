@@ -53,7 +53,7 @@ public abstract class CommonCommands {
     }
 
     @Command(value="get", description="View a permission")
-    public void get(CommandSender sender, final @Session("entityName") String name, @Option(value="permission") String permission) {
+    public void get(CommandSender sender, final @Session("entityName") String name, @Option("permission") String permission) {
         // Get world/permission
         final WorldPermission wp = new WorldPermission(permission);
 
