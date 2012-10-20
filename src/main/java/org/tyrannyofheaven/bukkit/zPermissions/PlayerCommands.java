@@ -105,7 +105,7 @@ public class PlayerCommands extends CommonCommands {
         }
         
         sendMessage(sender, colorize("{YELLOW}Declared permissions for {AQUA}%s{YELLOW}:"), entity.getDisplayName());
-        for (Entry e : entity.getPermissions()) {
+        for (Entry e : Utils.sortPermissions(entity.getPermissions())) {
             displayEntry(sender, e);
         }
     }
