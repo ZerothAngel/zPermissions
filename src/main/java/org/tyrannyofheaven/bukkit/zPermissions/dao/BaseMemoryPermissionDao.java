@@ -24,6 +24,16 @@ import org.tyrannyofheaven.bukkit.zPermissions.model.PermissionWorld;
  */
 public abstract class BaseMemoryPermissionDao implements PermissionDao {
 
+    private static final Comparator<PermissionEntity> PERMISSION_ENTITY_PRIORITY_COMPARATOR = new Comparator<PermissionEntity>() {
+        @Override
+        public int compare(PermissionEntity a, PermissionEntity b) {
+            int pri = a.getPriority() - b.getPriority();
+            if (pri != 0)
+                return pri;
+            return a.getName().compareTo(b.getName());
+        }
+    };
+
     private MemoryState memoryState = new MemoryState();
 
     protected MemoryState setMemoryState(MemoryState memoryState) {
@@ -298,15 +308,7 @@ public abstract class BaseMemoryPermissionDao implements PermissionDao {
         if (groups != null)
             groupsEntities.addAll(groups);
     
-        Collections.sort(groupsEntities, new Comparator<PermissionEntity>() {
-            @Override
-            public int compare(PermissionEntity a, PermissionEntity b) {
-                int pri = a.getPriority() - b.getPriority();
-                if (pri != 0)
-                    return pri;
-                return a.getName().compareTo(b.getName());
-            }
-        });
+        Collections.sort(groupsEntities, PERMISSION_ENTITY_PRIORITY_COMPARATOR);
     
         List<String> resultString = new ArrayList<String>(groupsEntities.size());
         for (PermissionEntity group : groupsEntities) {

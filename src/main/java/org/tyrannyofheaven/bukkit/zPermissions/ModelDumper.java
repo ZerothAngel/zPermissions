@@ -21,7 +21,6 @@ import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
@@ -93,7 +92,7 @@ public class ModelDumper {
 
     // Dump permissions for a player or group
     private void dumpPermissions(final PrintWriter out, PermissionEntity entity) {
-        for (Entry e : sortPermissions(entity.getPermissions())) {
+        for (Entry e : Utils.sortPermissions(entity.getPermissions())) {
             out.println(String.format("permissions %s %s set %s%s%s %s",
                     (entity.isGroup() ? "group" : "player"),
                     entity.getDisplayName(),
@@ -107,12 +106,7 @@ public class ModelDumper {
     private List<PermissionEntity> sortPlayers(Collection<PermissionEntity> players) {
         List<PermissionEntity> result = new ArrayList<PermissionEntity>(players);
         // Just sort alphabetically
-        Collections.sort(result, new Comparator<PermissionEntity>() {
-            @Override
-            public int compare(PermissionEntity a, PermissionEntity b) {
-                return a.getDisplayName().compareTo(b.getDisplayName());
-            }
-        });
+        Collections.sort(result, Utils.PERMISSION_ENTITY_ALPHA_COMPARATOR);
         return result;
     }
 
@@ -139,45 +133,11 @@ public class ModelDumper {
             children.addAll(group.getChildren());
             
             // Sort children alphabetically
-            Collections.sort(children, new Comparator<PermissionEntity>() {
-                @Override
-                public int compare(PermissionEntity a, PermissionEntity b) {
-                    return a.getDisplayName().compareTo(b.getDisplayName());
-                }
-            });
+            Collections.sort(children, Utils.PERMISSION_ENTITY_ALPHA_COMPARATOR);
 
             scanList.addAll(children);
         }
 
-        return result;
-    }
-
-    private List<Entry> sortPermissions(Collection<Entry> entries) {
-        List<Entry> result = new ArrayList<Entry>(entries);
-        Collections.sort(result, new Comparator<Entry>() {
-            @Override
-            public int compare(Entry a, Entry b) {
-                if (a.getRegion() != null && b.getRegion() == null)
-                    return 1;
-                else if (a.getRegion() == null && b.getRegion() != null)
-                    return -1;
-                else if (a.getRegion() != null && b.getRegion() != null) {
-                    int regions = a.getRegion().getName().compareTo(b.getRegion().getName());
-                    if (regions != 0) return regions;
-                }
-
-                if (a.getWorld() != null && b.getWorld() == null)
-                    return 1;
-                else if (a.getWorld() == null && b.getWorld() != null)
-                    return -1;
-                else if (a.getWorld() != null && b.getWorld() != null) {
-                    int worlds = a.getWorld().getName().compareTo(b.getWorld().getName());
-                    if (worlds != 0) return worlds;
-                }
-
-                return a.getPermission().compareTo(b.getPermission());
-            }
-        });
         return result;
     }
 

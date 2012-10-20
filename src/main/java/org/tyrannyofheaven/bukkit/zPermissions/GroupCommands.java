@@ -114,7 +114,7 @@ public class GroupCommands extends CommonCommands {
             if (entity.getParent() != null) {
                 sendMessage(sender, colorize("{YELLOW}Parent: {DARK_GREEN}%s"), entity.getParent().getDisplayName());
             }
-            for (Entry e : entity.getPermissions()) {
+            for (Entry e : Utils.sortPermissions(entity.getPermissions())) {
                 displayEntry(sender, e);
             }
         }
