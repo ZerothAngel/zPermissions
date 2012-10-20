@@ -140,8 +140,8 @@ Sources may be found on GitHub:
 
 Development builds may be found on my continous integration site:
 
-*   [zPermissions](http://ci.tyrannyofheaven.org/job/zPermissions/lastSuccessfulBuild/org.tyrannyofheaven.bukkit$zPermissions/) (Requires ToHPluginUtils.jar)
-*   [zPermissions-standlone](http://ci.tyrannyofheaven.org/job/zPermissions-standalone/lastSuccessfulBuild/org.tyrannyofheaven.bukkit$zPermissions/) (includes ToHPluginUtils, like the version distributed on dev.bukkit.org)
+*   [zPermissions](http://ci.tyrannyofheaven.org/job/zPermissions/) (Requires ToHPluginUtils.jar)
+*   [zPermissions-standlone](http://ci.tyrannyofheaven.org/job/zPermissions-standalone/) (includes ToHPluginUtils, like the version distributed on dev.bukkit.org)
 
 ## To Do ##
 
