@@ -6,11 +6,33 @@ Since 0.9.8, zPermissions has provided an API for common, read-only operations. 
 
 The API methods are exposed via the [ZPermissionsService](https://github.com/ZerothAngel/zPermissions/blob/master/src/main/java/org/tyrannyofheaven/bukkit/zPermissions/ZPermissionsService.java) interface.
 
-First, you will need to add zPermissions-X.Y.Z.jar to your build path somehow. (Sorry Maven users, I currently don't have a Maven repository.)
+First, you will need to add zPermissions-X.Y.Z.jar to your build path somehow. If your project uses Maven, add the following repository to your POM:
+
+    <repository>
+      <id>tyrannyofheaven.org</id>
+      <url>http://maven.tyrannyofheaven.org/</url>
+    </repository>
+
+Then add the following dependency:
+
+    <dependency>
+      <groupId>org.tyrannyofheaven.bukkit</groupId>
+      <artifactId>zPermissions</artifactId>
+      <version>[0.9.8,)</version>
+      <scope>provided</scope>
+    </dependency>
+
+If you don't use Maven (and why not?), you can visit my [Maven repository](http://maven.tyrannyofheaven.org/org/tyrannyofheaven/bukkit/zPermissions/) directly and download any version > 0.9.8.
 
 Next, to get an actual implementation of this interface, your plugin should do something like the following:
 
-    ZPermissionsService zPermissionsService = Bukkit.getServicesManager().load(ZPermissionsService.class);
+	ZPermissionsService zPermissionsService = null;
+	try {
+	    zPermissionsService = Bukkit.getServicesManager().load(ZPermissionsService.class);
+	}
+	catch (NoClassDefFoundError e) {
+	    // Eh...
+	}
 	if (zPermissionsService == null) {
 	    // zPermissions not found, do something else
 	}
