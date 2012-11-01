@@ -20,6 +20,7 @@ import static org.tyrannyofheaven.bukkit.util.ToHMessageUtils.sendMessage;
 import static org.tyrannyofheaven.bukkit.util.ToHStringUtils.delimitedString;
 import static org.tyrannyofheaven.bukkit.util.ToHStringUtils.hasText;
 import static org.tyrannyofheaven.bukkit.util.ToHUtils.assertFalse;
+import static org.tyrannyofheaven.bukkit.util.command.reader.CommandReader.abortBatchProcessing;
 import static org.tyrannyofheaven.bukkit.util.permissions.PermissionUtils.requireOnePermission;
 
 import java.util.HashSet;
@@ -117,6 +118,7 @@ public class RootCommands {
         final List<String> track = plugin.getTrack(trackName);
         if (track == null || track.isEmpty()) {
             sendMessage(sender, colorize("{RED}Track has not been defined."));
+            abortBatchProcessing();
             return;
         }
 
@@ -142,6 +144,7 @@ public class RootCommands {
                     // Hmm, player is member of 2 or more groups in track. Don't know
                     // what to do, so abort.
                     sendMessage(sender, colorize("{RED}Player is in more than one group in that track: {DARK_GREEN}%s"), delimitedString(", ", playerGroupNames));
+                    abortBatchProcessing();
                     return false;
                 }
                 else if (playerGroupNames.isEmpty()) {
@@ -153,6 +156,7 @@ public class RootCommands {
                         }
                         catch (MissingGroupException e) {
                             sendMessage(sender, colorize("{RED}Group {DARK_GREEN}%s{RED} does not exist."), e.getGroupName());
+                            abortBatchProcessing();
                             return false;
                         }
                         announce(scope, "%s added %s to %s", sender.getName(), playerName, group);
@@ -161,6 +165,7 @@ public class RootCommands {
                     }
                     else {
                         sendMessage(sender, colorize("{RED}Player is not in any groups in that track."));
+                        abortBatchProcessing();
                     }
                     return true;
                 }
@@ -191,6 +196,7 @@ public class RootCommands {
                         }
                         catch (MissingGroupException e) {
                             sendMessage(sender, colorize("{RED}Group {DARK_GREEN}%s{RED} does not exist."), e.getGroupName());
+                            abortBatchProcessing();
                             return false;
                         }
                         if (!oldGroup.equalsIgnoreCase(newGroup))
@@ -253,6 +259,7 @@ public class RootCommands {
         final List<String> track = plugin.getTrack(trackName);
         if (track == null || track.isEmpty()) {
             sendMessage(sender, colorize("{RED}Track has not been defined."));
+            abortBatchProcessing();
             return;
         }
 
@@ -264,6 +271,7 @@ public class RootCommands {
 
         if (rankName != null && !track.contains(rankName)) {
             sendMessage(sender, colorize("{RED}Rank is not in the track."));
+            abortBatchProcessing();
             return;
         }
 
@@ -283,6 +291,7 @@ public class RootCommands {
                     // Hmm, player is member of 2 or more groups in track. Don't know
                     // what to do, so abort.
                     sendMessage(sender, colorize("{RED}Player is in more than one group in that track: {DARK_GREEN}%s"), delimitedString(", ", playerGroupNames));
+                    abortBatchProcessing();
                     return false;
                 }
                 else if (playerGroupNames.isEmpty()) {
@@ -293,6 +302,7 @@ public class RootCommands {
                         }
                         catch (MissingGroupException e) {
                             sendMessage(sender, colorize("{RED}Group {DARK_GREEN}%s{RED} does not exist."), e.getGroupName());
+                            abortBatchProcessing();
                             return false;
                         }
                         announce(scope, "%s added %s to %s", sender.getName(), playerName, rankName);
@@ -301,6 +311,7 @@ public class RootCommands {
                     }
                     else {
                         sendMessage(sender, colorize("{RED}Player is not in any groups in that track."));
+                        abortBatchProcessing();
                     }
                     return true;
                 }
@@ -315,6 +326,7 @@ public class RootCommands {
                         }
                         catch (MissingGroupException e) {
                             sendMessage(sender, colorize("{RED}Group {DARK_GREEN}%s{RED} does not exist."), e.getGroupName());
+                            abortBatchProcessing();
                             return false;
                         }
 

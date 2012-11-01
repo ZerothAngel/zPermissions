@@ -18,6 +18,7 @@ package org.tyrannyofheaven.bukkit.zPermissions;
 import static org.tyrannyofheaven.bukkit.util.ToHLoggingUtils.log;
 import static org.tyrannyofheaven.bukkit.util.ToHMessageUtils.colorize;
 import static org.tyrannyofheaven.bukkit.util.ToHMessageUtils.sendMessage;
+import static org.tyrannyofheaven.bukkit.util.command.reader.CommandReader.abortBatchProcessing;
 import static org.tyrannyofheaven.bukkit.util.permissions.PermissionUtils.requirePermission;
 
 import java.io.File;
@@ -145,6 +146,7 @@ public class SubCommands {
             // No player specified
             if (!(sender instanceof Player)) {
                 sendMessage(sender, colorize("{RED}Cannot check permissions of console."));
+                abortBatchProcessing();
                 return;
             }
             // Use sender
@@ -157,6 +159,7 @@ public class SubCommands {
             player = plugin.getServer().getPlayer(playerName);
             if (player == null) {
                 sendMessage(sender, colorize("{RED}Player is not online."));
+                abortBatchProcessing();
                 return;
             }
         }

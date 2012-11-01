@@ -17,6 +17,7 @@ package org.tyrannyofheaven.bukkit.zPermissions;
 
 import static org.tyrannyofheaven.bukkit.util.ToHMessageUtils.colorize;
 import static org.tyrannyofheaven.bukkit.util.ToHMessageUtils.sendMessage;
+import static org.tyrannyofheaven.bukkit.util.command.reader.CommandReader.abortBatchProcessing;
 
 import java.util.Iterator;
 import java.util.List;
@@ -115,6 +116,7 @@ public class PlayerCommands extends CommonCommands {
         Player player = plugin.getServer().getPlayer(playerName);
         if (player == null) {
             sendMessage(sender, colorize("{RED}Player is not online."));
+            abortBatchProcessing();
             return;
         }
         
@@ -122,6 +124,7 @@ public class PlayerCommands extends CommonCommands {
             timeout = plugin.getDefaultTempPermissionTimeout();
         if (timeout <= 0) {
             sendMessage(sender, colorize("{RED}Invalid timeout."));
+            abortBatchProcessing();
             return;
         }
 
