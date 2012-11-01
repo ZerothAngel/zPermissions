@@ -19,6 +19,7 @@ import static org.tyrannyofheaven.bukkit.util.ToHMessageUtils.broadcastAdmin;
 import static org.tyrannyofheaven.bukkit.util.ToHMessageUtils.colorize;
 import static org.tyrannyofheaven.bukkit.util.ToHMessageUtils.sendMessage;
 import static org.tyrannyofheaven.bukkit.util.ToHStringUtils.delimitedString;
+import static org.tyrannyofheaven.bukkit.util.command.reader.CommandReader.abortBatchProcessing;
 
 import java.util.List;
 
@@ -59,8 +60,10 @@ public class GroupCommands extends CommonCommands {
             broadcastAdmin(plugin, "%s created group %s", sender.getName(), groupName);
             sendMessage(sender, colorize("{YELLOW}Group {DARK_GREEN}%s{YELLOW} created."), groupName);
         }
-        else
+        else {
             sendMessage(sender, colorize("{RED}Group {DARK_GREEN}%s{RED} already exists."), groupName);
+            abortBatchProcessing();
+        }
     }
 
     @Command(value="add", description="Add a player to a group")
@@ -101,6 +104,7 @@ public class GroupCommands extends CommonCommands {
         else {
             sendMessage(sender, colorize("{DARK_GREEN}%s{RED} does not exist or {AQUA}%s{RED} is not a member"), groupName, playerName);
             plugin.checkPlayer(sender, playerName);
+            abortBatchProcessing();
         }
     }
 
@@ -119,7 +123,12 @@ public class GroupCommands extends CommonCommands {
             }
         }
 
-        if (entity == null || entity.getPermissions().isEmpty()) {
+        if (entity == null) {
+            sendMessage(sender, colorize("{RED}Group {DARK_GREEN}%s{RED} does not exist."), groupName);
+            abortBatchProcessing();
+            return;
+        }
+        else if (entity.getPermissions().isEmpty()) {
             sendMessage(sender, colorize("{RED}Group has no declared permissions."));
             return;
         }
@@ -143,6 +152,7 @@ public class GroupCommands extends CommonCommands {
         catch (DaoException e) {
             // Most likely due to inheritance cycle
             sendMessage(sender, colorize("{RED}%s"), e.getMessage());
+            abortBatchProcessing();
             return;
         }
 

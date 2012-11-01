@@ -17,6 +17,7 @@ package org.tyrannyofheaven.bukkit.zPermissions;
 
 import static org.tyrannyofheaven.bukkit.util.ToHMessageUtils.colorize;
 import static org.tyrannyofheaven.bukkit.util.ToHMessageUtils.sendMessage;
+import static org.tyrannyofheaven.bukkit.util.command.reader.CommandReader.abortBatchProcessing;
 
 import org.bukkit.ChatColor;
 import org.bukkit.command.CommandSender;
@@ -69,6 +70,7 @@ public abstract class CommonCommands {
             sendMessage(sender, colorize("%s%s{YELLOW} does not set {GOLD}%s"), group ? ChatColor.DARK_GREEN : ChatColor.AQUA, name, permission);
             if (!group)
                 plugin.checkPlayer(sender, name);
+            abortBatchProcessing();
         }
         else {
             sendMessage(sender, colorize("%s%s{YELLOW} sets {GOLD}%s{YELLOW} to {GREEN}%s"), group ? ChatColor.DARK_GREEN : ChatColor.AQUA, name, permission, result);
@@ -128,6 +130,7 @@ public abstract class CommonCommands {
             sendMessage(sender, colorize("%s%s{RED} does not set {GOLD}%s"), group ? ChatColor.DARK_GREEN : ChatColor.AQUA, name, permission);
             if (!group)
                 plugin.checkPlayer(sender, name);
+            abortBatchProcessing();
         }
     }
 
@@ -150,8 +153,10 @@ public abstract class CommonCommands {
             else
                 plugin.refreshPlayer(name);
         }
-        else
+        else {
             sendMessage(sender, colorize("{RED}%s not found."), group ? "Group" : "Player");
+            abortBatchProcessing();
+        }
     }
 
     protected void displayEntry(CommandSender sender, Entry e) {
@@ -164,6 +169,7 @@ public abstract class CommonCommands {
 
     protected void handleMissingGroup(CommandSender sender, MissingGroupException e) {
         sendMessage(sender, colorize("{RED}Group {DARK_GREEN}%s{RED} does not exist."), e.getGroupName());
+        abortBatchProcessing();
     }
 
 }
