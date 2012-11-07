@@ -122,11 +122,11 @@ public class RootCommands {
             return;
         }
 
-        requireOnePermission(sender,
-                String.format("zpermissions.%s.*", rankUp ? "promote" : "demote"),
+        requireOnePermission(sender, true,
                 String.format("zpermissions.%s.%s", rankUp ? "promote" : "demote", trackName),
-                "zpermissions.rank.*",
-                String.format("zpermissions.rank.%s", trackName));
+                String.format("zpermissions.%s.*", rankUp ? "promote" : "demote"),
+                String.format("zpermissions.rank.%s", trackName),
+                "zpermissions.rank.*");
 
         // Determine what groups the player and the track have in common
         final Set<String> trackGroupNames = new HashSet<String>(track);
@@ -263,11 +263,11 @@ public class RootCommands {
             return;
         }
 
-        requireOnePermission(sender,
-                String.format("zpermissions.%s.*", rankName == null ? "unsetrank" : "setrank"),
+        requireOnePermission(sender, true,
                 String.format("zpermissions.%s.%s", (rankName == null ? "unsetrank" : "setrank"), trackName),
-                "zpermissions.rank.*",
-                String.format("zpermissions.rank.%s", trackName));
+                String.format("zpermissions.%s.*", rankName == null ? "unsetrank" : "setrank"),
+                String.format("zpermissions.rank.%s", trackName),
+                "zpermissions.rank.*");
 
         if (rankName != null && !track.contains(rankName)) {
             sendMessage(sender, colorize("{RED}Rank is not in the track."));
