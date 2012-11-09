@@ -110,7 +110,7 @@ public class RootCommands {
     }
 
     // Perform the actual promotion/demotion
-    private void rankChange(final CommandSender sender, final String playerName, String trackName, final boolean rankUp, final BroadcastScope scope) {
+    private void rankChange(final CommandSender sender, final String playerName, String trackName, final boolean rankUp, final BroadcastScope scope, final boolean verbose) {
         // Resolve track
         if (!hasText(trackName))
             trackName = plugin.getDefaultTrack();
@@ -160,7 +160,7 @@ public class RootCommands {
                             return false;
                         }
                         announce(scope, "%s added %s to %s", sender.getName(), playerName, group);
-                        if (scope.isShouldEcho())
+                        if (scope.isShouldEcho() || verbose)
                             sendMessage(sender, colorize("{YELLOW}Adding {AQUA}%s{YELLOW} to {DARK_GREEN}%s"), playerName, group);
                     }
                     else {
@@ -181,7 +181,7 @@ public class RootCommands {
                     if (rankIndex < 0) {
                         plugin.getDao().removeMember(oldGroup, playerName);
                         announce(scope, "%s removed %s from %s", sender.getName(), playerName, oldGroup);
-                        if (scope.isShouldEcho())
+                        if (scope.isShouldEcho() || verbose)
                             sendMessage(sender, colorize("{YELLOW}Removing {AQUA}%s{YELLOW} from {DARK_GREEN}%s"), playerName, oldGroup);
                     }
                     else {
@@ -207,7 +207,7 @@ public class RootCommands {
                                 playerName,
                                 oldGroup,
                                 newGroup);
-                        if (scope.isShouldEcho())
+                        if (scope.isShouldEcho() || verbose)
                             sendMessage(sender, colorize("{YELLOW}%s {AQUA}%s{YELLOW} from {DARK_GREEN}%s{YELLOW} to {DARK_GREEN}%s"),
                                     (rankUp ? "Promoting" : "Demoting"),
                                     playerName,
@@ -220,7 +220,7 @@ public class RootCommands {
             }
         });
         
-        if (check && scope.isShouldEcho())
+        if (check && (scope.isShouldEcho() || verbose))
             plugin.checkPlayer(sender, playerName);
         plugin.refreshPlayer(playerName);
     }
@@ -238,18 +238,18 @@ public class RootCommands {
 
     @Command("promote")
     @Require("zpermissions.promote")
-    public void promote(CommandSender sender, @Option("-q") boolean quiet, @Option("-Q") boolean loud, @Option(value="player", completer="player") String playerName, @Option(value="track", optional=true, completer="track") String trackName) {
-        rankChange(sender, playerName, trackName, true, determineScope(quiet, loud));
+    public void promote(CommandSender sender, @Option("-q") boolean quiet, @Option("-Q") boolean loud, @Option("-v") boolean verbose, @Option(value="player", completer="player") String playerName, @Option(value="track", optional=true, completer="track") String trackName) {
+        rankChange(sender, playerName, trackName, true, determineScope(quiet, loud), verbose);
     }
 
     @Command("demote")
     @Require("zpermissions.demote")
-    public void demote(CommandSender sender, @Option("-q") boolean quiet, @Option("-Q") boolean loud, @Option(value="player", completer="player") String playerName, @Option(value="track", optional=true, completer="track") String trackName) {
-        rankChange(sender, playerName, trackName, false, determineScope(quiet, loud));
+    public void demote(CommandSender sender, @Option("-q") boolean quiet, @Option("-Q") boolean loud, @Option("-v") boolean verbose,  @Option(value="player", completer="player") String playerName, @Option(value="track", optional=true, completer="track") String trackName) {
+        rankChange(sender, playerName, trackName, false, determineScope(quiet, loud), verbose);
     }
 
     // Set rank to a specified rank on a track
-    private void rankSet(final CommandSender sender, final String playerName, String trackName, final String rankName, final BroadcastScope scope) {
+    private void rankSet(final CommandSender sender, final String playerName, String trackName, final String rankName, final BroadcastScope scope, final boolean verbose) {
         // TODO lots of duped code from rankChange, refactor
 
         // Resolve track
@@ -306,7 +306,7 @@ public class RootCommands {
                             return false;
                         }
                         announce(scope, "%s added %s to %s", sender.getName(), playerName, rankName);
-                        if (scope.isShouldEcho())
+                        if (scope.isShouldEcho() || verbose)
                             sendMessage(sender, colorize("{YELLOW}Adding {AQUA}%s{YELLOW} to {DARK_GREEN}%s"), playerName, rankName);
                     }
                     else {
@@ -338,7 +338,7 @@ public class RootCommands {
                                 playerName,
                                 oldGroup,
                                 rankName);
-                        if (scope.isShouldEcho())
+                        if (scope.isShouldEcho() || verbose)
                             sendMessage(sender, colorize("{YELLOW}Changing rank of {AQUA}%s{YELLOW} from {DARK_GREEN}%s{YELLOW} to {DARK_GREEN}%s"),
                                     playerName,
                                     oldGroup,
@@ -349,7 +349,7 @@ public class RootCommands {
                         plugin.getDao().removeMember(oldGroup, playerName);
 
                         announce(scope, "%s removed %s from %s", sender.getName(), playerName, oldGroup);
-                        if (scope.isShouldEcho())
+                        if (scope.isShouldEcho() || verbose)
                             sendMessage(sender, colorize("{YELLOW}Removing {AQUA}%s{YELLOW} from {DARK_GREEN}%s"), playerName, oldGroup);
                     }
                     return false;
@@ -357,21 +357,21 @@ public class RootCommands {
             }
         });
 
-        if (check && scope.isShouldEcho())
+        if (check && (scope.isShouldEcho() || verbose))
             plugin.checkPlayer(sender, playerName);
         plugin.refreshPlayer(playerName);
     }
 
     @Command("setrank")
     @Require("zpermissions.setrank")
-    public void setrank(CommandSender sender, @Option("-q") boolean quiet, @Option("-Q") boolean loud, @Option(value="player", completer="player") String playerName, @Option("rank") String rankName, @Option(value="track", optional=true, completer="track") String trackName) {
-        rankSet(sender, playerName, trackName, rankName, determineScope(quiet, loud));
+    public void setrank(CommandSender sender, @Option("-q") boolean quiet, @Option("-Q") boolean loud, @Option("-v") boolean verbose, @Option(value="player", completer="player") String playerName, @Option("rank") String rankName, @Option(value="track", optional=true, completer="track") String trackName) {
+        rankSet(sender, playerName, trackName, rankName, determineScope(quiet, loud), verbose);
     }
 
     @Command("unsetrank")
     @Require("zpermissions.unsetrank")
-    public void unsetrank(CommandSender sender, @Option("-q") boolean quiet, @Option("-Q") boolean loud, @Option(value="player", completer="player") String playerName, @Option(value="track", optional=true, completer="track") String trackName) {
-        rankSet(sender, playerName, trackName, null, determineScope(quiet, loud));
+    public void unsetrank(CommandSender sender, @Option("-q") boolean quiet, @Option("-Q") boolean loud, @Option("-v") boolean verbose, @Option(value="player", completer="player") String playerName, @Option(value="track", optional=true, completer="track") String trackName) {
+        rankSet(sender, playerName, trackName, null, determineScope(quiet, loud), verbose);
     }
 
 }
