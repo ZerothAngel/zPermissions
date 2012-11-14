@@ -25,6 +25,7 @@ import java.util.List;
 import org.bukkit.ChatColor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
+import org.tyrannyofheaven.bukkit.util.ToHUtils;
 import org.tyrannyofheaven.bukkit.util.command.Command;
 import org.tyrannyofheaven.bukkit.util.command.Option;
 import org.tyrannyofheaven.bukkit.util.command.Session;
@@ -40,8 +41,6 @@ import org.tyrannyofheaven.bukkit.zPermissions.model.PermissionEntity;
  * @author zerothangel
  */
 public class PlayerCommands extends CommonCommands {
-
-    private static final int TICKS_PER_SECOND = 20;
 
     public PlayerCommands(ZPermissionsPlugin plugin) {
         super(plugin, false);
@@ -128,7 +127,7 @@ public class PlayerCommands extends CommonCommands {
             return;
         }
 
-        player.addAttachment(plugin, permission, value == null ? true : value, TICKS_PER_SECOND * timeout);
+        player.addAttachment(plugin, permission, value == null ? true : value, ToHUtils.TICKS_PER_SECOND * timeout);
 
         sendMessage(sender, colorize("{GOLD}%s{YELLOW} set to {GREEN}%s{YELLOW} for {AQUA}%s{YELLOW} for %d second%s"), permission, value == null ? Boolean.TRUE : value, player.getName(), timeout, timeout == 1 ? "" : "s");
     }
