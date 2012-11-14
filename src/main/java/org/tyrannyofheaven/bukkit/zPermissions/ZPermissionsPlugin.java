@@ -36,7 +36,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
-import java.util.logging.Logger;
 
 import javax.persistence.PersistenceException;
 
@@ -119,9 +118,6 @@ public class ZPermissionsPlugin extends JavaPlugin {
 
     // Filename of file-based storage
     private static final String FILE_STORAGE_FILENAME = "data.yml";
-
-    // This plugin's logger
-    private final Logger logger = Logger.getLogger(getClass().getName());
 
     // Version info (may include build number)
     private VersionInfo versionInfo;
@@ -562,7 +558,7 @@ public class ZPermissionsPlugin extends JavaPlugin {
         if (toRefresh.isEmpty())
             return; // Nothing to do
 
-        if (logger.isLoggable(Level.FINE))
+        if (getLogger().isLoggable(Level.FINE))
             debug(this, "Refreshing players: %s", ToHStringUtils.delimitedString(", ", toRefresh));
         refreshTask.start(toRefresh);
     }
@@ -723,7 +719,7 @@ public class ZPermissionsPlugin extends JavaPlugin {
         autoRefreshInterval = config.getInt("auto-refresh-interval", DEFAULT_AUTO_REFRESH_INTERVAL);
 
         // Set debug logging
-        logger.setLevel(config.getBoolean("debug", false) ? Level.FINE : null);
+        getLogger().setLevel(config.getBoolean("debug", false) ? Level.FINE : null);
     }
 
     /**
