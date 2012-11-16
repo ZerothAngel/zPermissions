@@ -55,10 +55,10 @@ public class SubCommands {
     // The "/permissions group" handler
     private final GroupCommands groupCommand;
 
-    SubCommands(ZPermissionsPlugin plugin) {
+    SubCommands(ZPermissionsPlugin plugin, PermissionsResolver resolver) {
         this.plugin = plugin;
-        playerCommand = new PlayerCommands(plugin);
-        groupCommand = new GroupCommands(plugin);
+        playerCommand = new PlayerCommands(plugin, resolver);
+        groupCommand = new GroupCommands(plugin, resolver);
     }
 
     @Command(value={"player", "pl", "p"}, description="Player-related commands")
@@ -76,6 +76,7 @@ public class SubCommands {
                 .forCommand("groups")
                 .forCommand("setgroup")
                 .forCommand("show")
+                .forCommand("dump")
                 .show();
             return null;
         }
@@ -103,6 +104,7 @@ public class SubCommands {
                 .forCommand("add")
                 .forCommand("remove")
                 .forCommand("show")
+                .forCommand("dump")
                 .show();
             return null;
         }

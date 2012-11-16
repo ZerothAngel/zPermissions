@@ -72,9 +72,9 @@ public class RootCommands {
 
     }
 
-    RootCommands(ZPermissionsPlugin plugin) {
+    RootCommands(ZPermissionsPlugin plugin, PermissionsResolver resolver) {
         this.plugin = plugin;
-        sc = new SubCommands(plugin);
+        sc = new SubCommands(plugin, resolver);
     }
 
     @Command("permissions")
