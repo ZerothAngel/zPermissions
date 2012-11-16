@@ -19,8 +19,25 @@ import static org.tyrannyofheaven.bukkit.util.ToHMessageUtils.colorize;
 import static org.tyrannyofheaven.bukkit.util.ToHMessageUtils.sendMessage;
 import static org.tyrannyofheaven.bukkit.util.command.reader.CommandReader.abortBatchProcessing;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
+import org.bukkit.World;
 import org.bukkit.command.CommandSender;
+import org.bukkit.conversations.Conversable;
+import org.bukkit.conversations.Conversation;
+import org.bukkit.conversations.ConversationFactory;
+import org.bukkit.entity.Player;
+import org.bukkit.permissions.Permission;
+import org.bukkit.util.ChatPaginator;
 import org.tyrannyofheaven.bukkit.util.command.Command;
 import org.tyrannyofheaven.bukkit.util.command.Option;
 import org.tyrannyofheaven.bukkit.util.command.Session;
@@ -40,6 +57,8 @@ public abstract class CommonCommands {
     // Parent plugin
     protected final ZPermissionsPlugin plugin;
 
+    protected final PermissionsResolver resolver;
+
     // true if this is handling groups
     private final boolean group;
 
@@ -48,8 +67,9 @@ public abstract class CommonCommands {
      * 
      * @param group true if this is handling groups
      */
-    protected CommonCommands(ZPermissionsPlugin plugin, boolean group) {
+    protected CommonCommands(ZPermissionsPlugin plugin, PermissionsResolver resolver, boolean group) {
         this.plugin = plugin;
+        this.resolver = resolver;
         this.group = group;
     }
 
@@ -156,6 +176,106 @@ public abstract class CommonCommands {
         else {
             sendMessage(sender, colorize("{RED}%s not found."), group ? "Group" : "Player");
             abortBatchProcessing();
+        }
+    }
+
+    @Command(value="dump", description="Display permissions for this group or player", varargs="region...")
+    public void dump(CommandSender sender, final @Session("entityName") String name, @Option(value={"-w", "--world"}, valueName="world", completer="world") String worldName, @Option(value={"-f", "--filter"}, valueName="filter") String filter, String[] regionNames) {
+        if (worldName == null) {
+            // Determine a default world
+            if (sender instanceof Player) {
+                worldName = ((Player)sender).getWorld().getName();
+                sendMessage(sender, colorize("{GRAY}(Using current world: %s. Use -w to specify a world.)"), worldName);
+            }
+            else {
+                List<World> worlds = Bukkit.getWorlds();
+                if (!worlds.isEmpty()) {
+                    worldName = worlds.get(0).getName();
+                    sendMessage(sender, colorize("{GRAY}(Use -w to specify a world. Defaulting to \"%s\")"), worldName);
+                }
+            }
+        }
+        else {
+            // Validate world name
+            World world = Bukkit.getWorld(worldName);
+            if (world == null) {
+                sendMessage(sender, colorize("{RED}Invalid world."));
+                return;
+            }
+        }
+
+        // Ensure regions are lowercased
+        final Set<String> regions = new HashSet<String>();
+        for (String region : regionNames) {
+            regions.add(region.toLowerCase());
+        }
+        
+        // Grab permissions from zPerms
+        final String lworldName = worldName.toLowerCase();
+        Map<String, Boolean> rootPermissions = plugin.getTransactionStrategy().execute(new TransactionCallback<Map<String, Boolean>>() {
+            @Override
+            public Map<String, Boolean> doInTransaction() throws Exception {
+                if (group) {
+                    return resolver.resolveGroup(name.toLowerCase(), lworldName, regions);
+                }
+                else {
+                    return resolver.resolvePlayer(name.toLowerCase(), lworldName, regions).getPermissions();
+                }
+            }
+        });
+
+        // Recursively determine all child permissions
+        Map<String, Boolean> permissions = new HashMap<String, Boolean>();
+        calculateChildPermissions(permissions, rootPermissions, false);
+        
+        // Sort for display
+        List<String> sortedKeys = new ArrayList<String>(permissions.keySet());
+        Collections.sort(sortedKeys);
+        Map<String, Boolean> sortedPermissions = new LinkedHashMap<String, Boolean>(permissions.size());
+        for (String key : sortedKeys)
+            sortedPermissions.put(key, permissions.get(key));
+        permissions = sortedPermissions;
+
+        // Convert to lines and filter
+        List<String> lines = new ArrayList<String>(permissions.size());
+        if (filter != null)
+            filter = filter.toLowerCase().trim();
+        for (Map.Entry<String, Boolean> me : permissions.entrySet()) {
+            String key = me.getKey();
+            if (filter != null && !key.contains(filter)) continue;
+            lines.add(String.format(colorize("{DARK_GREEN}- {GOLD}%s{DARK_GREEN}: {GREEN}%s"), key, me.getValue()));
+        }
+
+        if (sender instanceof Player && lines.size() > ChatPaginator.CLOSED_CHAT_PAGE_HEIGHT) {
+            Conversation convo = new ConversationFactory(plugin)
+                .withFirstPrompt(new PagerPrompt(lines))
+                .withLocalEcho(false)
+                .buildConversation((Conversable)sender);
+            
+            convo.begin();
+        }
+        else if (!lines.isEmpty()) {
+            // Don't bother with pager
+            for (String line : lines) {
+                sender.sendMessage(line);
+            }
+        }
+        else {
+            sendMessage(sender, colorize("{RED}No %spermissions found."), filter == null ? "" : "matching ");
+        }
+    }
+
+    private void calculateChildPermissions(Map<String, Boolean> permissions, Map<String, Boolean> children, boolean invert) {
+        for (Map.Entry<String, Boolean> me : children.entrySet()) {
+            String key = me.getKey().toLowerCase();
+            Permission perm = Bukkit.getPluginManager().getPermission(key);
+            boolean value = me.getValue() ^ invert;
+            
+            permissions.put(key, value);
+            
+            if (perm != null) {
+                calculateChildPermissions(permissions, perm.getChildren(), !value);
+            }
         }
     }
 

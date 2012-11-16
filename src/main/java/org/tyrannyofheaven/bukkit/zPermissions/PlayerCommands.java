@@ -42,8 +42,8 @@ import org.tyrannyofheaven.bukkit.zPermissions.model.PermissionEntity;
  */
 public class PlayerCommands extends CommonCommands {
 
-    public PlayerCommands(ZPermissionsPlugin plugin) {
-        super(plugin, false);
+    public PlayerCommands(ZPermissionsPlugin plugin, PermissionsResolver resolver) {
+        super(plugin, resolver, false);
     }
 
     @Command(value="groups", description="List groups this player is a member of")

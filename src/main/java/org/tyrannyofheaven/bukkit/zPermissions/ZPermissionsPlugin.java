@@ -289,7 +289,7 @@ public class ZPermissionsPlugin extends JavaPlugin {
         }
 
         // Install our commands
-        (new ToHCommandExecutor<ZPermissionsPlugin>(this, new RootCommands(this)))
+        (new ToHCommandExecutor<ZPermissionsPlugin>(this, new RootCommands(this, resolver)))
             .registerTypeCompleter("group", new GroupTypeCompleter(getDao()))
             .registerTypeCompleter("track", new TrackTypeCompleter(this))
             .registerTypeCompleter("dump-dir", new DirTypeCompleter(this))
