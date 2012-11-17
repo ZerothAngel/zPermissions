@@ -238,8 +238,8 @@ public abstract class CommonCommands {
         }
     }
 
-    protected void displayEntry(CommandSender sender, Entry e) {
-        sendMessage(sender, colorize("{DARK_GREEN}- {GOLD}%s%s%s{DARK_GREEN}: {GREEN}%s"),
+    protected String formatEntry(CommandSender sender, Entry e) {
+        return String.format(colorize("{DARK_GREEN}- {GOLD}%s%s%s{DARK_GREEN}: {GREEN}%s"),
                 (e.getRegion() == null ? "" : e.getRegion().getName() + colorize("{DARK_GREEN}/{GOLD}")),
                 (e.getWorld() == null ? "" : e.getWorld().getName() + colorize("{DARK_GREEN}:{GOLD}")),
                 e.getPermission(),

@@ -19,12 +19,14 @@ import static org.tyrannyofheaven.bukkit.util.ToHMessageUtils.colorize;
 import static org.tyrannyofheaven.bukkit.util.ToHMessageUtils.sendMessage;
 import static org.tyrannyofheaven.bukkit.util.command.reader.CommandReader.abortBatchProcessing;
 
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
 import org.bukkit.ChatColor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
+import org.tyrannyofheaven.bukkit.util.ToHMessageUtils;
 import org.tyrannyofheaven.bukkit.util.ToHUtils;
 import org.tyrannyofheaven.bukkit.util.command.Command;
 import org.tyrannyofheaven.bukkit.util.command.Option;
@@ -103,11 +105,13 @@ public class PlayerCommands extends CommonCommands {
             plugin.checkPlayer(sender, playerName);
             return;
         }
-        
-        sendMessage(sender, colorize("{YELLOW}Declared permissions for {AQUA}%s{YELLOW}:"), entity.getDisplayName());
+
+        List<String> lines = new ArrayList<String>();
+        lines.add(String.format(colorize("{YELLOW}Declared permissions for {AQUA}%s{YELLOW}:"), entity.getDisplayName()));
         for (Entry e : Utils.sortPermissions(entity.getPermissions())) {
-            displayEntry(sender, e);
+            lines.add(formatEntry(sender, e));
         }
+        ToHMessageUtils.displayLines(plugin, sender, lines);
     }
 
     @Command(value={"settemp", "temp", "tmp"}, description="Set a temporary permission")

@@ -21,10 +21,12 @@ import static org.tyrannyofheaven.bukkit.util.ToHMessageUtils.sendMessage;
 import static org.tyrannyofheaven.bukkit.util.ToHStringUtils.delimitedString;
 import static org.tyrannyofheaven.bukkit.util.command.reader.CommandReader.abortBatchProcessing;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.bukkit.ChatColor;
 import org.bukkit.command.CommandSender;
+import org.tyrannyofheaven.bukkit.util.ToHMessageUtils;
 import org.tyrannyofheaven.bukkit.util.command.Command;
 import org.tyrannyofheaven.bukkit.util.command.Option;
 import org.tyrannyofheaven.bukkit.util.command.Session;
@@ -113,14 +115,16 @@ public class GroupCommands extends CommonCommands {
         PermissionEntity entity = plugin.getDao().getEntity(groupName, true);
 
         if (entity != null) {
-            sendMessage(sender, colorize("{YELLOW}Declared permissions for {DARK_GREEN}%s{YELLOW}:"), entity.getDisplayName());
-            sendMessage(sender, colorize("{YELLOW}Priority: {GREEN}%s"), entity.getPriority());
+            List<String> lines = new ArrayList<String>();
+            lines.add(String.format(colorize("{YELLOW}Declared permissions for {DARK_GREEN}%s{YELLOW}:"), entity.getDisplayName()));
+            lines.add(String.format(colorize("{YELLOW}Priority: {GREEN}%s"), entity.getPriority()));
             if (entity.getParent() != null) {
-                sendMessage(sender, colorize("{YELLOW}Parent: {DARK_GREEN}%s"), entity.getParent().getDisplayName());
+                lines.add(String.format(colorize("{YELLOW}Parent: {DARK_GREEN}%s"), entity.getParent().getDisplayName()));
             }
             for (Entry e : Utils.sortPermissions(entity.getPermissions())) {
-                displayEntry(sender, e);
+                lines.add(formatEntry(sender, e));
             }
+            ToHMessageUtils.displayLines(plugin, sender, lines);
         }
 
         if (entity == null) {
