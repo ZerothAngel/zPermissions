@@ -19,6 +19,7 @@ import static org.tyrannyofheaven.bukkit.util.ToHMessageUtils.colorize;
 import static org.tyrannyofheaven.bukkit.util.ToHMessageUtils.sendMessage;
 import static org.tyrannyofheaven.bukkit.util.command.reader.CommandReader.abortBatchProcessing;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -174,17 +175,18 @@ public abstract class CommonCommands {
 
     @Command(value="dump", description="Display permissions for this group or player", varargs="region...")
     public void dump(CommandSender sender, final @Session("entityName") String name, @Option(value={"-w", "--world"}, valueName="world", completer="world") String worldName, @Option(value={"-f", "--filter"}, valueName="filter") String filter, String[] regionNames) {
+        List<String> header = new ArrayList<String>();
         if (worldName == null) {
             // Determine a default world
             if (sender instanceof Player) {
                 worldName = ((Player)sender).getWorld().getName();
-                sendMessage(sender, colorize("{GRAY}(Using current world: %s. Use -w to specify a world.)"), worldName);
+                header.add(String.format(colorize("{GRAY}(Using current world: %s. Use -w to specify a world.)"), worldName));
             }
             else {
                 List<World> worlds = Bukkit.getWorlds();
                 if (!worlds.isEmpty()) {
                     worldName = worlds.get(0).getName();
-                    sendMessage(sender, colorize("{GRAY}(Use -w to specify a world. Defaulting to \"%s\")"), worldName);
+                    header.add(String.format(colorize("{GRAY}(Use -w to specify a world. Defaulting to \"%s\")"), worldName));
                 }
             }
         }
@@ -221,7 +223,7 @@ public abstract class CommonCommands {
         Map<String, Boolean> permissions = new HashMap<String, Boolean>();
         calculateChildPermissions(permissions, rootPermissions, false);
         
-        Utils.displayPermissions(plugin, sender, permissions, filter);
+        Utils.displayPermissions(plugin, sender, header, permissions, filter);
     }
 
     private void calculateChildPermissions(Map<String, Boolean> permissions, Map<String, Boolean> children, boolean invert) {
