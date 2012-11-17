@@ -97,7 +97,7 @@ public class PlayerCommands extends CommonCommands {
     }
 
     @Command(value={"show", "sh"}, description="Show information about a player")
-    public void show(CommandSender sender, @Session("entityName") String playerName) {
+    public void show(CommandSender sender, @Session("entityName") String playerName, @Option(value={"-f", "--filter"}, valueName="filter") String filter) {
         PermissionEntity entity = plugin.getDao().getEntity(playerName, false);
 
         if (entity == null || entity.getPermissions().isEmpty()) {
@@ -108,7 +108,17 @@ public class PlayerCommands extends CommonCommands {
 
         List<String> lines = new ArrayList<String>();
         lines.add(String.format(colorize("{YELLOW}Declared permissions for {AQUA}%s{YELLOW}:"), entity.getDisplayName()));
+        if (filter != null) {
+            filter = filter.toLowerCase().trim();
+            if (filter.isEmpty())
+                filter = null;
+        }
         for (Entry e : Utils.sortPermissions(entity.getPermissions())) {
+            if (filter != null && !(
+                    (e.getRegion() != null && e.getRegion().getName().contains(filter)) ||
+                    (e.getWorld() != null && e.getWorld().getName().contains(filter)) ||
+                    e.getPermission().contains(filter)))
+                continue;
             lines.add(formatEntry(sender, e));
         }
         ToHMessageUtils.displayLines(plugin, sender, lines);
