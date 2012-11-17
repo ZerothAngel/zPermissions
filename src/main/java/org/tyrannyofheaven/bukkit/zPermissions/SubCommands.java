@@ -23,10 +23,12 @@ import static org.tyrannyofheaven.bukkit.util.permissions.PermissionUtils.requir
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 
 import org.bukkit.command.CommandSender;
+import org.bukkit.command.ConsoleCommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.permissions.PermissionAttachmentInfo;
 import org.tyrannyofheaven.bukkit.util.command.Command;
@@ -174,6 +176,41 @@ public class SubCommands {
             }
         }
         sendMessage(sender, colorize("{AQUA}%s{YELLOW} does not set {GOLD}%s"), player.getName(), permission);
+    }
+
+    @Command(value="inspect", description="Inspect effective permissions")
+    @Require("zpermissions.inspect")
+    public void inspect(CommandSender sender, @Option(value={"-f", "--filter"}, valueName="filter") String filter, @Option({"-v", "--verbose"}) boolean verbose, @Option(value="player", optional=true, completer="player") String playerName) {
+        Player player;
+        if (playerName == null) {
+            // No player specified
+            if (!(sender instanceof Player)) {
+                sendMessage(sender, colorize("{RED}Cannot inspect permissions of console."));
+                abortBatchProcessing();
+                return;
+            }
+            // Use sender
+            player = (Player)sender;
+        }
+        else {
+            // Checking perms for another player
+            requirePermission(sender, "zpermissions.inspect.other");
+
+            player = plugin.getServer().getPlayer(playerName);
+            if (player == null) {
+                sendMessage(sender, colorize("{RED}Player is not online."));
+                abortBatchProcessing();
+                return;
+            }
+        }
+
+        // Build map of effective permissions
+        List<Utils.PermissionInfo> permissions = new ArrayList<Utils.PermissionInfo>();
+        for (PermissionAttachmentInfo pai : player.getEffectivePermissions()) {
+            permissions.add(new Utils.PermissionInfo(pai.getPermission(), pai.getValue(), pai.getAttachment() != null ? pai.getAttachment().getPlugin().getName() : "default"));
+        }
+        
+        Utils.displayPermissions(plugin, sender, permissions, filter, sender instanceof ConsoleCommandSender ^ verbose);
     }
 
     @Command(value="reload", description="Re-read config.yml")
