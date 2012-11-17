@@ -84,21 +84,25 @@ public class Utils {
         return result;
     }
 
-    public static void displayPermissions(ZPermissionsPlugin plugin, CommandSender sender, Map<String, Boolean> permissions, String filter) {
+    public static void displayPermissions(ZPermissionsPlugin plugin, CommandSender sender, List<String> header, Map<String, Boolean> permissions, String filter) {
         List<PermissionInfo> permList = new ArrayList<PermissionInfo>(permissions.size());
         for (Map.Entry<String, Boolean> me : permissions.entrySet()) {
             permList.add(new PermissionInfo(me.getKey(), me.getValue(), null));
         }
-        displayPermissions(plugin, sender, permList, filter, false);
+        displayPermissions(plugin, sender, header, permList, filter, false);
     }
 
-    public static void displayPermissions(ZPermissionsPlugin plugin, CommandSender sender, List<PermissionInfo> permissions, String filter, boolean verbose) {
+    public static void displayPermissions(ZPermissionsPlugin plugin, CommandSender sender, List<String> header, List<PermissionInfo> permissions, String filter, boolean verbose) {
+        if (header == null)
+            header = Collections.emptyList();
+
         // Sort for display
         permissions = new ArrayList<PermissionInfo>(permissions); // make copy
         Collections.sort(permissions, PERMISSION_INFO_COMPARATOR);
 
         // Convert to lines and filter
-        List<String> lines = new ArrayList<String>(permissions.size());
+        List<String> lines = new ArrayList<String>(header.size() + permissions.size());
+        lines.addAll(header);
         if (filter != null) {
             filter = filter.toLowerCase().trim();
             if (filter.isEmpty())
