@@ -111,7 +111,7 @@ public class GroupCommands extends CommonCommands {
     }
 
     @Command(value={"show", "sh"}, description="Show information about a group")
-    public void show(CommandSender sender, @Session("entityName") String groupName) {
+    public void show(CommandSender sender, @Session("entityName") String groupName, @Option(value={"-f", "--filter"}, valueName="filter") String filter) {
         PermissionEntity entity = plugin.getDao().getEntity(groupName, true);
 
         if (entity != null) {
@@ -121,7 +121,17 @@ public class GroupCommands extends CommonCommands {
             if (entity.getParent() != null) {
                 lines.add(String.format(colorize("{YELLOW}Parent: {DARK_GREEN}%s"), entity.getParent().getDisplayName()));
             }
+            if (filter != null) {
+                filter = filter.toLowerCase().trim();
+                if (filter.isEmpty())
+                    filter = null;
+            }
             for (Entry e : Utils.sortPermissions(entity.getPermissions())) {
+                if (filter != null && !(
+                        (e.getRegion() != null && e.getRegion().getName().contains(filter)) ||
+                        (e.getWorld() != null && e.getWorld().getName().contains(filter)) ||
+                        e.getPermission().contains(filter)))
+                    continue;
                 lines.add(formatEntry(sender, e));
             }
             ToHMessageUtils.displayLines(plugin, sender, lines);
