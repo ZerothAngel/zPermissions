@@ -20,6 +20,7 @@ import java.util.List;
 
 import org.bukkit.ChatColor;
 import org.bukkit.conversations.ConversationContext;
+import org.bukkit.conversations.MessagePrompt;
 import org.bukkit.conversations.Prompt;
 import org.bukkit.util.ChatPaginator;
 
@@ -40,6 +41,20 @@ public class PagerPrompt implements Prompt {
     private boolean displayHeader;
 
     private boolean shouldBlock;
+
+    private static final Prompt ABORTED_PROMPT = new MessagePrompt() {
+
+        @Override
+        public String getPromptText(ConversationContext context) {
+            return ChatColor.YELLOW + "Stopping.";
+        }
+
+        @Override
+        protected Prompt getNextPrompt(ConversationContext context) {
+            return Prompt.END_OF_CONVERSATION;
+        }
+        
+    };
 
     public PagerPrompt(List<String> lines) {
         this(lines, DEFAULT_LINES_PER_PAGE);
@@ -96,7 +111,7 @@ public class PagerPrompt implements Prompt {
         }
 
         if ("n".equals(input)) {
-            return Prompt.END_OF_CONVERSATION;
+            return ABORTED_PROMPT;
         }
         else {
             // Not blocking
