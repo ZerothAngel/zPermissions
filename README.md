@@ -59,6 +59,8 @@ The rank commands are `/promote`, `/demote`, `/setrank`, and `/unsetrank` and wi
 *   zpermissions.list &mdash; `/permissions list` command
 *   zpermissions.check &mdash; `/permissions check` command
 *   zpermissions.check.other &mdash; `/permissions check` on other players
+*   zpermissions.inspect &mdash; `/permissions inspect` command
+*   zpermissions.inspect.other &mdash; `/permissions inspect` on other players
 *   zpermissions.reload &mdash; `/permissions reload` command
 *   zpermissions.refresh &mdash; `/permissions refresh` command
 *   zpermissions.export &mdash; `/permissions export` command
@@ -92,6 +94,7 @@ The rank commands are `/promote`, `/demote`, `/setrank`, and `/unsetrank` and wi
 
 *   `/permissions list <what>` &mdash; `what` should be "groups" or "players". Lists groups or players in the system. Note that only players with permissions set will be shown. (Players who are only members will not.)
 *   `/permissions check <permission> [player]` &mdash; Checks if yourself or another player has the given permission. `permission` must be an unqualified permission node &mdash; no world or region qualifiers.
+*   `/permissions inspect [-v] [-f <filter>] [player]` &mdash; Dumps the effective permissions of yourself or another player. Asterisked entries originate outside of zPermissions (e.g. defaults or another plugin). Use -v to also display the source of each permission (-v is default when issued from the console).
 *   `/permissions reload` &mdash; Re-reads config.yml.
 *   `/permissions refresh` &mdash; Re-read permissions from storage and update all online players. Needed to recognize any outside changes to the zPermissions database tables.
 *   `/permissions export <filename>` &mdash; Creates a file containing all the zPermissions commands necessary to re-create your database. See config.yml for the output directory.

@@ -15,12 +15,24 @@
  */
 package org.tyrannyofheaven.bukkit.zPermissions;
 
+import static org.tyrannyofheaven.bukkit.util.ToHMessageUtils.colorize;
+import static org.tyrannyofheaven.bukkit.util.ToHMessageUtils.sendMessage;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 
+import org.bukkit.ChatColor;
+import org.bukkit.command.CommandSender;
+import org.bukkit.conversations.Conversable;
+import org.bukkit.conversations.Conversation;
+import org.bukkit.conversations.ConversationFactory;
+import org.bukkit.entity.Player;
+import org.bukkit.util.ChatPaginator;
+import org.tyrannyofheaven.bukkit.util.ToHStringUtils;
 import org.tyrannyofheaven.bukkit.zPermissions.model.Entry;
 import org.tyrannyofheaven.bukkit.zPermissions.model.PermissionEntity;
 
@@ -63,10 +75,101 @@ public class Utils {
         }
     };
 
+    private final static Comparator<PermissionInfo> PERMISSION_INFO_COMPARATOR = new Comparator<PermissionInfo>() {
+        @Override
+        public int compare(PermissionInfo a, PermissionInfo b) {
+            return a.getPermission().compareTo(b.getPermission());
+        }
+    };
+
     public static List<Entry> sortPermissions(Collection<Entry> entries) {
         List<Entry> result = new ArrayList<Entry>(entries);
         Collections.sort(result, ENTRY_COMPARATOR);
         return result;
+    }
+
+    public static void displayPermissions(ZPermissionsPlugin plugin, CommandSender sender, Map<String, Boolean> permissions, String filter) {
+        List<PermissionInfo> permList = new ArrayList<PermissionInfo>(permissions.size());
+        for (Map.Entry<String, Boolean> me : permissions.entrySet()) {
+            permList.add(new PermissionInfo(me.getKey(), me.getValue(), null));
+        }
+        displayPermissions(plugin, sender, permList, filter, false);
+    }
+
+    public static void displayPermissions(ZPermissionsPlugin plugin, CommandSender sender, List<PermissionInfo> permissions, String filter, boolean verbose) {
+        // Sort for display
+        permissions = new ArrayList<PermissionInfo>(permissions); // make copy
+        Collections.sort(permissions, PERMISSION_INFO_COMPARATOR);
+
+        // Convert to lines and filter
+        List<String> lines = new ArrayList<String>(permissions.size());
+        if (filter != null) {
+            filter = filter.toLowerCase().trim();
+            if (filter.isEmpty())
+                filter = null;
+        }
+        for (PermissionInfo pi : permissions) {
+            String key = pi.getPermission();
+            if (filter != null && !key.contains(filter)) continue;
+            String source;
+            if (verbose) {
+                source = pi.getSource() != null ? (ChatColor.RED + " [" + pi.getSource() + "]") : "";
+            }
+            else {
+                boolean notMine = pi.getSource() != null &&
+                        !plugin.getName().equals(pi.getSource());
+                source = notMine? (ChatColor.RED + " *") : "";
+            }
+            lines.add(String.format(colorize("{DARK_GREEN}- {GOLD}%s{DARK_GREEN}: {GREEN}%s%s"), key, pi.getValue(), source));
+        }
+
+        if (sender instanceof Player && lines.size() > ChatPaginator.CLOSED_CHAT_PAGE_HEIGHT) {
+            Conversation convo = new ConversationFactory(plugin)
+                .withFirstPrompt(new PagerPrompt(lines))
+                .withLocalEcho(false)
+                .buildConversation((Conversable)sender);
+            
+            convo.begin();
+        }
+        else if (!lines.isEmpty()) {
+            // Don't bother with pager
+            for (String line : lines) {
+                sender.sendMessage(line);
+            }
+        }
+        else {
+            sendMessage(sender, colorize("{RED}No %spermissions found."), filter == null ? "" : "matching ");
+        }
+    }
+
+    public static class PermissionInfo {
+        
+        private final String permission;
+        
+        private final boolean value;
+        
+        private final String source;
+        
+        public PermissionInfo(String permission, boolean value, String source) {
+            if (!ToHStringUtils.hasText(permission))
+                throw new IllegalArgumentException("permission must have a value");
+            this.permission = permission.toLowerCase();
+            this.value = value;
+            this.source = source;
+        }
+
+        public String getPermission() {
+            return permission;
+        }
+
+        public boolean getValue() {
+            return value;
+        }
+
+        public String getSource() {
+            return source;
+        }
+
     }
 
 }

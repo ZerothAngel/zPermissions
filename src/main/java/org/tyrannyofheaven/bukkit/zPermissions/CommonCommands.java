@@ -19,11 +19,8 @@ import static org.tyrannyofheaven.bukkit.util.ToHMessageUtils.colorize;
 import static org.tyrannyofheaven.bukkit.util.ToHMessageUtils.sendMessage;
 import static org.tyrannyofheaven.bukkit.util.command.reader.CommandReader.abortBatchProcessing;
 
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -32,12 +29,8 @@ import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.World;
 import org.bukkit.command.CommandSender;
-import org.bukkit.conversations.Conversable;
-import org.bukkit.conversations.Conversation;
-import org.bukkit.conversations.ConversationFactory;
 import org.bukkit.entity.Player;
 import org.bukkit.permissions.Permission;
-import org.bukkit.util.ChatPaginator;
 import org.tyrannyofheaven.bukkit.util.command.Command;
 import org.tyrannyofheaven.bukkit.util.command.Option;
 import org.tyrannyofheaven.bukkit.util.command.Session;
@@ -228,41 +221,7 @@ public abstract class CommonCommands {
         Map<String, Boolean> permissions = new HashMap<String, Boolean>();
         calculateChildPermissions(permissions, rootPermissions, false);
         
-        // Sort for display
-        List<String> sortedKeys = new ArrayList<String>(permissions.keySet());
-        Collections.sort(sortedKeys);
-        Map<String, Boolean> sortedPermissions = new LinkedHashMap<String, Boolean>(permissions.size());
-        for (String key : sortedKeys)
-            sortedPermissions.put(key, permissions.get(key));
-        permissions = sortedPermissions;
-
-        // Convert to lines and filter
-        List<String> lines = new ArrayList<String>(permissions.size());
-        if (filter != null)
-            filter = filter.toLowerCase().trim();
-        for (Map.Entry<String, Boolean> me : permissions.entrySet()) {
-            String key = me.getKey();
-            if (filter != null && !key.contains(filter)) continue;
-            lines.add(String.format(colorize("{DARK_GREEN}- {GOLD}%s{DARK_GREEN}: {GREEN}%s"), key, me.getValue()));
-        }
-
-        if (sender instanceof Player && lines.size() > ChatPaginator.CLOSED_CHAT_PAGE_HEIGHT) {
-            Conversation convo = new ConversationFactory(plugin)
-                .withFirstPrompt(new PagerPrompt(lines))
-                .withLocalEcho(false)
-                .buildConversation((Conversable)sender);
-            
-            convo.begin();
-        }
-        else if (!lines.isEmpty()) {
-            // Don't bother with pager
-            for (String line : lines) {
-                sender.sendMessage(line);
-            }
-        }
-        else {
-            sendMessage(sender, colorize("{RED}No %spermissions found."), filter == null ? "" : "matching ");
-        }
+        Utils.displayPermissions(plugin, sender, permissions, filter);
     }
 
     private void calculateChildPermissions(Map<String, Boolean> permissions, Map<String, Boolean> children, boolean invert) {
