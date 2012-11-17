@@ -27,11 +27,7 @@ import java.util.Map;
 
 import org.bukkit.ChatColor;
 import org.bukkit.command.CommandSender;
-import org.bukkit.conversations.Conversable;
-import org.bukkit.conversations.Conversation;
-import org.bukkit.conversations.ConversationFactory;
-import org.bukkit.entity.Player;
-import org.bukkit.util.ChatPaginator;
+import org.tyrannyofheaven.bukkit.util.ToHMessageUtils;
 import org.tyrannyofheaven.bukkit.util.ToHStringUtils;
 import org.tyrannyofheaven.bukkit.zPermissions.model.Entry;
 import org.tyrannyofheaven.bukkit.zPermissions.model.PermissionEntity;
@@ -123,22 +119,11 @@ public class Utils {
             lines.add(String.format(colorize("{DARK_GREEN}- {GOLD}%s{DARK_GREEN}: {GREEN}%s%s"), key, pi.getValue(), source));
         }
 
-        if (sender instanceof Player && lines.size() > ChatPaginator.CLOSED_CHAT_PAGE_HEIGHT) {
-            Conversation convo = new ConversationFactory(plugin)
-                .withFirstPrompt(new PagerPrompt(lines))
-                .withLocalEcho(false)
-                .buildConversation((Conversable)sender);
-            
-            convo.begin();
-        }
-        else if (!lines.isEmpty()) {
-            // Don't bother with pager
-            for (String line : lines) {
-                sender.sendMessage(line);
-            }
+        if (lines.isEmpty()) {
+            sendMessage(sender, colorize("{RED}No %spermissions found."), filter == null ? "" : "matching ");
         }
         else {
-            sendMessage(sender, colorize("{RED}No %spermissions found."), filter == null ? "" : "matching ");
+            ToHMessageUtils.displayLines(plugin, sender, lines);
         }
     }
 
