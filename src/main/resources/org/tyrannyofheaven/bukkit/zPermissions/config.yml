@@ -1,4 +1,4 @@
-config-version: 7
+config-version: 8
 
 database-support: true
 
@@ -29,5 +29,7 @@ kick-on-error: true
 kick-ops-on-error: false
 
 auto-refresh-interval: -1
+
+opaque-inheritance: true
 
 debug: false

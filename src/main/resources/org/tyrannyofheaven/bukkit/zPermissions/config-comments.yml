@@ -62,5 +62,12 @@ auto-refresh-interval: |
   the risk of refreshes overlapping or permissions changes inexplicably
   being "forgotten."
 
+opaque-inheritance: |
+  Determines how inherited groups and assigned groups are resolved. When
+  true, each assigned group is fully resolved (itself + all ancestors)
+  before applying its permissions in assignment priority. When false,
+  the conglomerate of all assigned groups and their ancestor groups
+  are considered at once.
+
 debug: |
   Enable debug logging.
