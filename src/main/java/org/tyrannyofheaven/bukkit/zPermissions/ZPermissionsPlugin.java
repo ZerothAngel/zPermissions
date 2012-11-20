@@ -666,7 +666,7 @@ public class ZPermissionsPlugin extends JavaPlugin {
                 warn(this, "assigned-group-permission must be a string or list of strings");
         }
 
-        getResolver().setOpaqueInheritance(config.getBoolean("opaque-inheritance", DEFAULT_OPAQUE_INHERITANCE)); // FIXME currently hidden
+        getResolver().setOpaqueInheritance(config.getBoolean("opaque-inheritance", DEFAULT_OPAQUE_INHERITANCE));
         getResolver().setIncludeDefaultInAssigned(config.getBoolean("assigned-groups-can-include-default", DEFAULT_ASSIGNED_GROUPS_CAN_INCLUDE_DEFAULT));
 
         value = config.getString("default-group");
