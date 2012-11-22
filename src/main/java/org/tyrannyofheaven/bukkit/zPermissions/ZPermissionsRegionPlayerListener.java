@@ -19,6 +19,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerMoveEvent;
+import org.bukkit.event.player.PlayerRespawnEvent;
 import org.bukkit.event.player.PlayerTeleportEvent;
 
 /**
@@ -41,7 +42,7 @@ public class ZPermissionsRegionPlayerListener implements Listener {
 
     @EventHandler(priority=EventPriority.MONITOR, ignoreCancelled=true)
     public void onPlayerTeleport(PlayerTeleportEvent event) {
-        // Conditionally update if world changed
+        // Conditionally update if world or region changed
         plugin.updateAttachment(event.getPlayer(), event.getTo(), false);
     }
 
@@ -54,6 +55,12 @@ public class ZPermissionsRegionPlayerListener implements Listener {
             // Conditionally update if containing regions changed
             plugin.updateAttachment(event.getPlayer(), event.getTo(), false);
         }
+    }
+
+    @EventHandler(priority=EventPriority.MONITOR, ignoreCancelled=true)
+    public void onPlayerRespawn(PlayerRespawnEvent event) {
+        // Conditionally update if respawning in a different world or region
+        plugin.updateAttachment(event.getPlayer(), event.getRespawnLocation(), false);
     }
 
 }
