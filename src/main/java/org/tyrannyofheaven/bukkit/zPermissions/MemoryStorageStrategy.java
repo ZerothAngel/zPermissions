@@ -133,6 +133,7 @@ public class MemoryStorageStrategy implements StorageStrategy, TransactionStrate
         debug(plugin, "Auto-saving permissions database...");
         try {
             dao.save(saveFile);
+            saveTask = -1;
         }
         catch (IOException e) {
             log(plugin, Level.SEVERE, "Error saving permissions database:", e);
