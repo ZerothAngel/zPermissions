@@ -65,6 +65,16 @@ As in the MySQL case, this configuration assigns a database to each plugin. Be s
 
 Other databases will probably work, provided it's supported by [Avaje Ebean](http://avaje.org/) and zPermissions's data model. The setup will probably be similar to PostgreSQL.
 
+## Using a Test Database ##
+
+If your test Bukkit server happens to use the same database server as your production Bukkit server, you can specify a different database by simply prefixing or suffixing {NAME} in the URL with a string of your choice. For example:
+
+	database:
+        ... omitted ...
+		url: jdbc:mysql://127.0.0.1:3306/{NAME}_test
+
+zPermissions on your test server would then use the database named zPermissions_test. Note that this will, of course, affect other plugins that also use Bukkit persistence.
+
 ## Permission Entry ##
 
 The fact that zPermissions only has an SQL backend means there are only two ways to enter permissions:

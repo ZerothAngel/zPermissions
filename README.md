@@ -2,11 +2,13 @@
 
 zPermissions is an SQL database-backed Superperms (aka Bukkit permissions) implementation. Notable features are: multi-world support, ranks with multiple tracks/ladders, group inheritance of unlimited depth (within reason), and optional region-specific permissions using [WorldGuard](http://dev.bukkit.org/server-mods/worldguard/) regions.
 
-There is no build protection (I rely on WorldGuard for that) or chat prefix support. zPermissions does permissions and only permissions.
+There is no build protection (I rely on WorldGuard for that) or chat prefix support. zPermissions focuses on permissions and only permissions.
 
 I aim to keep zPermissions a simple, yet feature-rich, Superperms provider.
 
 Please post bugs and/or feature requests as [dev.bukkit.org tickets](http://dev.bukkit.org/server-mods/zpermissions/tickets/).
+
+[Quick start documentation](http://dev.bukkit.org/server-mods/zpermissions/pages/quick-start/) available for those new to zPermissions.
 
 ## Features ##
 
