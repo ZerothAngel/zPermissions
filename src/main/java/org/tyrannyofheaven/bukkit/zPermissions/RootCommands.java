@@ -138,6 +138,8 @@ public class RootCommands {
             public Boolean doInTransaction() throws Exception {
                 Set<String> playerGroupNames = new HashSet<String>();
                 playerGroupNames.addAll(plugin.getDao().getGroups(playerName));
+                if (playerGroupNames.isEmpty())
+                    playerGroupNames.add(plugin.getResolver().getDefaultGroup());
         
                 playerGroupNames.retainAll(trackGroupNames);
                 
@@ -285,6 +287,8 @@ public class RootCommands {
             public Boolean doInTransaction() throws Exception {
                 Set<String> playerGroupNames = new HashSet<String>();
                 playerGroupNames.addAll(plugin.getDao().getGroups(playerName));
+                if (playerGroupNames.isEmpty())
+                    playerGroupNames.add(plugin.getResolver().getDefaultGroup());
         
                 playerGroupNames.retainAll(trackGroupNames);
                 
