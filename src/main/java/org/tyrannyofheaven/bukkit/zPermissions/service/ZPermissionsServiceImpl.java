@@ -123,6 +123,10 @@ public class ZPermissionsServiceImpl implements ZPermissionsService {
             }
         });
 
+        // If totally empty, then they are in the default group.
+        if (result.isEmpty())
+            result.add(getResolver().getDefaultGroup());
+
         return result;
     }
 
