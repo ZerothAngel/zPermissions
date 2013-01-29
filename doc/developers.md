@@ -26,16 +26,16 @@ If you don't use Maven (and why not?), you can visit my [Maven repository](http:
 
 Next, to get an actual implementation of this interface, your plugin should do something like the following:
 
-	ZPermissionsService zPermissionsService = null;
-	try {
-	    zPermissionsService = Bukkit.getServicesManager().load(ZPermissionsService.class);
-	}
-	catch (NoClassDefFoundError e) {
-	    // Eh...
-	}
-	if (zPermissionsService == null) {
-	    // zPermissions not found, do something else
-	}
+    ZPermissionsService service = null;
+    try {
+        service = Bukkit.getServicesManager().load(ZPermissionsService.class);
+    }
+    catch (NoClassDefFoundError e) {
+        // Eh...
+    }
+    if (service == null) {
+        // zPermissions not found, do something else
+    }
 
 Ideally, you would do the lookup once (e.g. store the result in an instance or static variable) and, in addition to your plugin's onEnable(), possibly also perform the check inside a PluginEnableEvent handler. But the above is the general gist of it.
 
