@@ -59,7 +59,8 @@ public interface ZPermissionsService {
     /**
      * Retrieve groups which a player is explicitly assigned. The groups are
      * returned in priority order, with the highest priority first. (This can
-     * possibly be considered the player's "primary" group.)
+     * possibly be considered the player's "primary" group.) If the player has
+     * no explicitly assigned groups, the default group is returned.
      * 
      * @param playerName the player's name
      * @return the names of groups which the player is assigned to
