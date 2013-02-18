@@ -90,6 +90,12 @@ public class ZPermissionsServiceImpl implements ZPermissionsService {
             throw new IllegalArgumentException("playerName must have a value");
 
         List<String> groups = getDao().getGroups(playerName);
+        // NB: Only works because we know returned list is mutable.
+
+        // If totally empty, then they are in the default group.
+        if (groups.isEmpty())
+            groups.add(getResolver().getDefaultGroup());
+
         // Returned groups are in application order, so reverse them
         Collections.reverse(groups);
         // The first group of the returned list is the highest priority
