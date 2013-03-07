@@ -79,6 +79,7 @@ public class SubCommands {
                 .forCommand("setgroup")
                 .forCommand("show")
                 .forCommand("dump")
+                .forCommand("has")
                 .show();
             return null;
         }

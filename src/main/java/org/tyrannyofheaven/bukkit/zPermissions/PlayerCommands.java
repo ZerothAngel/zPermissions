@@ -146,4 +146,16 @@ public class PlayerCommands extends CommonCommands {
         sendMessage(sender, colorize("{GOLD}%s{YELLOW} set to {GREEN}%s{YELLOW} for {AQUA}%s{YELLOW} for %d second%s"), permission, value == null ? Boolean.TRUE : value, player.getName(), timeout, timeout == 1 ? "" : "s");
     }
 
+    @Command(value="has", description="Bukkit hasPermission() check")
+    public void has(CommandSender sender, @Session("entityName") String playerName, @Option("permission") String permission) {
+        Player player = plugin.getServer().getPlayer(playerName);
+        if (player == null) {
+            sendMessage(sender, colorize("{RED}Player is not online."));
+            abortBatchProcessing();
+            return;
+        }
+
+        sendMessage(sender, colorize("{GREEN}%s"), player.hasPermission(permission));
+    }
+
 }
