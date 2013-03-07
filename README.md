@@ -113,6 +113,7 @@ The rank commands are `/promote`, `/demote`, `/setrank`, and `/unsetrank` and wi
 *   `/permissions player <player> setgroup <group>` &mdash; Removes all of a player's group memberships and adds them to given group.
 *   `/permissions player <player> show` &mdash; Show any permissions associated with a player.
 *   `/permissions player <player> dump [-w <world>] [-f <filter>] [region...]` &mdash; Evaluates permissions for the given player as if they were in the given world and region(s) and recursively dumps all permissions. Note that this will only contain permissions directly or indirectly set by zPermissions. It will not include default permissions or permissions set by other plugins. (Use `/permissions check` to check for effective permissions.) Specify a filter to only display permissions with the given substring.
+*   `/permissions player <player> has <permission>` &mdash; Simply calls Bukkit's hasPermission() function for the given player and permission and outputs the result (true/false). `permission` must be an unqualified permission &mdash; no world or region qualifiers.
 
 ### Group Commands ###
 
