@@ -25,13 +25,13 @@ import static org.tyrannyofheaven.bukkit.util.ToHMessageUtils.sendMessage;
 import static org.tyrannyofheaven.bukkit.util.ToHStringUtils.hasText;
 
 import java.io.File;
+import java.lang.ref.WeakReference;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -240,7 +240,9 @@ public class ZPermissionsPlugin extends JavaPlugin {
 
         // Remove attachments
         for (PlayerState playerState : playerStates.values()) {
-            playerState.getAttachment().remove();
+            PermissionAttachment pa = playerState.getAttachment();
+            if (pa != null)
+                pa.remove();
         }
         playerStates.clear();
 
@@ -351,8 +353,11 @@ public class ZPermissionsPlugin extends JavaPlugin {
         PlayerState playerState = null;
         debug(this, "Removing attachment for %s", player.getName());
         playerState = playerStates.remove(player.getName());
-        if (playerState != null)
-            playerState.getAttachment().remove(); // potential to call a callback
+        if (playerState != null) {
+            PermissionAttachment pa = playerState.getAttachment();
+            if (pa != null)
+                pa.remove(); // potential to call a callback
+        }
     }
     
     // Update state about a player, resolving effective permissions and
@@ -428,14 +433,15 @@ public class ZPermissionsPlugin extends JavaPlugin {
         });
 
         // Create attachment and set its permissions
-        PermissionAttachment pa;
+        PermissionAttachment pa = null;
         boolean created = false;
 
         if (playerState != null) {
             // Re-use old attachment
-            pa = playerState.getAttachment();
+            pa = playerState.getAttachment(); // NB may be null because weak reference
         }
-        else {
+        
+        if (pa == null) {
             // Create brand new one, if needed
             pa = player.addAttachment(this);
             created = true;
@@ -477,17 +483,15 @@ public class ZPermissionsPlugin extends JavaPlugin {
 
         // Update state
         PermissionAttachment old = null;
-        playerState = playerStates.get(player.getName());
         if (playerState == null) {
             // Doesn't exist yet, add it
             playerState = new PlayerState(pa, regions, location.getWorld().getName(), resolverResult.getGroups());
             playerStates.put(player.getName(), playerState);
         }
-        else if (playerState != null) {
+        else {
             // Update values
             old = playerState.setAttachment(pa);
-            playerState.getRegions().clear();
-            playerState.getRegions().addAll(regions);
+            playerState.setRegions(regions);
             playerState.setWorld(location.getWorld().getName());
             playerState.setGroups(resolverResult.getGroups());
         }
@@ -790,31 +794,40 @@ public class ZPermissionsPlugin extends JavaPlugin {
     // Encapsulates state about a player
     private static class PlayerState {
         
-        private PermissionAttachment attachment;
+        private WeakReference<PermissionAttachment> attachmentRef;
 
-        private final Set<String> regions = new HashSet<String>();
+        private Set<String> regions;
 
         private String world;
 
-        private final Set<String> groups = new LinkedHashSet<String>();
+        private Set<String> groups;
 
         public PlayerState(PermissionAttachment attachment, Set<String> regions, String world, Set<String> groups) {
             setAttachment(attachment);
-            getRegions().addAll(regions);
+            setRegions(regions);
             setWorld(world);
             setGroups(groups);
         }
 
         public PermissionAttachment getAttachment() {
-            return attachment;
+            return attachmentRef.get();
         }
 
         public PermissionAttachment setAttachment(PermissionAttachment attachment) {
             if (attachment == null)
                 throw new IllegalArgumentException("attachment cannot be null");
-            PermissionAttachment old = this.attachment;
-            this.attachment = attachment;
+            PermissionAttachment old = null;
+            if (attachmentRef != null){
+                old = attachmentRef.get();
+                attachmentRef.clear();
+            }
+            attachmentRef = new WeakReference<PermissionAttachment>(attachment);
             return old;
+        }
+
+        public void setRegions(Set<String> regions) {
+            // NB should already be lower-cased
+            this.regions = Collections.unmodifiableSet(new HashSet<String>(regions));
         }
 
         public Set<String> getRegions() {
@@ -826,7 +839,7 @@ public class ZPermissionsPlugin extends JavaPlugin {
         }
 
         public Set<String> getGroups() {
-            return Collections.unmodifiableSet(groups);
+            return groups;
         }
 
         public void setWorld(String world) {
@@ -836,9 +849,11 @@ public class ZPermissionsPlugin extends JavaPlugin {
         }
 
         public void setGroups(Set<String> groups) {
+            this.groups = new HashSet<String>(groups.size());
             for (String group : groups) {
                 this.groups.add(group.toLowerCase());
             }
+            this.groups = Collections.unmodifiableSet(this.groups);
         }
 
     }
