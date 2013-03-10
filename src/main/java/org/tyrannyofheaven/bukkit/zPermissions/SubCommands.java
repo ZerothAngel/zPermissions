@@ -211,7 +211,7 @@ public class SubCommands {
             permissions.add(new Utils.PermissionInfo(pai.getPermission(), pai.getValue(), pai.getAttachment() != null ? pai.getAttachment().getPlugin().getName() : "default"));
         }
         
-        Utils.displayPermissions(plugin, sender, null, permissions, filter, sender instanceof ConsoleCommandSender ^ verbose);
+        Utils.displayPermissions(plugin, sender, null, permissions, filter, sender instanceof ConsoleCommandSender || verbose);
     }
 
     @Command(value="reload", description="Re-read config.yml")
