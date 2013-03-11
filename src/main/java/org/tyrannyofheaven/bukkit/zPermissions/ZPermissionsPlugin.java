@@ -25,11 +25,9 @@ import static org.tyrannyofheaven.bukkit.util.ToHMessageUtils.sendMessage;
 import static org.tyrannyofheaven.bukkit.util.ToHStringUtils.hasText;
 
 import java.io.File;
-import java.lang.ref.WeakReference;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -45,7 +43,10 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
+import org.bukkit.metadata.FixedMetadataValue;
+import org.bukkit.metadata.MetadataValue;
 import org.bukkit.permissions.PermissionAttachment;
+import org.bukkit.permissions.PermissionRemovedExecutor;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.ServicePriority;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -119,11 +120,11 @@ public class ZPermissionsPlugin extends JavaPlugin {
     // Filename of file-based storage
     private static final String FILE_STORAGE_FILENAME = "data.yml";
 
+    // Name of metadata key for our PlayerState instances
+    private static final String PLAYER_METADATA_KEY = "zPermissions.PlayerState";
+
     // Version info (may include build number)
     private VersionInfo versionInfo;
-
-    // Internal state kept about each online player
-    private final Map<String, PlayerState> playerStates = new HashMap<String, PlayerState>();
 
     // Permission resolver
     private final PermissionsResolver resolver = new PermissionsResolver(this);
@@ -239,12 +240,13 @@ public class ZPermissionsPlugin extends JavaPlugin {
         // Clear any player state
 
         // Remove attachments
-        for (PlayerState playerState : playerStates.values()) {
-            PermissionAttachment pa = playerState.getAttachment();
-            if (pa != null)
-                pa.remove();
+        for (Player player : Bukkit.getOnlinePlayers()) {
+            PlayerState playerState = getPlayerState(player);
+            if (playerState != null) {
+                playerState.removeAttachment();
+            }
+            player.removeMetadata(PLAYER_METADATA_KEY, this);
         }
-        playerStates.clear();
 
         log(this, "%s disabled.", versionInfo.getVersionString());
     }
@@ -350,14 +352,12 @@ public class ZPermissionsPlugin extends JavaPlugin {
 
     // Remove all state associated with a player, including their attachment
     void removeAttachment(Player player) {
-        PlayerState playerState = null;
         debug(this, "Removing attachment for %s", player.getName());
-        playerState = playerStates.remove(player.getName());
+        PlayerState playerState = getPlayerState(player);
         if (playerState != null) {
-            PermissionAttachment pa = playerState.getAttachment();
-            if (pa != null)
-                pa.remove(); // potential to call a callback
+            playerState.removeAttachment(); // potential to call a callback
         }
+        player.removeMetadata(PLAYER_METADATA_KEY, this);
     }
     
     // Update state about a player, resolving effective permissions and
@@ -406,13 +406,15 @@ public class ZPermissionsPlugin extends JavaPlugin {
     private void updateAttachmentInternal(final Player player, Location location, boolean force) {
         final Set<String> regions = getRegions(location);
 
-        PlayerState playerState = playerStates.get(player.getName());
+        PlayerState playerState = getPlayerState(player);
 
         // Check if the player changed regions/worlds or isn't known yet
+        // (Or if attachment mysteriously disappeared...)
         if (!force) {
             force = playerState == null ||
                 !regions.equals(playerState.getRegions()) ||
-                !location.getWorld().getName().equals(playerState.getWorld());
+                !location.getWorld().getName().equals(playerState.getWorld()) ||
+                playerState.getAttachment() == null;
         }
 
         // No need to update yet (most likely called by movement-based event)
@@ -438,7 +440,7 @@ public class ZPermissionsPlugin extends JavaPlugin {
 
         if (playerState != null) {
             // Re-use old attachment
-            pa = playerState.getAttachment(); // NB may be null because weak reference
+            pa = playerState.getAttachment(); // NB may be null due to premature removal
         }
         
         if (pa == null) {
@@ -446,6 +448,8 @@ public class ZPermissionsPlugin extends JavaPlugin {
             pa = player.addAttachment(this);
             created = true;
         }
+
+        debug(this, "(Existing PlayerState = %s, existing attachment = %s)", playerState != null, !created);
 
         boolean succeeded = false;
         try {
@@ -486,7 +490,7 @@ public class ZPermissionsPlugin extends JavaPlugin {
         if (playerState == null) {
             // Doesn't exist yet, add it
             playerState = new PlayerState(pa, regions, location.getWorld().getName(), resolverResult.getGroups());
-            playerStates.put(player.getName(), playerState);
+            player.setMetadata(PLAYER_METADATA_KEY, new FixedMetadataValue(this, playerState));
         }
         else {
             // Update values
@@ -526,7 +530,7 @@ public class ZPermissionsPlugin extends JavaPlugin {
      * @param playerName the name of the player
      */
     void refreshPlayer(String playerName) {
-        Player player = getServer().getPlayerExact(playerName);
+        Player player = Bukkit.getPlayerExact(playerName);
         if (player != null) {
             debug(this, "Refreshing player %s", player.getName());
             updateAttachment(player, player.getLocation(), true);
@@ -539,8 +543,8 @@ public class ZPermissionsPlugin extends JavaPlugin {
     void refreshPlayers() {
         debug(this, "Refreshing all online players");
         Set<String> toRefresh = new HashSet<String>();
-        for (Player player : getServer().getOnlinePlayers()) {
-            toRefresh.add(player.getName().toLowerCase());
+        for (Player player : Bukkit.getOnlinePlayers()) {
+            toRefresh.add(player.getName());
         }
         refreshTask.start(toRefresh);
     }
@@ -553,9 +557,10 @@ public class ZPermissionsPlugin extends JavaPlugin {
     void refreshAffectedPlayers(String groupName) {
         groupName = groupName.toLowerCase();
         Set<String> toRefresh = new HashSet<String>();
-        for (Map.Entry<String, PlayerState> me : playerStates.entrySet()) {
-            if (me.getValue().getGroups().contains(groupName)) {
-                toRefresh.add(me.getKey());
+        for (Player player : Bukkit.getOnlinePlayers()) {
+            PlayerState playerState = getPlayerState(player);
+            if (playerState == null || playerState.getGroups().contains(groupName)) {
+                toRefresh.add(player.getName());
             }
         }
         
@@ -791,10 +796,20 @@ public class ZPermissionsPlugin extends JavaPlugin {
         }
     }
 
+    // Retrieve associated PlayerState, if any
+    private PlayerState getPlayerState(Player player) {
+        for (MetadataValue mv : player.getMetadata(PLAYER_METADATA_KEY)) {
+            if (mv.getOwningPlugin() == this) {
+                return (PlayerState)mv.value();
+            }
+        }
+        return null;
+    }
+
     // Encapsulates state about a player
-    private static class PlayerState {
+    private static class PlayerState implements PermissionRemovedExecutor {
         
-        private WeakReference<PermissionAttachment> attachmentRef;
+        private PermissionAttachment attachment;
 
         private Set<String> regions;
 
@@ -810,19 +825,22 @@ public class ZPermissionsPlugin extends JavaPlugin {
         }
 
         public PermissionAttachment getAttachment() {
-            return attachmentRef.get();
+            return attachment;
         }
 
         public PermissionAttachment setAttachment(PermissionAttachment attachment) {
             if (attachment == null)
                 throw new IllegalArgumentException("attachment cannot be null");
-            PermissionAttachment old = null;
-            if (attachmentRef != null){
-                old = attachmentRef.get();
-                attachmentRef.clear();
-            }
-            attachmentRef = new WeakReference<PermissionAttachment>(attachment);
+            PermissionAttachment old = this.attachment;
+            this.attachment = attachment;
+            this.attachment.setRemovalCallback(this);
             return old;
+        }
+
+        public void removeAttachment() {
+            if (attachment != null)
+                attachment.remove();
+            attachment = null;
         }
 
         public void setRegions(Set<String> regions) {
@@ -854,6 +872,12 @@ public class ZPermissionsPlugin extends JavaPlugin {
                 this.groups.add(group.toLowerCase());
             }
             this.groups = Collections.unmodifiableSet(this.groups);
+        }
+
+        @Override
+        public void attachmentRemoved(PermissionAttachment attachment) {
+            if (attachment == this.attachment)
+                this.attachment = null;
         }
 
     }
