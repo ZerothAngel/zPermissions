@@ -1,7 +1,6 @@
 database-support: |
-  Enable database support (also requires "database" option in plugin.yml
-  to be true). Disabling database support switches zPermissions to its
-  flat-file-based permissions store WHICH IS TOTALLY EXPERIMENTAL.
+  Enable database support. Disabling database support switches
+  zPermissions to its flat-file-based permissions store.
 
 group-permission: |
   Groups may have a group permission node automatically assigned to their

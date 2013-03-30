@@ -66,6 +66,10 @@ import org.tyrannyofheaven.bukkit.zPermissions.model.PermissionRegion;
 import org.tyrannyofheaven.bukkit.zPermissions.model.PermissionWorld;
 import org.tyrannyofheaven.bukkit.zPermissions.service.ZPermissionsServiceImpl;
 
+import com.avaje.ebean.EbeanServer;
+import com.avaje.ebean.EbeanServerFactory;
+import com.avaje.ebean.config.DataSourceConfig;
+import com.avaje.ebean.config.ServerConfig;
 import com.sk89q.worldguard.bukkit.WorldGuardPlugin;
 import com.sk89q.worldguard.protection.ApplicableRegionSet;
 import com.sk89q.worldguard.protection.managers.RegionManager;
@@ -177,6 +181,12 @@ public class ZPermissionsPlugin extends JavaPlugin {
     // WorldGuard, if present
     private WorldGuardPlugin worldGuardPlugin;
 
+    // Create our own instance rather than use Bukkit's
+    private EbeanServer ebeanServer;
+
+    // Custom NamingConvention for Avaje
+    private final ZPermissionsNamingConvention namingConvention = new ZPermissionsNamingConvention(this);
+
     /**
      * Retrieve this plugin's TransactionStrategy
      * 
@@ -267,7 +277,9 @@ public class ZPermissionsPlugin extends JavaPlugin {
         ToHFileUtils.upgradeConfig(this, config);
 
         // Set up TransactionStrategy and DAO
-        if (getDescription().isDatabaseEnabled() && databaseSupport) {
+        if (databaseSupport) {
+            initializeDatabase();
+
             log(this, "Using database storage strategy.");
             storageStrategy = new AvajeStorageStrategy(this, txnMaxRetries); // TODO make configurable?
         }
@@ -322,6 +334,31 @@ public class ZPermissionsPlugin extends JavaPlugin {
         log(this, "%s enabled.", versionInfo.getVersionString());
     }
 
+    // R.I.P. BUKKIT-3919
+    private void initializeDatabase() {
+        ServerConfig db = new ServerConfig();
+
+        // All this duplication just for this one line...
+        db.setNamingConvention(namingConvention);
+
+        db.setDefaultServer(false);
+        db.setRegister(false);
+        db.setClasses(getDatabaseClasses());
+        db.setName(getDescription().getName());
+        getServer().configureDbConfig(db);
+
+        DataSourceConfig ds = db.getDataSourceConfig();
+
+        ds.setUrl(replaceDatabaseString(ds.getUrl()));
+        getDataFolder().mkdirs();
+
+        ClassLoader previous = Thread.currentThread().getContextClassLoader();
+
+        Thread.currentThread().setContextClassLoader(getClassLoader());
+        ebeanServer = EbeanServerFactory.create(db);
+        Thread.currentThread().setContextClassLoader(previous);
+    }
+
     // Must be here instead of AvajeStorageStrategy because installDDL()
     // is protected
     void createDatabaseSchema() {
@@ -334,6 +371,11 @@ public class ZPermissionsPlugin extends JavaPlugin {
             installDDL();
             log(this, "Done.");
         }
+    }
+    
+    @Override
+    public EbeanServer getDatabase() {
+        return ebeanServer;
     }
 
     /* (non-Javadoc)
@@ -348,6 +390,12 @@ public class ZPermissionsPlugin extends JavaPlugin {
         result.add(Entry.class);
         result.add(Membership.class);
         return result;
+    }
+
+    private String replaceDatabaseString(String input) {
+        input = input.replaceAll("\\{DIR\\}", getDataFolder().getPath().replaceAll("\\\\", "/") + "/");
+        input = input.replaceAll("\\{NAME\\}", getDescription().getName().replaceAll("[^\\w_-]", ""));
+        return input;
     }
 
     // Remove all state associated with a player, including their attachment
@@ -726,6 +774,14 @@ public class ZPermissionsPlugin extends JavaPlugin {
         // FIXME currently hidden option
         refreshTask.setDelay(config.getInt("bulk-refresh-delay", DEFAULT_BULK_REFRESH_DELAY));
         autoRefreshInterval = config.getInt("auto-refresh-interval", DEFAULT_AUTO_REFRESH_INTERVAL);
+
+        namingConvention.clearTableNames();
+        node = config.getConfigurationSection("tables");
+        if (node != null) {
+            for (Map.Entry<String, ?> me : node.getValues(false).entrySet()) {
+                namingConvention.setTableName(me.getKey(), me.getValue().toString());
+            }
+        }
 
         // Set debug logging
         getLogger().setLevel(config.getBoolean("debug", false) ? Level.FINE : null);
