@@ -1,6 +1,6 @@
 # zPermissions &mdash; A Superperms plugin for Bukkit #
 
-zPermissions is an SQL database-backed Superperms (aka Bukkit permissions) implementation. Notable features are: multi-world support, ranks with multiple tracks/ladders, group inheritance of unlimited depth (within reason), and optional region-specific permissions using [WorldGuard](http://dev.bukkit.org/server-mods/worldguard/) regions.
+zPermissions is primarily an SQL database-backed Superperms (aka Bukkit permissions) implementation. It also supports flat-file storage. Notable features are: multi-world support, ranks with multiple tracks/ladders, group inheritance of unlimited depth (within reason), and optional region-specific permissions using [WorldGuard](http://dev.bukkit.org/server-mods/worldguard/) regions.
 
 There is no build protection (I rely on WorldGuard for that) or chat prefix support. zPermissions focuses on permissions and only permissions.
 
@@ -12,9 +12,7 @@ Please post bugs and/or feature requests as [dev.bukkit.org tickets](http://dev.
 
 ## Features ##
 
-*   Uses Bukkit database to store permissions (i.e. settings in bukkit.yml). Note however, SQLite, the default database for Bukkit, does **not** work. You must use a real database. I know this will scare away 99% of prospective users. :P
-	
-    I developed with [H2](http://www.h2database.com/) and will probably deploy with it. [PostgreSQL](http://www.postgresql.org/) also seems to work fine and I'm sure [MySQL](http://dev.mysql.com/) will as well.
+*   Uses Bukkit database to store permissions (i.e. settings in bukkit.yml). Should work with most databases supported by [Avaje Ebean](http://www.avaje.org) &mdash; I've specifically tested with PostgreSQL, MySQL, and H2. The default Bukkit database, SQLite, is **not** supported. zPermissions will automatically fall back to flat-file storage if it is used.
 
 *   Group inheritance. Groups may inherit permissions from a single parent group.
 
@@ -154,4 +152,4 @@ Development builds may be found on my continous integration site:
 ## To Do ##
 
 *   Commands to clone/copy the permissions for a user or group.
-*   More extensive unit tests.
+*   More extensive unit tests, especially on the service interface.
