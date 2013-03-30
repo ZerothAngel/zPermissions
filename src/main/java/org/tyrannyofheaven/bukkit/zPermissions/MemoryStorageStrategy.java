@@ -20,8 +20,11 @@ import static org.tyrannyofheaven.bukkit.util.ToHLoggingUtils.log;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Level;
 
+import org.bukkit.Bukkit;
 import org.tyrannyofheaven.bukkit.util.transaction.TransactionCallback;
 import org.tyrannyofheaven.bukkit.util.transaction.TransactionException;
 import org.tyrannyofheaven.bukkit.util.transaction.TransactionStrategy;
@@ -45,7 +48,9 @@ public class MemoryStorageStrategy implements StorageStrategy, TransactionStrate
 
     private boolean initialized;
 
-    private int saveTask = -1;
+    private int saveTask = -1; // NB synchronized on this
+
+    private final Lock saveLock = new ReentrantLock();
 
     MemoryStorageStrategy(ZPermissionsPlugin plugin, File saveFile) {
         this.plugin = plugin;
@@ -72,12 +77,17 @@ public class MemoryStorageStrategy implements StorageStrategy, TransactionStrate
     public void shutdown() {
         if (!initialized) return; // if didn't load properly DON'T overwrite
 
-        try {
-            dao.save(saveFile);
+        // Kill scheduled async task
+        synchronized (this) {
+            if (saveTask > -1) {
+                // NB still race condition, but saveLock will serialize saves
+                Bukkit.getScheduler().cancelTask(saveTask);
+                saveTask = -1;
+            }
         }
-        catch (IOException e) {
-            log(plugin, Level.SEVERE, "Error saving permissions database:", e);
-        }
+
+        debug(plugin, "Saving permissions database one last time...");
+        save();
     }
 
     @Override
@@ -109,10 +119,14 @@ public class MemoryStorageStrategy implements StorageStrategy, TransactionStrate
         try {
             T result = callback.doInTransaction();
             // Schedule a save if dirty and no pending save
-            if (dao.isDirty() && saveTask < 0) {
-                saveTask = plugin.getServer().getScheduler().runTaskLaterAsynchronously(plugin, this, SAVE_DELAY).getTaskId();
-                if (saveTask < 0)
-                    log(plugin, Level.SEVERE, "Error scheduling permissions database save task");
+            if (dao.isDirty()) {
+                synchronized (this) {
+                    if (saveTask < 0) {
+                        saveTask = Bukkit.getScheduler().runTaskLaterAsynchronously(plugin, this, SAVE_DELAY).getTaskId();
+                        if (saveTask < 0)
+                            log(plugin, Level.SEVERE, "Error scheduling permissions database save task");
+                    }
+                }
             }
             return result;
         }
@@ -131,9 +145,21 @@ public class MemoryStorageStrategy implements StorageStrategy, TransactionStrate
     @Override
     public void run() {
         debug(plugin, "Auto-saving permissions database...");
-        try {
-            dao.save(saveFile);
+        synchronized (this) {
             saveTask = -1;
+        }
+        save();
+    }
+
+    private void save() {
+        try {
+            saveLock.lock();
+            try {
+                dao.save(saveFile);
+            }
+            finally {
+                saveLock.unlock();
+            }
         }
         catch (IOException e) {
             log(plugin, Level.SEVERE, "Error saving permissions database:", e);
