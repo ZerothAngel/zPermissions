@@ -3,7 +3,7 @@ version: ${version}
 main: org.tyrannyofheaven.bukkit.zPermissions.ZPermissionsPlugin
 description: Superperms implementation with Bukkit database backend
 author: ZerothAngel
-database: true
+database: false
 softdepend: [WorldGuard]
 load: STARTUP
 
