@@ -1,4 +1,4 @@
-config-version: 8
+config-version: 9
 
 database-support: true
 
@@ -31,5 +31,7 @@ kick-ops-on-error: false
 auto-refresh-interval: -1
 
 opaque-inheritance: true
+
+rank-admin-broadcast: true
 
 debug: false

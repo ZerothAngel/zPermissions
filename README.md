@@ -88,6 +88,16 @@ The rank commands are `/promote`, `/demote`, `/setrank`, and `/unsetrank` and wi
 *   zpermissions.rank.* &mdash; Allows rank commands on all tracks
 *   zpermissions.rank.&lt;track> &mdash; Allows rank commands on a specific track
 
+### Notification Permissions ###
+*   zpermissions.notify.* &mdash; Receives all notifications.
+*   zpermissions.notify.rank &mdash; Receives all rank command notifications.
+*   zpermissions.notify.promote &mdash; Receives all `/promote` notifications.
+*   zpermissions.notify.demote &mdash; Receives all `/demote` notifications.
+*   zpermissions.notify.setrank &mdash; Receives all `/setrank` notifications.
+*   zpermissions.notify.unsetrank &mdash; Receives all `/unsetrank` notifications.
+
+For zpermissions.notify.rank (and related permissions) to work, the config.yml option rank-admin-broadcast must be set to false.
+
 ## Detailed Command Usage ##
 
 ### General Commands ###

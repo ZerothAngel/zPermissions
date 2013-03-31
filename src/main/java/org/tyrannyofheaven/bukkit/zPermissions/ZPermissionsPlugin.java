@@ -118,6 +118,9 @@ public class ZPermissionsPlugin extends JavaPlugin {
     // Default opaque inheritance
     private static final boolean DEFAULT_OPAQUE_INHERITANCE = true;
 
+    // Default rank broadcast to admins
+    private static final boolean DEFAULT_RANK_ADMIN_BROADCAST = true;
+
     // Default auto-refresh interval
     private static final int DEFAULT_AUTO_REFRESH_INTERVAL = -1;
 
@@ -186,6 +189,9 @@ public class ZPermissionsPlugin extends JavaPlugin {
 
     // Custom NamingConvention for Avaje
     private final ToHNamingConvention namingConvention = new ToHNamingConvention(this, "zperms_schema_version");
+
+    // Backwards compatibility. Broadcast to admins if true, the custom permissions otherwise.
+    private boolean rankAdminBroadcast = DEFAULT_RANK_ADMIN_BROADCAST;
 
     /**
      * Retrieve this plugin's TransactionStrategy
@@ -634,6 +640,15 @@ public class ZPermissionsPlugin extends JavaPlugin {
         return defaultTempPermissionTimeout;
     }
 
+    /**
+     * Returns the configured value for rank-admin-broadcast.
+     * 
+     * @return whether to broadcast rank changes to admins
+     */
+    boolean isRankAdminBroadcast() {
+        return rankAdminBroadcast;
+    }
+
     // Read config.yml
     private void readConfig() {
         // Barebones defaults
@@ -708,6 +723,7 @@ public class ZPermissionsPlugin extends JavaPlugin {
 
         defaultTempPermissionTimeout = config.getInt("default-temp-permission-timeout", DEFAULT_TEMP_PERMISSION_TIMEOUT);
         txnMaxRetries = config.getInt("txn-max-retries", DEFAULT_TXN_MAX_RETRIES); // FIXME hidden
+        rankAdminBroadcast = config.getBoolean("rank-admin-broadcast", DEFAULT_RANK_ADMIN_BROADCAST);
 
         // Read tracks, if any
         ConfigurationSection node = config.getConfigurationSection("tracks");

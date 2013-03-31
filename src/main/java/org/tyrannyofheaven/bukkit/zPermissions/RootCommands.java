@@ -101,9 +101,16 @@ public class RootCommands {
 
     // Audit record of change. If quiet, only log to server log rather than
     // broadcasting to admins.
-    private void announce(BroadcastScope scope, String format, Object... args) {
-        if (scope == BroadcastScope.DEFAULT)
-            ToHMessageUtils.broadcastAdmin(plugin, format, args);
+    private void announce(String notifyNode, BroadcastScope scope, String format, Object... args) {
+        if (scope == BroadcastScope.DEFAULT) {
+            if (plugin.isRankAdminBroadcast()) {
+                ToHMessageUtils.broadcastAdmin(plugin, format, args);
+            }
+            else {
+                ToHMessageUtils.broadcast(plugin, "zpermissions.notify." + notifyNode, format, args);
+                ToHLoggingUtils.log(plugin, format, args); // ensure it also goes to log
+            }
+        }
         else if (scope == BroadcastScope.QUIET)
             ToHLoggingUtils.log(plugin, format, args);
         else
@@ -162,7 +169,7 @@ public class RootCommands {
                             abortBatchProcessing();
                             return false;
                         }
-                        announce(scope, "%s added %s to %s", sender.getName(), playerName, group);
+                        announce("promote", scope, "%s added %s to %s", sender.getName(), playerName, group);
                         if (scope.isShouldEcho() || verbose)
                             sendMessage(sender, colorize("{YELLOW}Adding {AQUA}%s{YELLOW} to {DARK_GREEN}%s"), playerName, group);
                     }
@@ -183,7 +190,7 @@ public class RootCommands {
                     // If now ranked below first rank, remove altogether
                     if (rankIndex < 0) {
                         plugin.getDao().removeMember(oldGroup, playerName);
-                        announce(scope, "%s removed %s from %s", sender.getName(), playerName, oldGroup);
+                        announce(rankUp ? "promote" : "demote", scope, "%s removed %s from %s", sender.getName(), playerName, oldGroup);
                         if (scope.isShouldEcho() || verbose)
                             sendMessage(sender, colorize("{YELLOW}Removing {AQUA}%s{YELLOW} from {DARK_GREEN}%s"), playerName, oldGroup);
                     }
@@ -205,7 +212,7 @@ public class RootCommands {
                         if (!oldGroup.equalsIgnoreCase(newGroup))
                             plugin.getDao().removeMember(oldGroup, playerName);
         
-                        announce(scope, "%s %s %s from %s to %s", sender.getName(),
+                        announce(rankUp ? "promote" : "demote", scope, "%s %s %s from %s to %s", sender.getName(),
                                 (rankUp ? "promoted" : "demoted"),
                                 playerName,
                                 oldGroup,
@@ -310,7 +317,7 @@ public class RootCommands {
                             abortBatchProcessing();
                             return false;
                         }
-                        announce(scope, "%s added %s to %s", sender.getName(), playerName, rankName);
+                        announce("setrank", scope, "%s added %s to %s", sender.getName(), playerName, rankName);
                         if (scope.isShouldEcho() || verbose)
                             sendMessage(sender, colorize("{YELLOW}Adding {AQUA}%s{YELLOW} to {DARK_GREEN}%s"), playerName, rankName);
                     }
@@ -339,7 +346,7 @@ public class RootCommands {
                         if (!oldGroup.equalsIgnoreCase(rankName))
                             plugin.getDao().removeMember(oldGroup, playerName);
 
-                        announce(scope, "%s changed rank of %s from %s to %s", sender.getName(),
+                        announce("setrank", scope, "%s changed rank of %s from %s to %s", sender.getName(),
                                 playerName,
                                 oldGroup,
                                 rankName);
@@ -353,7 +360,7 @@ public class RootCommands {
                         // Remove from old group
                         plugin.getDao().removeMember(oldGroup, playerName);
 
-                        announce(scope, "%s removed %s from %s", sender.getName(), playerName, oldGroup);
+                        announce("unsetrank", scope, "%s removed %s from %s", sender.getName(), playerName, oldGroup);
                         if (scope.isShouldEcho() || verbose)
                             sendMessage(sender, colorize("{YELLOW}Removing {AQUA}%s{YELLOW} from {DARK_GREEN}%s"), playerName, oldGroup);
                     }
