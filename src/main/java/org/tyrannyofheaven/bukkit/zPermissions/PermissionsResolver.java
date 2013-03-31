@@ -165,7 +165,7 @@ public class PermissionsResolver {
      */
     public ResolverResult resolvePlayer(String playerName, String world, Set<String> regions) {
         // Get this player's groups
-        List<String> groups = getDao().getGroups(playerName);
+        List<String> groups = Utils.toGroupNames(Utils.filterExpired(getDao().getGroups(playerName)));
         if (groups.isEmpty()) {
             // If no groups, use the default group
             groups.add(getDefaultGroup());

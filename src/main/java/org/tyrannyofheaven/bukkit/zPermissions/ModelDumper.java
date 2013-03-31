@@ -19,6 +19,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
@@ -26,8 +27,11 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
 
+import javax.xml.bind.DatatypeConverter;
+
 import org.tyrannyofheaven.bukkit.util.transaction.TransactionCallbackWithoutResult;
 import org.tyrannyofheaven.bukkit.zPermissions.model.Entry;
+import org.tyrannyofheaven.bukkit.zPermissions.model.Membership;
 import org.tyrannyofheaven.bukkit.zPermissions.model.PermissionEntity;
 
 /**
@@ -76,10 +80,20 @@ public class ModelDumper {
                                     entity.getParent().getDisplayName()));
                         }
                         // Dump memberships
-                        for (String playerName : plugin.getDao().getMembers(entity.getName())) {
-                            out.println(String.format("permissions group %s add %s",
-                                    entity.getDisplayName(),
-                                    playerName));
+                        for (Membership membership : plugin.getDao().getMembers(entity.getName())) {
+                            if (membership.getExpiration() == null) {
+                                out.println(String.format("permissions group %s add %s",
+                                        entity.getDisplayName(),
+                                        membership.getMember()));
+                            }
+                            else {
+                                Calendar cal = Calendar.getInstance();
+                                cal.setTime(membership.getExpiration());
+                                out.println(String.format("permissions group %s add %s %s",
+                                        entity.getDisplayName(),
+                                        membership.getMember(),
+                                        DatatypeConverter.printDateTime(cal)));
+                            }
                         }
                     }
                 }

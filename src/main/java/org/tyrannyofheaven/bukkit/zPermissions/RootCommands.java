@@ -137,7 +137,7 @@ public class RootCommands {
             @Override
             public Boolean doInTransaction() throws Exception {
                 Set<String> playerGroupNames = new HashSet<String>();
-                playerGroupNames.addAll(plugin.getDao().getGroups(playerName));
+                playerGroupNames.addAll(Utils.toGroupNames(Utils.filterExpired(plugin.getDao().getGroups(playerName))));
                 if (playerGroupNames.isEmpty())
                     playerGroupNames.add(plugin.getResolver().getDefaultGroup());
         
@@ -155,7 +155,7 @@ public class RootCommands {
                     if (rankUp) {
                         String group = track.get(0);
                         try {
-                            plugin.getDao().addMember(group, playerName);
+                            plugin.getDao().addMember(group, playerName, null);
                         }
                         catch (MissingGroupException e) {
                             sendMessage(sender, colorize("{RED}Group {DARK_GREEN}%s{RED} does not exist."), e.getGroupName());
@@ -195,7 +195,7 @@ public class RootCommands {
         
                         // Change groups
                         try {
-                            plugin.getDao().addMember(newGroup, playerName);
+                            plugin.getDao().addMember(newGroup, playerName, null);
                         }
                         catch (MissingGroupException e) {
                             sendMessage(sender, colorize("{RED}Group {DARK_GREEN}%s{RED} does not exist."), e.getGroupName());
@@ -286,7 +286,7 @@ public class RootCommands {
             @Override
             public Boolean doInTransaction() throws Exception {
                 Set<String> playerGroupNames = new HashSet<String>();
-                playerGroupNames.addAll(plugin.getDao().getGroups(playerName));
+                playerGroupNames.addAll(Utils.toGroupNames(Utils.filterExpired(plugin.getDao().getGroups(playerName))));
                 if (playerGroupNames.isEmpty())
                     playerGroupNames.add(plugin.getResolver().getDefaultGroup());
         
@@ -303,7 +303,7 @@ public class RootCommands {
                     if (rankName != null) {
                         // Not in any groups, just add to new group.
                         try {
-                            plugin.getDao().addMember(rankName, playerName);
+                            plugin.getDao().addMember(rankName, playerName, null);
                         }
                         catch (MissingGroupException e) {
                             sendMessage(sender, colorize("{RED}Group {DARK_GREEN}%s{RED} does not exist."), e.getGroupName());
@@ -327,7 +327,7 @@ public class RootCommands {
                     if (rankName != null) {
                         // Add to new group
                         try {
-                            plugin.getDao().addMember(rankName, playerName);
+                            plugin.getDao().addMember(rankName, playerName, null);
                         }
                         catch (MissingGroupException e) {
                             sendMessage(sender, colorize("{RED}Group {DARK_GREEN}%s{RED} does not exist."), e.getGroupName());

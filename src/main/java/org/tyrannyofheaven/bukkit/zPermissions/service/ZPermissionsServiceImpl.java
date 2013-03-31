@@ -27,6 +27,7 @@ import org.tyrannyofheaven.bukkit.util.transaction.TransactionCallback;
 import org.tyrannyofheaven.bukkit.util.transaction.TransactionCallbackWithoutResult;
 import org.tyrannyofheaven.bukkit.util.transaction.TransactionStrategy;
 import org.tyrannyofheaven.bukkit.zPermissions.PermissionsResolver;
+import org.tyrannyofheaven.bukkit.zPermissions.Utils;
 import org.tyrannyofheaven.bukkit.zPermissions.ZPermissionsService;
 import org.tyrannyofheaven.bukkit.zPermissions.dao.PermissionDao;
 
@@ -89,7 +90,7 @@ public class ZPermissionsServiceImpl implements ZPermissionsService {
         if (!hasText(playerName))
             throw new IllegalArgumentException("playerName must have a value");
 
-        List<String> groups = getDao().getGroups(playerName);
+        List<String> groups = Utils.toGroupNames(Utils.filterExpired(getDao().getGroups(playerName)));
         // NB: Only works because we know returned list is mutable.
 
         // If totally empty, then they are in the default group.
@@ -115,7 +116,7 @@ public class ZPermissionsServiceImpl implements ZPermissionsService {
         getTransactionStrategy().execute(new TransactionCallbackWithoutResult() {
             @Override
             public void doInTransactionWithoutResult() throws Exception {
-                for (String group : getDao().getGroups(playerName)) {
+                for (String group : Utils.toGroupNames(Utils.filterExpired(getDao().getGroups(playerName)))) {
                     // Get ancestors
                     List<String> ancestors = getDao().getAncestry(group);
                     if (ancestors.isEmpty()) {
@@ -215,7 +216,7 @@ public class ZPermissionsServiceImpl implements ZPermissionsService {
             throw new IllegalArgumentException("groupName must have a value");
         // DAO returns them in alphabetical order. This interface doesn't care
         // about ordering.
-        return new HashSet<String>(getDao().getMembers(groupName));
+        return new HashSet<String>(Utils.toMembers(getDao().getMembers(groupName)));
     }
 
 }

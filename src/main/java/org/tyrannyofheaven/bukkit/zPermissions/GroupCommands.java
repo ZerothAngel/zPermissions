@@ -18,10 +18,11 @@ package org.tyrannyofheaven.bukkit.zPermissions;
 import static org.tyrannyofheaven.bukkit.util.ToHMessageUtils.broadcastAdmin;
 import static org.tyrannyofheaven.bukkit.util.ToHMessageUtils.colorize;
 import static org.tyrannyofheaven.bukkit.util.ToHMessageUtils.sendMessage;
-import static org.tyrannyofheaven.bukkit.util.ToHStringUtils.delimitedString;
 import static org.tyrannyofheaven.bukkit.util.command.reader.CommandReader.abortBatchProcessing;
 
 import java.util.ArrayList;
+import java.util.Date;
+import java.util.Iterator;
 import java.util.List;
 
 import org.bukkit.ChatColor;
@@ -35,6 +36,7 @@ import org.tyrannyofheaven.bukkit.util.transaction.TransactionCallbackWithoutRes
 import org.tyrannyofheaven.bukkit.zPermissions.dao.DaoException;
 import org.tyrannyofheaven.bukkit.zPermissions.dao.MissingGroupException;
 import org.tyrannyofheaven.bukkit.zPermissions.model.Entry;
+import org.tyrannyofheaven.bukkit.zPermissions.model.Membership;
 import org.tyrannyofheaven.bukkit.zPermissions.model.PermissionEntity;
 
 /**
@@ -69,13 +71,15 @@ public class GroupCommands extends CommonCommands {
     }
 
     @Command(value="add", description="Add a player to a group")
-    public void addMember(CommandSender sender, final @Session("entityName") String groupName, final @Option(value="player", completer="player") String playerName) {
+    public void addMember(CommandSender sender, final @Session("entityName") String groupName, final @Option(value="player", completer="player") String playerName, @Option(value="duration/timestamp", optional=true) String duration, @Option(value="units", optional=true) String units) {
+        final Date expiration = Utils.parseDurationTimestamp(duration, units);
+
         // Add player to group.
         try {
             plugin.getRetryingTransactionStrategy().execute(new TransactionCallbackWithoutResult() {
                 @Override
                 public void doInTransactionWithoutResult() throws Exception {
-                    plugin.getDao().addMember(groupName, playerName);
+                    plugin.getDao().addMember(groupName, playerName, expiration);
                 }
             });
         }
@@ -196,13 +200,36 @@ public class GroupCommands extends CommonCommands {
 
     @Command(value="members", description="List members of a group")
     public void members(CommandSender sender, @Session("entityName") String groupName) {
-        List<String> members = plugin.getDao().getMembers(groupName);
+        List<Membership> memberships = plugin.getDao().getMembers(groupName);
         
         // NB: Can't tell if group doesn't exist or if it has no members.
-        if (members.isEmpty())
+        if (memberships.isEmpty()) {
             sendMessage(sender, colorize("{YELLOW}Group has no members or does not exist."));
+        }
         else {
-            sendMessage(sender, colorize("{YELLOW}Members of {DARK_GREEN}%s{YELLOW}: {AQUA}%s"), groupName, delimitedString(ChatColor.YELLOW + ", " + ChatColor.AQUA, members));
+            Date now = new Date();
+            StringBuilder sb = new StringBuilder();
+            for (Iterator<Membership> i = memberships.iterator(); i.hasNext();) {
+                Membership membership = i.next();
+                if (membership.getExpiration() == null || membership.getExpiration().after(now))
+                    sb.append(ChatColor.AQUA);
+                else
+                    sb.append(ChatColor.GRAY);
+
+                sb.append(membership.getMember());
+
+                if (membership.getExpiration() != null) {
+                    sb.append('[');
+                    sb.append(Utils.dateToString(membership.getExpiration()));
+                    sb.append(']');
+                }
+
+                if (i.hasNext()) {
+                    sb.append(ChatColor.YELLOW);
+                    sb.append(", ");
+                }
+            }
+            sendMessage(sender, colorize("{YELLOW}Members of {DARK_GREEN}%s{YELLOW}: %s"), groupName, sb);
         }
     }
 

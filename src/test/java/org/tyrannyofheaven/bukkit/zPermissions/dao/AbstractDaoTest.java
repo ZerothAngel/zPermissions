@@ -24,6 +24,7 @@ import static org.junit.Assert.assertTrue;
 import java.util.List;
 
 import org.junit.Test;
+import org.tyrannyofheaven.bukkit.zPermissions.Utils;
 import org.tyrannyofheaven.bukkit.zPermissions.model.PermissionEntity;
 import org.tyrannyofheaven.bukkit.zPermissions.model.PermissionRegion;
 import org.tyrannyofheaven.bukkit.zPermissions.model.PermissionWorld;
@@ -226,7 +227,7 @@ public abstract class AbstractDaoTest {
             
             // Add to a group
             assertTrue(getDao().createGroup(TEST_GROUP1));
-            getDao().addMember(TEST_GROUP1, TEST_PLAYER);
+            getDao().addMember(TEST_GROUP1, TEST_PLAYER, null);
             commit();
         }
         finally {
@@ -236,17 +237,17 @@ public abstract class AbstractDaoTest {
         begin();
         try {
             // Confirm membership
-            List<String> groups = getDao().getGroups(TEST_PLAYER);
+            List<String> groups = Utils.toGroupNames(getDao().getGroups(TEST_PLAYER));
             assertEquals(1, groups.size());
             assertEquals(TEST_GROUP1, groups.get(0));
             
-            List<String> players = getDao().getMembers(TEST_GROUP1);
+            List<String> players = Utils.toMembers(getDao().getMembers(TEST_GROUP1));
             assertEquals(1, players.size());
             assertTrue(players.contains(TEST_PLAYER.toLowerCase()));
     
             // Add to second group
             assertTrue(getDao().createGroup(TEST_GROUP2));
-            getDao().addMember(TEST_GROUP2, TEST_PLAYER);
+            getDao().addMember(TEST_GROUP2, TEST_PLAYER, null);
             commit();
         }
         finally {
@@ -256,13 +257,13 @@ public abstract class AbstractDaoTest {
         begin();
         try {
             // Confirm membership
-            List<String> groups = getDao().getGroups(TEST_PLAYER);
+            List<String> groups = Utils.toGroupNames(getDao().getGroups(TEST_PLAYER));
             assertEquals(2, groups.size());
             // NB: When priorities are equal, falls back to lexicographical ordering
             assertEquals(TEST_GROUP1, groups.get(0));
             assertEquals(TEST_GROUP2, groups.get(1));
             
-            List<String> players = getDao().getMembers(TEST_GROUP2);
+            List<String> players = Utils.toMembers(getDao().getMembers(TEST_GROUP2));
             assertEquals(1, players.size());
             assertTrue(players.contains(TEST_PLAYER.toLowerCase()));
         }
@@ -283,7 +284,7 @@ public abstract class AbstractDaoTest {
         begin();
         try {
             // Confirm new ordering
-            List<String> groups = getDao().getGroups(TEST_PLAYER);
+            List<String> groups = Utils.toGroupNames(getDao().getGroups(TEST_PLAYER));
             assertEquals(2, groups.size());
             assertEquals(TEST_GROUP2, groups.get(0));
             assertEquals(TEST_GROUP1, groups.get(1));
@@ -299,14 +300,14 @@ public abstract class AbstractDaoTest {
         begin();
         try {
             // Confirm membership
-            List<String> groups = getDao().getGroups(TEST_PLAYER);
+            List<String> groups = Utils.toGroupNames(getDao().getGroups(TEST_PLAYER));
             assertEquals(1, groups.size());
             assertEquals(TEST_GROUP2, groups.get(0));
     
             assertTrue(getDao().getMembers(TEST_GROUP1).isEmpty());
     
             // Set group
-            getDao().setGroup(TEST_PLAYER, TEST_GROUP1);
+            getDao().setGroup(TEST_PLAYER, TEST_GROUP1, null);
             commit();
         }
         finally {
@@ -316,7 +317,7 @@ public abstract class AbstractDaoTest {
         begin();
         try {
             // Confirm membership
-            List<String> groups = getDao().getGroups(TEST_PLAYER);
+            List<String> groups = Utils.toGroupNames(getDao().getGroups(TEST_PLAYER));
             assertEquals(1, groups.size());
             assertEquals(TEST_GROUP1, groups.get(0));
             
@@ -331,7 +332,7 @@ public abstract class AbstractDaoTest {
         begin();
         try {
             // Confirm
-            List<String> groups = getDao().getGroups(TEST_PLAYER);
+            List<String> groups = Utils.toGroupNames(getDao().getGroups(TEST_PLAYER));
             assertTrue(groups.isEmpty());
 
             // Clean up
@@ -352,7 +353,7 @@ public abstract class AbstractDaoTest {
             
             // Add to a group
             assertTrue(getDao().createGroup(TEST_GROUP1));
-            getDao().addMember(TEST_GROUP1, TEST_PLAYER);
+            getDao().addMember(TEST_GROUP1, TEST_PLAYER, null);
             commit();
         }
         finally {
@@ -362,11 +363,11 @@ public abstract class AbstractDaoTest {
         begin();
         try {
             // Confirm membership
-            List<String> groups = getDao().getGroups(TEST_PLAYER);
+            List<String> groups = Utils.toGroupNames(getDao().getGroups(TEST_PLAYER));
             assertEquals(1, groups.size());
             assertEquals(TEST_GROUP1, groups.get(0));
             
-            List<String> players = getDao().getMembers(TEST_GROUP1);
+            List<String> players = Utils.toMembers(getDao().getMembers(TEST_GROUP1));
             assertEquals(1, players.size());
             assertTrue(players.contains(TEST_PLAYER.toLowerCase()));
 
@@ -381,10 +382,10 @@ public abstract class AbstractDaoTest {
         begin();
         try {
             // Confirm membership
-            List<String> groups = getDao().getGroups(TEST_PLAYER);
+            List<String> groups = Utils.toGroupNames(getDao().getGroups(TEST_PLAYER));
             assertTrue(groups.isEmpty());
             
-            List<String> players = getDao().getMembers(TEST_GROUP1);
+            List<String> players = Utils.toMembers(getDao().getMembers(TEST_GROUP1));
             assertTrue(players.isEmpty());
 
             // Clean up

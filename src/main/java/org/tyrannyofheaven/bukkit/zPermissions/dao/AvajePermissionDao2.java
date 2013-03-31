@@ -2,6 +2,7 @@ package org.tyrannyofheaven.bukkit.zPermissions.dao;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -74,8 +75,8 @@ public class AvajePermissionDao2 extends BaseMemoryPermissionDao {
     }
 
     @Override
-    synchronized public void addMember(String groupName, String member) {
-        super.addMember(groupName, member);
+    synchronized public void addMember(String groupName, String member, Date expiration) {
+        super.addMember(groupName, member, expiration);
     }
 
     @Override
@@ -84,12 +85,12 @@ public class AvajePermissionDao2 extends BaseMemoryPermissionDao {
     }
 
     @Override
-    synchronized public List<String> getGroups(String member) {
+    synchronized public List<Membership> getGroups(String member) {
         return super.getGroups(member);
     }
 
     @Override
-    synchronized public List<String> getMembers(String group) {
+    synchronized public List<Membership> getMembers(String group) {
         return super.getMembers(group);
     }
 
@@ -104,8 +105,8 @@ public class AvajePermissionDao2 extends BaseMemoryPermissionDao {
     }
 
     @Override
-    synchronized public void setGroup(String playerName, String groupName) {
-        super.setGroup(playerName, groupName);
+    synchronized public void setGroup(String playerName, String groupName, Date expiration) {
+        super.setGroup(playerName, groupName, expiration);
     }
 
     @Override
@@ -326,9 +327,10 @@ public class AvajePermissionDao2 extends BaseMemoryPermissionDao {
     }
 
     @Override
-    protected void createMembership(Membership membership) {
+    protected void createOrUpdateMembership(Membership membership) {
         final String name = membership.getGroup().getDisplayName();
         final String member = membership.getMember();
+        final Date expiration = membership.getExpiration();
 
         getExecutor().execute(new Runnable() {
             @Override
@@ -350,8 +352,9 @@ public class AvajePermissionDao2 extends BaseMemoryPermissionDao {
                     dbMembership = new Membership();
                     dbMembership.setGroup(group);
                     dbMembership.setMember(member);
-                    getEbeanServer().save(dbMembership);
                 }
+                dbMembership.setExpiration(expiration);
+                getEbeanServer().save(dbMembership);
             }
         });
     }
@@ -567,9 +570,10 @@ public class AvajePermissionDao2 extends BaseMemoryPermissionDao {
                 Membership newMembership = new Membership();
                 newMembership.setMember(membership.getMember());
                 newMembership.setGroup(newGroup);
+                newMembership.setExpiration(membership.getExpiration());
                 newGroup.getMemberships().add(newMembership);
                 
-                rememberMembership(memoryState, newGroup, newMembership);
+                rememberMembership(memoryState, newMembership);
             }
         }
         
