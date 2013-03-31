@@ -59,7 +59,6 @@ public class AvajeStorageStrategy implements StorageStrategy {
 
     @Override
     public void init() {
-        plugin.createDatabaseSchema();
 //        plugin.getDatabase().getAdminLogging().setDebugGeneratedSql(true);
         refreshInternal(); // synchronously
     }

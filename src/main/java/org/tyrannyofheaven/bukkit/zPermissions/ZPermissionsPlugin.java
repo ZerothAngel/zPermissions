@@ -25,6 +25,7 @@ import static org.tyrannyofheaven.bukkit.util.ToHMessageUtils.sendMessage;
 import static org.tyrannyofheaven.bukkit.util.ToHStringUtils.hasText;
 
 import java.io.File;
+import java.io.IOException;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -34,8 +35,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
-
-import javax.persistence.PersistenceException;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
@@ -50,8 +49,10 @@ import org.bukkit.permissions.PermissionRemovedExecutor;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.ServicePriority;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.tyrannyofheaven.bukkit.util.ToHDatabaseUtils;
 import org.tyrannyofheaven.bukkit.util.ToHFileUtils;
 import org.tyrannyofheaven.bukkit.util.ToHNamingConvention;
+import org.tyrannyofheaven.bukkit.util.ToHSchemaVersion;
 import org.tyrannyofheaven.bukkit.util.ToHStringUtils;
 import org.tyrannyofheaven.bukkit.util.ToHUtils;
 import org.tyrannyofheaven.bukkit.util.VersionInfo;
@@ -68,6 +69,7 @@ import org.tyrannyofheaven.bukkit.zPermissions.model.PermissionWorld;
 import org.tyrannyofheaven.bukkit.zPermissions.service.ZPermissionsServiceImpl;
 
 import com.avaje.ebean.EbeanServer;
+import com.avaje.ebeaninternal.api.SpiEbeanServer;
 import com.sk89q.worldguard.bukkit.WorldGuardPlugin;
 import com.sk89q.worldguard.protection.ApplicableRegionSet;
 import com.sk89q.worldguard.protection.managers.RegionManager;
@@ -183,7 +185,7 @@ public class ZPermissionsPlugin extends JavaPlugin {
     private EbeanServer ebeanServer;
 
     // Custom NamingConvention for Avaje
-    private final ToHNamingConvention namingConvention = new ToHNamingConvention(this);
+    private final ToHNamingConvention namingConvention = new ToHNamingConvention(this, "zperms_schema_version");
 
     /**
      * Retrieve this plugin's TransactionStrategy
@@ -275,13 +277,32 @@ public class ZPermissionsPlugin extends JavaPlugin {
         ToHFileUtils.upgradeConfig(this, config);
 
         // Set up TransactionStrategy and DAO
+        storageStrategy = null;
         if (databaseSupport) {
-            ebeanServer = ToHUtils.createEbeanServer(this, getClassLoader(), namingConvention);
+            ebeanServer = ToHDatabaseUtils.createEbeanServer(this, getClassLoader(), namingConvention);
 
-            log(this, "Using database storage strategy.");
-            storageStrategy = new AvajeStorageStrategy(this, txnMaxRetries); // TODO make configurable?
+            SpiEbeanServer spiEbeanServer = (SpiEbeanServer)ebeanServer;
+            if (spiEbeanServer.getDatabasePlatform().getName().contains("sqlite")) {
+                log(this, Level.WARNING, "This plugin is NOT compatible with SQLite.");
+                log(this, Level.WARNING, "Edit bukkit.yml to switch databases or disable database support in config.yml.");
+                log(this, Level.WARNING, "Falling back to file-based storage strategy.");
+                // Do nothing else (storageStrategy still null)
+            }
+            else {
+                try {
+                    ToHDatabaseUtils.upgradeDatabase(this, namingConvention, getClassLoader(), "sql");
+                }
+                catch (IOException e) {
+                    error(this, "Exception upgrading database schema:", e);
+                }
+
+                log(this, "Using database storage strategy.");
+                storageStrategy = new AvajeStorageStrategy(this, txnMaxRetries); // TODO make configurable?
+            }
         }
-        else {
+        
+        // If still no storage strategy at this point, use flat-file one
+        if (storageStrategy == null) {
             log(this, "Using file-based storage strategy.");
             storageStrategy = new MemoryStorageStrategy(this, new File(getDataFolder(), FILE_STORAGE_FILENAME));
         }
@@ -292,14 +313,7 @@ public class ZPermissionsPlugin extends JavaPlugin {
         }
         catch (Exception e) {
             error(this, "Exception initializing storage strategy:", e);
-            
-            log(this, Level.WARNING, "This error is often casued by using the default bukkit.yml database settings.");
-            log(this, Level.WARNING, "This plugin is NOT compatible with SQLite.");
-            log(this, Level.WARNING, "Edit bukkit.yml to switch databases or disable database support in config.yml.");
-            // The following might be a bad idea. We'll see how it goes...
-            log(this, Level.WARNING, "Falling back to file-based storage strategy.");
-            storageStrategy = new MemoryStorageStrategy(this, new File(getDataFolder(), FILE_STORAGE_FILENAME));
-            storageStrategy.init();
+            // TODO Now what?
         }
 
         // Install our commands
@@ -332,20 +346,6 @@ public class ZPermissionsPlugin extends JavaPlugin {
         log(this, "%s enabled.", versionInfo.getVersionString());
     }
 
-    // Must be here instead of AvajeStorageStrategy because installDDL()
-    // is protected
-    void createDatabaseSchema() {
-        // Create database schema, if needed
-        try {
-            getDatabase().createQuery(Entry.class).findRowCount();
-        }
-        catch (PersistenceException e) {
-            log(this, "Creating SQL tables...");
-            installDDL();
-            log(this, "Done.");
-        }
-    }
-    
     @Override
     public EbeanServer getDatabase() {
         return ebeanServer;
@@ -357,6 +357,7 @@ public class ZPermissionsPlugin extends JavaPlugin {
     @Override
     public List<Class<?>> getDatabaseClasses() {
         List<Class<?>> result = new ArrayList<Class<?>>();
+        result.add(ToHSchemaVersion.class);
         result.add(PermissionEntity.class);
         result.add(PermissionRegion.class);
         result.add(PermissionWorld.class);
@@ -742,7 +743,7 @@ public class ZPermissionsPlugin extends JavaPlugin {
         refreshTask.setDelay(config.getInt("bulk-refresh-delay", DEFAULT_BULK_REFRESH_DELAY));
         autoRefreshInterval = config.getInt("auto-refresh-interval", DEFAULT_AUTO_REFRESH_INTERVAL);
 
-        ToHUtils.populateNamingConvention(config, namingConvention);
+        ToHDatabaseUtils.populateNamingConvention(config, namingConvention);
 
         // Set debug logging
         getLogger().setLevel(config.getBoolean("debug", false) ? Level.FINE : null);
