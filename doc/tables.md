@@ -2,8 +2,9 @@
 
 If, for whatever reason, you cannot set up bukkit.yml to assign one database per plugin, you can choose to customize the names of zPermissions' tables instead. Doing so will help avoid table name collisions.
 
-zPermissions has 5 tables. The tables and their default names are:
+zPermissions has 6 tables. The tables and their default names are:
 
+*   `ToHSchemaVersion` &mdash; zperms\_schema_version
 *   `Entry` &mdash; entries
 *   `Membership` &mdash; memberships
 *   `PermissionEntity` &mdash; entities
@@ -13,15 +14,16 @@ zPermissions has 5 tables. The tables and their default names are:
 To customize the names, simply add something like the following to your config.yml:
 
     tables:
-      Entry: zperms_entries
-      Membership: zperms_memberships
-      PermissionEntity: zperms_entities
-      PermissionRegion: zperms_regions
-      PermissionWorld: zperms_worlds
+      ToHSchemaVersion: zp_schema_version
+      Entry: zp_entries
+      Membership: zp_memberships
+      PermissionEntity: zp_entities
+      PermissionRegion: zp_regions
+      PermissionWorld: zp_worlds
 
-(In this example, the default table names are prefixed with `zperms_`.)
+(In this example, the default table names are prefixed with `zp_`.)
 
-Note that zPermissions will only create the tables if it notices the `Entry` table missing. When changing table names, you should drop all old tables (or `ALTER TABLE ... RENAME TO ...` appropriately). You should change all table names in the configuration at once.
+Note that zPermissions will only create the tables if it notices the `ToHSchemaVersion` or `PermissionEntity` tables missing. When changing table names, you should drop all old tables (or `ALTER TABLE ... RENAME TO ...` appropriately). You should change all table names in the configuration at once.
 
 I have no plans to automate table renaming at all since it would put multi-server/shared-server schemas at risk.
 
@@ -36,6 +38,7 @@ Lastly, the table names you specify in config.yml can actually be qualified usin
 For example,
 
     tables:
+      ToHSchemaVersion: myserver.zperms_schema_version
       Entry: myserver.entries
       Membership: myserver.memberships
       PermissionEntity: myserver.entities
