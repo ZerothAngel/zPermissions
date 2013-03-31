@@ -68,5 +68,10 @@ opaque-inheritance: |
   the conglomerate of all assigned groups and their ancestor groups
   are considered at once.
 
+rank-admin-broadcast: |
+  If true, rank commands will broadcast changes to admins by default.
+  Otherwise, rank commands will broadcast to players with a custom
+  permission, e.g. zpermissions.notify.promote, etc.
+
 debug: |
   Enable debug logging.

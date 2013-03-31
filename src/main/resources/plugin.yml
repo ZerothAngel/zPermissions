@@ -92,3 +92,28 @@ permissions:
     description: Allows use of the /unsetrank command
   zpermissions.unsetrank.*:
     description: Allows use of /unsetrank on all tracks
+  zpermissions.notify.*:
+    description: Receives all notifications
+    default: false
+    children:
+      zpermissions.notify.rank: true
+  zpermissions.notify.rank:
+    description: Receives rank command notitifications
+    default: false
+    children:
+      zpermissions.notify.promote: true
+      zpermissions.notify.demote: true
+      zpermissions.notify.setrank: true
+      zpermissions.notify.unsetrank: true
+  zpermissions.notify.promote:
+    description: Receives /promote notifications
+    default: false
+  zpermissions.notify.demote:
+    description: Receives /demote notifications
+    default: false
+  zpermissions.notify.setrank:
+    description: Receives /setrank notifications
+    default: false
+  zpermissions.notify.unsetrank:
+    description: Receives /unsetrank notifications
+    default: false
