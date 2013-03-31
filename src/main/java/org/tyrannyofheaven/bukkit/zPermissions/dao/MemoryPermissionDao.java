@@ -23,6 +23,8 @@ import java.io.Reader;
 import java.io.Writer;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -84,8 +86,8 @@ public class MemoryPermissionDao extends BaseMemoryPermissionDao {
     }
 
     @Override
-    public synchronized void addMember(String groupName, String member) {
-        super.addMember(groupName, member);
+    public synchronized void addMember(String groupName, String member, Date expiration) {
+        super.addMember(groupName, member, expiration);
     }
 
     @Override
@@ -94,12 +96,12 @@ public class MemoryPermissionDao extends BaseMemoryPermissionDao {
     }
 
     @Override
-    public synchronized List<String> getGroups(String member) {
+    public synchronized List<Membership> getGroups(String member) {
         return super.getGroups(member);
     }
 
     @Override
-    public synchronized List<String> getMembers(String group) {
+    public synchronized List<Membership> getMembers(String group) {
         return super.getMembers(group);
     }
 
@@ -114,8 +116,8 @@ public class MemoryPermissionDao extends BaseMemoryPermissionDao {
     }
 
     @Override
-    public synchronized void setGroup(String playerName, String groupName) {
-        super.setGroup(playerName, groupName);
+    public synchronized void setGroup(String playerName, String groupName, Date expiration) {
+        super.setGroup(playerName, groupName, expiration);
     }
 
     @Override
@@ -248,11 +250,23 @@ public class MemoryPermissionDao extends BaseMemoryPermissionDao {
             groupMap.put("priority", group.getPriority());
             if (group.getParent() != null)
                 groupMap.put("parent", group.getParent().getDisplayName());
-            List<String> members = new ArrayList<String>(group.getMemberships().size());
+            // Permanent members
+            List<String> members = new ArrayList<String>();
+            List<Map<String, Object>> tempMembers = new ArrayList<Map<String, Object>>();
             for (Membership membership : group.getMemberships()) {
-                members.add(membership.getMember());
+                if (membership.getExpiration() == null) {
+                    members.add(membership.getMember());
+                }
+                else {
+                    Map<String, Object> tempMemberMap = new HashMap<String, Object>();
+                    tempMemberMap.put("member", membership.getMember());
+                    tempMemberMap.put("expiration", membership.getExpiration());
+
+                    tempMembers.add(tempMemberMap);
+                }
             }
             groupMap.put("members", members);
+            groupMap.put("tempmembers", tempMembers);
             
             groups.add(groupMap);
         }
@@ -281,7 +295,10 @@ public class MemoryPermissionDao extends BaseMemoryPermissionDao {
             Number priority = (Number)groupMap.get("priority");
             String parent = (String)groupMap.get("parent");
             List<String> members = (List<String>)groupMap.get("members");
-            
+            List<Map<String, Object>> tempMembers = (List<Map<String, Object>>)groupMap.get("tempmembers");
+            if (tempMembers == null) // backwards compat
+                tempMembers = Collections.emptyList();
+
             PermissionEntity group = getEntity(memoryState, name, true);
             loadPermissions(memoryState, permissions, group);
             group.setPriority(priority.intValue());
@@ -296,7 +313,16 @@ public class MemoryPermissionDao extends BaseMemoryPermissionDao {
                 membership.setGroup(group);
                 group.getMemberships().add(membership);
                 
-                rememberMembership(memoryState, group, membership);
+                rememberMembership(memoryState, membership);
+            }
+            for (Map<String, Object> tempMemberMap : tempMembers) {
+                Membership membership = new Membership();
+                membership.setMember(((String)tempMemberMap.get("member")).toLowerCase());
+                membership.setGroup(group);
+                membership.setExpiration((Date)tempMemberMap.get("expiration"));
+                group.getMemberships().add(membership);
+                
+                rememberMembership(memoryState, membership);
             }
         }
         
@@ -358,7 +384,7 @@ public class MemoryPermissionDao extends BaseMemoryPermissionDao {
     }
 
     @Override
-    protected void createMembership(Membership membership) {
+    protected void createOrUpdateMembership(Membership membership) {
         setDirty();
     }
 

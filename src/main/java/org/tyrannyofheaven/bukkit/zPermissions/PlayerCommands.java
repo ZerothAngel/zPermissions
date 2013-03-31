@@ -20,6 +20,7 @@ import static org.tyrannyofheaven.bukkit.util.ToHMessageUtils.sendMessage;
 import static org.tyrannyofheaven.bukkit.util.command.reader.CommandReader.abortBatchProcessing;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 
@@ -34,6 +35,7 @@ import org.tyrannyofheaven.bukkit.util.command.Session;
 import org.tyrannyofheaven.bukkit.util.transaction.TransactionCallbackWithoutResult;
 import org.tyrannyofheaven.bukkit.zPermissions.dao.MissingGroupException;
 import org.tyrannyofheaven.bukkit.zPermissions.model.Entry;
+import org.tyrannyofheaven.bukkit.zPermissions.model.Membership;
 import org.tyrannyofheaven.bukkit.zPermissions.model.PermissionEntity;
 
 /**
@@ -50,39 +52,60 @@ public class PlayerCommands extends CommonCommands {
 
     @Command(value="groups", description="List groups this player is a member of")
     public void getGroups(CommandSender sender, @Session("entityName") String name) {
-        List<String> groups = plugin.getDao().getGroups(name);
+        List<Membership> memberships = plugin.getDao().getGroups(name);
 
-        // Add default group if needed
-        if (groups.isEmpty()) {
-            groups.add(plugin.getResolver().getDefaultGroup());
-        }
+        boolean gotGroup = false;
 
-        if (groups.isEmpty()) {
-            sendMessage(sender, colorize("{YELLOW}Player is not a member of any groups."));
-            plugin.checkPlayer(sender, name);
-        }
-        else {
-            StringBuilder sb = new StringBuilder();
-            for (Iterator<String> i = groups.iterator(); i.hasNext();) {
-                String group = i.next();
+        Date now = new Date();
+        StringBuilder sb = new StringBuilder();
+        for (Iterator<Membership> i = memberships.iterator(); i.hasNext();) {
+            Membership membership = i.next();
+            if (membership.getExpiration() == null || membership.getExpiration().after(now)) {
                 sb.append(ChatColor.DARK_GREEN);
-                sb.append(group);
-                if (i.hasNext()) {
-                    sb.append(ChatColor.YELLOW);
-                    sb.append(", ");
-                }
+                gotGroup = true;
             }
-            sendMessage(sender, colorize("{AQUA}%s{YELLOW} is a member of: %s"), name, sb.toString());
+            else
+                sb.append(ChatColor.GRAY);
+
+            sb.append(membership.getGroup().getDisplayName());
+
+            if (membership.getExpiration() != null) {
+                sb.append('[');
+                sb.append(Utils.dateToString(membership.getExpiration()));
+                sb.append(']');
+            }
+
+            if (i.hasNext()) {
+                sb.append(ChatColor.YELLOW);
+                sb.append(", ");
+            }
         }
+
+        // Add default group if we got nothing
+        if (!gotGroup) {
+            if (sb.length() > 0) {
+                sb.append(ChatColor.YELLOW);
+                sb.append(", ");
+            }
+            sb.append(ChatColor.DARK_GREEN);
+            sb.append(plugin.getResolver().getDefaultGroup());
+        }
+
+        sendMessage(sender, colorize("{AQUA}%s{YELLOW} is a member of: %s"), name, sb);
+        
+        if (memberships.isEmpty())
+            plugin.checkPlayer(sender, name);
     }
 
     @Command(value={"setgroup", "group"}, description="Set this player's singular group")
-    public void setGroup(CommandSender sender, final @Session("entityName") String playerName, final @Option(value="group", completer="group") String groupName) {
+    public void setGroup(CommandSender sender, final @Session("entityName") String playerName, final @Option(value="group", completer="group") String groupName, @Option(value="duration/timestamp", optional=true) String duration, @Option(value="units", optional=true) String units) {
+        final Date expiration = Utils.parseDurationTimestamp(duration, units);
+
         try {
             plugin.getRetryingTransactionStrategy().execute(new TransactionCallbackWithoutResult() {
                 @Override
                 public void doInTransactionWithoutResult() throws Exception {
-                    plugin.getDao().setGroup(playerName, groupName);
+                    plugin.getDao().setGroup(playerName, groupName, expiration);
                 }
             });
         }

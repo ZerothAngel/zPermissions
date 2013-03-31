@@ -15,11 +15,15 @@
  */
 package org.tyrannyofheaven.bukkit.zPermissions.model;
 
+import java.util.Date;
+
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
+import javax.persistence.Temporal;
+import javax.persistence.TemporalType;
 import javax.persistence.UniqueConstraint;
 
 import com.avaje.ebean.annotation.CacheStrategy;
@@ -40,6 +44,8 @@ public class Membership {
     private String member;
 
     private PermissionEntity group;
+
+    private Date expiration;
 
     @Id
     public Long getId() {
@@ -66,6 +72,15 @@ public class Membership {
 
     public void setGroup(PermissionEntity group) {
         this.group = group;
+    }
+
+    @Temporal(TemporalType.TIMESTAMP)
+    public Date getExpiration() {
+        return expiration;
+    }
+
+    public void setExpiration(Date expiration) {
+        this.expiration = expiration;
     }
 
     @Override

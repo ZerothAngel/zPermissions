@@ -19,17 +19,23 @@ import static org.tyrannyofheaven.bukkit.util.ToHMessageUtils.colorize;
 import static org.tyrannyofheaven.bukkit.util.ToHMessageUtils.sendMessage;
 
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
+
+import javax.xml.bind.DatatypeConverter;
 
 import org.bukkit.ChatColor;
 import org.bukkit.command.CommandSender;
 import org.tyrannyofheaven.bukkit.util.ToHMessageUtils;
 import org.tyrannyofheaven.bukkit.util.ToHStringUtils;
+import org.tyrannyofheaven.bukkit.util.command.ParseException;
 import org.tyrannyofheaven.bukkit.zPermissions.model.Entry;
+import org.tyrannyofheaven.bukkit.zPermissions.model.Membership;
 import org.tyrannyofheaven.bukkit.zPermissions.model.PermissionEntity;
 
 /**
@@ -129,6 +135,104 @@ public class Utils {
         else {
             ToHMessageUtils.displayLines(plugin, sender, lines);
         }
+    }
+
+    public static List<String> toMembers(Collection<Membership> memberships) {
+        List<String> result = new ArrayList<String>(memberships.size());
+        for (Membership membership : memberships) {
+            result.add(membership.getMember());
+        }
+        return result;
+    }
+
+    public static List<String> toGroupNames(Collection<Membership> memberships) {
+        List<String> result = new ArrayList<String>(memberships.size());
+        for (Membership membership : memberships) {
+            result.add(membership.getGroup().getDisplayName());
+        }
+        return result;
+    }
+
+    public static List<Membership> filterExpired(Collection<Membership> memberships) {
+        List<Membership> result = new ArrayList<Membership>(memberships.size());
+        Date now = new Date();
+        for (Membership membership : memberships) {
+            if (membership.getExpiration() == null || membership.getExpiration().after(now))
+                result.add(membership);
+        }
+        return result;
+    }
+
+    public static Date parseDurationTimestamp(String duration, String units) {
+        if (!ToHStringUtils.hasText(duration))
+            return null;
+        
+        duration = duration.trim().toUpperCase();
+
+        Integer durationInt;
+        try {
+            durationInt = Integer.valueOf(duration);
+        }
+        catch (NumberFormatException e) {
+            // Try ISO 8601 date
+            try {
+                Calendar cal = DatatypeConverter.parseDateTime(duration);
+                cal.set(Calendar.MILLISECOND, 0);
+                return cal.getTime();
+            }
+            catch (IllegalArgumentException e2) {
+                // One last try. Append :00
+                // WHY U SO STRICT DatatypeConverter?!
+                try {
+                    Calendar cal = DatatypeConverter.parseDateTime(duration + ":00");
+                    cal.set(Calendar.MILLISECOND, 0);
+                    return cal.getTime();
+                }
+                catch (IllegalArgumentException e3) {
+                    throw new ParseException("Invalid value: duration/timestamp"); // NB Should match option name
+                }
+            }
+        }
+
+        if (durationInt < 1)
+            throw new ParseException("Invalid value: duration/timestamp"); // NB Should match option name
+
+        int unitsInt = Calendar.DAY_OF_MONTH;
+        if (ToHStringUtils.hasText(units)) {
+            units = units.trim().toLowerCase();
+
+            if ("hours".equals(units) || "hour".equals(units) || "h".equals(units))
+                unitsInt = Calendar.HOUR;
+            else if ("days".equals(units) || "day".equals(units) || "d".equals(units))
+                unitsInt = Calendar.DAY_OF_MONTH;
+            else if ("months".equals(units) || "month".equals(units) || "m".equals(units))
+                unitsInt = Calendar.MONTH;
+            else if ("years".equals(units) || "year".equals(units) || "y".equals(units))
+                unitsInt = Calendar.YEAR;
+            else
+                throw new ParseException("units must be hours, days, months, years");
+        }
+        
+        Calendar cal = Calendar.getInstance();
+        cal.add(unitsInt, durationInt);
+        cal.set(Calendar.MILLISECOND, 0);
+        return cal.getTime();
+    }
+
+    // Suitable for user viewing (e.g. not dumps)
+    public static String dateToString(Date date) {
+        if (date == null)
+            throw new IllegalArgumentException("date cannot be null");
+        
+        Calendar cal = Calendar.getInstance();
+        cal.setTime(date);
+        
+        String result = DatatypeConverter.printDateTime(cal);
+        
+        if (result.length() < 16)
+            return result;
+        else
+            return result.substring(0, 16);
     }
 
     public static class PermissionInfo {

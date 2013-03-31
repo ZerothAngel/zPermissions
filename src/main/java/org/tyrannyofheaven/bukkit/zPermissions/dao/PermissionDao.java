@@ -15,14 +15,16 @@
  */
 package org.tyrannyofheaven.bukkit.zPermissions.dao;
 
+import java.util.Date;
 import java.util.List;
 
 import org.tyrannyofheaven.bukkit.zPermissions.model.Entry;
+import org.tyrannyofheaven.bukkit.zPermissions.model.Membership;
 import org.tyrannyofheaven.bukkit.zPermissions.model.PermissionEntity;
 
 /**
  * Data access object for zPermissions. This isn't actually a pure DAO as it
- * contains some business logic &mdash; {@link #setGroup(String, String)} being the
+ * contains some business logic &mdash; {@link #setGroup(String, String, Date)} being the
  * biggest offender. Ah well... :)
  * 
  * <p>More like a DAO/service object, I guess!
@@ -40,20 +42,20 @@ public interface PermissionDao {
 
     public boolean unsetPermission(String name, boolean group, String region, String world, String permission);
 
-    public void addMember(String groupName, String member);
+    public void addMember(String groupName, String member, Date expiration);
     
     public boolean removeMember(String groupName, String member);
 
     // NB: Resolver critical path
-    public List<String> getGroups(String member);
+    public List<Membership> getGroups(String member);
 
-    public List<String> getMembers(String group);
+    public List<Membership> getMembers(String group);
 
     public PermissionEntity getEntity(String name, boolean group);
 
     public List<PermissionEntity> getEntities(boolean group);
 
-    public void setGroup(String playerName, String groupName);
+    public void setGroup(String playerName, String groupName, Date expiration);
 
     public void setParent(String groupName, String parentName);
 

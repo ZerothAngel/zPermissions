@@ -4,6 +4,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
+import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -234,7 +235,7 @@ public abstract class AbstractResolverTest {
         
         begin();
         try {
-            getDao().setGroup(TEST_PLAYER, TEST_GROUP2);
+            getDao().setGroup(TEST_PLAYER, TEST_GROUP2, null);
             commit();
         }
         finally {
@@ -267,7 +268,7 @@ public abstract class AbstractResolverTest {
         
         begin();
         try {
-            getDao().setGroup(TEST_PLAYER, TEST_GROUP2);
+            getDao().setGroup(TEST_PLAYER, TEST_GROUP2, null);
             commit();
         }
         finally {
@@ -285,7 +286,7 @@ public abstract class AbstractResolverTest {
         // Explicitly add to default group
         begin();
         try {
-            getDao().addMember(TEST_GROUP1, TEST_PLAYER);
+            getDao().addMember(TEST_GROUP1, TEST_PLAYER, null);
             commit();
         }
         finally {
@@ -331,7 +332,7 @@ public abstract class AbstractResolverTest {
     
         begin();
         try {
-            getDao().setGroup(TEST_PLAYER, TEST_GROUP2);
+            getDao().setGroup(TEST_PLAYER, TEST_GROUP2, null);
             commit();
         }
         finally {
@@ -349,7 +350,7 @@ public abstract class AbstractResolverTest {
         // Explicitly add to default group
         begin();
         try {
-            getDao().addMember(TEST_GROUP1, TEST_PLAYER);
+            getDao().addMember(TEST_GROUP1, TEST_PLAYER, null);
             commit();
         }
         finally {
@@ -397,14 +398,14 @@ public abstract class AbstractResolverTest {
         
         begin();
         try {
-            getDao().setGroup(TEST_PLAYER, TEST_GROUP2);
+            getDao().setGroup(TEST_PLAYER, TEST_GROUP2, null);
             commit();
         }
         finally {
             end ();
         }
         // Confirm
-        List<String> groups = getDao().getGroups(TEST_PLAYER);
+        List<String> groups = Utils.toGroupNames(getDao().getGroups(TEST_PLAYER));
         assertEquals(1, groups.size());
         assertEquals(TEST_GROUP2, groups.get(0));
     
@@ -459,14 +460,14 @@ public abstract class AbstractResolverTest {
         // Switch group
         begin();
         try {
-            getDao().setGroup(TEST_PLAYER, TEST_GROUP2);
+            getDao().setGroup(TEST_PLAYER, TEST_GROUP2, null);
             commit();
         }
         finally {
             end ();
         }
         // Confirm
-        List<String> groups = getDao().getGroups(TEST_PLAYER);
+        List<String> groups = Utils.toGroupNames(getDao().getGroups(TEST_PLAYER));
         assertEquals(1, groups.size());
         assertEquals(TEST_GROUP2, groups.get(0));
     
@@ -490,7 +491,7 @@ public abstract class AbstractResolverTest {
             end();
         }
         // Confirm
-        groups = getDao().getGroups(TEST_PLAYER);
+        groups = Utils.toGroupNames(getDao().getGroups(TEST_PLAYER));
         assertTrue(groups.isEmpty());
     
         permissions = resolve(TEST_PLAYER, TEST_WORLD1);
@@ -552,14 +553,14 @@ public abstract class AbstractResolverTest {
         // Switch group
         begin();
         try {
-            getDao().setGroup(TEST_PLAYER, TEST_GROUP2);
+            getDao().setGroup(TEST_PLAYER, TEST_GROUP2, null);
             commit();
         }
         finally {
             end ();
         }
         // Confirm
-        List<String> groups = getDao().getGroups(TEST_PLAYER);
+        List<String> groups = Utils.toGroupNames(getDao().getGroups(TEST_PLAYER));
         assertEquals(1, groups.size());
         assertEquals(TEST_GROUP2, groups.get(0));
     
@@ -613,14 +614,14 @@ public abstract class AbstractResolverTest {
         // Switch group
         begin();
         try {
-            getDao().setGroup(TEST_PLAYER, TEST_GROUP2);
+            getDao().setGroup(TEST_PLAYER, TEST_GROUP2, null);
             commit();
         }
         finally {
             end ();
         }
         // Confirm
-        List<String> groups = getDao().getGroups(TEST_PLAYER);
+        List<String> groups = Utils.toGroupNames(getDao().getGroups(TEST_PLAYER));
         assertEquals(1, groups.size());
         assertEquals(TEST_GROUP2, groups.get(0));
     
@@ -675,14 +676,14 @@ public abstract class AbstractResolverTest {
         // Switch group
         begin();
         try {
-            getDao().setGroup(TEST_PLAYER, TEST_GROUP2);
+            getDao().setGroup(TEST_PLAYER, TEST_GROUP2, null);
             commit();
         }
         finally {
             end ();
         }
         // Confirm
-        List<String> groups = getDao().getGroups(TEST_PLAYER);
+        List<String> groups = Utils.toGroupNames(getDao().getGroups(TEST_PLAYER));
         assertEquals(1, groups.size());
         assertEquals(TEST_GROUP2, groups.get(0));
     
@@ -731,7 +732,7 @@ public abstract class AbstractResolverTest {
         // Add groups
         begin();
         try {
-            getDao().addMember(TEST_GROUP1, TEST_PLAYER);
+            getDao().addMember(TEST_GROUP1, TEST_PLAYER, null);
             commit();
         }
         finally {
@@ -739,14 +740,14 @@ public abstract class AbstractResolverTest {
         }
         begin();
         try {
-            getDao().addMember(TEST_GROUP2, TEST_PLAYER);
+            getDao().addMember(TEST_GROUP2, TEST_PLAYER, null);
             commit();
         }
         finally {
             end ();
         }
         // Confirm
-        List<String> groups = getDao().getGroups(TEST_PLAYER);
+        List<String> groups = Utils.toGroupNames(getDao().getGroups(TEST_PLAYER));
         assertEquals(2, groups.size());
         assertTrue(groups.contains(TEST_GROUP1));
         assertTrue(groups.contains(TEST_GROUP2));
@@ -798,7 +799,7 @@ public abstract class AbstractResolverTest {
         // Add groups
         begin();
         try {
-            getDao().addMember(TEST_GROUP1, TEST_PLAYER);
+            getDao().addMember(TEST_GROUP1, TEST_PLAYER, null);
             commit();
         }
         finally {
@@ -806,14 +807,14 @@ public abstract class AbstractResolverTest {
         }
         begin();
         try {
-            getDao().addMember(TEST_GROUP2, TEST_PLAYER);
+            getDao().addMember(TEST_GROUP2, TEST_PLAYER, null);
             commit();
         }
         finally {
             end ();
         }
         // Confirm
-        List<String> groups = getDao().getGroups(TEST_PLAYER);
+        List<String> groups = Utils.toGroupNames(getDao().getGroups(TEST_PLAYER));
         assertEquals(2, groups.size());
         assertTrue(groups.contains(TEST_GROUP1));
         assertTrue(groups.contains(TEST_GROUP2));
@@ -898,14 +899,14 @@ public abstract class AbstractResolverTest {
         // Switch group
         begin();
         try {
-            getDao().setGroup(TEST_PLAYER, TEST_GROUP2);
+            getDao().setGroup(TEST_PLAYER, TEST_GROUP2, null);
             commit();
         }
         finally {
             end ();
         }
         // Confirm
-        List<String> groups = getDao().getGroups(TEST_PLAYER);
+        List<String> groups = Utils.toGroupNames(getDao().getGroups(TEST_PLAYER));
         assertEquals(1, groups.size());
         assertEquals(TEST_GROUP2, groups.get(0));
     
@@ -925,14 +926,14 @@ public abstract class AbstractResolverTest {
         // Switch to inner-most group
         begin();
         try {
-            getDao().setGroup(TEST_PLAYER, TEST_GROUP3);
+            getDao().setGroup(TEST_PLAYER, TEST_GROUP3, null);
             commit();
         }
         finally {
             end();
         }
         // Confirm
-        groups = getDao().getGroups(TEST_PLAYER);
+        groups = Utils.toGroupNames(getDao().getGroups(TEST_PLAYER));
         assertEquals(1, groups.size());
         assertEquals(TEST_GROUP3, groups.get(0));
     
@@ -948,6 +949,149 @@ public abstract class AbstractResolverTest {
         assertPermission(permissions, "assignedgroup.Group1", false);
         assertPermission(permissions, "assignedgroup.Group2", false);
         assertPermission(permissions, "assignedgroup.Group3");
+    }
+
+    @Test
+    public void testGroupExpiration() {
+        setPermissions(TEST_PLAYER, false,
+                "basic.perm1");
+        assertTrue(createGroup(TEST_GROUP1));
+        setPermissions(TEST_GROUP1, true,
+                "basic.perm2");
+        assertTrue(createGroup(TEST_GROUP2));
+        setPermissions(TEST_GROUP2, true,
+                "basic.perm3");
+        assertTrue(createGroup(TEST_GROUP3));
+        setPermissions(TEST_GROUP3, true,
+                "basic.perm4");
+        
+        // Add permanent groups
+        begin();
+        try {
+            getDao().addMember(TEST_GROUP1, TEST_PLAYER, null);
+            getDao().addMember(TEST_GROUP2, TEST_PLAYER, null);
+            commit();
+        }
+        finally {
+            end();
+        }
+        
+        Date now = new Date();
+
+        // Add non-expired group
+        begin();
+        try {
+            getDao().addMember(TEST_GROUP3, TEST_PLAYER, new Date(now.getTime() + 10000L));
+            commit();
+        }
+        finally {
+            end();
+        }
+        
+        // DAO should return raw groups
+        List<String> groups = Utils.toGroupNames(getDao().getGroups(TEST_PLAYER));
+        assertEquals(3, groups.size());
+        assertEquals(TEST_GROUP3, groups.get(2));
+
+        // Should be resolved
+        Map<String, Boolean> permissions;
+        permissions = resolve(TEST_PLAYER, TEST_WORLD1);
+        
+        assertPermission(permissions, "basic.perm1");
+        assertPermission(permissions, "basic.perm2");
+        assertPermission(permissions, "basic.perm3");
+        assertPermission(permissions, "basic.perm4");
+        assertPermission(permissions, "group.Group1");
+        assertPermission(permissions, "group.Group2");
+        assertPermission(permissions, "group.Group3");
+        assertPermission(permissions, "assignedgroup.Group1");
+        assertPermission(permissions, "assignedgroup.Group2");
+        assertPermission(permissions, "assignedgroup.Group3");
+        
+        // Switch it to expired
+        begin();
+        try {
+            getDao().addMember(TEST_GROUP3, TEST_PLAYER, new Date(now.getTime() - 10000L));
+            commit();
+        }
+        finally {
+            end();
+        }
+        
+        // DAO should return raw groups
+        groups = Utils.toGroupNames(getDao().getGroups(TEST_PLAYER));
+        assertEquals(3, groups.size());
+        assertEquals(TEST_GROUP3, groups.get(2));
+
+        // Should no longer be resolved
+        permissions = resolve(TEST_PLAYER, TEST_WORLD1);
+        
+        assertPermission(permissions, "basic.perm1");
+        assertPermission(permissions, "basic.perm2");
+        assertPermission(permissions, "basic.perm3");
+        assertPermission(permissions, "basic.perm4", false);
+        assertPermission(permissions, "group.Group1");
+        assertPermission(permissions, "group.Group2");
+        assertPermission(permissions, "group.Group3", false);
+        assertPermission(permissions, "assignedgroup.Group1");
+        assertPermission(permissions, "assignedgroup.Group2");
+        assertPermission(permissions, "assignedgroup.Group3", false);
+        
+        // Change to single, non-expired group
+        begin();
+        try {
+            getDao().setGroup(TEST_PLAYER, TEST_GROUP3, new Date(now.getTime() + 10000L));
+            commit();
+        }
+        finally {
+            end();
+        }
+
+        // DAO should return raw groups
+        groups = Utils.toGroupNames(getDao().getGroups(TEST_PLAYER));
+        assertEquals(1, groups.size());
+        assertEquals(TEST_GROUP3, groups.get(0));
+
+        permissions = resolve(TEST_PLAYER, TEST_WORLD1);
+        
+        assertPermission(permissions, "basic.perm1");
+        assertPermission(permissions, "basic.perm2", false);
+        assertPermission(permissions, "basic.perm3", false);
+        assertPermission(permissions, "basic.perm4");
+        assertPermission(permissions, "group.Group1", false);
+        assertPermission(permissions, "group.Group2", false);
+        assertPermission(permissions, "group.Group3");
+        assertPermission(permissions, "assignedgroup.Group1", false);
+        assertPermission(permissions, "assignedgroup.Group2", false);
+        assertPermission(permissions, "assignedgroup.Group3");
+
+        // Change to single, expired group
+        begin();
+        try {
+            getDao().setGroup(TEST_PLAYER, TEST_GROUP3, new Date(now.getTime() - 10000L));
+            commit();
+        }
+        finally {
+            end();
+        }
+
+        // DAO should return raw groups
+        groups = Utils.toGroupNames(getDao().getGroups(TEST_PLAYER));
+        assertEquals(1, groups.size());
+        assertEquals(TEST_GROUP3, groups.get(0));
+
+        permissions = resolve(TEST_PLAYER, TEST_WORLD1);
+        
+        assertPermission(permissions, "basic.perm1");
+        assertPermission(permissions, "basic.perm2"); // NB default group
+        assertPermission(permissions, "basic.perm3", false);
+        assertPermission(permissions, "basic.perm4", false);
+        assertPermission(permissions, "group.Group1");
+        assertPermission(permissions, "group.Group2", false);
+        assertPermission(permissions, "group.Group3", false);
+        assertPermission(permissions, "assignedgroup.Group1");
+        assertPermission(permissions, "assignedgroup.Group2", false);
+        assertPermission(permissions, "assignedgroup.Group3", false);
     }
 
 }
