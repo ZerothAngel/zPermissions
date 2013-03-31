@@ -15,8 +15,12 @@
  */
 package org.tyrannyofheaven.bukkit.zPermissions;
 
+import static org.tyrannyofheaven.bukkit.util.ToHLoggingUtils.log;
+
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
 
 import org.bukkit.Bukkit;
 import org.tyrannyofheaven.bukkit.util.transaction.AsyncTransactionStrategy;
@@ -63,6 +67,19 @@ public class AvajeStorageStrategy implements StorageStrategy {
     @Override
     public void shutdown() {
         executorService.shutdown();
+        try {
+            long timeout = 60L;
+            log(plugin, "Waiting upto %d seconds for pending write operations...", timeout);
+            if (!executorService.awaitTermination(timeout, TimeUnit.SECONDS)) {
+                log(plugin, Level.WARNING, "Timed out before all write operations could finish; expect inconsistencies :(");
+            }
+            else {
+                log(plugin, "All write operations done.");
+            }
+        }
+        catch (InterruptedException e) {
+            // Do nothing
+        }
     }
 
     @Override
