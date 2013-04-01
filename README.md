@@ -61,6 +61,7 @@ The rank commands are `/promote`, `/demote`, `/setrank`, and `/unsetrank` and wi
 *   zpermissions.check.other &mdash; `/permissions check` on other players
 *   zpermissions.inspect &mdash; `/permissions inspect` command
 *   zpermissions.inspect.other &mdash; `/permissions inspect` on other players
+*   zpermissions.mygroups &mdash; `/permissions mygroups` command
 *   zpermissions.reload &mdash; `/permissions reload` command
 *   zpermissions.refresh &mdash; `/permissions refresh` command
 *   zpermissions.export &mdash; `/permissions export` command
@@ -109,6 +110,7 @@ For zpermissions.notify.rank (and related permissions) to work, the config.yml o
 *   `/permissions refresh` &mdash; Re-read permissions from storage and update all online players. Needed to recognize any outside changes to the zPermissions database tables.
 *   `/permissions export <filename>` &mdash; Creates a file containing all the zPermissions commands necessary to re-create your database. See config.yml for the output directory.
 *   `/permissions import <filename>` &mdash; Executes a file containing zPermissions commands. Only works on an empty database!
+*   `/permissions mygroups` &mdash; Displays a list of groups that you are a member of.
 
 ### Player Commands ###
 
