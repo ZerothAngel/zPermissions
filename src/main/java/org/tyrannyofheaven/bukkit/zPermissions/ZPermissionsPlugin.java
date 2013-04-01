@@ -28,6 +28,7 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -193,6 +194,9 @@ public class ZPermissionsPlugin extends JavaPlugin {
     // Backwards compatibility. Broadcast to admins if true, the custom permissions otherwise.
     private boolean rankAdminBroadcast = DEFAULT_RANK_ADMIN_BROADCAST;
 
+    // Handles async refreshes when memberships expire
+    private ExpirationRefreshHandler expirationRefreshHandler;
+
     /**
      * Retrieve this plugin's TransactionStrategy
      * 
@@ -244,6 +248,9 @@ public class ZPermissionsPlugin extends JavaPlugin {
      */
     @Override
     public void onDisable() {
+        // Kill expiration handler
+        expirationRefreshHandler.shutdown();
+
         // Kill pending refresh, if any
         refreshTask.stop();
 
@@ -334,6 +341,7 @@ public class ZPermissionsPlugin extends JavaPlugin {
         boolean regionSupport = worldGuardPlugin != null && regionSupportEnable;
 
         // Install our listeners
+        expirationRefreshHandler = new ExpirationRefreshHandler(this);
         (new ZPermissionsPlayerListener(this)).registerEvents();
         if (regionSupport) {
             (new ZPermissionsRegionPlayerListener(this)).registerEvents();
@@ -348,6 +356,9 @@ public class ZPermissionsPlugin extends JavaPlugin {
 
         // Start auto-refresh task, if one is configured
         startAutoRefreshTask();
+
+        // Initialize expiration handler
+        refreshExpirations();
 
         log(this, "%s enabled.", versionInfo.getVersionString());
     }
@@ -571,6 +582,14 @@ public class ZPermissionsPlugin extends JavaPlugin {
         refreshTask.start(toRefresh);
     }
 
+    void refreshPlayers(Collection<String> playerNames) {
+        refreshTask.start(playerNames);
+    }
+
+    void refreshExpirations() {
+        expirationRefreshHandler.rescan();
+    }
+
     /**
      * Refresh all players who are members of the given group.
      * 
@@ -776,6 +795,7 @@ public class ZPermissionsPlugin extends JavaPlugin {
             @Override
             public void run() {
                 refreshPlayers();
+                refreshExpirations();
             }
         });
     }
@@ -823,6 +843,7 @@ public class ZPermissionsPlugin extends JavaPlugin {
                             // This is executed after the storage refresh is done.
                             log(plugin, "Refresh done.");
                             refreshPlayers();
+                            refreshExpirations();
                         }
                     });
                 }
