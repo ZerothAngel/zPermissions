@@ -80,6 +80,9 @@ public class PlayerCommands extends CommonCommands {
         sendMessage(sender, colorize("{AQUA}%s{YELLOW}'s group set to {DARK_GREEN}%s"), playerName, groupName);
         plugin.checkPlayer(sender, playerName);
         plugin.refreshPlayer(playerName);
+        
+        if (expiration != null)
+            plugin.refreshExpirations();
     }
 
     @Command(value={"show", "sh"}, description="Show information about a player")

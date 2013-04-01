@@ -166,6 +166,7 @@ public abstract class CommonCommands {
                 plugin.refreshAffectedPlayers(name);
             else
                 plugin.refreshPlayer(name);
+            plugin.refreshExpirations();
         }
         else {
             sendMessage(sender, colorize("{RED}%s not found."), group ? "Group" : "Player");

@@ -229,6 +229,7 @@ public class SubCommands {
             @Override
             public void run() {
                 plugin.refreshPlayers();
+                plugin.refreshExpirations();
             }
         });
         sendMessage(sender, colorize("{YELLOW}Refresh queued."));

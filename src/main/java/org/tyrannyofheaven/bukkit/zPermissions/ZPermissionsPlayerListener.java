@@ -15,6 +15,7 @@
  */
 package org.tyrannyofheaven.bukkit.zPermissions;
 
+import org.bukkit.Bukkit;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
@@ -43,11 +44,25 @@ class ZPermissionsPlayerListener implements Listener {
     @EventHandler(priority=EventPriority.LOWEST)
     public void onPlayerLogin(PlayerLoginEvent event) {
         plugin.updateAttachment(event.getPlayer(), event.getPlayer().getLocation(), true);
+        // Wait for next tick...
+        Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, new Runnable() {
+            @Override
+            public void run() {
+                plugin.refreshExpirations();
+            }
+        });
     }
 
     @EventHandler(priority=EventPriority.MONITOR)
     public void onPlayerQuit(PlayerQuitEvent event) {
         plugin.removeAttachment(event.getPlayer());
+        // Wait for next tick...
+        Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, new Runnable() {
+            @Override
+            public void run() {
+                plugin.refreshExpirations();
+            }
+        });
     }
 
     @EventHandler(priority=EventPriority.LOWEST)
