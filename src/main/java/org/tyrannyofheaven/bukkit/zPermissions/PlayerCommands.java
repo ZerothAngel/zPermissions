@@ -21,10 +21,8 @@ import static org.tyrannyofheaven.bukkit.util.command.reader.CommandReader.abort
 
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.Iterator;
 import java.util.List;
 
-import org.bukkit.ChatColor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.tyrannyofheaven.bukkit.util.ToHMessageUtils;
@@ -54,44 +52,9 @@ public class PlayerCommands extends CommonCommands {
     public void getGroups(CommandSender sender, @Session("entityName") String name) {
         List<Membership> memberships = plugin.getDao().getGroups(name);
 
-        boolean gotGroup = false;
+        String groups = Utils.displayGroups(plugin, memberships);
 
-        Date now = new Date();
-        StringBuilder sb = new StringBuilder();
-        for (Iterator<Membership> i = memberships.iterator(); i.hasNext();) {
-            Membership membership = i.next();
-            if (membership.getExpiration() == null || membership.getExpiration().after(now)) {
-                sb.append(ChatColor.DARK_GREEN);
-                gotGroup = true;
-            }
-            else
-                sb.append(ChatColor.GRAY);
-
-            sb.append(membership.getGroup().getDisplayName());
-
-            if (membership.getExpiration() != null) {
-                sb.append('[');
-                sb.append(Utils.dateToString(membership.getExpiration()));
-                sb.append(']');
-            }
-
-            if (i.hasNext()) {
-                sb.append(ChatColor.YELLOW);
-                sb.append(", ");
-            }
-        }
-
-        // Add default group if we got nothing
-        if (!gotGroup) {
-            if (sb.length() > 0) {
-                sb.append(ChatColor.YELLOW);
-                sb.append(", ");
-            }
-            sb.append(ChatColor.DARK_GREEN);
-            sb.append(plugin.getResolver().getDefaultGroup());
-        }
-
-        sendMessage(sender, colorize("{AQUA}%s{YELLOW} is a member of: %s"), name, sb);
+        sendMessage(sender, colorize("{AQUA}%s{YELLOW} is a member of: %s"), name, groups);
         
         if (memberships.isEmpty())
             plugin.checkPlayer(sender, name);

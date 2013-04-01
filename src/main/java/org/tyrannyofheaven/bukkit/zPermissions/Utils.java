@@ -24,6 +24,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -135,6 +136,47 @@ public class Utils {
         else {
             ToHMessageUtils.displayLines(plugin, sender, lines);
         }
+    }
+
+    public static String displayGroups(ZPermissionsPlugin plugin, List<Membership> memberships) {
+        boolean gotGroup = false;
+
+        Date now = new Date();
+        StringBuilder sb = new StringBuilder();
+        for (Iterator<Membership> i = memberships.iterator(); i.hasNext();) {
+            Membership membership = i.next();
+            if (membership.getExpiration() == null || membership.getExpiration().after(now)) {
+                sb.append(ChatColor.DARK_GREEN);
+                gotGroup = true;
+            }
+            else
+                sb.append(ChatColor.GRAY);
+
+            sb.append(membership.getGroup().getDisplayName());
+
+            if (membership.getExpiration() != null) {
+                sb.append('[');
+                sb.append(Utils.dateToString(membership.getExpiration()));
+                sb.append(']');
+            }
+
+            if (i.hasNext()) {
+                sb.append(ChatColor.YELLOW);
+                sb.append(", ");
+            }
+        }
+
+        // Add default group if we got nothing
+        if (!gotGroup) {
+            if (sb.length() > 0) {
+                sb.append(ChatColor.YELLOW);
+                sb.append(", ");
+            }
+            sb.append(ChatColor.DARK_GREEN);
+            sb.append(plugin.getResolver().getDefaultGroup());
+        }
+
+        return sb.toString();
     }
 
     public static List<String> toMembers(Collection<Membership> memberships) {

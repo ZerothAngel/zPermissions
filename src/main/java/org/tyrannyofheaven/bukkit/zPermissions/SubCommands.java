@@ -39,6 +39,7 @@ import org.tyrannyofheaven.bukkit.util.command.ParseException;
 import org.tyrannyofheaven.bukkit.util.command.Require;
 import org.tyrannyofheaven.bukkit.util.command.reader.CommandReader;
 import org.tyrannyofheaven.bukkit.util.transaction.TransactionCallback;
+import org.tyrannyofheaven.bukkit.zPermissions.model.Membership;
 import org.tyrannyofheaven.bukkit.zPermissions.model.PermissionEntity;
 
 /**
@@ -297,6 +298,21 @@ public class SubCommands {
             sendMessage(sender, colorize("{RED}Error exporting; see server log."));
             log(plugin, Level.SEVERE, "Error exporting:", e);
         }
+    }
+
+    @Command(value="mygroups", description="List groups you are a member of")
+    @Require("zpermissions.mygroups")
+    public void mygroups(CommandSender sender) {
+        if (!(sender instanceof Player)) {
+            sendMessage(sender, colorize("{RED}Command only valid for players."));
+            return;
+        }
+        
+        List<Membership> memberships = plugin.getDao().getGroups(sender.getName());
+
+        String groups = Utils.displayGroups(plugin, memberships);
+        
+        sendMessage(sender, colorize("{YELLOW}You are a member of: %s"), groups);
     }
 
 }
