@@ -582,12 +582,30 @@ public class ZPermissionsPlugin extends JavaPlugin {
         refreshTask.start(toRefresh);
     }
 
+    /**
+     * Refresh the attachments of a specific set of players.
+     * 
+     * @param playerNames collection of players to refresh
+     */
     void refreshPlayers(Collection<String> playerNames) {
         refreshTask.start(playerNames);
     }
 
+    /**
+     * Refresh expiration task.
+     */
     void refreshExpirations() {
         expirationRefreshHandler.rescan();
+    }
+
+    /**
+     * Refresh expiration task if the given player is online.
+     * 
+     * @param playerName a player
+     */
+    void refreshExpirations(String playerName) {
+        if (Bukkit.getPlayerExact(playerName) != null)
+            refreshExpirations();
     }
 
     /**

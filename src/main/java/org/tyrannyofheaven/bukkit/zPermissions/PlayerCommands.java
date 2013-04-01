@@ -82,7 +82,7 @@ public class PlayerCommands extends CommonCommands {
         plugin.refreshPlayer(playerName);
         
         if (expiration != null)
-            plugin.refreshExpirations();
+            plugin.refreshExpirations(playerName);
     }
 
     @Command(value={"show", "sh"}, description="Show information about a player")

@@ -234,7 +234,7 @@ public class RootCommands {
         if (check && (scope.isShouldEcho() || verbose))
             plugin.checkPlayer(sender, playerName);
         plugin.refreshPlayer(playerName);
-        plugin.refreshExpirations();
+        plugin.refreshExpirations(playerName);
     }
 
     private BroadcastScope determineScope(boolean quiet, boolean loud) {
@@ -374,7 +374,7 @@ public class RootCommands {
         if (check && (scope.isShouldEcho() || verbose))
             plugin.checkPlayer(sender, playerName);
         plugin.refreshPlayer(playerName);
-        plugin.refreshExpirations();
+        plugin.refreshExpirations(playerName);
     }
 
     @Command("setrank")
