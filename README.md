@@ -18,13 +18,17 @@ Please post bugs and/or feature requests as [dev.bukkit.org tickets](http://dev.
 
 *   Players may be members of more than one group. The order of which group permissions are applied is well defined and based on group priority (which is configurable, of course).
 
-*   Multi-world support. Each group may define world-specific permissions.
+*   Multi-world support. Permissions granted to players and groups may be associated with a specific world.
 
-*   Optional region support. Permissions may be associated with WorldGuard regions.
+*   Optional region support. Permissions may also be associated with WorldGuard regions.
 
 *   Ranks! You may define multiple tracks on which to promote/demote users. Using permissions, you can also limit who can promote/demote others and which tracks they may use.
 
-*   With the advent of Superperms/Bukkit permissions, the recommended way of testing group membership is by using permissions. zPermissions can automatically set a permission based on the group's name for each group. By default, this configurable permission is `group.<groupname>`.
+*   Short-term temporary permissions. Give a player a permission node that lasts anywhere from a few seconds to a few minutes.
+
+*   Temporary group assignments. Assign a group to a player and have their membership expire after 1 day... a few months... or a year! Whatever duration you want.
+
+*   With the advent of Superperms/Bukkit permissions, the recommended way of testing group membership is by using permissions. zPermissions can automatically set a permission based on the group's name for each group. By default, this configurable permission is `group.<groupname>` (compatible out-of-the-box with WorldEdit and WorldGuard!).
 
 *   The default group (the group assigned to players who have not been explicitly placed into any groups) is named `default`. This may be changed.
 
