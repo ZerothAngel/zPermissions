@@ -93,7 +93,7 @@ public class GroupCommands extends CommonCommands {
         plugin.refreshPlayer(playerName);
         
         if (expiration != null)
-            plugin.refreshExpirations();
+            plugin.refreshExpirations(playerName);
     }
 
     @Command(value={"remove", "rm"}, description="Remove a player from a group")
@@ -109,7 +109,7 @@ public class GroupCommands extends CommonCommands {
         if (result) {
             sendMessage(sender, colorize("{AQUA}%s{YELLOW} removed from {DARK_GREEN}%s"), playerName, groupName);
             plugin.refreshPlayer(playerName);
-            plugin.refreshExpirations();
+            plugin.refreshExpirations(playerName);
         }
         else {
             sendMessage(sender, colorize("{DARK_GREEN}%s{RED} does not exist or {AQUA}%s{RED} is not a member"), groupName, playerName);
