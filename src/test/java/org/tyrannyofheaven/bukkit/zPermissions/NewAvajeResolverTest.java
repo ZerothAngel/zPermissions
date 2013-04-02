@@ -19,6 +19,7 @@ package org.tyrannyofheaven.bukkit.zPermissions;
 import java.util.Collections;
 
 import org.tyrannyofheaven.bukkit.zPermissions.dao.AvajePermissionDao2;
+import org.tyrannyofheaven.bukkit.zPermissions.model.EntityMetadata;
 import org.tyrannyofheaven.bukkit.zPermissions.model.Entry;
 import org.tyrannyofheaven.bukkit.zPermissions.model.Membership;
 import org.tyrannyofheaven.bukkit.zPermissions.model.PermissionEntity;
@@ -59,6 +60,7 @@ public class NewAvajeResolverTest extends AbstractResolverTest {
                 config.addClass(PermissionWorld.class);
                 config.addClass(Entry.class);
                 config.addClass(Membership.class);
+                config.addClass(EntityMetadata.class);
 
                 ebeanServer = EbeanServerFactory.create(config);
             }

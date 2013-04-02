@@ -73,4 +73,10 @@ public interface PermissionDao {
     
     public List<String> getEntityNames(boolean group);
 
+    public Object getMetadata(String name, boolean group, String metadataName);
+
+    public void setMetadata(String name, boolean group, String metadataName, Object value);
+
+    public boolean unsetMetadata(String name, boolean group, String metadataName);
+
 }

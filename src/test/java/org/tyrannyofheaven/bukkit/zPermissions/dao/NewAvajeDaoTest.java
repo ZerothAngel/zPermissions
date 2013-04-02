@@ -15,6 +15,7 @@
  */
 package org.tyrannyofheaven.bukkit.zPermissions.dao;
 
+import org.tyrannyofheaven.bukkit.zPermissions.model.EntityMetadata;
 import org.tyrannyofheaven.bukkit.zPermissions.model.Entry;
 import org.tyrannyofheaven.bukkit.zPermissions.model.Membership;
 import org.tyrannyofheaven.bukkit.zPermissions.model.PermissionEntity;
@@ -55,6 +56,7 @@ public class NewAvajeDaoTest extends AbstractDaoTest {
                 config.addClass(PermissionWorld.class);
                 config.addClass(Entry.class);
                 config.addClass(Membership.class);
+                config.addClass(EntityMetadata.class);
 
                 ebeanServer = EbeanServerFactory.create(config);
             }

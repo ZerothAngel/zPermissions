@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.tyrannyofheaven.bukkit.zPermissions.model.EntityMetadata;
 import org.tyrannyofheaven.bukkit.zPermissions.model.Entry;
 import org.tyrannyofheaven.bukkit.zPermissions.model.Membership;
 import org.tyrannyofheaven.bukkit.zPermissions.model.PermissionEntity;
@@ -581,6 +582,73 @@ public abstract class BaseMemoryPermissionDao implements PermissionDao {
         }
         return result;
     }
+
+    @Override
+    public Object getMetadata(String name, boolean group, String metadataName) {
+        PermissionEntity entity = getEntity(name, group, false);
+        if (entity == null)
+            return null;
+        
+        for (EntityMetadata em : entity.getMetadata()) {
+            if (em.getName().equalsIgnoreCase(metadataName)) {
+                return em.getValue();
+            }
+        }
+        return null;
+    }
+
+    @Override
+    public void setMetadata(String name, boolean group, String metadataName, Object value) {
+        PermissionEntity owner;
+        if (group) {
+            owner = getGroup(name);
+        }
+        else {
+            owner = getEntity(name, group, true);
+        }
+
+        metadataName = metadataName.toLowerCase();
+        
+        EntityMetadata found = null;
+        for (EntityMetadata em : owner.getMetadata()) {
+            if (em.getName().equalsIgnoreCase(metadataName)) {
+                found = em;
+                break;
+            }
+        }
+
+        if (found == null) {
+            found = new EntityMetadata();
+            found.setEntity(owner);
+            found.setName(metadataName);
+            
+            owner.getMetadata().add(found);
+        }
+        
+        found.setValue(value);
+        createOrUpdateMetadata(found);
+    }
+
+    protected abstract void createOrUpdateMetadata(EntityMetadata metadata);
+
+    @Override
+    public boolean unsetMetadata(String name, boolean group, String metadataName) {
+        PermissionEntity entity = getEntity(name, group, false);
+        if (entity == null)
+            return false;
+
+        for (Iterator<EntityMetadata> i = entity.getMetadata().iterator(); i.hasNext();) {
+            EntityMetadata em = i.next();
+            if (em.getName().equalsIgnoreCase(metadataName)) {
+                i.remove();
+                deleteMetadata(em);
+                return true;
+            }
+        }
+        return false;
+    }
+
+    protected abstract void deleteMetadata(EntityMetadata metadata);
 
     protected void rememberMembership(Membership membership) {
         Set<Membership> memberships = getReverseMembershipMap().get(membership.getMember());

@@ -81,6 +81,7 @@ public class SubCommands {
                 .forCommand("show")
                 .forCommand("dump")
                 .forCommand("has")
+                .forCommand("metadata")
                 .show();
             return null;
         }
@@ -109,6 +110,7 @@ public class SubCommands {
                 .forCommand("remove")
                 .forCommand("show")
                 .forCommand("dump")
+                .forCommand("metadata")
                 .show();
             return null;
         }

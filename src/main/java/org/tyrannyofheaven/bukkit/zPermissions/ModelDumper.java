@@ -30,6 +30,7 @@ import java.util.Queue;
 import javax.xml.bind.DatatypeConverter;
 
 import org.tyrannyofheaven.bukkit.util.transaction.TransactionCallbackWithoutResult;
+import org.tyrannyofheaven.bukkit.zPermissions.model.EntityMetadata;
 import org.tyrannyofheaven.bukkit.zPermissions.model.Entry;
 import org.tyrannyofheaven.bukkit.zPermissions.model.Membership;
 import org.tyrannyofheaven.bukkit.zPermissions.model.PermissionEntity;
@@ -64,6 +65,7 @@ public class ModelDumper {
                     for (PermissionEntity entity : players) {
                         out.println(String.format("# Player %s", entity.getDisplayName()));
                         dumpPermissions(out, entity);
+                        dumpMetadata(out, entity);
                     }
                     // Dump groups
                     List<PermissionEntity> groups = sortGroups(plugin.getDao().getEntities(true));
@@ -71,6 +73,7 @@ public class ModelDumper {
                         out.println(String.format("# Group %s", entity.getDisplayName()));
                         out.println(String.format("permissions group %s create", entity.getDisplayName()));
                         dumpPermissions(out, entity);
+                        dumpMetadata(out, entity);
                         out.println(String.format("permissions group %s setpriority %d",
                                 entity.getDisplayName(),
                                 entity.getPriority()));
@@ -114,6 +117,25 @@ public class ModelDumper {
                     (e.getWorld() == null ? "" : e.getWorld().getName() + ":"),
                     e.getPermission(),
                     e.isValue()));
+        }
+    }
+
+    private void dumpMetadata(PrintWriter out, PermissionEntity entity) {
+        for (EntityMetadata me : Utils.sortMetadata(entity.getMetadata())) {
+            Object value = me.getValue();
+            String suffix = "";
+            if (value instanceof Long)
+                suffix = "int";
+            else if (value instanceof Double)
+                suffix = "real";
+            else if (value instanceof Boolean)
+                suffix = "bool";
+            out.println(String.format("permissions %s %s metadata set%s %s %s",
+                    (entity.isGroup() ? "group" : "player"),
+                    entity.getDisplayName(),
+                    suffix,
+                    me.getName(),
+                    value));
         }
     }
 

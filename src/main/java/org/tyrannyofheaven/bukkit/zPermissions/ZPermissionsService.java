@@ -108,4 +108,28 @@ public interface ZPermissionsService {
      */
     public Set<String> getGroupMembers(String groupName);
 
+    /**
+     * Retrieve the named metadata value from a player.
+     * 
+     * @param playerName the player's name
+     * @param metadataName the name of the metadata value
+     * @param type the metadata type (String, Integer, Long, Float, Double, Boolean, Object).
+     *     Integers and Floats may be truncated due to the source value having more precision.
+     * @return the metadata value or null if not found
+     * @throws IllegalStateException if the actual metadata type does not match the given type
+     */
+    public <T> T getPlayerMetadata(String playerName, String metadataName, Class<T> type);
+    
+    /**
+     * Retrieve the named metadata value from a group.
+     * 
+     * @param playerName the group's name
+     * @param metadataName the name of the metadata value
+     * @param type the metadata type (String, Integer, Long, Float, Double, Boolean, Object)
+     *     Integers and Floats may be truncated due to the source value having more precision.
+     * @return the metadata value or null if not found
+     * @throws IllegalStateException if the actual metadata type does not match the given type
+     */
+    public <T> T getGroupMetadata(String groupName, String metadataName, Class<T> type);
+
 }

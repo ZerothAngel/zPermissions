@@ -10,6 +10,7 @@ import java.util.concurrent.Executor;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import org.tyrannyofheaven.bukkit.zPermissions.model.EntityMetadata;
 import org.tyrannyofheaven.bukkit.zPermissions.model.Entry;
 import org.tyrannyofheaven.bukkit.zPermissions.model.Membership;
 import org.tyrannyofheaven.bukkit.zPermissions.model.PermissionEntity;
@@ -142,6 +143,21 @@ public class AvajePermissionDao2 extends BaseMemoryPermissionDao {
     @Override
     synchronized public List<String> getEntityNames(boolean group) {
         return super.getEntityNames(group);
+    }
+
+    @Override
+    synchronized public Object getMetadata(String name, boolean group, String metadataName) {
+        return super.getMetadata(name, group, metadataName);
+    }
+
+    @Override
+    synchronized public void setMetadata(String name, boolean group, String metadataName, Object value) {
+        super.setMetadata(name, group, metadataName, value);
+    }
+
+    @Override
+    synchronized public boolean unsetMetadata(String name, boolean group, String metadataName) {
+        return super.unsetMetadata(name, group, metadataName);
     }
 
     @Override
@@ -539,6 +555,74 @@ public class AvajePermissionDao2 extends BaseMemoryPermissionDao {
         });
     }
 
+    @Override
+    protected void createOrUpdateMetadata(EntityMetadata metadata) {
+        final String name = metadata.getEntity().getDisplayName();
+        final boolean group = metadata.getEntity().isGroup();
+        final String metadataName = metadata.getName();
+        final Object value = metadata.getValue();
+        
+        getExecutor().execute(new Runnable() {
+            @Override
+            public void run() {
+                // Locate dependent objects
+                PermissionEntity entity = getEbeanServer().find(PermissionEntity.class).where()
+                        .eq("name", name.toLowerCase())
+                        .eq("group", group)
+                        .findUnique();
+                if (entity == null) {
+                    entity = inconsistentEntity(name, group);
+                }
+
+                EntityMetadata dbMetadata = getEbeanServer().find(EntityMetadata.class).where()
+                        .eq("entity", entity)
+                        .eq("name", metadataName.toLowerCase())
+                        .findUnique();
+                if (dbMetadata == null) {
+                    dbMetadata = new EntityMetadata();
+                    dbMetadata.setEntity(entity);
+                    dbMetadata.setName(metadataName.toLowerCase());
+                }
+
+                dbMetadata.setValue(value);
+                getEbeanServer().save(dbMetadata);
+            }
+        });
+    }
+
+    @Override
+    protected void deleteMetadata(EntityMetadata metadata) {
+        final String name = metadata.getEntity().getDisplayName();
+        final boolean group = metadata.getEntity().isGroup();
+        final String metadataName = metadata.getName();
+        
+        getExecutor().execute(new Runnable() {
+            @Override
+            public void run() {
+                // Locate dependent objects
+                PermissionEntity entity = getEbeanServer().find(PermissionEntity.class).where()
+                        .eq("name", name.toLowerCase())
+                        .eq("group", group)
+                        .findUnique();
+                if (entity == null) {
+                    databaseInconsistency();
+                    return;
+                }
+
+                EntityMetadata dbMetadata = getEbeanServer().find(EntityMetadata.class).where()
+                        .eq("entity", entity)
+                        .eq("name", metadataName.toLowerCase())
+                        .findUnique();
+                if (dbMetadata == null) {
+                    databaseInconsistency();
+                    return;
+                }
+
+                getEbeanServer().delete(dbMetadata);
+            }
+        });
+    }
+
     public void load() {
         List<PermissionEntity> players = getEbeanServer().createQuery(PermissionEntity.class,
                 "find PermissionEntity fetch permissions where group = false")
@@ -556,10 +640,12 @@ public class AvajePermissionDao2 extends BaseMemoryPermissionDao {
         for (PermissionEntity player : players) {
             PermissionEntity newPlayer = getEntity(memoryState, player.getDisplayName(), false);
             loadPermissions(memoryState, player.getPermissions(), newPlayer);
+            loadMetadata(player.getMetadata(), newPlayer);
         }
         for (PermissionEntity group : groups) {
             PermissionEntity newGroup = getEntity(memoryState, group.getDisplayName(), true);
             loadPermissions(memoryState, group.getPermissions(), newGroup);
+            loadMetadata(group.getMetadata(), newGroup);
             newGroup.setPriority(group.getPriority());
             if (group.getParent() != null) {
                 PermissionEntity parentEntity = getEntity(memoryState, group.getParent().getDisplayName(), true);
@@ -593,6 +679,18 @@ public class AvajePermissionDao2 extends BaseMemoryPermissionDao {
 
             newEntry.setEntity(entity);
             entity.getPermissions().add(newEntry);
+        }
+    }
+
+    private void loadMetadata(Collection<EntityMetadata> metadata, PermissionEntity entity) {
+        for (EntityMetadata em : metadata) {
+            EntityMetadata newMetadata = new EntityMetadata();
+
+            newMetadata.setName(em.getName());
+            newMetadata.setValue(em.getValue());
+
+            newMetadata.setEntity(entity);
+            entity.getMetadata().add(newMetadata);
         }
     }
 

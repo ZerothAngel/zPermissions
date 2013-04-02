@@ -33,6 +33,7 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.permissions.Permission;
 import org.tyrannyofheaven.bukkit.util.command.Command;
+import org.tyrannyofheaven.bukkit.util.command.HelpBuilder;
 import org.tyrannyofheaven.bukkit.util.command.Option;
 import org.tyrannyofheaven.bukkit.util.command.Session;
 import org.tyrannyofheaven.bukkit.util.transaction.TransactionCallback;
@@ -56,6 +57,8 @@ public abstract class CommonCommands {
     // true if this is handling groups
     private final boolean group;
 
+    private final MetadataCommands metadataCommands;
+
     /**
      * Instantiate this handler.
      * 
@@ -65,6 +68,8 @@ public abstract class CommonCommands {
         this.plugin = plugin;
         this.resolver = resolver;
         this.group = group;
+        
+        metadataCommands = new MetadataCommands(plugin, group);
     }
 
     @Command(value="get", description="View a permission")
@@ -225,6 +230,24 @@ public abstract class CommonCommands {
         calculateChildPermissions(permissions, rootPermissions, false);
         
         Utils.displayPermissions(plugin, sender, header, permissions, filter);
+    }
+
+    @Command(value={"metadata", "md"}, description="Metadata-related commands")
+    public MetadataCommands metadata(HelpBuilder helpBuilder, CommandSender sender, String[] args) {
+        if (args.length == 0) {
+            helpBuilder.withCommandSender(sender)
+                .withHandler(metadataCommands)
+                .forCommand("get")
+                .forCommand("set")
+                .forCommand("setint")
+                .forCommand("setreal")
+                .forCommand("setbool")
+                .forCommand("unset")
+                .forCommand("show")
+                .show();
+            return null;
+        }
+        return metadataCommands;
     }
 
     private void calculateChildPermissions(Map<String, Boolean> permissions, Map<String, Boolean> children, boolean invert) {
