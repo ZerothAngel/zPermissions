@@ -62,6 +62,8 @@ public class PermissionEntity {
     
     private Set<Membership> memberships = new HashSet<Membership>();
 
+    private Set<EntityMetadata> metadata = new HashSet<EntityMetadata>();
+
     @Id
     public Long getId() {
         return id;
@@ -140,6 +142,15 @@ public class PermissionEntity {
 
     public void setMemberships(Set<Membership> memberships) {
         this.memberships = memberships;
+    }
+
+    @OneToMany(mappedBy="entity", cascade=CascadeType.ALL)
+    public Set<EntityMetadata> getMetadata() {
+        return metadata;
+    }
+
+    public void setMetadata(Set<EntityMetadata> metadata) {
+        this.metadata = metadata;
     }
 
     @Override

@@ -62,6 +62,7 @@ import org.tyrannyofheaven.bukkit.util.transaction.TransactionCallback;
 import org.tyrannyofheaven.bukkit.util.transaction.TransactionStrategy;
 import org.tyrannyofheaven.bukkit.zPermissions.PermissionsResolver.ResolverResult;
 import org.tyrannyofheaven.bukkit.zPermissions.dao.PermissionDao;
+import org.tyrannyofheaven.bukkit.zPermissions.model.EntityMetadata;
 import org.tyrannyofheaven.bukkit.zPermissions.model.Entry;
 import org.tyrannyofheaven.bukkit.zPermissions.model.Membership;
 import org.tyrannyofheaven.bukkit.zPermissions.model.PermissionEntity;
@@ -380,6 +381,7 @@ public class ZPermissionsPlugin extends JavaPlugin {
         result.add(PermissionWorld.class);
         result.add(Entry.class);
         result.add(Membership.class);
+        result.add(EntityMetadata.class);
         return result;
     }
 

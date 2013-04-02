@@ -33,6 +33,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.tyrannyofheaven.bukkit.zPermissions.WorldPermission;
+import org.tyrannyofheaven.bukkit.zPermissions.model.EntityMetadata;
 import org.tyrannyofheaven.bukkit.zPermissions.model.Entry;
 import org.tyrannyofheaven.bukkit.zPermissions.model.Membership;
 import org.tyrannyofheaven.bukkit.zPermissions.model.PermissionEntity;
@@ -155,6 +156,21 @@ public class MemoryPermissionDao extends BaseMemoryPermissionDao {
         return super.getEntityNames(group);
     }
 
+    @Override
+    public synchronized Object getMetadata(String name, boolean group, String metadataName) {
+        return super.getMetadata(name, group, metadataName);
+    }
+
+    @Override
+    public synchronized void setMetadata(String name, boolean group, String metadataName, Object value) {
+        super.setMetadata(name, group, metadataName, value);
+    }
+
+    @Override
+    public synchronized boolean unsetMetadata(String name, boolean group, String metadataName) {
+        return super.unsetMetadata(name, group, metadataName);
+    }
+
     /**
      * Save state of entire system to filesyste.
      * 
@@ -238,6 +254,7 @@ public class MemoryPermissionDao extends BaseMemoryPermissionDao {
             Map<String, Object> playerMap = new LinkedHashMap<String, Object>();
             playerMap.put("name", player.getDisplayName());
             playerMap.put("permissions", dumpPermissions(player));
+            playerMap.put("metadata", dumpMetadata(player));
             players.add(playerMap);
         }
 
@@ -247,6 +264,7 @@ public class MemoryPermissionDao extends BaseMemoryPermissionDao {
             Map<String, Object> groupMap = new LinkedHashMap<String, Object>();
             groupMap.put("name", group.getDisplayName());
             groupMap.put("permissions", dumpPermissions(group));
+            groupMap.put("metadata", dumpMetadata(group));
             groupMap.put("priority", group.getPriority());
             if (group.getParent() != null)
                 groupMap.put("parent", group.getParent().getDisplayName());
@@ -287,6 +305,10 @@ public class MemoryPermissionDao extends BaseMemoryPermissionDao {
             Map<String, Boolean> permissions = (Map<String, Boolean>)playerMap.get("permissions");
             PermissionEntity player = getEntity(memoryState, name, false);
             loadPermissions(memoryState, permissions, player);
+            Map<String, Object> metadata = (Map<String, Object>)playerMap.get("metadata");
+            if (metadata == null) // backwards compat
+                metadata = Collections.emptyMap();
+            loadMetadata(metadata, player);
         }
         
         for (Map<String, Object> groupMap : (List<Map<String, Object>>)input.get("groups")) {
@@ -298,9 +320,13 @@ public class MemoryPermissionDao extends BaseMemoryPermissionDao {
             List<Map<String, Object>> tempMembers = (List<Map<String, Object>>)groupMap.get("tempmembers");
             if (tempMembers == null) // backwards compat
                 tempMembers = Collections.emptyList();
+            Map<String, Object> metadata = (Map<String, Object>)groupMap.get("metadata");
+            if (metadata == null) // backwards compat
+                metadata = Collections.emptyMap();
 
             PermissionEntity group = getEntity(memoryState, name, true);
             loadPermissions(memoryState, permissions, group);
+            loadMetadata(metadata, group);
             group.setPriority(priority.intValue());
             if (parent != null) {
                 PermissionEntity parentEntity = getEntity(memoryState, parent, true);
@@ -355,6 +381,29 @@ public class MemoryPermissionDao extends BaseMemoryPermissionDao {
 
             entry.setEntity(entity);
             entity.getPermissions().add(entry);
+        }
+    }
+
+    private Map<String, Object> dumpMetadata(PermissionEntity entity) {
+        Map<String, Object> result = new HashMap<String, Object>();
+        for (EntityMetadata em : entity.getMetadata()) {
+            result.put(em.getName(), em.getValue());
+        }
+        return result;
+    }
+
+    private void loadMetadata(Map<String, Object> input, PermissionEntity entity) {
+        for (Map.Entry<String, Object> me : input.entrySet()) {
+            try {
+                EntityMetadata em = new EntityMetadata();
+                em.setName(me.getKey().toLowerCase());
+                em.setValue(me.getValue());
+                em.setEntity(entity);
+                entity.getMetadata().add(em);
+            }
+            catch (IllegalArgumentException e) {
+                // Ignore invalid value
+            }
         }
     }
 
@@ -415,6 +464,16 @@ public class MemoryPermissionDao extends BaseMemoryPermissionDao {
 
     @Override
     protected void deleteWorlds(Collection<PermissionWorld> worlds) {
+        setDirty();
+    }
+
+    @Override
+    protected void createOrUpdateMetadata(EntityMetadata metadata) {
+        setDirty();
+    }
+
+    @Override
+    protected void deleteMetadata(EntityMetadata metadata) {
         setDirty();
     }
 

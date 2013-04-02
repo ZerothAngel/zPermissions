@@ -2,7 +2,7 @@
 
 If, for whatever reason, you cannot set up bukkit.yml to assign one database per plugin, you can choose to customize the names of zPermissions' tables instead. Doing so will help avoid table name collisions.
 
-zPermissions has 6 tables. The tables and their default names are:
+zPermissions has 7 tables. The tables and their default names are:
 
 *   `ToHSchemaVersion` &mdash; zperms\_schema_version
 *   `Entry` &mdash; entries
@@ -10,6 +10,7 @@ zPermissions has 6 tables. The tables and their default names are:
 *   `PermissionEntity` &mdash; entities
 *   `PermissionRegion` &mdash; regions
 *   `PermissionWorld` &mdash; worlds
+*   `EntityMetadata` &mdash; metadata
 
 To customize the names, simply add something like the following to your config.yml:
 
@@ -20,6 +21,7 @@ To customize the names, simply add something like the following to your config.y
       PermissionEntity: zp_entities
       PermissionRegion: zp_regions
       PermissionWorld: zp_worlds
+      EntityMetadata: zp_metadata
 
 (In this example, the default table names are prefixed with `zp_`.)
 
@@ -44,5 +46,6 @@ For example,
       PermissionEntity: myserver.entities
       PermissionRegion: myserver.regions
       PermissionWorld: myserver.worlds
+      EntityMetadata: myserver.metadata
 
 This would place all your tables in the `myserver` schema. Note that named schema support varies from database to database.

@@ -38,11 +38,25 @@ import org.tyrannyofheaven.bukkit.zPermissions.dao.PermissionDao;
  */
 public class ZPermissionsServiceImpl implements ZPermissionsService {
 
+    private static final Set<Class<?>> validMetadataTypes;
+
     private final PermissionsResolver resolver;
 
     private final PermissionDao dao;
 
     private final TransactionStrategy transactionStrategy;
+
+    static {
+        Set<Class<?>> types = new HashSet<Class<?>>();
+        types.add(Object.class);
+        types.add(String.class);
+        types.add(Integer.class);
+        types.add(Long.class);
+        types.add(Float.class);
+        types.add(Double.class);
+        types.add(Boolean.class);
+        validMetadataTypes = Collections.unmodifiableSet(types);
+    }
 
     public ZPermissionsServiceImpl(PermissionsResolver resolver, PermissionDao dao, TransactionStrategy transactionStrategy) {
         if (resolver == null)
@@ -217,6 +231,56 @@ public class ZPermissionsServiceImpl implements ZPermissionsService {
         // DAO returns them in alphabetical order. This interface doesn't care
         // about ordering.
         return new HashSet<String>(Utils.toMembers(getDao().getMembers(groupName)));
+    }
+
+    /* (non-Javadoc)
+     * @see org.tyrannyofheaven.bukkit.zPermissions.ZPermissionsService#getPlayerMetadata(java.lang.String, java.lang.String, java.lang.Class)
+     */
+    @Override
+    public <T> T getPlayerMetadata(String playerName, String metadataName, Class<T> type) {
+        if (!hasText(playerName))
+            throw new IllegalArgumentException("playerName must have a value");
+        return getEntityMetadata(playerName, false, metadataName, type);
+    }
+
+    /* (non-Javadoc)
+     * @see org.tyrannyofheaven.bukkit.zPermissions.ZPermissionsService#getGroupMetadata(java.lang.String, java.lang.String, java.lang.Class)
+     */
+    @Override
+    public <T> T getGroupMetadata(String groupName, String metadataName, Class<T> type) {
+        if (!hasText(groupName))
+            throw new IllegalArgumentException("groupName must have a value");
+        return getEntityMetadata(groupName, true, metadataName, type);
+    }
+
+    private <T> T getEntityMetadata(final String name, final boolean group, final String metadataName, Class<T> type) {
+        if (!hasText(metadataName))
+            throw new IllegalArgumentException("metadataName must have a value");
+        if (type == null)
+            throw new IllegalArgumentException("type cannot be null");
+        if (!validMetadataTypes.contains(type))
+            throw new IllegalArgumentException("Unsupported metadata type");
+        
+        Object value = getTransactionStrategy().execute(new TransactionCallback<Object>() {
+            @Override
+            public Object doInTransaction() throws Exception {
+                return getDao().getMetadata(name, group, metadataName);
+            }
+        });
+
+        if (value == null)
+            return null;
+
+        if (type == Object.class)
+            return type.cast(value); // Can be any type
+        else if (value.getClass() == type)
+            return type.cast(value); // Same type, good to go
+        else if (type == Integer.class && value.getClass() == Long.class)
+            return type.cast(((Number)value).intValue()); // Convert
+        else if (type == Float.class && value.getClass() == Double.class)
+            return type.cast(((Number)value).floatValue()); // Convert
+
+        throw new IllegalStateException("Mismatched metadata type: " + value.getClass().getSimpleName() + "; expecting: " + type.getSimpleName());
     }
 
 }

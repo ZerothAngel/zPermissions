@@ -35,6 +35,7 @@ import org.bukkit.command.CommandSender;
 import org.tyrannyofheaven.bukkit.util.ToHMessageUtils;
 import org.tyrannyofheaven.bukkit.util.ToHStringUtils;
 import org.tyrannyofheaven.bukkit.util.command.ParseException;
+import org.tyrannyofheaven.bukkit.zPermissions.model.EntityMetadata;
 import org.tyrannyofheaven.bukkit.zPermissions.model.Entry;
 import org.tyrannyofheaven.bukkit.zPermissions.model.Membership;
 import org.tyrannyofheaven.bukkit.zPermissions.model.PermissionEntity;
@@ -85,9 +86,22 @@ public class Utils {
         }
     };
 
+    private static final Comparator<EntityMetadata> METADATA_COMPARATOR = new Comparator<EntityMetadata>() {
+        @Override
+        public int compare(EntityMetadata a, EntityMetadata b) {
+            return a.getName().compareToIgnoreCase(b.getName());
+        }
+    };
+
     public static List<Entry> sortPermissions(Collection<Entry> entries) {
         List<Entry> result = new ArrayList<Entry>(entries);
         Collections.sort(result, ENTRY_COMPARATOR);
+        return result;
+    }
+
+    public static List<EntityMetadata> sortMetadata(Collection<EntityMetadata> metadata) {
+        List<EntityMetadata> result = new ArrayList<EntityMetadata>(metadata);
+        Collections.sort(result, METADATA_COMPARATOR);
         return result;
     }
 
