@@ -39,6 +39,14 @@ public abstract class AbstractDaoTest {
 
     private static final String TEST_PERMISSION = "foo.bar";
 
+    private static final String TEST_METADATA = "my_metadata";
+
+    private static final String TEST_STRING_VALUE = "blahblahblah";
+    
+    private static final Long TEST_INT_VALUE = 1234567890L;
+
+    private static final Double TEST_REAL_VALUE = 3.1415926535;
+    
     private PermissionDao dao;
 
     protected PermissionDao getDao() {
@@ -545,6 +553,90 @@ public abstract class AbstractDaoTest {
             assertTrue(getDao().deleteEntity(TEST_PLAYER, false));
             assertTrue(getDao().deleteEntity(TEST_GROUP2, true));
             assertTrue(getDao().deleteEntity(TEST_GROUP1, true));
+            commit();
+        }
+        finally {
+            end();
+        }
+    }
+
+    @Test
+    public void testMetadataGetSetUnset() {
+        begin();
+        try {
+            // Null get
+            assertNull(getDao().getMetadata(TEST_PLAYER, false, TEST_METADATA));
+    
+            // Missing unset
+            assertFalse(getDao().unsetMetadata(TEST_PLAYER, false, TEST_METADATA));
+    
+            // Set something
+            getDao().setMetadata(TEST_PLAYER, false, TEST_METADATA, TEST_STRING_VALUE);
+            commit();
+        }
+        finally {
+            end();
+        }
+    
+        begin();
+        try {
+            // Verify it's there
+            assertEquals(TEST_STRING_VALUE, getDao().getMetadata(TEST_PLAYER, false, TEST_METADATA));
+    
+            // Set to something else
+            getDao().setMetadata(TEST_PLAYER, false, TEST_METADATA, TEST_INT_VALUE);
+            commit();
+        }
+        finally {
+            end();
+        }
+    
+        begin();
+        try {
+            // Verify it changed
+            assertEquals(TEST_INT_VALUE, getDao().getMetadata(TEST_PLAYER, false, TEST_METADATA));
+    
+            // Set to something else
+            getDao().setMetadata(TEST_PLAYER, false, TEST_METADATA, TEST_REAL_VALUE);
+            commit();
+        }
+        finally {
+            end();
+        }
+    
+        begin();
+        try {
+            // Verify it changed
+            assertEquals(TEST_REAL_VALUE, getDao().getMetadata(TEST_PLAYER, false, TEST_METADATA));
+    
+            // Set to something else
+            getDao().setMetadata(TEST_PLAYER, false, TEST_METADATA, Boolean.FALSE);
+            commit();
+        }
+        finally {
+            end();
+        }
+
+        begin();
+        try {
+            // Verify it changed
+            assertEquals(Boolean.FALSE, getDao().getMetadata(TEST_PLAYER, false, TEST_METADATA));
+    
+            // Unset
+            assertTrue(getDao().unsetMetadata(TEST_PLAYER, false, TEST_METADATA));
+            commit();
+        }
+        finally {
+            end();
+        }
+            
+        begin();
+        try {
+            // Verify it's gone
+            assertNull(getDao().getMetadata(TEST_PLAYER, false, TEST_METADATA));
+            
+            // Clean up
+            assertTrue(getDao().deleteEntity(TEST_PLAYER, false));
             commit();
         }
         finally {
