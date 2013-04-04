@@ -24,6 +24,7 @@ import static org.tyrannyofheaven.bukkit.util.permissions.PermissionUtils.requir
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.logging.Level;
 
@@ -312,6 +313,7 @@ public class SubCommands {
         }
         
         List<Membership> memberships = plugin.getDao().getGroups(sender.getName());
+        Collections.reverse(memberships); // Order from highest to lowest
 
         String groups = Utils.displayGroups(plugin, memberships);
         
