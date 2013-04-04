@@ -20,6 +20,7 @@ import static org.tyrannyofheaven.bukkit.util.ToHMessageUtils.sendMessage;
 import static org.tyrannyofheaven.bukkit.util.command.reader.CommandReader.abortBatchProcessing;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
@@ -51,6 +52,7 @@ public class PlayerCommands extends CommonCommands {
     @Command(value="groups", description="List groups this player is a member of")
     public void getGroups(CommandSender sender, @Session("entityName") String name) {
         List<Membership> memberships = plugin.getDao().getGroups(name);
+        Collections.reverse(memberships); // Order from highest to lowest
 
         String groups = Utils.displayGroups(plugin, memberships);
 
