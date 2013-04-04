@@ -71,8 +71,8 @@ public class GroupCommands extends CommonCommands {
     }
 
     @Command(value="add", description="Add a player to a group")
-    public void addMember(CommandSender sender, final @Session("entityName") String groupName, final @Option(value="player", completer="player") String playerName, @Option(value="duration/timestamp", optional=true) String duration, @Option(value="units", optional=true) String units) {
-        final Date expiration = Utils.parseDurationTimestamp(duration, units);
+    public void addMember(CommandSender sender, final @Session("entityName") String groupName, final @Option(value="player", completer="player") String playerName, @Option(value="duration/timestamp", optional=true) String duration, String[] args) {
+        final Date expiration = Utils.parseDurationTimestamp(duration, args);
 
         // Add player to group.
         try {

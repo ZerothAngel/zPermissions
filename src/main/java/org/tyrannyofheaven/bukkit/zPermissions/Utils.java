@@ -27,6 +27,8 @@ import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.xml.bind.DatatypeConverter;
 
@@ -53,6 +55,8 @@ public class Utils {
             return a.getDisplayName().compareTo(b.getDisplayName());
         }
     };
+
+    private final static Pattern DURATION_PATTERN = Pattern.compile("^(\\d+)\\s*(h(?:ours?)?|d(?:ays?)?|m(?:onths?)?|y(?:ears?)?)?$", Pattern.CASE_INSENSITIVE);
 
     public final static Comparator<Entry> ENTRY_COMPARATOR = new Comparator<Entry>() {
         @Override
@@ -219,18 +223,51 @@ public class Utils {
         return result;
     }
 
-    public static Date parseDurationTimestamp(String duration, String units) {
+    public static Date parseDurationTimestamp(String duration, String[] args) {
         if (!ToHStringUtils.hasText(duration))
             return null;
         
-        duration = duration.trim().toUpperCase();
-
-        Integer durationInt;
-        try {
-            durationInt = Integer.valueOf(duration);
+        if (duration != null) {
+            // Append args, if present
+            if (args.length > 0)
+                duration = duration + " " + ToHStringUtils.delimitedString(" ", (Object[])args);
         }
-        catch (NumberFormatException e) {
+
+        duration = duration.trim();
+
+        Matcher match = DURATION_PATTERN.matcher(duration);
+        if (match.matches()) {
+            int unitsInt = Calendar.DAY_OF_MONTH;
+
+            int durationInt = Integer.valueOf(match.group(1));
+            if (durationInt < 1)
+                throw new ParseException("Invalid value: duration/timestamp"); // NB Should match option name
+
+            String units = match.group(2);
+
+            if (units != null) {
+                units = units.toLowerCase();
+
+                if ("hours".equals(units) || "hour".equals(units) || "h".equals(units))
+                    unitsInt = Calendar.HOUR;
+                else if ("days".equals(units) || "day".equals(units) || "d".equals(units))
+                    unitsInt = Calendar.DAY_OF_MONTH;
+                else if ("months".equals(units) || "month".equals(units) || "m".equals(units))
+                    unitsInt = Calendar.MONTH;
+                else if ("years".equals(units) || "year".equals(units) || "y".equals(units))
+                    unitsInt = Calendar.YEAR;
+                else
+                    throw new ParseException("units must be hours, days, months, years");
+            }
+
+            Calendar cal = Calendar.getInstance();
+            cal.add(unitsInt, durationInt);
+            cal.set(Calendar.MILLISECOND, 0);
+            return cal.getTime();
+        }
+        else {
             // Try ISO 8601 date
+            duration = duration.toUpperCase(); // Make sure that 'T' is capitalized
             try {
                 Calendar cal = DatatypeConverter.parseDateTime(duration);
                 cal.set(Calendar.MILLISECOND, 0);
@@ -249,30 +286,6 @@ public class Utils {
                 }
             }
         }
-
-        if (durationInt < 1)
-            throw new ParseException("Invalid value: duration/timestamp"); // NB Should match option name
-
-        int unitsInt = Calendar.DAY_OF_MONTH;
-        if (ToHStringUtils.hasText(units)) {
-            units = units.trim().toLowerCase();
-
-            if ("hours".equals(units) || "hour".equals(units) || "h".equals(units))
-                unitsInt = Calendar.HOUR;
-            else if ("days".equals(units) || "day".equals(units) || "d".equals(units))
-                unitsInt = Calendar.DAY_OF_MONTH;
-            else if ("months".equals(units) || "month".equals(units) || "m".equals(units))
-                unitsInt = Calendar.MONTH;
-            else if ("years".equals(units) || "year".equals(units) || "y".equals(units))
-                unitsInt = Calendar.YEAR;
-            else
-                throw new ParseException("units must be hours, days, months, years");
-        }
-        
-        Calendar cal = Calendar.getInstance();
-        cal.add(unitsInt, durationInt);
-        cal.set(Calendar.MILLISECOND, 0);
-        return cal.getTime();
     }
 
     // Suitable for user viewing (e.g. not dumps)
