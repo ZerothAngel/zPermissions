@@ -61,8 +61,8 @@ public class PlayerCommands extends CommonCommands {
     }
 
     @Command(value={"setgroup", "group"}, description="Set this player's singular group")
-    public void setGroup(CommandSender sender, final @Session("entityName") String playerName, final @Option(value="group", completer="group") String groupName, @Option(value="duration/timestamp", optional=true) String duration, @Option(value="units", optional=true) String units) {
-        final Date expiration = Utils.parseDurationTimestamp(duration, units);
+    public void setGroup(CommandSender sender, final @Session("entityName") String playerName, final @Option(value="group", completer="group") String groupName, @Option(value="duration/timestamp", optional=true) String duration, String[] args) {
+        final Date expiration = Utils.parseDurationTimestamp(duration, args);
 
         try {
             plugin.getRetryingTransactionStrategy().execute(new TransactionCallbackWithoutResult() {
