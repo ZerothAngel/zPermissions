@@ -545,15 +545,17 @@ public class ZPermissionsPlugin extends JavaPlugin {
         WorldGuardPlugin wgp = getWorldGuardPlugin();
         if (wgp != null && regionSupportEnable) {
             RegionManager rm = wgp.getRegionManager(location.getWorld());
-            ApplicableRegionSet ars = rm.getApplicableRegions(location);
+            if (rm != null) {
+                ApplicableRegionSet ars = rm.getApplicableRegions(location);
 
-            Set<String> result = new HashSet<String>();
-            for (ProtectedRegion pr : ars) {
-                // Ignore global region
-                if (!"__global__".equals(pr.getId())) // NB: Hardcoded and not available as constant in WorldGuard
-                    result.add(pr.getId().toLowerCase());
+                Set<String> result = new HashSet<String>();
+                for (ProtectedRegion pr : ars) {
+                    // Ignore global region
+                    if (!"__global__".equals(pr.getId())) // NB: Hardcoded and not available as constant in WorldGuard
+                        result.add(pr.getId().toLowerCase());
+                }
+                return result;
             }
-            return result;
         }
         return Collections.emptySet();
     }

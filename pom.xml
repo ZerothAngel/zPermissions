@@ -33,55 +33,43 @@
     <dependency>
       <groupId>com.sk89q</groupId>
       <artifactId>worldguard</artifactId>
-      <version>5.5.1</version>
+      <version>5.7.3</version>
       <exclusions>
-	<exclusion>
-	  <groupId>com.sk89q</groupId>
-	  <artifactId>commandbook</artifactId>
-	</exclusion>
-	<exclusion>
-	  <groupId>com.nijikokun</groupId>
-	  <artifactId>iconomy</artifactId>
-	</exclusion>
-	<exclusion>
-	  <groupId>org.khelekore</groupId>
-	  <artifactId>prtree</artifactId>
-	</exclusion>
-	<exclusion>
-	  <groupId>net.sf.opencsv</groupId>
-	  <artifactId>opencsv</artifactId>
-	</exclusion>
+        <exclusion>
+          <artifactId>iconomy</artifactId>
+          <groupId>com.nijikokun</groupId>
+        </exclusion>
+        <exclusion>
+          <artifactId>prtree</artifactId>
+          <groupId>org.khelekore</groupId>
+        </exclusion>
+        <exclusion>
+          <artifactId>opencsv</artifactId>
+          <groupId>net.sf.opencsv</groupId>
+        </exclusion>
+        <exclusion>
+          <artifactId>commandbook</artifactId>
+          <groupId>com.sk89q</groupId>
+        </exclusion>
       </exclusions>
     </dependency>
     <dependency>
       <groupId>com.sk89q</groupId>
       <artifactId>worldedit</artifactId>
-      <version>5.1</version>
+      <version>5.5.5</version>
       <exclusions>
-	<exclusion>
-	  <groupId>com.sk89q</groupId>
-	  <artifactId>dummypermscompat</artifactId>
-	</exclusion>
-	<exclusion>
-	  <groupId>de.schlichtherle</groupId>
-	  <artifactId>truezip</artifactId>
-	</exclusion>
-	<exclusion>
-	  <groupId>rhino</groupId>
-	  <artifactId>js</artifactId>
-	</exclusion>
-	<exclusion>
-	  <groupId>com.sk89q</groupId>
-	  <artifactId>jchronic</artifactId>
-	</exclusion>
-	<exclusion>
-	  <groupId>org.spout</groupId>
-	  <artifactId>spoutapi</artifactId>
-	</exclusion>
-	<exclusion>
-	  <groupId>net.sf.trove4j</groupId>
-	  <artifactId>trove4j</artifactId>
-	</exclusion>
+        <exclusion>
+          <artifactId>js</artifactId>
+          <groupId>rhino</groupId>
+        </exclusion>
+        <exclusion>
+          <artifactId>jchronic</artifactId>
+          <groupId>com.sk89q</groupId>
+        </exclusion>
+        <exclusion>
+          <artifactId>truezip</artifactId>
+          <groupId>de.schlichtherle</groupId>
+        </exclusion>
       </exclusions>
     </dependency>
     <dependency>
