@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.tyrannyofheaven.bukkit.zPermissions;
+package org.tyrannyofheaven.bukkit.zPermissions.storage;
 
 import static org.tyrannyofheaven.bukkit.util.ToHLoggingUtils.debug;
 import static org.tyrannyofheaven.bukkit.util.ToHLoggingUtils.log;
@@ -25,6 +25,7 @@ import java.util.concurrent.locks.ReentrantLock;
 import java.util.logging.Level;
 
 import org.bukkit.Bukkit;
+import org.bukkit.plugin.Plugin;
 import org.tyrannyofheaven.bukkit.util.transaction.TransactionCallback;
 import org.tyrannyofheaven.bukkit.util.transaction.TransactionException;
 import org.tyrannyofheaven.bukkit.util.transaction.TransactionStrategy;
@@ -42,7 +43,7 @@ public class MemoryStorageStrategy implements StorageStrategy, TransactionStrate
 
     private final MemoryPermissionDao dao = new MemoryPermissionDao();
 
-    private final ZPermissionsPlugin plugin;
+    private final Plugin plugin;
 
     private final File saveFile;
 
@@ -52,7 +53,7 @@ public class MemoryStorageStrategy implements StorageStrategy, TransactionStrate
 
     private final Lock saveLock = new ReentrantLock();
 
-    MemoryStorageStrategy(ZPermissionsPlugin plugin, File saveFile) {
+    public MemoryStorageStrategy(Plugin plugin, File saveFile) {
         this.plugin = plugin;
         this.saveFile = saveFile;
     }

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.tyrannyofheaven.bukkit.zPermissions;
+package org.tyrannyofheaven.bukkit.zPermissions.command;
 
 import static org.tyrannyofheaven.bukkit.util.ToHMessageUtils.colorize;
 import static org.tyrannyofheaven.bukkit.util.ToHMessageUtils.sendMessage;
@@ -30,24 +30,26 @@ import org.tyrannyofheaven.bukkit.util.transaction.TransactionCallbackWithoutRes
 import org.tyrannyofheaven.bukkit.zPermissions.dao.MissingGroupException;
 import org.tyrannyofheaven.bukkit.zPermissions.model.EntityMetadata;
 import org.tyrannyofheaven.bukkit.zPermissions.model.PermissionEntity;
+import org.tyrannyofheaven.bukkit.zPermissions.storage.StorageStrategy;
+import org.tyrannyofheaven.bukkit.zPermissions.util.Utils;
 
 public class MetadataCommands {
 
-    private final ZPermissionsPlugin plugin;
-    
+    private final StorageStrategy storageStrategy;
+
     private final boolean group;
 
-    MetadataCommands(ZPermissionsPlugin plugin, boolean group) {
-        this.plugin = plugin;
+    MetadataCommands(StorageStrategy storageStrategy, boolean group) {
+        this.storageStrategy = storageStrategy;
         this.group = group;
     }
 
     @Command(value="get", description="Retrieve metadata value")
     public void get(CommandSender sender, final @Session("entityName") String name, final @Option("name") String metadataName) {
-        Object result = plugin.getRetryingTransactionStrategy().execute(new TransactionCallback<Object>() {
+        Object result = storageStrategy.getRetryingTransactionStrategy().execute(new TransactionCallback<Object>() {
             @Override
             public Object doInTransaction() throws Exception {
-                return plugin.getDao().getMetadata(name, group, metadataName);
+                return storageStrategy.getDao().getMetadata(name, group, metadataName);
             }
         });
         
@@ -72,10 +74,10 @@ public class MetadataCommands {
 
     private void set0(CommandSender sender, final String name, final String metadataName, final Object value) {
         try {
-            plugin.getRetryingTransactionStrategy().execute(new TransactionCallbackWithoutResult() {
+            storageStrategy.getRetryingTransactionStrategy().execute(new TransactionCallbackWithoutResult() {
                 @Override
                 public void doInTransactionWithoutResult() throws Exception {
-                    plugin.getDao().setMetadata(name, group, metadataName, value);
+                    storageStrategy.getDao().setMetadata(name, group, metadataName, value);
                 }
             });
         }
@@ -104,10 +106,10 @@ public class MetadataCommands {
 
     @Command(value="unset", description="Remove metadata value")
     public void unset(CommandSender sender, final @Session("entityName") String name, final @Option("name") String metadataName) {
-        Boolean result = plugin.getRetryingTransactionStrategy().execute(new TransactionCallback<Boolean>() {
+        Boolean result = storageStrategy.getRetryingTransactionStrategy().execute(new TransactionCallback<Boolean>() {
             @Override
             public Boolean doInTransaction() throws Exception {
-                return plugin.getDao().unsetMetadata(name, group, metadataName);
+                return storageStrategy.getDao().unsetMetadata(name, group, metadataName);
             }
         });
         
@@ -122,7 +124,7 @@ public class MetadataCommands {
 
     @Command(value={"show", "list", "ls"}, description="List all metadata")
     public void list(CommandSender sender, final @Session("entityName") String name) {
-        PermissionEntity entity = plugin.getDao().getEntity(name, group);
+        PermissionEntity entity = storageStrategy.getDao().getEntity(name, group);
         if (entity == null || entity.getMetadata().isEmpty()) {
             sendMessage(sender, colorize("{RED}%s has no metadata."), group ? "Group" : "Player");
             return;

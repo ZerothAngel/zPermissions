@@ -15,6 +15,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.tyrannyofheaven.bukkit.zPermissions.dao.PermissionDao;
 import org.tyrannyofheaven.bukkit.zPermissions.model.PermissionEntity;
+import org.tyrannyofheaven.bukkit.zPermissions.util.Utils;
 
 public abstract class AbstractResolverTest {
 
@@ -64,7 +65,7 @@ public abstract class AbstractResolverTest {
         begin();
         try {
             for (String perm : perms) {
-                WorldPermission wp = new WorldPermission(perm);
+                QualifiedPermission wp = new QualifiedPermission(perm);
                 getDao().setPermission(name, group, wp.getRegion(), wp.getWorld(), wp.getPermission(), true);
             }
             commit();
@@ -78,7 +79,7 @@ public abstract class AbstractResolverTest {
         begin();
         try {
             for (String perm : perms) {
-                WorldPermission wp = new WorldPermission(perm);
+                QualifiedPermission wp = new QualifiedPermission(perm);
                 getDao().setPermission(name, group, wp.getRegion(), wp.getWorld(), wp.getPermission(), false);
             }
             commit();

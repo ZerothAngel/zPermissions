@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.tyrannyofheaven.bukkit.zPermissions;
+package org.tyrannyofheaven.bukkit.zPermissions.command;
 
 import static org.tyrannyofheaven.bukkit.util.ToHMessageUtils.broadcastAdmin;
 import static org.tyrannyofheaven.bukkit.util.ToHMessageUtils.colorize;
@@ -27,17 +27,23 @@ import java.util.List;
 
 import org.bukkit.ChatColor;
 import org.bukkit.command.CommandSender;
+import org.bukkit.plugin.Plugin;
 import org.tyrannyofheaven.bukkit.util.ToHMessageUtils;
 import org.tyrannyofheaven.bukkit.util.command.Command;
 import org.tyrannyofheaven.bukkit.util.command.Option;
 import org.tyrannyofheaven.bukkit.util.command.Session;
 import org.tyrannyofheaven.bukkit.util.transaction.TransactionCallback;
 import org.tyrannyofheaven.bukkit.util.transaction.TransactionCallbackWithoutResult;
+import org.tyrannyofheaven.bukkit.zPermissions.PermissionsResolver;
+import org.tyrannyofheaven.bukkit.zPermissions.ZPermissionsConfig;
+import org.tyrannyofheaven.bukkit.zPermissions.ZPermissionsCore;
 import org.tyrannyofheaven.bukkit.zPermissions.dao.DaoException;
 import org.tyrannyofheaven.bukkit.zPermissions.dao.MissingGroupException;
 import org.tyrannyofheaven.bukkit.zPermissions.model.Entry;
 import org.tyrannyofheaven.bukkit.zPermissions.model.Membership;
 import org.tyrannyofheaven.bukkit.zPermissions.model.PermissionEntity;
+import org.tyrannyofheaven.bukkit.zPermissions.storage.StorageStrategy;
+import org.tyrannyofheaven.bukkit.zPermissions.util.Utils;
 
 /**
  * Handler for group commands. Expects the group name to be in the CommandSession
@@ -47,16 +53,16 @@ import org.tyrannyofheaven.bukkit.zPermissions.model.PermissionEntity;
  */
 public class GroupCommands extends CommonCommands {
 
-    public GroupCommands(ZPermissionsPlugin plugin, PermissionsResolver resolver) {
-        super(plugin, resolver, true);
+    GroupCommands(ZPermissionsCore core, StorageStrategy storageStrategy, PermissionsResolver resolver, ZPermissionsConfig config, Plugin plugin) {
+        super(core, storageStrategy, resolver, config, plugin, true);
     }
 
     @Command(value="create", description="Create a group")
     public void create(CommandSender sender, final @Session("entityName") String groupName) {
-        boolean result = plugin.getRetryingTransactionStrategy().execute(new TransactionCallback<Boolean>() {
+        boolean result = storageStrategy.getRetryingTransactionStrategy().execute(new TransactionCallback<Boolean>() {
             @Override
             public Boolean doInTransaction() throws Exception {
-                return plugin.getDao().createGroup(groupName);
+                return storageStrategy.getDao().createGroup(groupName);
             }
         });
         
@@ -76,10 +82,10 @@ public class GroupCommands extends CommonCommands {
 
         // Add player to group.
         try {
-            plugin.getRetryingTransactionStrategy().execute(new TransactionCallbackWithoutResult() {
+            storageStrategy.getRetryingTransactionStrategy().execute(new TransactionCallbackWithoutResult() {
                 @Override
                 public void doInTransactionWithoutResult() throws Exception {
-                    plugin.getDao().addMember(groupName, playerName, expiration);
+                    storageStrategy.getDao().addMember(groupName, playerName, expiration);
                 }
             });
         }
@@ -89,38 +95,38 @@ public class GroupCommands extends CommonCommands {
         }
 
         sendMessage(sender, colorize("{AQUA}%s{YELLOW} added to {DARK_GREEN}%s"), playerName, groupName);
-        plugin.checkPlayer(sender, playerName);
-        plugin.refreshPlayer(playerName);
+        Utils.checkPlayer(sender, playerName);
+        core.refreshPlayer(playerName);
         
         if (expiration != null)
-            plugin.refreshExpirations(playerName);
+            core.refreshExpirations(playerName);
     }
 
     @Command(value={"remove", "rm"}, description="Remove a player from a group")
     public void removeMember(CommandSender sender, final @Session("entityName") String groupName, final @Option(value="player", completer="player") String playerName) {
         // Remove player from group
-        Boolean result = plugin.getRetryingTransactionStrategy().execute(new TransactionCallback<Boolean>() {
+        Boolean result = storageStrategy.getRetryingTransactionStrategy().execute(new TransactionCallback<Boolean>() {
             @Override
             public Boolean doInTransaction() throws Exception {
-                return plugin.getDao().removeMember(groupName, playerName);
+                return storageStrategy.getDao().removeMember(groupName, playerName);
             }
         });
 
         if (result) {
             sendMessage(sender, colorize("{AQUA}%s{YELLOW} removed from {DARK_GREEN}%s"), playerName, groupName);
-            plugin.refreshPlayer(playerName);
-            plugin.refreshExpirations(playerName);
+            core.refreshPlayer(playerName);
+            core.refreshExpirations(playerName);
         }
         else {
             sendMessage(sender, colorize("{DARK_GREEN}%s{RED} does not exist or {AQUA}%s{RED} is not a member"), groupName, playerName);
-            plugin.checkPlayer(sender, playerName);
+            Utils.checkPlayer(sender, playerName);
             abortBatchProcessing();
         }
     }
 
     @Command(value={"show", "sh"}, description="Show information about a group")
     public void show(CommandSender sender, @Session("entityName") String groupName, @Option(value={"-f", "--filter"}, valueName="filter") String filter) {
-        PermissionEntity entity = plugin.getDao().getEntity(groupName, true);
+        PermissionEntity entity = storageStrategy.getDao().getEntity(groupName, true);
 
         if (entity != null) {
             List<String> lines = new ArrayList<String>();
@@ -160,10 +166,10 @@ public class GroupCommands extends CommonCommands {
     public void setParent(CommandSender sender, final @Session("entityName") String groupName, final @Option(value="parent", optional=true, completer="group") String parentName) {
         try {
             // Set parent. Creates group and/or parent if missing.
-            plugin.getRetryingTransactionStrategy().execute(new TransactionCallbackWithoutResult() {
+            storageStrategy.getRetryingTransactionStrategy().execute(new TransactionCallbackWithoutResult() {
                 @Override
                 public void doInTransactionWithoutResult() throws Exception {
-                    plugin.getDao().setParent(groupName, parentName);
+                    storageStrategy.getDao().setParent(groupName, parentName);
                 }
             });
         }
@@ -179,17 +185,17 @@ public class GroupCommands extends CommonCommands {
         }
 
         sendMessage(sender, colorize("{DARK_GREEN}%s{YELLOW}'s parent is now {DARK_GREEN}%s"), groupName, parentName);
-        plugin.refreshAffectedPlayers(groupName);
+        core.refreshAffectedPlayers(groupName);
     }
 
     @Command(value={"setpriority", "priority"}, description="Set a group's priority")
     public void setPriority(CommandSender sender, final @Session("entityName") String groupName, final @Option("priority") int priority) {
         // Set the priority. Will not fail, creates group if necessary
         try {
-            plugin.getRetryingTransactionStrategy().execute(new TransactionCallbackWithoutResult() {
+            storageStrategy.getRetryingTransactionStrategy().execute(new TransactionCallbackWithoutResult() {
                 @Override
                 public void doInTransactionWithoutResult() throws Exception {
-                    plugin.getDao().setPriority(groupName, priority);
+                    storageStrategy.getDao().setPriority(groupName, priority);
                 }
             });
         }
@@ -199,12 +205,12 @@ public class GroupCommands extends CommonCommands {
         }
 
         sendMessage(sender, colorize("{DARK_GREEN}%s{YELLOW}'s priority is now {GREEN}%d"), groupName, priority);
-        plugin.refreshAffectedPlayers(groupName);
+        core.refreshAffectedPlayers(groupName);
     }
 
     @Command(value="members", description="List members of a group")
     public void members(CommandSender sender, @Session("entityName") String groupName) {
-        List<Membership> memberships = plugin.getDao().getMembers(groupName);
+        List<Membership> memberships = storageStrategy.getDao().getMembers(groupName);
         
         // NB: Can't tell if group doesn't exist or if it has no members.
         if (memberships.isEmpty()) {

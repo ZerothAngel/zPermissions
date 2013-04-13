@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.tyrannyofheaven.bukkit.zPermissions;
+package org.tyrannyofheaven.bukkit.zPermissions.util;
 
 import static org.tyrannyofheaven.bukkit.util.ToHLoggingUtils.debug;
 import static org.tyrannyofheaven.bukkit.util.ToHLoggingUtils.error;
@@ -27,16 +27,20 @@ import java.util.Queue;
 import java.util.Set;
 
 import org.bukkit.Bukkit;
+import org.bukkit.plugin.Plugin;
+import org.tyrannyofheaven.bukkit.zPermissions.ZPermissionsCore;
 
 /**
- * Periodically calls {@link ZPermissionsPlugin#refreshPlayer(String)} on the
+ * Periodically calls {@link ZPermissionsCore#refreshPlayer(String)} on the
  * given queue of players.
  * 
  * @author zerothangel
  */
 public class RefreshTask implements Runnable {
 
-    private final ZPermissionsPlugin plugin;
+    private final ZPermissionsCore core;
+
+    private final Plugin plugin;
 
     private final Queue<String> playersToRefresh = new LinkedList<String>();
 
@@ -44,17 +48,18 @@ public class RefreshTask implements Runnable {
 
     private int taskId = -1;
 
-    RefreshTask(ZPermissionsPlugin plugin) {
+    public RefreshTask(ZPermissionsCore core, Plugin plugin) {
+        this.core = core;
         this.plugin = plugin;
     }
 
-    void setDelay(int delay) {
+    public void setDelay(int delay) {
         if (delay < 0)
             delay = 0;
         this.delay = delay;
     }
 
-    void start(Collection<String> playerNames) {
+    public void start(Collection<String> playerNames) {
         if (playerNames == null || playerNames.isEmpty())
             return; // Nothing to do
 
@@ -84,7 +89,7 @@ public class RefreshTask implements Runnable {
         }
     }
 
-    void stop() {
+    public void stop() {
         if (taskId > -1) {
             warn(plugin, "RefreshTask cancelled prematurely! Remaining players: %s", delimitedString(", ", playersToRefresh));
             Bukkit.getScheduler().cancelTask(taskId);
@@ -100,7 +105,7 @@ public class RefreshTask implements Runnable {
             String playerToRefresh = playersToRefresh.remove();
 
             // Refresh single player
-            plugin.refreshPlayer(playerToRefresh);
+            core.refreshPlayer(playerToRefresh);
         }
         
         // Schedule next player

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.tyrannyofheaven.bukkit.zPermissions;
+package org.tyrannyofheaven.bukkit.zPermissions.util;
 
 import static org.tyrannyofheaven.bukkit.util.ToHMessageUtils.colorize;
 import static org.tyrannyofheaven.bukkit.util.ToHMessageUtils.sendMessage;
@@ -32,8 +32,10 @@ import java.util.regex.Pattern;
 
 import javax.xml.bind.DatatypeConverter;
 
+import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.command.CommandSender;
+import org.bukkit.plugin.Plugin;
 import org.tyrannyofheaven.bukkit.util.ToHMessageUtils;
 import org.tyrannyofheaven.bukkit.util.ToHStringUtils;
 import org.tyrannyofheaven.bukkit.util.command.ParseException;
@@ -109,7 +111,7 @@ public class Utils {
         return result;
     }
 
-    public static void displayPermissions(ZPermissionsPlugin plugin, CommandSender sender, List<String> header, Map<String, Boolean> permissions, String filter) {
+    public static void displayPermissions(Plugin plugin, CommandSender sender, List<String> header, Map<String, Boolean> permissions, String filter) {
         List<PermissionInfo> permList = new ArrayList<PermissionInfo>(permissions.size());
         for (Map.Entry<String, Boolean> me : permissions.entrySet()) {
             permList.add(new PermissionInfo(me.getKey(), me.getValue(), null));
@@ -117,7 +119,7 @@ public class Utils {
         displayPermissions(plugin, sender, header, permList, filter, false);
     }
 
-    public static void displayPermissions(ZPermissionsPlugin plugin, CommandSender sender, List<String> header, List<PermissionInfo> permissions, String filter, boolean verbose) {
+    public static void displayPermissions(Plugin plugin, CommandSender sender, List<String> header, List<PermissionInfo> permissions, String filter, boolean verbose) {
         if (header == null)
             header = Collections.emptyList();
 
@@ -156,7 +158,7 @@ public class Utils {
         }
     }
 
-    public static String displayGroups(ZPermissionsPlugin plugin, List<Membership> memberships) {
+    public static String displayGroups(String defaultGroup, List<Membership> memberships) {
         boolean gotGroup = false;
 
         Date now = new Date();
@@ -191,7 +193,7 @@ public class Utils {
                 sb.append(", ");
             }
             sb.append(ChatColor.DARK_GREEN);
-            sb.append(plugin.getResolver().getDefaultGroup());
+            sb.append(defaultGroup);
         }
 
         return sb.toString();
@@ -302,6 +304,18 @@ public class Utils {
             return result;
         else
             return result.substring(0, 16);
+    }
+
+    /**
+     * Give a little warning if the player isn't online.
+     * 
+     * @param sender the CommandSender to send warning to
+     * @param playerName the player name
+     */
+    public static void checkPlayer(CommandSender sender, String playerName) {
+        if (Bukkit.getPlayerExact(playerName) == null) {
+            sendMessage(sender, colorize("{GRAY}(Player not online, make sure the name is correct)"));
+        }
     }
 
     public static class PermissionInfo {

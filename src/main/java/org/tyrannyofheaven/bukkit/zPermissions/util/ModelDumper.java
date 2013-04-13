@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.tyrannyofheaven.bukkit.zPermissions;
+package org.tyrannyofheaven.bukkit.zPermissions.util;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -29,11 +29,13 @@ import java.util.Queue;
 
 import javax.xml.bind.DatatypeConverter;
 
+import org.bukkit.plugin.Plugin;
 import org.tyrannyofheaven.bukkit.util.transaction.TransactionCallbackWithoutResult;
 import org.tyrannyofheaven.bukkit.zPermissions.model.EntityMetadata;
 import org.tyrannyofheaven.bukkit.zPermissions.model.Entry;
 import org.tyrannyofheaven.bukkit.zPermissions.model.Membership;
 import org.tyrannyofheaven.bukkit.zPermissions.model.PermissionEntity;
+import org.tyrannyofheaven.bukkit.zPermissions.storage.StorageStrategy;
 
 /**
  * Creates a dump file containing commands that can re-create the persistent
@@ -43,16 +45,19 @@ import org.tyrannyofheaven.bukkit.zPermissions.model.PermissionEntity;
  */
 public class ModelDumper {
 
-    private final ZPermissionsPlugin plugin;
-    
-    ModelDumper(ZPermissionsPlugin plugin) {
+    private final Plugin plugin;
+
+    private final StorageStrategy storageStrategy;
+
+    public ModelDumper(StorageStrategy storageStrategy, Plugin plugin) {
+        this.storageStrategy = storageStrategy;
         this.plugin = plugin;
     }
 
     public void dump(File outFile) throws FileNotFoundException {
         final PrintWriter out = new PrintWriter(outFile);
         try {
-            plugin.getTransactionStrategy().execute(new TransactionCallbackWithoutResult() {
+            storageStrategy.getTransactionStrategy().execute(new TransactionCallbackWithoutResult() {
                 @Override
                 public void doInTransactionWithoutResult() throws Exception {
                     // Header
@@ -61,14 +66,14 @@ public class ModelDumper {
                             plugin.getDescription().getVersion(),
                             new Date()));
                     // Dump players first
-                    List<PermissionEntity> players = sortPlayers(plugin.getDao().getEntities(false));
+                    List<PermissionEntity> players = sortPlayers(storageStrategy.getDao().getEntities(false));
                     for (PermissionEntity entity : players) {
                         out.println(String.format("# Player %s", entity.getDisplayName()));
                         dumpPermissions(out, entity);
                         dumpMetadata(out, entity);
                     }
                     // Dump groups
-                    List<PermissionEntity> groups = sortGroups(plugin.getDao().getEntities(true));
+                    List<PermissionEntity> groups = sortGroups(storageStrategy.getDao().getEntities(true));
                     for (PermissionEntity entity : groups) {
                         out.println(String.format("# Group %s", entity.getDisplayName()));
                         out.println(String.format("permissions group %s create", entity.getDisplayName()));
@@ -83,7 +88,7 @@ public class ModelDumper {
                                     entity.getParent().getDisplayName()));
                         }
                         // Dump memberships
-                        for (Membership membership : plugin.getDao().getMembers(entity.getName())) {
+                        for (Membership membership : storageStrategy.getDao().getMembers(entity.getName())) {
                             if (membership.getExpiration() == null) {
                                 out.println(String.format("permissions group %s add %s",
                                         entity.getDisplayName(),

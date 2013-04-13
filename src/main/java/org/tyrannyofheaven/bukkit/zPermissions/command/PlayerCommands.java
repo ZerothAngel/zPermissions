@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.tyrannyofheaven.bukkit.zPermissions;
+package org.tyrannyofheaven.bukkit.zPermissions.command;
 
 import static org.tyrannyofheaven.bukkit.util.ToHMessageUtils.colorize;
 import static org.tyrannyofheaven.bukkit.util.ToHMessageUtils.sendMessage;
@@ -24,18 +24,25 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
+import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
+import org.bukkit.plugin.Plugin;
 import org.tyrannyofheaven.bukkit.util.ToHMessageUtils;
 import org.tyrannyofheaven.bukkit.util.ToHUtils;
 import org.tyrannyofheaven.bukkit.util.command.Command;
 import org.tyrannyofheaven.bukkit.util.command.Option;
 import org.tyrannyofheaven.bukkit.util.command.Session;
 import org.tyrannyofheaven.bukkit.util.transaction.TransactionCallbackWithoutResult;
+import org.tyrannyofheaven.bukkit.zPermissions.PermissionsResolver;
+import org.tyrannyofheaven.bukkit.zPermissions.ZPermissionsConfig;
+import org.tyrannyofheaven.bukkit.zPermissions.ZPermissionsCore;
 import org.tyrannyofheaven.bukkit.zPermissions.dao.MissingGroupException;
 import org.tyrannyofheaven.bukkit.zPermissions.model.Entry;
 import org.tyrannyofheaven.bukkit.zPermissions.model.Membership;
 import org.tyrannyofheaven.bukkit.zPermissions.model.PermissionEntity;
+import org.tyrannyofheaven.bukkit.zPermissions.storage.StorageStrategy;
+import org.tyrannyofheaven.bukkit.zPermissions.util.Utils;
 
 /**
  * Handler for player sub-commands. Expects the CommandSession to contain the
@@ -45,21 +52,21 @@ import org.tyrannyofheaven.bukkit.zPermissions.model.PermissionEntity;
  */
 public class PlayerCommands extends CommonCommands {
 
-    public PlayerCommands(ZPermissionsPlugin plugin, PermissionsResolver resolver) {
-        super(plugin, resolver, false);
+    PlayerCommands(ZPermissionsCore core, StorageStrategy storageStrategy, PermissionsResolver resolver, ZPermissionsConfig config, Plugin plugin) {
+        super(core, storageStrategy, resolver, config, plugin, false);
     }
 
     @Command(value="groups", description="List groups this player is a member of")
     public void getGroups(CommandSender sender, @Session("entityName") String name) {
-        List<Membership> memberships = plugin.getDao().getGroups(name);
+        List<Membership> memberships = storageStrategy.getDao().getGroups(name);
         Collections.reverse(memberships); // Order from highest to lowest
 
-        String groups = Utils.displayGroups(plugin, memberships);
+        String groups = Utils.displayGroups(resolver.getDefaultGroup(), memberships);
 
         sendMessage(sender, colorize("{AQUA}%s{YELLOW} is a member of: %s"), name, groups);
         
         if (memberships.isEmpty())
-            plugin.checkPlayer(sender, name);
+            Utils.checkPlayer(sender, name);
     }
 
     @Command(value={"setgroup", "group"}, description="Set this player's singular group")
@@ -67,10 +74,10 @@ public class PlayerCommands extends CommonCommands {
         final Date expiration = Utils.parseDurationTimestamp(duration, args);
 
         try {
-            plugin.getRetryingTransactionStrategy().execute(new TransactionCallbackWithoutResult() {
+            storageStrategy.getRetryingTransactionStrategy().execute(new TransactionCallbackWithoutResult() {
                 @Override
                 public void doInTransactionWithoutResult() throws Exception {
-                    plugin.getDao().setGroup(playerName, groupName, expiration);
+                    storageStrategy.getDao().setGroup(playerName, groupName, expiration);
                 }
             });
         }
@@ -80,20 +87,20 @@ public class PlayerCommands extends CommonCommands {
         }
 
         sendMessage(sender, colorize("{AQUA}%s{YELLOW}'s group set to {DARK_GREEN}%s"), playerName, groupName);
-        plugin.checkPlayer(sender, playerName);
-        plugin.refreshPlayer(playerName);
+        Utils.checkPlayer(sender, playerName);
+        core.refreshPlayer(playerName);
         
         if (expiration != null)
-            plugin.refreshExpirations(playerName);
+            core.refreshExpirations(playerName);
     }
 
     @Command(value={"show", "sh"}, description="Show information about a player")
     public void show(CommandSender sender, @Session("entityName") String playerName, @Option(value={"-f", "--filter"}, valueName="filter") String filter) {
-        PermissionEntity entity = plugin.getDao().getEntity(playerName, false);
+        PermissionEntity entity = storageStrategy.getDao().getEntity(playerName, false);
 
         if (entity == null || entity.getPermissions().isEmpty()) {
             sendMessage(sender, colorize("{RED}Player has no declared permissions."));
-            plugin.checkPlayer(sender, playerName);
+            Utils.checkPlayer(sender, playerName);
             return;
         }
 
@@ -117,7 +124,7 @@ public class PlayerCommands extends CommonCommands {
 
     @Command(value={"settemp", "temp", "tmp"}, description="Set a temporary permission")
     public void settemp(CommandSender sender, @Session("entityName") String playerName, @Option("permission") String permission, @Option(value="value", optional=true) Boolean value, @Option(value={"-t", "--timeout"}, valueName="timeout") Integer timeout) {
-        Player player = plugin.getServer().getPlayer(playerName);
+        Player player = Bukkit.getPlayer(playerName);
         if (player == null) {
             sendMessage(sender, colorize("{RED}Player is not online."));
             abortBatchProcessing();
@@ -125,7 +132,7 @@ public class PlayerCommands extends CommonCommands {
         }
         
         if (timeout == null)
-            timeout = plugin.getDefaultTempPermissionTimeout();
+            timeout = config.getDefaultTempPermissionTimeout();
         if (timeout <= 0) {
             sendMessage(sender, colorize("{RED}Invalid timeout."));
             abortBatchProcessing();
@@ -139,7 +146,7 @@ public class PlayerCommands extends CommonCommands {
 
     @Command(value="has", description="Bukkit hasPermission() check")
     public void has(CommandSender sender, @Session("entityName") String playerName, @Option("permission") String permission) {
-        Player player = plugin.getServer().getPlayer(playerName);
+        Player player = Bukkit.getPlayer(playerName);
         if (player == null) {
             sendMessage(sender, colorize("{RED}Player is not online."));
             abortBatchProcessing();

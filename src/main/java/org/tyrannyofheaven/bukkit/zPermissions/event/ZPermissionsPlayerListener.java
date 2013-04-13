@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.tyrannyofheaven.bukkit.zPermissions;
+package org.tyrannyofheaven.bukkit.zPermissions.event;
 
 import org.bukkit.Bukkit;
 import org.bukkit.event.EventHandler;
@@ -22,6 +22,8 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerChangedWorldEvent;
 import org.bukkit.event.player.PlayerLoginEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
+import org.bukkit.plugin.Plugin;
+import org.tyrannyofheaven.bukkit.zPermissions.ZPermissionsCore;
 
 /**
  * PlayerListener for zPermissions. Simply updates or removes the zPermissions
@@ -29,45 +31,44 @@ import org.bukkit.event.player.PlayerQuitEvent;
  * 
  * @author zerothangel
  */
-class ZPermissionsPlayerListener implements Listener {
+public class ZPermissionsPlayerListener implements Listener {
 
-    private final ZPermissionsPlugin plugin;
+    private final ZPermissionsCore core;
     
-    ZPermissionsPlayerListener(ZPermissionsPlugin plugin) {
-        this.plugin = plugin;
-    }
+    private final Plugin plugin;
 
-    void registerEvents() {
-        plugin.getServer().getPluginManager().registerEvents(this, plugin);
+    public ZPermissionsPlayerListener(ZPermissionsCore core, Plugin plugin) {
+        this.core = core;
+        this.plugin = plugin;
     }
 
     @EventHandler(priority=EventPriority.LOWEST)
     public void onPlayerLogin(PlayerLoginEvent event) {
-        plugin.updateAttachment(event.getPlayer(), event.getPlayer().getLocation(), true);
+        core.updateAttachment(event.getPlayer(), event.getPlayer().getLocation(), true);
         // Wait for next tick...
         Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, new Runnable() {
             @Override
             public void run() {
-                plugin.refreshExpirations();
+                core.refreshExpirations();
             }
         });
     }
 
     @EventHandler(priority=EventPriority.MONITOR)
     public void onPlayerQuit(PlayerQuitEvent event) {
-        plugin.removeAttachment(event.getPlayer());
+        core.removeAttachment(event.getPlayer());
         // Wait for next tick...
         Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, new Runnable() {
             @Override
             public void run() {
-                plugin.refreshExpirations();
+                core.refreshExpirations();
             }
         });
     }
 
     @EventHandler(priority=EventPriority.LOWEST)
     public void onPlayerChangedWorld(PlayerChangedWorldEvent event) {
-        plugin.updateAttachment(event.getPlayer(), event.getPlayer().getLocation(), false);
+        core.updateAttachment(event.getPlayer(), event.getPlayer().getLocation(), false);
     }
 
 }

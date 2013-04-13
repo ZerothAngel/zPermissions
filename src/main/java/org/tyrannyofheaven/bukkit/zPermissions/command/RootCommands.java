@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.tyrannyofheaven.bukkit.zPermissions;
+package org.tyrannyofheaven.bukkit.zPermissions.command;
 
 import static org.tyrannyofheaven.bukkit.util.ToHMessageUtils.colorize;
 import static org.tyrannyofheaven.bukkit.util.ToHMessageUtils.sendMessage;
@@ -28,6 +28,7 @@ import java.util.List;
 import java.util.Set;
 
 import org.bukkit.command.CommandSender;
+import org.bukkit.plugin.Plugin;
 import org.tyrannyofheaven.bukkit.util.ToHLoggingUtils;
 import org.tyrannyofheaven.bukkit.util.ToHMessageUtils;
 import org.tyrannyofheaven.bukkit.util.command.Command;
@@ -35,7 +36,13 @@ import org.tyrannyofheaven.bukkit.util.command.HelpBuilder;
 import org.tyrannyofheaven.bukkit.util.command.Option;
 import org.tyrannyofheaven.bukkit.util.command.Require;
 import org.tyrannyofheaven.bukkit.util.transaction.TransactionCallback;
+import org.tyrannyofheaven.bukkit.zPermissions.PermissionsResolver;
+import org.tyrannyofheaven.bukkit.zPermissions.ZPermissionsConfig;
+import org.tyrannyofheaven.bukkit.zPermissions.ZPermissionsCore;
 import org.tyrannyofheaven.bukkit.zPermissions.dao.MissingGroupException;
+import org.tyrannyofheaven.bukkit.zPermissions.storage.StorageStrategy;
+import org.tyrannyofheaven.bukkit.zPermissions.util.ModelDumper;
+import org.tyrannyofheaven.bukkit.zPermissions.util.Utils;
 
 /**
  * Handler for top-level commands:
@@ -51,8 +58,16 @@ import org.tyrannyofheaven.bukkit.zPermissions.dao.MissingGroupException;
  */
 public class RootCommands {
 
+    private final ZPermissionsCore core;
+    
+    private final StorageStrategy storageStrategy;
+
+    private final PermissionsResolver resolver;
+
+    private final ZPermissionsConfig config;
+
     // Parent plugin
-    private final ZPermissionsPlugin plugin;
+    private final Plugin plugin;
 
     // Handler for /permissions sub-commands
     private final SubCommands sc;
@@ -72,9 +87,14 @@ public class RootCommands {
 
     }
 
-    RootCommands(ZPermissionsPlugin plugin, PermissionsResolver resolver) {
+    public RootCommands(ZPermissionsCore core, StorageStrategy storageStrategy, PermissionsResolver resolver, ModelDumper modelDumper, ZPermissionsConfig config, Plugin plugin) {
+        this.core = core;
+        this.storageStrategy = storageStrategy;
+        this.resolver = resolver;
+        this.config = config;
         this.plugin = plugin;
-        sc = new SubCommands(plugin, resolver);
+
+        sc = new SubCommands(core, storageStrategy, resolver, modelDumper, config, plugin);
     }
 
     @Command("permissions")
@@ -104,7 +124,7 @@ public class RootCommands {
     // broadcasting to admins.
     private void announce(String notifyNode, BroadcastScope scope, String format, Object... args) {
         if (scope == BroadcastScope.DEFAULT) {
-            if (plugin.isRankAdminBroadcast()) {
+            if (config.isRankAdminBroadcast()) {
                 ToHMessageUtils.broadcastAdmin(plugin, format, args);
             }
             else {
@@ -122,9 +142,9 @@ public class RootCommands {
     private void rankChange(final CommandSender sender, final String playerName, String trackName, final boolean rankUp, final BroadcastScope scope, final boolean verbose) {
         // Resolve track
         if (!hasText(trackName))
-            trackName = plugin.getDefaultTrack();
+            trackName = config.getDefaultTrack();
         
-        final List<String> track = plugin.getTrack(trackName);
+        final List<String> track = config.getTrack(trackName);
         if (track == null || track.isEmpty()) {
             sendMessage(sender, colorize("{RED}Track has not been defined."));
             abortBatchProcessing();
@@ -141,13 +161,13 @@ public class RootCommands {
         final Set<String> trackGroupNames = new HashSet<String>(track);
 
         // Do everything in one ginormous transaction.
-        Boolean check = plugin.getTransactionStrategy().execute(new TransactionCallback<Boolean>() {
+        Boolean check = storageStrategy.getTransactionStrategy().execute(new TransactionCallback<Boolean>() {
             @Override
             public Boolean doInTransaction() throws Exception {
                 Set<String> playerGroupNames = new HashSet<String>();
-                playerGroupNames.addAll(Utils.toGroupNames(Utils.filterExpired(plugin.getDao().getGroups(playerName))));
+                playerGroupNames.addAll(Utils.toGroupNames(Utils.filterExpired(storageStrategy.getDao().getGroups(playerName))));
                 if (playerGroupNames.isEmpty())
-                    playerGroupNames.add(plugin.getResolver().getDefaultGroup());
+                    playerGroupNames.add(resolver.getDefaultGroup());
         
                 playerGroupNames.retainAll(trackGroupNames);
                 
@@ -163,7 +183,7 @@ public class RootCommands {
                     if (rankUp) {
                         String group = track.get(0);
                         try {
-                            plugin.getDao().addMember(group, playerName, null);
+                            storageStrategy.getDao().addMember(group, playerName, null);
                         }
                         catch (MissingGroupException e) {
                             sendMessage(sender, colorize("{RED}Group {DARK_GREEN}%s{RED} does not exist."), e.getGroupName());
@@ -190,7 +210,7 @@ public class RootCommands {
         
                     // If now ranked below first rank, remove altogether
                     if (rankIndex < 0) {
-                        plugin.getDao().removeMember(oldGroup, playerName);
+                        storageStrategy.getDao().removeMember(oldGroup, playerName);
                         announce(rankUp ? "promote" : "demote", scope, "%s removed %s from %s", sender.getName(), playerName, oldGroup);
                         if (scope.isShouldEcho() || verbose)
                             sendMessage(sender, colorize("{YELLOW}Removing {AQUA}%s{YELLOW} from {DARK_GREEN}%s"), playerName, oldGroup);
@@ -203,7 +223,7 @@ public class RootCommands {
         
                         // Change groups
                         try {
-                            plugin.getDao().addMember(newGroup, playerName, null);
+                            storageStrategy.getDao().addMember(newGroup, playerName, null);
                         }
                         catch (MissingGroupException e) {
                             sendMessage(sender, colorize("{RED}Group {DARK_GREEN}%s{RED} does not exist."), e.getGroupName());
@@ -211,7 +231,7 @@ public class RootCommands {
                             return false;
                         }
                         if (!oldGroup.equalsIgnoreCase(newGroup))
-                            plugin.getDao().removeMember(oldGroup, playerName);
+                            storageStrategy.getDao().removeMember(oldGroup, playerName);
         
                         announce(rankUp ? "promote" : "demote", scope, "%s %s %s from %s to %s", sender.getName(),
                                 (rankUp ? "promoted" : "demoted"),
@@ -232,9 +252,9 @@ public class RootCommands {
         });
         
         if (check && (scope.isShouldEcho() || verbose))
-            plugin.checkPlayer(sender, playerName);
-        plugin.refreshPlayer(playerName);
-        plugin.refreshExpirations(playerName);
+            Utils.checkPlayer(sender, playerName);
+        core.refreshPlayer(playerName);
+        core.refreshExpirations(playerName);
     }
 
     private BroadcastScope determineScope(boolean quiet, boolean loud) {
@@ -266,9 +286,9 @@ public class RootCommands {
 
         // Resolve track
         if (!hasText(trackName))
-            trackName = plugin.getDefaultTrack();
+            trackName = config.getDefaultTrack();
         
-        final List<String> track = plugin.getTrack(trackName);
+        final List<String> track = config.getTrack(trackName);
         if (track == null || track.isEmpty()) {
             sendMessage(sender, colorize("{RED}Track has not been defined."));
             abortBatchProcessing();
@@ -291,13 +311,13 @@ public class RootCommands {
         final Set<String> trackGroupNames = new HashSet<String>(track);
 
         // Do everything in one ginormous transaction.
-        Boolean check = plugin.getTransactionStrategy().execute(new TransactionCallback<Boolean>() {
+        Boolean check = storageStrategy.getTransactionStrategy().execute(new TransactionCallback<Boolean>() {
             @Override
             public Boolean doInTransaction() throws Exception {
                 Set<String> playerGroupNames = new HashSet<String>();
-                playerGroupNames.addAll(Utils.toGroupNames(Utils.filterExpired(plugin.getDao().getGroups(playerName))));
+                playerGroupNames.addAll(Utils.toGroupNames(Utils.filterExpired(storageStrategy.getDao().getGroups(playerName))));
                 if (playerGroupNames.isEmpty())
-                    playerGroupNames.add(plugin.getResolver().getDefaultGroup());
+                    playerGroupNames.add(resolver.getDefaultGroup());
         
                 playerGroupNames.retainAll(trackGroupNames);
                 
@@ -312,7 +332,7 @@ public class RootCommands {
                     if (rankName != null) {
                         // Not in any groups, just add to new group.
                         try {
-                            plugin.getDao().addMember(rankName, playerName, null);
+                            storageStrategy.getDao().addMember(rankName, playerName, null);
                         }
                         catch (MissingGroupException e) {
                             sendMessage(sender, colorize("{RED}Group {DARK_GREEN}%s{RED} does not exist."), e.getGroupName());
@@ -336,7 +356,7 @@ public class RootCommands {
                     if (rankName != null) {
                         // Add to new group
                         try {
-                            plugin.getDao().addMember(rankName, playerName, null);
+                            storageStrategy.getDao().addMember(rankName, playerName, null);
                         }
                         catch (MissingGroupException e) {
                             sendMessage(sender, colorize("{RED}Group {DARK_GREEN}%s{RED} does not exist."), e.getGroupName());
@@ -346,7 +366,7 @@ public class RootCommands {
 
                         // Remove from old group
                         if (!oldGroup.equalsIgnoreCase(rankName))
-                            plugin.getDao().removeMember(oldGroup, playerName);
+                            storageStrategy.getDao().removeMember(oldGroup, playerName);
 
                         announce("setrank", scope, "%s changed rank of %s from %s to %s", sender.getName(),
                                 playerName,
@@ -360,7 +380,7 @@ public class RootCommands {
                     }
                     else {
                         // Remove from old group
-                        plugin.getDao().removeMember(oldGroup, playerName);
+                        storageStrategy.getDao().removeMember(oldGroup, playerName);
 
                         announce("unsetrank", scope, "%s removed %s from %s", sender.getName(), playerName, oldGroup);
                         if (scope.isShouldEcho() || verbose)
@@ -372,9 +392,9 @@ public class RootCommands {
         });
 
         if (check && (scope.isShouldEcho() || verbose))
-            plugin.checkPlayer(sender, playerName);
-        plugin.refreshPlayer(playerName);
-        plugin.refreshExpirations(playerName);
+            Utils.checkPlayer(sender, playerName);
+        core.refreshPlayer(playerName);
+        core.refreshExpirations(playerName);
     }
 
     @Command("setrank")

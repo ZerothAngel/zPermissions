@@ -13,9 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.tyrannyofheaven.bukkit.zPermissions;
+package org.tyrannyofheaven.bukkit.zPermissions.command;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -23,29 +22,23 @@ import java.util.List;
 import org.bukkit.command.CommandSender;
 import org.bukkit.util.StringUtil;
 import org.tyrannyofheaven.bukkit.util.command.TypeCompleter;
+import org.tyrannyofheaven.bukkit.zPermissions.dao.PermissionDao;
 
-public class DirTypeCompleter implements TypeCompleter {
+public class GroupTypeCompleter implements TypeCompleter {
 
-    private final ZPermissionsPlugin plugin;
-    
-    public DirTypeCompleter(ZPermissionsPlugin plugin) {
-        // Dump directory is modifyable via reload, so we have to do this...
-        this.plugin = plugin;
+    private final PermissionDao dao;
+
+    public GroupTypeCompleter(PermissionDao dao) {
+        this.dao = dao;
     }
 
     @Override
     public List<String> complete(Class<?> clazz, String arg, CommandSender sender, String partial) {
         if (clazz == String.class) {
-            File[] files = plugin.getDumpDirectory().listFiles();
-            if (files != null) {
-                List<String> result = new ArrayList<String>();
-                for (File file : files) {
-                    if (file.isFile() && !file.getName().startsWith(".") && StringUtil.startsWithIgnoreCase(file.getName(), partial))
-                        result.add(file.getName());
-                }
-                Collections.sort(result);
-                return result;
-            }
+            List<String> result = new ArrayList<String>();
+            StringUtil.copyPartialMatches(partial, dao.getEntityNames(true), result);
+            Collections.sort(result);
+            return result;
         }
         return Collections.emptyList();
     }
