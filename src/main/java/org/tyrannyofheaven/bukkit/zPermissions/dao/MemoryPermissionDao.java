@@ -32,7 +32,7 @@ import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import org.tyrannyofheaven.bukkit.zPermissions.WorldPermission;
+import org.tyrannyofheaven.bukkit.zPermissions.QualifiedPermission;
 import org.tyrannyofheaven.bukkit.zPermissions.model.EntityMetadata;
 import org.tyrannyofheaven.bukkit.zPermissions.model.Entry;
 import org.tyrannyofheaven.bukkit.zPermissions.model.Membership;
@@ -361,7 +361,7 @@ public class MemoryPermissionDao extends BaseMemoryPermissionDao {
     private Map<String, Boolean> dumpPermissions(PermissionEntity entity) {
         Map<String, Boolean> result = new HashMap<String, Boolean>();
         for (Entry e : entity.getPermissions()) {
-            WorldPermission wp = new WorldPermission(e.getRegion() == null ? null : e.getRegion().getName(),
+            QualifiedPermission wp = new QualifiedPermission(e.getRegion() == null ? null : e.getRegion().getName(),
                     e.getWorld() == null ? null : e.getWorld().getName(), e.getPermission());
             result.put(wp.toString(), e.isValue());
         }
@@ -373,7 +373,7 @@ public class MemoryPermissionDao extends BaseMemoryPermissionDao {
         for (Map.Entry<String, Boolean> me : input.entrySet()) {
             Entry entry = new Entry();
 
-            WorldPermission wp = new WorldPermission(me.getKey());
+            QualifiedPermission wp = new QualifiedPermission(me.getKey());
             entry.setRegion(wp.getRegion() == null ? null : getRegion(memoryState, wp.getRegion()));
             entry.setWorld(wp.getWorld() == null ? null : getWorld(memoryState, wp.getWorld()));
             entry.setPermission(wp.getPermission().toLowerCase());

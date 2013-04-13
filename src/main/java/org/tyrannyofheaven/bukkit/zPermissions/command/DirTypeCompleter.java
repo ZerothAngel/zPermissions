@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.tyrannyofheaven.bukkit.zPermissions;
+package org.tyrannyofheaven.bukkit.zPermissions.command;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -23,20 +23,21 @@ import java.util.List;
 import org.bukkit.command.CommandSender;
 import org.bukkit.util.StringUtil;
 import org.tyrannyofheaven.bukkit.util.command.TypeCompleter;
+import org.tyrannyofheaven.bukkit.zPermissions.ZPermissionsConfig;
 
 public class DirTypeCompleter implements TypeCompleter {
 
-    private final ZPermissionsPlugin plugin;
+    private final ZPermissionsConfig config;
     
-    public DirTypeCompleter(ZPermissionsPlugin plugin) {
+    public DirTypeCompleter(ZPermissionsConfig config) {
         // Dump directory is modifyable via reload, so we have to do this...
-        this.plugin = plugin;
+        this.config = config;
     }
 
     @Override
     public List<String> complete(Class<?> clazz, String arg, CommandSender sender, String partial) {
         if (clazz == String.class) {
-            File[] files = plugin.getDumpDirectory().listFiles();
+            File[] files = config.getDumpDirectory().listFiles();
             if (files != null) {
                 List<String> result = new ArrayList<String>();
                 for (File file : files) {

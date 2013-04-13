@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.tyrannyofheaven.bukkit.zPermissions;
+package org.tyrannyofheaven.bukkit.zPermissions.util;
 
 import static org.tyrannyofheaven.bukkit.util.ToHLoggingUtils.debug;
 
@@ -30,9 +30,12 @@ import java.util.concurrent.TimeUnit;
 
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
+import org.bukkit.plugin.Plugin;
+import org.tyrannyofheaven.bukkit.zPermissions.ZPermissionsCore;
 import org.tyrannyofheaven.bukkit.zPermissions.model.Membership;
+import org.tyrannyofheaven.bukkit.zPermissions.storage.StorageStrategy;
 
-class ExpirationRefreshHandler implements Runnable {
+public class ExpirationRefreshHandler implements Runnable {
 
     private static final Comparator<Membership> MEMBERSHIP_EXPIRATION_COMPARATOR = new Comparator<Membership>() {
         @Override
@@ -43,7 +46,11 @@ class ExpirationRefreshHandler implements Runnable {
 
     private static final long FUDGE = 1000L;
 
-    private final ZPermissionsPlugin plugin;
+    private final ZPermissionsCore core;
+
+    private final StorageStrategy storageStrategy;
+
+    private final Plugin plugin;
 
     private final Queue<Membership> membershipQueue = new PriorityQueue<Membership>(11, MEMBERSHIP_EXPIRATION_COMPARATOR);
 
@@ -51,17 +58,19 @@ class ExpirationRefreshHandler implements Runnable {
 
     private ScheduledFuture<?> scheduledFuture;
 
-    ExpirationRefreshHandler(ZPermissionsPlugin plugin) {
+    public ExpirationRefreshHandler(ZPermissionsCore core, StorageStrategy storageStrategy, Plugin plugin) {
+        this.core = core;
+        this.storageStrategy = storageStrategy;
         this.plugin = plugin;
         
         executorService = Executors.newSingleThreadScheduledExecutor();
     }
 
-    void rescan() {
+    public void rescan() {
         membershipQueue.clear();
         Date now = new Date();
         for (Player player : Bukkit.getOnlinePlayers()) {
-            for (Membership membership : plugin.getDao().getGroups(player.getName())) {
+            for (Membership membership : storageStrategy.getDao().getGroups(player.getName())) {
                 if (membership.getExpiration() != null && membership.getExpiration().after(now)) {
                     membershipQueue.add(membership);
                 }
@@ -91,7 +100,7 @@ class ExpirationRefreshHandler implements Runnable {
         }
 
         debug(plugin, "Refreshing expired players: %s", toRefresh);
-        plugin.refreshPlayers(toRefresh);
+        core.refreshPlayers(toRefresh);
 
         // Cancel previous task
         if (scheduledFuture != null) {
@@ -103,7 +112,6 @@ class ExpirationRefreshHandler implements Runnable {
         if (next != null) {
             now = new Date();
             long delay = next.getExpiration().getTime() - now.getTime();
-            delay += FUDGE;
 
             if (delay < 0L)
                 delay = 0L; // Weird...
@@ -117,13 +125,13 @@ class ExpirationRefreshHandler implements Runnable {
                     debug(plugin, "Expiring...");
                     Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, realThis);
                 }
-            }, delay, TimeUnit.MILLISECONDS);
+            }, delay + FUDGE, TimeUnit.MILLISECONDS);
         }
         else
             debug(plugin, "No future expirations");
     }
 
-    void shutdown() {
+    public void shutdown() {
         if (scheduledFuture != null) {
             scheduledFuture.cancel(false);
             scheduledFuture = null;

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.tyrannyofheaven.bukkit.zPermissions;
+package org.tyrannyofheaven.bukkit.zPermissions.storage;
 
 import static org.tyrannyofheaven.bukkit.util.ToHLoggingUtils.log;
 
@@ -23,6 +23,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 
 import org.bukkit.Bukkit;
+import org.bukkit.plugin.Plugin;
 import org.tyrannyofheaven.bukkit.util.transaction.AsyncTransactionStrategy;
 import org.tyrannyofheaven.bukkit.util.transaction.RetryingAvajeTransactionStrategy;
 import org.tyrannyofheaven.bukkit.util.transaction.TransactionCallbackWithoutResult;
@@ -43,11 +44,11 @@ public class AvajeStorageStrategy implements StorageStrategy {
 
     private final TransactionStrategy retryingTransactionStrategy;
 
-    private final ZPermissionsPlugin plugin;
+    private final Plugin plugin;
 
     private final ExecutorService executorService;
 
-    AvajeStorageStrategy(ZPermissionsPlugin plugin, int maxRetries) {
+    public AvajeStorageStrategy(Plugin plugin, int maxRetries) {
         // Following will be used to actually execute async
         executorService = Executors.newSingleThreadExecutor();
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2011 Allan Saddi <allan@saddi.com>
+ * Copyright 2013 Allan Saddi <allan@saddi.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,25 +13,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.tyrannyofheaven.bukkit.zPermissions.dao;
+package org.tyrannyofheaven.bukkit.zPermissions;
+
+import java.io.File;
+import java.util.List;
 
 /**
- * Thrown when referencing a non-existent group.
+ * Holds configuration data used by other modules, namely the command handlers.
  * 
  * @author asaddi
  */
-public class MissingGroupException extends DaoException {
+public interface ZPermissionsConfig {
 
-    private static final long serialVersionUID = 1066889464517437579L;
+    public List<String> getTracks();
 
-    private final String groupName;
-    
-    public MissingGroupException(String groupName) {
-        this.groupName = groupName;
-    }
+    public String getDefaultTrack();
 
-    public String getGroupName() {
-        return groupName;
-    }
+    public List<String> getTrack(String trackName);
+
+    public File getDumpDirectory();
+
+    public boolean isRankAdminBroadcast();
+
+    public int getDefaultTempPermissionTimeout();
 
 }

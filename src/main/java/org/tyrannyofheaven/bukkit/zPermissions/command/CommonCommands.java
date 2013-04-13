@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.tyrannyofheaven.bukkit.zPermissions;
+package org.tyrannyofheaven.bukkit.zPermissions.command;
 
 import static org.tyrannyofheaven.bukkit.util.ToHMessageUtils.colorize;
 import static org.tyrannyofheaven.bukkit.util.ToHMessageUtils.sendMessage;
@@ -32,14 +32,21 @@ import org.bukkit.World;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.permissions.Permission;
+import org.bukkit.plugin.Plugin;
 import org.tyrannyofheaven.bukkit.util.command.Command;
 import org.tyrannyofheaven.bukkit.util.command.HelpBuilder;
 import org.tyrannyofheaven.bukkit.util.command.Option;
 import org.tyrannyofheaven.bukkit.util.command.Session;
 import org.tyrannyofheaven.bukkit.util.transaction.TransactionCallback;
 import org.tyrannyofheaven.bukkit.util.transaction.TransactionCallbackWithoutResult;
+import org.tyrannyofheaven.bukkit.zPermissions.PermissionsResolver;
+import org.tyrannyofheaven.bukkit.zPermissions.QualifiedPermission;
+import org.tyrannyofheaven.bukkit.zPermissions.ZPermissionsConfig;
+import org.tyrannyofheaven.bukkit.zPermissions.ZPermissionsCore;
 import org.tyrannyofheaven.bukkit.zPermissions.dao.MissingGroupException;
 import org.tyrannyofheaven.bukkit.zPermissions.model.Entry;
+import org.tyrannyofheaven.bukkit.zPermissions.storage.StorageStrategy;
+import org.tyrannyofheaven.bukkit.zPermissions.util.Utils;
 
 /**
  * Handler for common commands between "/permissions group" and
@@ -49,10 +56,16 @@ import org.tyrannyofheaven.bukkit.zPermissions.model.Entry;
  */
 public abstract class CommonCommands {
 
-    // Parent plugin
-    protected final ZPermissionsPlugin plugin;
+    protected final ZPermissionsCore core;
+
+    protected final StorageStrategy storageStrategy;
 
     protected final PermissionsResolver resolver;
+
+    protected final ZPermissionsConfig config;
+
+    // Parent plugin
+    protected final Plugin plugin;
 
     // true if this is handling groups
     private final boolean group;
@@ -61,34 +74,36 @@ public abstract class CommonCommands {
 
     /**
      * Instantiate this handler.
-     * 
      * @param group true if this is handling groups
      */
-    protected CommonCommands(ZPermissionsPlugin plugin, PermissionsResolver resolver, boolean group) {
-        this.plugin = plugin;
+    protected CommonCommands(ZPermissionsCore core, StorageStrategy storageStrategy, PermissionsResolver resolver, ZPermissionsConfig config, Plugin plugin, boolean group) {
+        this.core = core;
+        this.storageStrategy = storageStrategy;
         this.resolver = resolver;
+        this.config = config;
+        this.plugin = plugin;
         this.group = group;
         
-        metadataCommands = new MetadataCommands(plugin, group);
+        metadataCommands = new MetadataCommands(storageStrategy, group);
     }
 
     @Command(value="get", description="View a permission")
     public void get(CommandSender sender, final @Session("entityName") String name, @Option("permission") String permission) {
         // Get world/permission
-        final WorldPermission wp = new WorldPermission(permission);
+        final QualifiedPermission wp = new QualifiedPermission(permission);
 
         // Read entry from DAO, if any
-        Boolean result = plugin.getRetryingTransactionStrategy().execute(new TransactionCallback<Boolean>() {
+        Boolean result = storageStrategy.getRetryingTransactionStrategy().execute(new TransactionCallback<Boolean>() {
             @Override
             public Boolean doInTransaction() throws Exception {
-                return plugin.getDao().getPermission(name, group, wp.getRegion(), wp.getWorld(), wp.getPermission());
+                return storageStrategy.getDao().getPermission(name, group, wp.getRegion(), wp.getWorld(), wp.getPermission());
             }
         });
         
         if (result == null) {
             sendMessage(sender, colorize("%s%s{YELLOW} does not set {GOLD}%s"), group ? ChatColor.DARK_GREEN : ChatColor.AQUA, name, permission);
             if (!group)
-                plugin.checkPlayer(sender, name);
+                Utils.checkPlayer(sender, name);
             abortBatchProcessing();
         }
         else {
@@ -99,14 +114,14 @@ public abstract class CommonCommands {
     @Command(value="set", description="Set a permission")
     public void set(CommandSender sender, final @Session("entityName") String name, @Option("permission") String permission, final @Option(value="value", optional=true) Boolean value) {
         // Get world/permission
-        final WorldPermission wp = new WorldPermission(permission);
+        final QualifiedPermission wp = new QualifiedPermission(permission);
     
         // Set permission.
         try {
-            plugin.getRetryingTransactionStrategy().execute(new TransactionCallbackWithoutResult() {
+            storageStrategy.getRetryingTransactionStrategy().execute(new TransactionCallbackWithoutResult() {
                 @Override
                 public void doInTransactionWithoutResult() throws Exception {
-                    plugin.getDao().setPermission(name, group, wp.getRegion(), wp.getWorld(), wp.getPermission(), value == null ? Boolean.TRUE : value);
+                    storageStrategy.getDao().setPermission(name, group, wp.getRegion(), wp.getWorld(), wp.getPermission(), value == null ? Boolean.TRUE : value);
                 }
             });
         }
@@ -117,48 +132,48 @@ public abstract class CommonCommands {
     
         sendMessage(sender, colorize("{GOLD}%s{YELLOW} set to {GREEN}%s{YELLOW} for %s%s"), permission, value == null ? Boolean.TRUE : value, group ? ChatColor.DARK_GREEN : ChatColor.AQUA, name);
         if (!group) {
-            plugin.checkPlayer(sender, name);
-            plugin.refreshPlayer(name);
+            Utils.checkPlayer(sender, name);
+            core.refreshPlayer(name);
         }
         else {
-            plugin.refreshAffectedPlayers(name);
+            core.refreshAffectedPlayers(name);
         }
     }
 
     @Command(value="unset", description="Remove a permission")
     public void unset(CommandSender sender, final @Session("entityName") String name, @Option("permission") String permission) {
         // Get world/permission
-        final WorldPermission wp = new WorldPermission(permission);
+        final QualifiedPermission wp = new QualifiedPermission(permission);
     
         // Delete permission entry.
-        Boolean result = plugin.getRetryingTransactionStrategy().execute(new TransactionCallback<Boolean>() {
+        Boolean result = storageStrategy.getRetryingTransactionStrategy().execute(new TransactionCallback<Boolean>() {
             @Override
             public Boolean doInTransaction() throws Exception {
-                return plugin.getDao().unsetPermission(name, group, wp.getRegion(), wp.getWorld(), wp.getPermission());
+                return storageStrategy.getDao().unsetPermission(name, group, wp.getRegion(), wp.getWorld(), wp.getPermission());
             }
         });
 
         if (result) {
             sendMessage(sender, colorize("{GOLD}%s{YELLOW} unset for %s%s"), permission, group ? ChatColor.DARK_GREEN : ChatColor.AQUA, name);
             if (group)
-                plugin.refreshAffectedPlayers(name);
+                core.refreshAffectedPlayers(name);
             else
-                plugin.refreshPlayer(name);
+                core.refreshPlayer(name);
         }
         else {
             sendMessage(sender, colorize("%s%s{RED} does not set {GOLD}%s"), group ? ChatColor.DARK_GREEN : ChatColor.AQUA, name, permission);
             if (!group)
-                plugin.checkPlayer(sender, name);
+                Utils.checkPlayer(sender, name);
             abortBatchProcessing();
         }
     }
 
     @Command(value="purge", description="Delete this group or player") // doh!
     public void delete(CommandSender sender, final @Session("entityName") String name) {
-        boolean result = plugin.getRetryingTransactionStrategy().execute(new TransactionCallback<Boolean>() {
+        boolean result = storageStrategy.getRetryingTransactionStrategy().execute(new TransactionCallback<Boolean>() {
             @Override
             public Boolean doInTransaction() throws Exception {
-                return plugin.getDao().deleteEntity(name, group);
+                return storageStrategy.getDao().deleteEntity(name, group);
             }
         });
         
@@ -168,10 +183,10 @@ public abstract class CommonCommands {
                     (group ? ChatColor.DARK_GREEN : ChatColor.AQUA),
                     name);
             if (group)
-                plugin.refreshAffectedPlayers(name);
+                core.refreshAffectedPlayers(name);
             else
-                plugin.refreshPlayer(name);
-            plugin.refreshExpirations();
+                core.refreshPlayer(name);
+            core.refreshExpirations();
         }
         else {
             sendMessage(sender, colorize("{RED}%s not found."), group ? "Group" : "Player");
@@ -213,7 +228,7 @@ public abstract class CommonCommands {
         
         // Grab permissions from zPerms
         final String lworldName = worldName.toLowerCase();
-        Map<String, Boolean> rootPermissions = plugin.getTransactionStrategy().execute(new TransactionCallback<Map<String, Boolean>>() {
+        Map<String, Boolean> rootPermissions = storageStrategy.getTransactionStrategy().execute(new TransactionCallback<Map<String, Boolean>>() {
             @Override
             public Map<String, Boolean> doInTransaction() throws Exception {
                 if (group) {

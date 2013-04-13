@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.tyrannyofheaven.bukkit.zPermissions;
+package org.tyrannyofheaven.bukkit.zPermissions.command;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -22,20 +22,21 @@ import java.util.List;
 import org.bukkit.command.CommandSender;
 import org.bukkit.util.StringUtil;
 import org.tyrannyofheaven.bukkit.util.command.TypeCompleter;
+import org.tyrannyofheaven.bukkit.zPermissions.ZPermissionsConfig;
 
-class TrackTypeCompleter implements TypeCompleter {
+public class TrackTypeCompleter implements TypeCompleter {
 
-    private final ZPermissionsPlugin plugin;
+    private final ZPermissionsConfig config;
 
-    public TrackTypeCompleter(ZPermissionsPlugin plugin) {
-        this.plugin = plugin;
+    public TrackTypeCompleter(ZPermissionsConfig config) {
+        this.config = config;
     }
 
     @Override
     public List<String> complete(Class<?> clazz, String arg, CommandSender sender, String partial) {
         if (clazz == String.class) {
             List<String> result = new ArrayList<String>();
-            StringUtil.copyPartialMatches(partial, plugin.getTracks(), result);
+            StringUtil.copyPartialMatches(partial, config.getTracks(), result);
             // NB not sorted, left in definition order
             return result;
         }

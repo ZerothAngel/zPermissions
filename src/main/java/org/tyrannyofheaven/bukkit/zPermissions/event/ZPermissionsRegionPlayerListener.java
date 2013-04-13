@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.tyrannyofheaven.bukkit.zPermissions;
+package org.tyrannyofheaven.bukkit.zPermissions.event;
 
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -21,6 +21,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.player.PlayerRespawnEvent;
 import org.bukkit.event.player.PlayerTeleportEvent;
+import org.tyrannyofheaven.bukkit.zPermissions.ZPermissionsCore;
 
 /**
  * Additional player events to listen on if (WorldGuard) region support is
@@ -30,20 +31,16 @@ import org.bukkit.event.player.PlayerTeleportEvent;
  */
 public class ZPermissionsRegionPlayerListener implements Listener {
 
-    private final ZPermissionsPlugin plugin;
+    private final ZPermissionsCore core;
 
-    ZPermissionsRegionPlayerListener(ZPermissionsPlugin plugin) {
-        this.plugin = plugin;
-    }
-
-    void registerEvents() {
-        plugin.getServer().getPluginManager().registerEvents(this, plugin);
+    public ZPermissionsRegionPlayerListener(ZPermissionsCore plugin) {
+        this.core = plugin;
     }
 
     @EventHandler(priority=EventPriority.MONITOR, ignoreCancelled=true)
     public void onPlayerTeleport(PlayerTeleportEvent event) {
         // Conditionally update if world or region changed
-        plugin.updateAttachment(event.getPlayer(), event.getTo(), false);
+        core.updateAttachment(event.getPlayer(), event.getTo(), false);
     }
 
     @EventHandler(priority=EventPriority.MONITOR, ignoreCancelled=true)
@@ -53,14 +50,14 @@ public class ZPermissionsRegionPlayerListener implements Listener {
                 event.getFrom().getBlockY() != event.getTo().getBlockY() ||
                 event.getFrom().getBlockZ() != event.getTo().getBlockZ()) {
             // Conditionally update if containing regions changed
-            plugin.updateAttachment(event.getPlayer(), event.getTo(), false);
+            core.updateAttachment(event.getPlayer(), event.getTo(), false);
         }
     }
 
     @EventHandler(priority=EventPriority.MONITOR, ignoreCancelled=true)
     public void onPlayerRespawn(PlayerRespawnEvent event) {
         // Conditionally update if respawning in a different world or region
-        plugin.updateAttachment(event.getPlayer(), event.getRespawnLocation(), false);
+        core.updateAttachment(event.getPlayer(), event.getRespawnLocation(), false);
     }
 
 }

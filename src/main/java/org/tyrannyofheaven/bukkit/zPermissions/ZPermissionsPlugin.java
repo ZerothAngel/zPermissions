@@ -39,7 +39,6 @@ import java.util.logging.Level;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
-import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
@@ -61,7 +60,13 @@ import org.tyrannyofheaven.bukkit.util.command.ToHCommandExecutor;
 import org.tyrannyofheaven.bukkit.util.transaction.TransactionCallback;
 import org.tyrannyofheaven.bukkit.util.transaction.TransactionStrategy;
 import org.tyrannyofheaven.bukkit.zPermissions.PermissionsResolver.ResolverResult;
+import org.tyrannyofheaven.bukkit.zPermissions.command.DirTypeCompleter;
+import org.tyrannyofheaven.bukkit.zPermissions.command.GroupTypeCompleter;
+import org.tyrannyofheaven.bukkit.zPermissions.command.RootCommands;
+import org.tyrannyofheaven.bukkit.zPermissions.command.TrackTypeCompleter;
 import org.tyrannyofheaven.bukkit.zPermissions.dao.PermissionDao;
+import org.tyrannyofheaven.bukkit.zPermissions.event.ZPermissionsPlayerListener;
+import org.tyrannyofheaven.bukkit.zPermissions.event.ZPermissionsRegionPlayerListener;
 import org.tyrannyofheaven.bukkit.zPermissions.model.EntityMetadata;
 import org.tyrannyofheaven.bukkit.zPermissions.model.Entry;
 import org.tyrannyofheaven.bukkit.zPermissions.model.Membership;
@@ -69,6 +74,12 @@ import org.tyrannyofheaven.bukkit.zPermissions.model.PermissionEntity;
 import org.tyrannyofheaven.bukkit.zPermissions.model.PermissionRegion;
 import org.tyrannyofheaven.bukkit.zPermissions.model.PermissionWorld;
 import org.tyrannyofheaven.bukkit.zPermissions.service.ZPermissionsServiceImpl;
+import org.tyrannyofheaven.bukkit.zPermissions.storage.AvajeStorageStrategy;
+import org.tyrannyofheaven.bukkit.zPermissions.storage.MemoryStorageStrategy;
+import org.tyrannyofheaven.bukkit.zPermissions.storage.StorageStrategy;
+import org.tyrannyofheaven.bukkit.zPermissions.util.ExpirationRefreshHandler;
+import org.tyrannyofheaven.bukkit.zPermissions.util.ModelDumper;
+import org.tyrannyofheaven.bukkit.zPermissions.util.RefreshTask;
 
 import com.avaje.ebean.EbeanServer;
 import com.avaje.ebeaninternal.api.SpiEbeanServer;
@@ -82,7 +93,7 @@ import com.sk89q.worldguard.protection.regions.ProtectedRegion;
  * 
  * @author asaddi
  */
-public class ZPermissionsPlugin extends JavaPlugin {
+public class ZPermissionsPlugin extends JavaPlugin implements ZPermissionsCore, ZPermissionsConfig {
 
     // Name of the default group, in absence of a config file
     private static final String DEFAULT_GROUP = "default";
@@ -136,13 +147,13 @@ public class ZPermissionsPlugin extends JavaPlugin {
     private VersionInfo versionInfo;
 
     // Permission resolver
-    private final PermissionsResolver resolver = new PermissionsResolver(this);
+    private PermissionsResolver resolver = new PermissionsResolver(this);
 
     // Model dumper
-    private final ModelDumper modelDumper = new ModelDumper(this);
+    private ModelDumper modelDumper;
 
     // Multi-user refreshing
-    private final RefreshTask refreshTask = new RefreshTask(this);
+    private final RefreshTask refreshTask = new RefreshTask(getZPermissionsCore(), this);
 
     // Our own Configuration (don't bother with JavaPlugin's)
     private FileConfiguration config;
@@ -199,15 +210,6 @@ public class ZPermissionsPlugin extends JavaPlugin {
     private ExpirationRefreshHandler expirationRefreshHandler;
 
     /**
-     * Retrieve this plugin's TransactionStrategy
-     * 
-     * @return the TransactionStrategy
-     */
-    TransactionStrategy getTransactionStrategy() {
-        return storageStrategy.getTransactionStrategy();
-    }
-
-    /**
      * Retrieve this plugin's retrying TransactionStrategy
      * FIXME We use a separate TransactionStrategy because not all transactions
      * might be safe to be retried. Most simple transactions are safe to retry.
@@ -216,7 +218,7 @@ public class ZPermissionsPlugin extends JavaPlugin {
      * 
      * @return the retrying TransactionStrategy
      */
-    TransactionStrategy getRetryingTransactionStrategy() {
+    private TransactionStrategy getRetryingTransactionStrategy() {
         return storageStrategy.getRetryingTransactionStrategy();
     }
 
@@ -230,13 +232,23 @@ public class ZPermissionsPlugin extends JavaPlugin {
     }
 
     // Retrieve the PermissionResolver instance
-    PermissionsResolver getResolver() {
+    private PermissionsResolver getResolver() {
         return resolver;
     }
 
     // Retrieve ModelDumper instance
-    ModelDumper getModelDumper() {
+    private ModelDumper getModelDumper() {
         return modelDumper;
+    }
+
+    // Retrieve ZPermissionsCore instance
+    private ZPermissionsCore getZPermissionsCore() {
+        return this;
+    }
+    
+    // Retrieve ZPermissionsConfig instance
+    private ZPermissionsConfig getZPermissionsConfig() {
+        return this;
     }
 
     @Override
@@ -311,7 +323,7 @@ public class ZPermissionsPlugin extends JavaPlugin {
                 }
 
                 log(this, "Using database storage strategy.");
-                storageStrategy = new AvajeStorageStrategy(this, txnMaxRetries); // TODO make configurable?
+                storageStrategy = new AvajeStorageStrategy(this, txnMaxRetries);
             }
         }
         
@@ -330,22 +342,24 @@ public class ZPermissionsPlugin extends JavaPlugin {
             // TODO Now what?
         }
 
+        modelDumper = new ModelDumper(storageStrategy, this);
+
         // Install our commands
-        (new ToHCommandExecutor<ZPermissionsPlugin>(this, new RootCommands(this, resolver)))
+        (new ToHCommandExecutor<ZPermissionsPlugin>(this, new RootCommands(getZPermissionsCore(), storageStrategy, getResolver(), getModelDumper(), getZPermissionsConfig(), this)))
             .registerTypeCompleter("group", new GroupTypeCompleter(getDao()))
-            .registerTypeCompleter("track", new TrackTypeCompleter(this))
-            .registerTypeCompleter("dump-dir", new DirTypeCompleter(this))
+            .registerTypeCompleter("track", new TrackTypeCompleter(getZPermissionsConfig()))
+            .registerTypeCompleter("dump-dir", new DirTypeCompleter(getZPermissionsConfig()))
             .registerCommands();
 
         // Detect WorldGuard
-        worldGuardPlugin = (WorldGuardPlugin)getServer().getPluginManager().getPlugin("WorldGuard");
-        boolean regionSupport = worldGuardPlugin != null && regionSupportEnable;
+        detectWorldGuard();
+        boolean regionSupport = getWorldGuardPlugin() != null && regionSupportEnable;
 
         // Install our listeners
-        expirationRefreshHandler = new ExpirationRefreshHandler(this);
-        (new ZPermissionsPlayerListener(this)).registerEvents();
+        expirationRefreshHandler = new ExpirationRefreshHandler(getZPermissionsCore(), storageStrategy, this);
+        Bukkit.getPluginManager().registerEvents(new ZPermissionsPlayerListener(getZPermissionsCore(), this), this);
         if (regionSupport) {
-            (new ZPermissionsRegionPlayerListener(this)).registerEvents();
+            Bukkit.getPluginManager().registerEvents(new ZPermissionsRegionPlayerListener(getZPermissionsCore()), this);
             log(this, "WorldGuard region support enabled.");
         }
 
@@ -386,7 +400,8 @@ public class ZPermissionsPlugin extends JavaPlugin {
     }
 
     // Remove all state associated with a player, including their attachment
-    void removeAttachment(Player player) {
+    @Override
+    public void removeAttachment(Player player) {
         debug(this, "Removing attachment for %s", player.getName());
         PlayerState playerState = getPlayerState(player);
         if (playerState != null) {
@@ -397,7 +412,8 @@ public class ZPermissionsPlugin extends JavaPlugin {
     
     // Update state about a player, resolving effective permissions and
     // creating/updating their attachment
-    void updateAttachment(Player player, Location location, boolean force) {
+    @Override
+    public void updateAttachment(Player player, Location location, boolean force) {
         try {
             updateAttachmentInternal(player, location, force);
         }
@@ -566,7 +582,8 @@ public class ZPermissionsPlugin extends JavaPlugin {
      * 
      * @param playerName the name of the player
      */
-    void refreshPlayer(String playerName) {
+    @Override
+    public void refreshPlayer(String playerName) {
         Player player = Bukkit.getPlayerExact(playerName);
         if (player != null) {
             debug(this, "Refreshing player %s", player.getName());
@@ -577,7 +594,8 @@ public class ZPermissionsPlugin extends JavaPlugin {
     /**
      * Refresh the attachments of all online players.
      */
-    void refreshPlayers() {
+    @Override
+    public void refreshPlayers() {
         debug(this, "Refreshing all online players");
         Set<String> toRefresh = new HashSet<String>();
         for (Player player : Bukkit.getOnlinePlayers()) {
@@ -591,14 +609,16 @@ public class ZPermissionsPlugin extends JavaPlugin {
      * 
      * @param playerNames collection of players to refresh
      */
-    void refreshPlayers(Collection<String> playerNames) {
+    @Override
+    public void refreshPlayers(Collection<String> playerNames) {
         refreshTask.start(playerNames);
     }
 
     /**
      * Refresh expiration task.
      */
-    void refreshExpirations() {
+    @Override
+    public void refreshExpirations() {
         expirationRefreshHandler.rescan();
     }
 
@@ -607,7 +627,8 @@ public class ZPermissionsPlugin extends JavaPlugin {
      * 
      * @param playerName a player
      */
-    void refreshExpirations(String playerName) {
+    @Override
+    public void refreshExpirations(String playerName) {
         if (Bukkit.getPlayerExact(playerName) != null)
             refreshExpirations();
     }
@@ -617,7 +638,8 @@ public class ZPermissionsPlugin extends JavaPlugin {
      * 
      * @param groupName the affected group
      */
-    void refreshAffectedPlayers(String groupName) {
+    @Override
+    public void refreshAffectedPlayers(String groupName) {
         groupName = groupName.toLowerCase();
         Set<String> toRefresh = new HashSet<String>();
         for (Player player : Bukkit.getOnlinePlayers()) {
@@ -640,7 +662,8 @@ public class ZPermissionsPlugin extends JavaPlugin {
      * 
      * @return the default track
      */
-    String getDefaultTrack() {
+    @Override
+    public String getDefaultTrack() {
         return defaultTrack;
     }
 
@@ -650,7 +673,8 @@ public class ZPermissionsPlugin extends JavaPlugin {
      * @param trackName the name of the track
      * @return a list of groups (in ascending order) associated with the track
      */
-    List<String> getTrack(String trackName) {
+    @Override
+    public List<String> getTrack(String trackName) {
         return tracks.get(trackName);
     }
 
@@ -659,7 +683,8 @@ public class ZPermissionsPlugin extends JavaPlugin {
      * 
      * @return names of all tracks
      */
-    List<String> getTracks() {
+    @Override
+    public List<String> getTracks() {
         return new ArrayList<String>(tracks.keySet());
     }
 
@@ -668,7 +693,8 @@ public class ZPermissionsPlugin extends JavaPlugin {
      * 
      * @return the dump directory
      */
-    File getDumpDirectory() {
+    @Override
+    public File getDumpDirectory() {
         return dumpDirectory;
     }
 
@@ -677,7 +703,8 @@ public class ZPermissionsPlugin extends JavaPlugin {
      * 
      * @return the temp permission timeout in seconds
      */
-    int getDefaultTempPermissionTimeout() {
+    @Override
+    public int getDefaultTempPermissionTimeout() {
         return defaultTempPermissionTimeout;
     }
 
@@ -686,7 +713,8 @@ public class ZPermissionsPlugin extends JavaPlugin {
      * 
      * @return whether to broadcast rank changes to admins
      */
-    boolean isRankAdminBroadcast() {
+    @Override
+    public boolean isRankAdminBroadcast() {
         return rankAdminBroadcast;
     }
 
@@ -809,7 +837,8 @@ public class ZPermissionsPlugin extends JavaPlugin {
     /**
      * Re-read config.yml and refresh attachments of all online players.
      */
-    void reload() {
+    @Override
+    public void reload() {
         config = ToHFileUtils.getConfig(this);
         readConfig();
         startAutoRefreshTask();
@@ -825,24 +854,25 @@ public class ZPermissionsPlugin extends JavaPlugin {
     /**
      * Refresh permissions store
      */
-    void refresh(Runnable finishTask) {
+    @Override
+    public void refresh(Runnable finishTask) {
         storageStrategy.refresh(finishTask);
+    }
+
+    // Detects WorldGuardPlugin
+    private void detectWorldGuard() {
+        Plugin plugin = getServer().getPluginManager().getPlugin("WorldGuard");
+        if (plugin instanceof WorldGuardPlugin) {
+            worldGuardPlugin = (WorldGuardPlugin)plugin;
+        }
+        else {
+            worldGuardPlugin = null;
+        }
     }
 
     // Returns WorldGuardPlugin or null if not present
     private WorldGuardPlugin getWorldGuardPlugin() {
         return worldGuardPlugin;
-    }
-
-    /**
-     * Give a little warning if the player isn't online.
-     * 
-     * @param playerName the player name
-     */
-    void checkPlayer(CommandSender sender, String playerName) {
-        if (getServer().getPlayerExact(playerName) == null) {
-            sendMessage(sender, colorize("{GRAY}(Player not online, make sure the name is correct)"));
-        }
     }
 
     // Cancel existing auto-refresh task and start a new one if autoRefreshInterval is valid

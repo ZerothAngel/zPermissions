@@ -24,10 +24,10 @@ import static org.junit.Assert.assertTrue;
 import java.util.List;
 
 import org.junit.Test;
-import org.tyrannyofheaven.bukkit.zPermissions.Utils;
 import org.tyrannyofheaven.bukkit.zPermissions.model.PermissionEntity;
 import org.tyrannyofheaven.bukkit.zPermissions.model.PermissionRegion;
 import org.tyrannyofheaven.bukkit.zPermissions.model.PermissionWorld;
+import org.tyrannyofheaven.bukkit.zPermissions.util.Utils;
 
 public abstract class AbstractDaoTest {
 

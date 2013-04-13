@@ -29,6 +29,7 @@ import java.util.logging.Logger;
 import org.tyrannyofheaven.bukkit.util.ToHLoggingUtils;
 import org.tyrannyofheaven.bukkit.zPermissions.dao.PermissionDao;
 import org.tyrannyofheaven.bukkit.zPermissions.model.Entry;
+import org.tyrannyofheaven.bukkit.zPermissions.util.Utils;
 
 /**
  * Responsible for resolving a player's effective permissions.

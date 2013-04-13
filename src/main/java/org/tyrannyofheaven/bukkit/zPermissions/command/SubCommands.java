@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.tyrannyofheaven.bukkit.zPermissions;
+package org.tyrannyofheaven.bukkit.zPermissions.command;
 
 import static org.tyrannyofheaven.bukkit.util.ToHLoggingUtils.log;
 import static org.tyrannyofheaven.bukkit.util.ToHMessageUtils.colorize;
@@ -28,10 +28,12 @@ import java.util.Collections;
 import java.util.List;
 import java.util.logging.Level;
 
+import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.ConsoleCommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.permissions.PermissionAttachmentInfo;
+import org.bukkit.plugin.Plugin;
 import org.tyrannyofheaven.bukkit.util.command.Command;
 import org.tyrannyofheaven.bukkit.util.command.CommandSession;
 import org.tyrannyofheaven.bukkit.util.command.HelpBuilder;
@@ -40,8 +42,14 @@ import org.tyrannyofheaven.bukkit.util.command.ParseException;
 import org.tyrannyofheaven.bukkit.util.command.Require;
 import org.tyrannyofheaven.bukkit.util.command.reader.CommandReader;
 import org.tyrannyofheaven.bukkit.util.transaction.TransactionCallback;
+import org.tyrannyofheaven.bukkit.zPermissions.PermissionsResolver;
+import org.tyrannyofheaven.bukkit.zPermissions.ZPermissionsConfig;
+import org.tyrannyofheaven.bukkit.zPermissions.ZPermissionsCore;
 import org.tyrannyofheaven.bukkit.zPermissions.model.Membership;
 import org.tyrannyofheaven.bukkit.zPermissions.model.PermissionEntity;
+import org.tyrannyofheaven.bukkit.zPermissions.storage.StorageStrategy;
+import org.tyrannyofheaven.bukkit.zPermissions.util.ModelDumper;
+import org.tyrannyofheaven.bukkit.zPermissions.util.Utils;
 
 /**
  * Handler for sub-commands of /permissions
@@ -50,8 +58,18 @@ import org.tyrannyofheaven.bukkit.zPermissions.model.PermissionEntity;
  */
 public class SubCommands {
 
+    private final ZPermissionsCore core;
+
+    private final StorageStrategy storageStrategy;
+
+    private final PermissionsResolver resolver;
+
+    private final ModelDumper modelDumper;
+
+    private final ZPermissionsConfig config;
+
     // Parent plugin
-    private final ZPermissionsPlugin plugin;
+    private final Plugin plugin;
 
     // The "/permissions player" handler
     private final PlayerCommands playerCommand;
@@ -59,10 +77,16 @@ public class SubCommands {
     // The "/permissions group" handler
     private final GroupCommands groupCommand;
 
-    SubCommands(ZPermissionsPlugin plugin, PermissionsResolver resolver) {
+    SubCommands(ZPermissionsCore core, StorageStrategy storageStrategy, PermissionsResolver resolver, ModelDumper modelDumper, ZPermissionsConfig config, Plugin plugin) {
+        this.core = core;
+        this.storageStrategy = storageStrategy;
+        this.resolver = resolver;
+        this.modelDumper = modelDumper;
+        this.config = config;
         this.plugin = plugin;
-        playerCommand = new PlayerCommands(plugin, resolver);
-        groupCommand = new GroupCommands(plugin, resolver);
+
+        playerCommand = new PlayerCommands(core, storageStrategy, resolver, config, plugin);
+        groupCommand = new GroupCommands(core, storageStrategy, resolver, config, plugin);
     }
 
     @Command(value={"player", "pl", "p"}, description="Player-related commands")
@@ -135,7 +159,7 @@ public class SubCommands {
             throw new ParseException("<what> should be 'groups' or 'players'");
         }
 
-        List<String> entityNames = plugin.getDao().getEntityNames(group);
+        List<String> entityNames = storageStrategy.getDao().getEntityNames(group);
 
         if (entityNames.isEmpty()) {
             sendMessage(sender, colorize("{YELLOW}No %s found."), group ? "groups" : "players");
@@ -165,7 +189,7 @@ public class SubCommands {
             // Checking perms for another player
             requirePermission(sender, "zpermissions.check.other");
 
-            player = plugin.getServer().getPlayer(playerName);
+            player = Bukkit.getPlayer(playerName);
             if (player == null) {
                 sendMessage(sender, colorize("{RED}Player is not online."));
                 abortBatchProcessing();
@@ -201,7 +225,7 @@ public class SubCommands {
             // Checking perms for another player
             requirePermission(sender, "zpermissions.inspect.other");
 
-            player = plugin.getServer().getPlayer(playerName);
+            player = Bukkit.getPlayer(playerName);
             if (player == null) {
                 sendMessage(sender, colorize("{RED}Player is not online."));
                 abortBatchProcessing();
@@ -221,18 +245,18 @@ public class SubCommands {
     @Command(value="reload", description="Re-read config.yml")
     @Require("zpermissions.reload")
     public void reload(CommandSender sender) {
-        plugin.reload();
+        core.reload();
         sendMessage(sender, colorize("{WHITE}config.yml{YELLOW} reloaded"));
     }
 
     @Command(value="refresh", description="Re-read permissions from storage")
     @Require("zpermissions.refresh")
     public void refresh(CommandSender sender) {
-        plugin.refresh(new Runnable() {
+        core.refresh(new Runnable() {
             @Override
             public void run() {
-                plugin.refreshPlayers();
-                plugin.refreshExpirations();
+                core.refreshPlayers();
+                core.refreshExpirations();
             }
         });
         sendMessage(sender, colorize("{YELLOW}Refresh queued."));
@@ -251,15 +275,15 @@ public class SubCommands {
     @Command(value={"import", "restore"}, description="Import a dump of the database")
     @Require("zpermissions.import")
     public void import_command(final CommandSender sender, @Option(value="filename", completer="dump-dir") String filename) {
-        File inFile = sanitizeFilename(plugin.getDumpDirectory(), filename);
+        File inFile = sanitizeFilename(config.getDumpDirectory(), filename);
         try {
             // Ensure database is empty
-            if (!plugin.getTransactionStrategy().execute(new TransactionCallback<Boolean>() {
+            if (!storageStrategy.getTransactionStrategy().execute(new TransactionCallback<Boolean>() {
                 @Override
                 public Boolean doInTransaction() throws Exception {
                     // Check in a single transaction
-                    List<PermissionEntity> players = plugin.getDao().getEntities(false);
-                    List<PermissionEntity> groups = plugin.getDao().getEntities(true);
+                    List<PermissionEntity> players = storageStrategy.getDao().getEntities(false);
+                    List<PermissionEntity> groups = storageStrategy.getDao().getEntities(true);
                     if (!players.isEmpty() || !groups.isEmpty()) {
                         sendMessage(sender, colorize("{RED}Database is not empty!"));
                         return false;
@@ -271,7 +295,7 @@ public class SubCommands {
             }
 
             // Execute commands
-            if (CommandReader.read(plugin.getServer(), sender, inFile, plugin)) {
+            if (CommandReader.read(Bukkit.getServer(), sender, inFile, plugin)) {
                 sendMessage(sender, colorize("{YELLOW}Import complete."));
             }
             else {
@@ -287,15 +311,15 @@ public class SubCommands {
     @Command(value={"export", "dump"}, description="Export a dump of the database")
     @Require("zpermissions.export")
     public void export(CommandSender sender, @Option(value="filename", completer="dump-dir") String filename) {
-        File outFile = sanitizeFilename(plugin.getDumpDirectory(), filename);
+        File outFile = sanitizeFilename(config.getDumpDirectory(), filename);
         try {
-            if (!plugin.getDumpDirectory().exists()) {
-                if (!plugin.getDumpDirectory().mkdirs()) {
+            if (!config.getDumpDirectory().exists()) {
+                if (!config.getDumpDirectory().mkdirs()) {
                     sendMessage(sender, colorize("{RED}Unable to create dump directory"));
                     return;
                 }
             }
-            plugin.getModelDumper().dump(outFile);
+            modelDumper.dump(outFile);
             sendMessage(sender, colorize("{YELLOW}Export completed."));
         }
         catch (IOException e) {
@@ -312,10 +336,10 @@ public class SubCommands {
             return;
         }
         
-        List<Membership> memberships = plugin.getDao().getGroups(sender.getName());
+        List<Membership> memberships = storageStrategy.getDao().getGroups(sender.getName());
         Collections.reverse(memberships); // Order from highest to lowest
 
-        String groups = Utils.displayGroups(plugin, memberships);
+        String groups = Utils.displayGroups(resolver.getDefaultGroup(), memberships);
         
         sendMessage(sender, colorize("{YELLOW}You are a member of: %s"), groups);
     }

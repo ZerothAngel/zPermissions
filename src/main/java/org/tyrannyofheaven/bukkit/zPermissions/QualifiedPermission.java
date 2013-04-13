@@ -24,7 +24,7 @@ import static org.tyrannyofheaven.bukkit.util.ToHStringUtils.hasText;
  * 
  * @author asaddi
  */
-public class WorldPermission {
+public class QualifiedPermission {
 
     private final String region;
 
@@ -32,20 +32,20 @@ public class WorldPermission {
     
     private final String permission;
 
-    public WorldPermission(String worldPermission) {
+    public QualifiedPermission(String qualifiedPermission) {
         // Pull out region, if present
-        String[] parts = worldPermission.split("/", 2);
+        String[] parts = qualifiedPermission.split("/", 2);
         if (parts.length == 1) {
             // No region
             region = null;
         }
         else {
             region = parts[0];
-            worldPermission = parts[1];
+            qualifiedPermission = parts[1];
         }
 
         // Break up into world/permission, as appropriate
-        parts = worldPermission.split(":", 2);
+        parts = qualifiedPermission.split(":", 2);
         if (parts.length == 1) {
             // No world
             world = null;
@@ -57,7 +57,7 @@ public class WorldPermission {
         }
     }
 
-    public WorldPermission(String region, String world, String permission) {
+    public QualifiedPermission(String region, String world, String permission) {
         if (!hasText(region))
             region = null;
         if (!hasText(world))
