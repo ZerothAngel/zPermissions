@@ -405,6 +405,8 @@ public class MemoryPermissionDao extends BaseMemoryPermissionDao {
                 // Ignore invalid value
             }
         }
+        
+        entity.updateMetadataMap();
     }
 
     @Override
