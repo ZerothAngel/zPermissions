@@ -72,7 +72,8 @@ public interface RegionStrategy {
      * Retrieve the name of all regions that contain the given ocation.
      * 
      * @param location the location
-     * @return name of containing regions or empty set. Never null.
+     * @return name of containing regions or empty set. Never null. Region names
+     *     must be in all lowercase.
      */
     public Set<String> getRegions(Location location);
 

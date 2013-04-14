@@ -73,5 +73,9 @@ rank-admin-broadcast: |
   Otherwise, rank commands will broadcast to players with a custom
   permission, e.g. zpermissions.notify.promote, etc.
 
+region-managers: |
+  If region-support is enabled, this is the order in which region manager
+  plugins will be detected. The first plugin detected will be used.
+
 debug: |
   Enable debug logging.

@@ -30,7 +30,6 @@ import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -75,6 +74,7 @@ import org.tyrannyofheaven.bukkit.zPermissions.model.PermissionEntity;
 import org.tyrannyofheaven.bukkit.zPermissions.model.PermissionRegion;
 import org.tyrannyofheaven.bukkit.zPermissions.model.PermissionWorld;
 import org.tyrannyofheaven.bukkit.zPermissions.region.RegionStrategy;
+import org.tyrannyofheaven.bukkit.zPermissions.region.ResidenceRegionStrategy;
 import org.tyrannyofheaven.bukkit.zPermissions.region.WorldGuardRegionStrategy;
 import org.tyrannyofheaven.bukkit.zPermissions.service.ZPermissionsServiceImpl;
 import org.tyrannyofheaven.bukkit.zPermissions.storage.AvajeStorageStrategy;
@@ -390,14 +390,16 @@ public class ZPermissionsPlugin extends JavaPlugin implements ZPermissionsCore, 
         if (!regionSupportEnable)
             return; // Don't bother with the rest
 
-        Map<String, RegionStrategy> strategies = new HashMap<String, RegionStrategy>();
+        Map<String, RegionStrategy> strategies = new LinkedHashMap<String, RegionStrategy>();
         RegionStrategy regionStrategy;
 
         // WorldGuard
         regionStrategy = new WorldGuardRegionStrategy();
         strategies.put(regionStrategy.getName(), regionStrategy);
 
-        // Additional (if ever) region managers go here.
+        // Additional region managers are registered here.
+        regionStrategy = new ResidenceRegionStrategy();
+        strategies.put(regionStrategy.getName(), regionStrategy);
         
         // Run through list in preference order
         for (String rmName : regionManagers) {
@@ -876,10 +878,10 @@ public class ZPermissionsPlugin extends JavaPlugin implements ZPermissionsCore, 
             else
                 warn(this, "region-managers must be a string or list of strings");
         }
-
-        // Set up default region manager(s)
-        if (regionManagers.isEmpty()) {
+        else {
+            // Set up default region manager(s)
             regionManagers.add("WorldGuard");
+            regionManagers.add("Residence");
         }
 
         // Set debug logging
