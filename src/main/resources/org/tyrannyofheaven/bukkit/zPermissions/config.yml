@@ -1,4 +1,4 @@
-config-version: 9
+config-version: 10
 
 database-support: true
 
@@ -33,5 +33,9 @@ auto-refresh-interval: -1
 opaque-inheritance: true
 
 rank-admin-broadcast: true
+
+region-managers:
+- WorldGuard
+- Residence
 
 debug: false
