@@ -15,7 +15,9 @@
  */
 package org.tyrannyofheaven.bukkit.zPermissions.model;
 
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 import javax.persistence.CascadeType;
@@ -25,6 +27,7 @@ import javax.persistence.Id;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
+import javax.persistence.Transient;
 import javax.persistence.UniqueConstraint;
 
 import com.avaje.ebean.annotation.CacheStrategy;
@@ -63,6 +66,9 @@ public class PermissionEntity {
     private Set<Membership> memberships = new HashSet<Membership>();
 
     private Set<EntityMetadata> metadata = new HashSet<EntityMetadata>();
+
+    @Transient
+    private final Map<String, EntityMetadata> metadataMap = new HashMap<String, EntityMetadata>();
 
     @Id
     public Long getId() {
@@ -151,6 +157,18 @@ public class PermissionEntity {
 
     public void setMetadata(Set<EntityMetadata> metadata) {
         this.metadata = metadata;
+    }
+
+    @Transient
+    public Map<String, EntityMetadata> getMetadataMap() {
+        return metadataMap;
+    }
+
+    public void updateMetadataMap() {
+        getMetadataMap().clear();
+        for (EntityMetadata em : getMetadata()) {
+            getMetadataMap().put(em.getName().toLowerCase(), em);
+        }
     }
 
     @Override

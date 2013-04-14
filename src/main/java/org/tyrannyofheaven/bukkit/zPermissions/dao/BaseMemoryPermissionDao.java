@@ -603,13 +603,12 @@ public abstract class BaseMemoryPermissionDao implements PermissionDao {
         PermissionEntity entity = getEntity(name, group, false);
         if (entity == null)
             return null;
-        
-        for (EntityMetadata em : entity.getMetadata()) {
-            if (em.getName().equalsIgnoreCase(metadataName)) {
-                return em.getValue();
-            }
-        }
-        return null;
+
+        EntityMetadata em = entity.getMetadataMap().get(metadataName.toLowerCase());
+        if (em != null)
+            return em.getValue();
+        else
+            return null;
     }
 
     @Override
@@ -624,13 +623,7 @@ public abstract class BaseMemoryPermissionDao implements PermissionDao {
 
         metadataName = metadataName.toLowerCase();
         
-        EntityMetadata found = null;
-        for (EntityMetadata em : owner.getMetadata()) {
-            if (em.getName().equalsIgnoreCase(metadataName)) {
-                found = em;
-                break;
-            }
-        }
+        EntityMetadata found = owner.getMetadataMap().get(metadataName);
 
         if (found == null) {
             found = new EntityMetadata();
@@ -638,6 +631,7 @@ public abstract class BaseMemoryPermissionDao implements PermissionDao {
             found.setName(metadataName);
             
             owner.getMetadata().add(found);
+            owner.getMetadataMap().put(metadataName, found);
         }
         
         found.setValue(value);
@@ -652,10 +646,13 @@ public abstract class BaseMemoryPermissionDao implements PermissionDao {
         if (entity == null)
             return false;
 
+        metadataName = metadataName.toLowerCase();
+
         for (Iterator<EntityMetadata> i = entity.getMetadata().iterator(); i.hasNext();) {
             EntityMetadata em = i.next();
-            if (em.getName().equalsIgnoreCase(metadataName)) {
+            if (em.getName().equals(metadataName)) {
                 i.remove();
+                entity.getMetadataMap().remove(metadataName);
                 deleteMetadata(em);
                 return true;
             }

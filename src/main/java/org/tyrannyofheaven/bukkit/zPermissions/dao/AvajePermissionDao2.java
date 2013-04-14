@@ -707,6 +707,8 @@ public class AvajePermissionDao2 extends BaseMemoryPermissionDao {
             newMetadata.setEntity(entity);
             entity.getMetadata().add(newMetadata);
         }
+        
+        entity.updateMetadataMap();
     }
 
     private void databaseInconsistency() {
