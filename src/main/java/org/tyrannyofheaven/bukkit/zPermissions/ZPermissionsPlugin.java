@@ -30,6 +30,7 @@ import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -73,6 +74,8 @@ import org.tyrannyofheaven.bukkit.zPermissions.model.Membership;
 import org.tyrannyofheaven.bukkit.zPermissions.model.PermissionEntity;
 import org.tyrannyofheaven.bukkit.zPermissions.model.PermissionRegion;
 import org.tyrannyofheaven.bukkit.zPermissions.model.PermissionWorld;
+import org.tyrannyofheaven.bukkit.zPermissions.region.RegionStrategy;
+import org.tyrannyofheaven.bukkit.zPermissions.region.WorldGuardRegionStrategy;
 import org.tyrannyofheaven.bukkit.zPermissions.service.ZPermissionsServiceImpl;
 import org.tyrannyofheaven.bukkit.zPermissions.storage.AvajeStorageStrategy;
 import org.tyrannyofheaven.bukkit.zPermissions.storage.MemoryStorageStrategy;
@@ -83,10 +86,6 @@ import org.tyrannyofheaven.bukkit.zPermissions.util.RefreshTask;
 
 import com.avaje.ebean.EbeanServer;
 import com.avaje.ebeaninternal.api.SpiEbeanServer;
-import com.sk89q.worldguard.bukkit.WorldGuardPlugin;
-import com.sk89q.worldguard.protection.ApplicableRegionSet;
-import com.sk89q.worldguard.protection.managers.RegionManager;
-import com.sk89q.worldguard.protection.regions.ProtectedRegion;
 
 /**
  * zPermissions main class.
@@ -194,9 +193,6 @@ public class ZPermissionsPlugin extends JavaPlugin implements ZPermissionsCore, 
     // Strategy for permissions storage
     private StorageStrategy storageStrategy;
 
-    // WorldGuard, if present
-    private WorldGuardPlugin worldGuardPlugin;
-
     // Create our own instance rather than use Bukkit's
     private EbeanServer ebeanServer;
 
@@ -208,6 +204,12 @@ public class ZPermissionsPlugin extends JavaPlugin implements ZPermissionsCore, 
 
     // Handles async refreshes when memberships expire
     private ExpirationRefreshHandler expirationRefreshHandler;
+
+    // Strategy for region detection
+    private RegionStrategy regionStrategy;
+
+    // Region managers to use in preference order
+    private List<String> regionManagers;
 
     /**
      * Retrieve this plugin's retrying TransactionStrategy
@@ -261,6 +263,10 @@ public class ZPermissionsPlugin extends JavaPlugin implements ZPermissionsCore, 
      */
     @Override
     public void onDisable() {
+        // Shut down region manager
+        if (regionStrategy != null)
+            regionStrategy.shutdown();
+
         // Kill expiration handler
         expirationRefreshHandler.shutdown();
 
@@ -351,16 +357,16 @@ public class ZPermissionsPlugin extends JavaPlugin implements ZPermissionsCore, 
             .registerTypeCompleter("dump-dir", new DirTypeCompleter(getZPermissionsConfig()))
             .registerCommands();
 
-        // Detect WorldGuard
-        detectWorldGuard();
-        boolean regionSupport = getWorldGuardPlugin() != null && regionSupportEnable;
+        // Detect a region manager
+        initializeRegionStrategy();
+        boolean regionSupport = regionStrategy != null && regionSupportEnable; // Need both
 
         // Install our listeners
         expirationRefreshHandler = new ExpirationRefreshHandler(getZPermissionsCore(), storageStrategy, this);
         Bukkit.getPluginManager().registerEvents(new ZPermissionsPlayerListener(getZPermissionsCore(), this), this);
         if (regionSupport) {
             Bukkit.getPluginManager().registerEvents(new ZPermissionsRegionPlayerListener(getZPermissionsCore()), this);
-            log(this, "WorldGuard region support enabled.");
+            log(this, "%s region support enabled.", regionStrategy.getName());
         }
 
         // Set up service API
@@ -376,6 +382,39 @@ public class ZPermissionsPlugin extends JavaPlugin implements ZPermissionsCore, 
         refreshExpirations();
 
         log(this, "%s enabled.", versionInfo.getVersionString());
+    }
+
+    private void initializeRegionStrategy() {
+        regionStrategy = null;
+
+        if (!regionSupportEnable)
+            return; // Don't bother with the rest
+
+        Map<String, RegionStrategy> strategies = new HashMap<String, RegionStrategy>();
+        RegionStrategy regionStrategy;
+
+        // WorldGuard
+        regionStrategy = new WorldGuardRegionStrategy();
+        strategies.put(regionStrategy.getName(), regionStrategy);
+
+        // Additional (if ever) region managers go here.
+        
+        // Run through list in preference order
+        for (String rmName : regionManagers) {
+            regionStrategy = strategies.get(rmName);
+            if (regionStrategy == null) {
+                // Misconfiguration
+                warn(this, "Unknown region manager '%s'. Valid values are: %s", rmName, ToHStringUtils.delimitedString(", ", strategies.keySet()));
+                continue;
+            }
+            
+            if (regionStrategy.isPresent()) {
+                debug(this, "Found region manager %s", regionStrategy.getName());
+                regionStrategy.init();
+                this.regionStrategy = regionStrategy;
+                return;
+            }
+        }
     }
 
     @Override
@@ -558,20 +597,8 @@ public class ZPermissionsPlugin extends JavaPlugin implements ZPermissionsCore, 
 
     // Returns names of regions that contain the location
     private Set<String> getRegions(Location location) {
-        WorldGuardPlugin wgp = getWorldGuardPlugin();
-        if (wgp != null && regionSupportEnable) {
-            RegionManager rm = wgp.getRegionManager(location.getWorld());
-            if (rm != null) {
-                ApplicableRegionSet ars = rm.getApplicableRegions(location);
-
-                Set<String> result = new HashSet<String>();
-                for (ProtectedRegion pr : ars) {
-                    // Ignore global region
-                    if (!"__global__".equals(pr.getId())) // NB: Hardcoded and not available as constant in WorldGuard
-                        result.add(pr.getId().toLowerCase());
-                }
-                return result;
-            }
+        if (regionSupportEnable && regionStrategy != null && regionStrategy.isEnabled()) {
+            return regionStrategy.getRegions(location);
         }
         return Collections.emptySet();
     }
@@ -830,6 +857,31 @@ public class ZPermissionsPlugin extends JavaPlugin implements ZPermissionsCore, 
 
         ToHDatabaseUtils.populateNamingConvention(config, namingConvention);
 
+        // Region managers
+        regionManagers = new ArrayList<String>();
+        strOrList = config.get("region-managers");
+        if (strOrList != null) {
+            if (strOrList instanceof String) {
+                regionManagers.add((String)strOrList);
+            }
+            else if (strOrList instanceof List<?>) {
+                for (Object obj : (List<?>)strOrList) {
+                    if (obj instanceof String) {
+                        regionManagers.add((String)obj);
+                    }
+                    else
+                        warn(this, "region-managers list contains non-string value");
+                }
+            }
+            else
+                warn(this, "region-managers must be a string or list of strings");
+        }
+
+        // Set up default region manager(s)
+        if (regionManagers.isEmpty()) {
+            regionManagers.add("WorldGuard");
+        }
+
         // Set debug logging
         getLogger().setLevel(config.getBoolean("debug", false) ? Level.FINE : null);
     }
@@ -857,22 +909,6 @@ public class ZPermissionsPlugin extends JavaPlugin implements ZPermissionsCore, 
     @Override
     public void refresh(Runnable finishTask) {
         storageStrategy.refresh(finishTask);
-    }
-
-    // Detects WorldGuardPlugin
-    private void detectWorldGuard() {
-        Plugin plugin = getServer().getPluginManager().getPlugin("WorldGuard");
-        if (plugin instanceof WorldGuardPlugin) {
-            worldGuardPlugin = (WorldGuardPlugin)plugin;
-        }
-        else {
-            worldGuardPlugin = null;
-        }
-    }
-
-    // Returns WorldGuardPlugin or null if not present
-    private WorldGuardPlugin getWorldGuardPlugin() {
-        return worldGuardPlugin;
     }
 
     // Cancel existing auto-refresh task and start a new one if autoRefreshInterval is valid
