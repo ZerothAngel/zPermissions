@@ -20,6 +20,11 @@ import java.util.Set;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.Listener;
+import org.bukkit.event.server.PluginEnableEvent;
+import org.bukkit.plugin.Plugin;
+import org.tyrannyofheaven.bukkit.util.ToHLoggingUtils;
 
 import com.bekvon.bukkit.residence.Residence;
 import com.bekvon.bukkit.residence.protection.ClaimedResidence;
@@ -29,24 +34,35 @@ import com.bekvon.bukkit.residence.protection.ClaimedResidence;
  *
  * @author zerothangel
  */
-public class ResidenceRegionStrategy implements RegionStrategy {
+public class ResidenceRegionStrategy implements RegionStrategy, Listener {
+
+    private static final String RM_PLUGIN_NAME = "Residence";
+
+    private final Plugin plugin;
 
     private boolean enabled;
 
+    public ResidenceRegionStrategy(Plugin plugin) {
+        this.plugin = plugin;
+    }
+
     @Override
     public String getName() {
-        return "Residence";
+        return RM_PLUGIN_NAME;
     }
 
     @Override
     public boolean isPresent() {
-        return Bukkit.getPluginManager().getPlugin("Residence") != null;
+        return Bukkit.getPluginManager().getPlugin(RM_PLUGIN_NAME) != null;
     }
 
     @Override
     public void init() {
-        enabled = true;
-        // Nothing else to do
+        detectResidencePlugin();
+        if (!isEnabled()) {
+            // Not yet loaded, listen for its enable event
+            Bukkit.getPluginManager().registerEvents(this, plugin);
+        }
     }
 
     @Override
@@ -66,6 +82,21 @@ public class ResidenceRegionStrategy implements RegionStrategy {
             return Collections.singleton(res.getName().toLowerCase());
         }
         return Collections.emptySet();
+    }
+
+    @EventHandler
+    public void onPluginEnable(PluginEnableEvent event) {
+        if (!isEnabled() && RM_PLUGIN_NAME.equals(event.getPlugin().getName())) {
+            detectResidencePlugin();
+            if (isEnabled())
+                ToHLoggingUtils.log(plugin, "%s region support enabled.", getName());
+        }
+    }
+
+    private void detectResidencePlugin() {
+        Plugin plugin = Bukkit.getPluginManager().getPlugin(RM_PLUGIN_NAME);
+        enabled = plugin != null && plugin.isEnabled();
+        // Nothing else to do
     }
 
 }

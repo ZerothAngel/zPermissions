@@ -21,7 +21,11 @@ import java.util.Set;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.Listener;
+import org.bukkit.event.server.PluginEnableEvent;
 import org.bukkit.plugin.Plugin;
+import org.tyrannyofheaven.bukkit.util.ToHLoggingUtils;
 
 import com.sk89q.worldguard.bukkit.WorldGuardPlugin;
 import com.sk89q.worldguard.protection.ApplicableRegionSet;
@@ -33,28 +37,34 @@ import com.sk89q.worldguard.protection.regions.ProtectedRegion;
  * 
  * @author zerothangel
  */
-public class WorldGuardRegionStrategy implements RegionStrategy {
+public class WorldGuardRegionStrategy implements RegionStrategy, Listener {
+
+    private static final String RM_PLUGIN_NAME = "WorldGuard";
+
+    private final Plugin plugin;
 
     private WorldGuardPlugin worldGuardPlugin;
 
+    public WorldGuardRegionStrategy(Plugin plugin) {
+        this.plugin = plugin;
+    }
+
     @Override
     public String getName() {
-        return "WorldGuard";
+        return RM_PLUGIN_NAME;
     }
 
     @Override
     public boolean isPresent() {
-        return Bukkit.getPluginManager().getPlugin("WorldGuard") != null;
+        return Bukkit.getPluginManager().getPlugin(RM_PLUGIN_NAME) != null;
     }
 
     @Override
     public void init() {
-        Plugin plugin = Bukkit.getPluginManager().getPlugin("WorldGuard");
-        if (plugin instanceof WorldGuardPlugin) {
-            worldGuardPlugin = (WorldGuardPlugin)plugin;
-        }
-        else {
-            worldGuardPlugin = null;
+        detectWorldGuardPlugin();
+        if (!isEnabled()) {
+            // Not yet loaded, listen for its enable event
+            Bukkit.getPluginManager().registerEvents(this, plugin);
         }
     }
 
@@ -85,6 +95,25 @@ public class WorldGuardRegionStrategy implements RegionStrategy {
             }
         }
         return Collections.emptySet();
+    }
+
+    @EventHandler
+    public void onPluginEnable(PluginEnableEvent event) {
+        if (!isEnabled() && RM_PLUGIN_NAME.equals(event.getPlugin().getName())) {
+            detectWorldGuardPlugin();
+            if (isEnabled())
+                ToHLoggingUtils.log(plugin, "%s region support enabled.", getName());
+        }
+    }
+
+    private void detectWorldGuardPlugin() {
+        Plugin plugin = Bukkit.getPluginManager().getPlugin(RM_PLUGIN_NAME);
+        if (plugin instanceof WorldGuardPlugin && plugin.isEnabled()) {
+            worldGuardPlugin = (WorldGuardPlugin)plugin;
+        }
+        else {
+            worldGuardPlugin = null;
+        }
     }
 
 }

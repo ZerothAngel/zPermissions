@@ -366,7 +366,7 @@ public class ZPermissionsPlugin extends JavaPlugin implements ZPermissionsCore, 
         Bukkit.getPluginManager().registerEvents(new ZPermissionsPlayerListener(getZPermissionsCore(), this), this);
         if (regionSupport) {
             Bukkit.getPluginManager().registerEvents(new ZPermissionsRegionPlayerListener(getZPermissionsCore()), this);
-            log(this, "%s region support enabled.", regionStrategy.getName());
+            log(this, "%s region support: %s", regionStrategy.getName(), regionStrategy.isEnabled() ? "Enabled" : "Waiting");
         }
 
         // Set up service API
@@ -394,11 +394,11 @@ public class ZPermissionsPlugin extends JavaPlugin implements ZPermissionsCore, 
         RegionStrategy regionStrategy;
 
         // WorldGuard
-        regionStrategy = new WorldGuardRegionStrategy();
+        regionStrategy = new WorldGuardRegionStrategy(this);
         strategies.put(regionStrategy.getName(), regionStrategy);
 
         // Additional region managers are registered here.
-        regionStrategy = new ResidenceRegionStrategy();
+        regionStrategy = new ResidenceRegionStrategy(this);
         strategies.put(regionStrategy.getName(), regionStrategy);
         
         // Run through list in preference order
