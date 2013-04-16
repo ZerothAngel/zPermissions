@@ -1095,4 +1095,41 @@ public abstract class AbstractResolverTest {
         assertPermission(permissions, "assignedgroup.Group3", false);
     }
 
+    @Test
+    public void testQualifierPrecedence() {
+        setPermissionsFalse(TEST_PLAYER, false,
+                TEST_WORLD2 + ":basic.perm1",
+                TEST_REGION + "/basic.perm2",
+                TEST_REGION + "/" + TEST_WORLD2 + ":basic.perm3");
+        setPermissions(TEST_PLAYER, false,
+                "basic.perm1",
+                TEST_WORLD2 + ":basic.perm2",
+                TEST_REGION + "/basic.perm3");
+
+        Map<String, Boolean> permissions;
+        permissions = resolve(TEST_PLAYER, TEST_WORLD1);
+        
+        assertPermission(permissions, "basic.perm1");
+        assertPermission(permissions, "basic.perm2", false);
+        assertPermission(permissions, "basic.perm3", false);
+        
+        permissions = resolve(TEST_PLAYER, TEST_WORLD1, TEST_REGION);
+        
+        assertPermission(permissions, "basic.perm1");
+        assertPermission(permissions, "basic.perm2", false);
+        assertPermission(permissions, "basic.perm3");
+        
+        permissions = resolve(TEST_PLAYER, TEST_WORLD2);
+        
+        assertPermission(permissions, "basic.perm1", false);
+        assertPermission(permissions, "basic.perm2");
+        assertPermission(permissions, "basic.perm3", false);
+
+        permissions = resolve(TEST_PLAYER, TEST_WORLD2, TEST_REGION);
+        
+        assertPermission(permissions, "basic.perm1", false);
+        assertPermission(permissions, "basic.perm2", false);
+        assertPermission(permissions, "basic.perm3", false);
+    }
+
 }
