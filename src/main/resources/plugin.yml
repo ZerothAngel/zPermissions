@@ -4,7 +4,6 @@ main: org.tyrannyofheaven.bukkit.zPermissions.ZPermissionsPlugin
 description: Superperms implementation with Bukkit database backend
 author: ZerothAngel
 database: false
-softdepend: [WorldGuard, Residence]
 load: STARTUP
 
 commands:
