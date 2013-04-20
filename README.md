@@ -160,7 +160,8 @@ Sources may be found on GitHub:
 *   [zPermissions](https://github.com/ZerothAngel/zPermissions)
 *   [ToHPluginUtils](https://github.com/ZerothAngel/ToHPluginUtils)
 
-Development builds may be found on my continous integration site:
+Development builds of this project can be acquired at the provided continuous integration server. 
+These builds have not been approved by the BukkitDev staff. Use them at your own risk.
 
 *   [zPermissions](http://ci.tyrannyofheaven.org/job/zPermissions/) (Requires ToHPluginUtils.jar)
 *   [zPermissions-standlone](http://ci.tyrannyofheaven.org/job/zPermissions-standalone/) (includes ToHPluginUtils, like the version distributed on dev.bukkit.org)
