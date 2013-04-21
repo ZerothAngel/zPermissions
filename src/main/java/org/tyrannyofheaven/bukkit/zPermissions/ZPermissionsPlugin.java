@@ -32,6 +32,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -176,7 +177,10 @@ public class ZPermissionsPlugin extends JavaPlugin implements ZPermissionsCore, 
     private boolean regionSupportEnable;
 
     // Track definitions
-    private Map<String, List<String>> tracks = new LinkedHashMap<String, List<String>>();
+    private final Map<String, List<String>> tracks = new LinkedHashMap<String, List<String>>();
+
+    // Names of tracks (in original case)
+    private final Set<String> trackNames = new LinkedHashSet<String>();
 
     // Whether or not to use the database (Avaje) storage strategy
     private boolean databaseSupport;
@@ -370,7 +374,7 @@ public class ZPermissionsPlugin extends JavaPlugin implements ZPermissionsCore, 
         }
 
         // Set up service API
-        getServer().getServicesManager().register(ZPermissionsService.class, new ZPermissionsServiceImpl(getResolver(), getDao(), getRetryingTransactionStrategy()), this, ServicePriority.Normal);
+        getServer().getServicesManager().register(ZPermissionsService.class, new ZPermissionsServiceImpl(getResolver(), getDao(), getRetryingTransactionStrategy(), getZPermissionsConfig()), this, ServicePriority.Normal);
 
         // Make sure everyone currently online has an attachment
         refreshPlayers();
@@ -704,7 +708,7 @@ public class ZPermissionsPlugin extends JavaPlugin implements ZPermissionsCore, 
      */
     @Override
     public List<String> getTrack(String trackName) {
-        return tracks.get(trackName);
+        return tracks.get(trackName.toLowerCase());
     }
 
     /**
@@ -714,7 +718,7 @@ public class ZPermissionsPlugin extends JavaPlugin implements ZPermissionsCore, 
      */
     @Override
     public List<String> getTracks() {
-        return new ArrayList<String>(tracks.keySet());
+        return new ArrayList<String>(trackNames);
     }
 
     /**
@@ -757,6 +761,7 @@ public class ZPermissionsPlugin extends JavaPlugin implements ZPermissionsCore, 
         getResolver().setGroupPermissionFormats(null);
         getResolver().setAssignedGroupPermissionFormats(null);
         tracks.clear();
+        trackNames.clear();
         
         String value;
         
@@ -837,7 +842,8 @@ public class ZPermissionsPlugin extends JavaPlugin implements ZPermissionsCore, 
                 for (Object o : list) {
                     members.add(o.toString());
                 }
-                tracks.put(trackName, members);
+                tracks.put(trackName.toLowerCase(), members);
+                trackNames.add(trackName);
             }
         }
         // Set up default track if none are defined
@@ -847,6 +853,7 @@ public class ZPermissionsPlugin extends JavaPlugin implements ZPermissionsCore, 
             members.add("somegroup");
             members.add("someothergroup");
             tracks.put("default", members);
+            trackNames.add("default");
         }
 
         kickOnError = config.getBoolean("kick-on-error", DEFAULT_KICK_ON_ERROR);
