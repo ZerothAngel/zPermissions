@@ -132,4 +132,19 @@ public interface ZPermissionsService {
      */
     public <T> T getGroupMetadata(String groupName, String metadataName, Class<T> type);
 
+    /**
+     * Retrieve names of all defined tracks.
+     * 
+     * @return names of all tracks
+     */
+    public Set<String> getAllTracks();
+
+    /**
+     * Retrieve group names of the given track in rank order.
+     * 
+     * @param trackName the track name
+     * @return the group names of the track
+     */
+    public List<String> getTrackGroups(String trackName);
+
 }

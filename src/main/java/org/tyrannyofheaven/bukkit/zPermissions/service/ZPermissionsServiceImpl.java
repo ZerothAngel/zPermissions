@@ -17,6 +17,7 @@ package org.tyrannyofheaven.bukkit.zPermissions.service;
 
 import static org.tyrannyofheaven.bukkit.util.ToHStringUtils.hasText;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -27,6 +28,7 @@ import org.tyrannyofheaven.bukkit.util.transaction.TransactionCallback;
 import org.tyrannyofheaven.bukkit.util.transaction.TransactionCallbackWithoutResult;
 import org.tyrannyofheaven.bukkit.util.transaction.TransactionStrategy;
 import org.tyrannyofheaven.bukkit.zPermissions.PermissionsResolver;
+import org.tyrannyofheaven.bukkit.zPermissions.ZPermissionsConfig;
 import org.tyrannyofheaven.bukkit.zPermissions.ZPermissionsService;
 import org.tyrannyofheaven.bukkit.zPermissions.dao.PermissionDao;
 import org.tyrannyofheaven.bukkit.zPermissions.util.Utils;
@@ -46,6 +48,8 @@ public class ZPermissionsServiceImpl implements ZPermissionsService {
 
     private final TransactionStrategy transactionStrategy;
 
+    private final ZPermissionsConfig config;
+
     static {
         Set<Class<?>> types = new HashSet<Class<?>>();
         types.add(Object.class);
@@ -58,16 +62,19 @@ public class ZPermissionsServiceImpl implements ZPermissionsService {
         validMetadataTypes = Collections.unmodifiableSet(types);
     }
 
-    public ZPermissionsServiceImpl(PermissionsResolver resolver, PermissionDao dao, TransactionStrategy transactionStrategy) {
+    public ZPermissionsServiceImpl(PermissionsResolver resolver, PermissionDao dao, TransactionStrategy transactionStrategy, ZPermissionsConfig config) {
         if (resolver == null)
             throw new IllegalArgumentException("resolver cannot be null");
         if (dao == null)
             throw new IllegalArgumentException("dao cannot be null");
         if (transactionStrategy == null)
             throw new IllegalArgumentException("transactionStrategy cannot be null");
+        if (config == null)
+            throw new IllegalArgumentException("config cannot be null");
         this.resolver = resolver;
         this.dao = dao;
         this.transactionStrategy = transactionStrategy;
+        this.config = config;
     }
 
     private PermissionsResolver getResolver() {
@@ -80,6 +87,10 @@ public class ZPermissionsServiceImpl implements ZPermissionsService {
 
     private TransactionStrategy getTransactionStrategy() {
         return transactionStrategy;
+    }
+
+    private ZPermissionsConfig getZPermissionsConfig() {
+        return config;
     }
 
     /* (non-Javadoc)
@@ -281,6 +292,29 @@ public class ZPermissionsServiceImpl implements ZPermissionsService {
             return type.cast(((Number)value).floatValue()); // Convert
 
         throw new IllegalStateException("Mismatched metadata type: " + value.getClass().getSimpleName() + "; expecting: " + type.getSimpleName());
+    }
+
+    /* (non-Javadoc)
+     * @see org.tyrannyofheaven.bukkit.zPermissions.ZPermissionsService#getAllTracks()
+     */
+    @Override
+    public Set<String> getAllTracks() {
+        return new HashSet<String>(getZPermissionsConfig().getTracks());
+    }
+
+    /* (non-Javadoc)
+     * @see org.tyrannyofheaven.bukkit.zPermissions.ZPermissionsService#getTrackGroups(java.lang.String)
+     */
+    @Override
+    public List<String> getTrackGroups(String trackName) {
+        if (!hasText(trackName))
+            throw new IllegalArgumentException("trackName must have a value");
+        
+        List<String> result = getZPermissionsConfig().getTrack(trackName);
+        if (result == null || result.isEmpty())
+            throw new IllegalStateException("Track has not been defined");
+        // NB make a copy
+        return new ArrayList<String>(result);
     }
 
 }
