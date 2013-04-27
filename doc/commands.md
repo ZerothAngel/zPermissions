@@ -45,3 +45,13 @@
 *   `/demote <player> [track]` &mdash; Demote the player along the given track. If `track` is omitted, the default track is used. If the player is in the lowest group (the first group), they are removed from the group (and the track) altogether.
 *   `/setrank <player> <rank> [track]` &mdash; Set the player's rank on the given track. If `track` is omitted, the default track is used.
 *   `/unsetrank <player> [track]` &mdash; Remove the player from the given track. If `track` is omitted, the default track is used.
+
+### Aliases ###
+
+Convenient aliases for setting Vault-related metadata properties. See [Vault Support](http://dev.bukkit.org/server-mods/zpermissions/pages/vault-support) for more details.
+
+*   `/permissions player <player> prefix [<prefix>]` &mdash; Set a player's chat prefix. Omit the prefix to unset.
+*   `/permissions player <player> suffix [<suffix>]` &mdash; Set a player's chat suffix. Omit the suffix to unset.
+*   `/permissions player <player> settrack [<track>]` &mdash; Use the given track to determine a player's "primary group." Omit the track to unset.
+*   `/permissions group <group> prefix [<prefix>]` &mdash; Set a group's chat prefix. Omit the prefix to unset.
+*   `/permissions group <group> suffix [<suffix>]` &mdash; Set a group's chat suffix. Omit the suffix to unset.

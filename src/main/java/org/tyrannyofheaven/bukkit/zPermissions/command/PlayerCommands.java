@@ -29,6 +29,7 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
 import org.tyrannyofheaven.bukkit.util.ToHMessageUtils;
+import org.tyrannyofheaven.bukkit.util.ToHStringUtils;
 import org.tyrannyofheaven.bukkit.util.ToHUtils;
 import org.tyrannyofheaven.bukkit.util.command.Command;
 import org.tyrannyofheaven.bukkit.util.command.Option;
@@ -42,6 +43,7 @@ import org.tyrannyofheaven.bukkit.zPermissions.model.Entry;
 import org.tyrannyofheaven.bukkit.zPermissions.model.Membership;
 import org.tyrannyofheaven.bukkit.zPermissions.model.PermissionEntity;
 import org.tyrannyofheaven.bukkit.zPermissions.storage.StorageStrategy;
+import org.tyrannyofheaven.bukkit.zPermissions.util.MetadataConstants;
 import org.tyrannyofheaven.bukkit.zPermissions.util.Utils;
 
 /**
@@ -154,6 +156,16 @@ public class PlayerCommands extends CommonCommands {
         }
 
         sendMessage(sender, colorize("{GREEN}%s"), player.hasPermission(permission));
+    }
+
+    @Command(value="settrack", description="Set track which determines primary group for Vault")
+    public void settrack(CommandSender sender, @Session("entityName") String playerName, @Option(value="track", optional=true, completer="track") String track) {
+        if (ToHStringUtils.hasText(track)) {
+            getMetadataCommands().set(sender, playerName, MetadataConstants.PRIMARY_GROUP_TRACK_KEY, track, new String[0]);
+        }
+        else {
+            getMetadataCommands().unset(sender, playerName, MetadataConstants.PRIMARY_GROUP_TRACK_KEY);
+        }
     }
 
 }

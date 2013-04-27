@@ -107,6 +107,9 @@ public class SubCommands {
                 .forCommand("dump")
                 .forCommand("has")
                 .forCommand("metadata")
+                .forCommand("prefix")
+                .forCommand("suffix")
+                .forCommand("settrack")
                 .show();
             return null;
         }
@@ -136,6 +139,8 @@ public class SubCommands {
                 .forCommand("show")
                 .forCommand("dump")
                 .forCommand("metadata")
+                .forCommand("prefix")
+                .forCommand("suffix")
                 .show();
             return null;
         }

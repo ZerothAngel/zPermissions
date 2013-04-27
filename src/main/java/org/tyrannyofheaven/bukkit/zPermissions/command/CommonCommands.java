@@ -33,6 +33,7 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.permissions.Permission;
 import org.bukkit.plugin.Plugin;
+import org.tyrannyofheaven.bukkit.util.ToHStringUtils;
 import org.tyrannyofheaven.bukkit.util.command.Command;
 import org.tyrannyofheaven.bukkit.util.command.HelpBuilder;
 import org.tyrannyofheaven.bukkit.util.command.Option;
@@ -46,6 +47,7 @@ import org.tyrannyofheaven.bukkit.zPermissions.ZPermissionsCore;
 import org.tyrannyofheaven.bukkit.zPermissions.dao.MissingGroupException;
 import org.tyrannyofheaven.bukkit.zPermissions.model.Entry;
 import org.tyrannyofheaven.bukkit.zPermissions.storage.StorageStrategy;
+import org.tyrannyofheaven.bukkit.zPermissions.util.MetadataConstants;
 import org.tyrannyofheaven.bukkit.zPermissions.util.Utils;
 
 /**
@@ -85,6 +87,10 @@ public abstract class CommonCommands {
         this.group = group;
         
         metadataCommands = new MetadataCommands(storageStrategy, group);
+    }
+
+    protected MetadataCommands getMetadataCommands() {
+        return metadataCommands;
     }
 
     @Command(value="get", description="View a permission")
@@ -263,6 +269,26 @@ public abstract class CommonCommands {
             return null;
         }
         return metadataCommands;
+    }
+
+    @Command(value="prefix", description="Set chat prefix for this group or player")
+    public void prefix(CommandSender sender, @Session("entityName") String name, @Option(value="prefix", optional=true) String prefix, String[] rest) {
+        if (ToHStringUtils.hasText(prefix)) {
+            metadataCommands.set(sender, name, MetadataConstants.PREFIX_KEY, prefix, rest);
+        }
+        else {
+            metadataCommands.unset(sender, name, MetadataConstants.PREFIX_KEY);
+        }
+    }
+
+    @Command(value="suffix", description="Set chat suffix for this group or player")
+    public void suffix(CommandSender sender, @Session("entityName") String name, @Option(value="suffix", optional=true) String suffix, String[] rest) {
+        if (ToHStringUtils.hasText(suffix)) {
+            metadataCommands.set(sender, name, MetadataConstants.SUFFIX_KEY, suffix, rest);
+        }
+        else {
+            metadataCommands.unset(sender, name, MetadataConstants.SUFFIX_KEY);
+        }
     }
 
     private void calculateChildPermissions(Map<String, Boolean> permissions, Map<String, Boolean> children, boolean invert) {
