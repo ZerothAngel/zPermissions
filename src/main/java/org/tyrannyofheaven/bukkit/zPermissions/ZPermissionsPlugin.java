@@ -137,6 +137,9 @@ public class ZPermissionsPlugin extends JavaPlugin implements ZPermissionsCore, 
     // Default auto-refresh interval
     private static final int DEFAULT_AUTO_REFRESH_INTERVAL = -1;
 
+    // Default optimize set permissions (using reflection)
+    private static final boolean DEFAULT_OPTIMIZE_SET_PERMISSIONS = true;
+
     // Filename of file-based storage
     private static final String FILE_STORAGE_FILENAME = "data.yml";
 
@@ -193,6 +196,9 @@ public class ZPermissionsPlugin extends JavaPlugin implements ZPermissionsCore, 
 
     // Task ID for auto-refresh task
     private int autoRefreshTaskId = -1;
+
+    // Optimize setting permissions in Bukkit PermissionAttachments
+    private boolean optimizeSetPermissions;
 
     // Strategy for permissions storage
     private StorageStrategy storageStrategy;
@@ -548,31 +554,28 @@ public class ZPermissionsPlugin extends JavaPlugin implements ZPermissionsCore, 
         debug(this, "(Existing PlayerState = %s, existing attachment = %s)", playerState != null, !created);
 
         boolean succeeded = false;
-        try {
-            Field perms = pa.getClass().getDeclaredField("permissions");
-            perms.setAccessible(true);
-            @SuppressWarnings("unchecked")
-            Map<String, Boolean> privatePerms = (Map<String, Boolean>)perms.get(pa);
-            privatePerms.clear();
-            privatePerms.putAll(resolverResult.getPermissions());
-            pa.getPermissible().recalculatePermissions();
-            succeeded = true;
-        }
-        catch (SecurityException e) {
-            // Do nothing
-        }
-        catch (NoSuchFieldException e) {
-            // Do nothing
-        }
-        catch (IllegalArgumentException e) {
-            // Do nothing
-        }
-        catch (IllegalAccessException e) {
-            // Do nothing
+        if (optimizeSetPermissions) {
+            try {
+                // This is bad, but pretty much necessary.
+                // Use reflection to get access to the PermissionAttachment's
+                // permissions map. Set our permissions all at once, then call
+                // recalculatePermissions() once.
+                Field perms = pa.getClass().getDeclaredField("permissions");
+                perms.setAccessible(true);
+                @SuppressWarnings("unchecked")
+                Map<String, Boolean> privatePerms = (Map<String, Boolean>)perms.get(pa);
+                privatePerms.clear();
+                privatePerms.putAll(resolverResult.getPermissions());
+                pa.getPermissible().recalculatePermissions();
+                succeeded = true;
+            }
+            catch (Exception e) {
+                // Do nothing
+                warn(this, "Setting permissions the slow way. Is zPermissions up-to-date?");
+            }
         }
         if (!succeeded) {
             // The slow, but legal way
-            warn(this, "Setting permissions the slow way. Is zPermissions up-to-date?");
             if (!created)
                 pa = player.addAttachment(this); // create new one to start from clean slate
             // Set each permission individually... which unfortunately calls recalculatePermissions each time
@@ -827,6 +830,7 @@ public class ZPermissionsPlugin extends JavaPlugin implements ZPermissionsCore, 
         defaultTempPermissionTimeout = config.getInt("default-temp-permission-timeout", DEFAULT_TEMP_PERMISSION_TIMEOUT);
         txnMaxRetries = config.getInt("txn-max-retries", DEFAULT_TXN_MAX_RETRIES); // FIXME hidden
         rankAdminBroadcast = config.getBoolean("rank-admin-broadcast", DEFAULT_RANK_ADMIN_BROADCAST);
+        optimizeSetPermissions = config.getBoolean("optimize-set-permissions", DEFAULT_OPTIMIZE_SET_PERMISSIONS); // FIXME hidden for now
 
         // Read tracks, if any
         ConfigurationSection node = config.getConfigurationSection("tracks");
