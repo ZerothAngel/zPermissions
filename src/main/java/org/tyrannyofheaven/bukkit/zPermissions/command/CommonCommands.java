@@ -33,7 +33,6 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.permissions.Permission;
 import org.bukkit.plugin.Plugin;
-import org.tyrannyofheaven.bukkit.util.ToHStringUtils;
 import org.tyrannyofheaven.bukkit.util.command.Command;
 import org.tyrannyofheaven.bukkit.util.command.HelpBuilder;
 import org.tyrannyofheaven.bukkit.util.command.Option;
@@ -273,7 +272,7 @@ public abstract class CommonCommands {
 
     @Command(value="prefix", description="Set chat prefix for this group or player")
     public void prefix(CommandSender sender, @Session("entityName") String name, @Option(value="prefix", optional=true) String prefix, String[] rest) {
-        if (ToHStringUtils.hasText(prefix)) {
+        if ((prefix != null && !prefix.isEmpty()) || rest.length > 0) {
             metadataCommands.set(sender, name, MetadataConstants.PREFIX_KEY, prefix, rest);
         }
         else {
@@ -283,7 +282,7 @@ public abstract class CommonCommands {
 
     @Command(value="suffix", description="Set chat suffix for this group or player")
     public void suffix(CommandSender sender, @Session("entityName") String name, @Option(value="suffix", optional=true) String suffix, String[] rest) {
-        if (ToHStringUtils.hasText(suffix)) {
+        if ((suffix != null && !suffix.isEmpty()) || rest.length > 0) {
             metadataCommands.set(sender, name, MetadataConstants.SUFFIX_KEY, suffix, rest);
         }
         else {
