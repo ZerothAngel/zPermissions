@@ -253,7 +253,7 @@ public abstract class CommonCommands {
         Utils.displayPermissions(plugin, sender, header, permissions, filter);
     }
 
-    @Command(value={"metadata", "md"}, description="Metadata-related commands")
+    @Command(value={"metadata", "meta", "md"}, description="Metadata-related commands")
     public MetadataCommands metadata(HelpBuilder helpBuilder, CommandSender sender, String[] args) {
         if (args.length == 0) {
             helpBuilder.withCommandSender(sender)
