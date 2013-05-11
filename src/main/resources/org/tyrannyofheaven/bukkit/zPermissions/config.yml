@@ -30,7 +30,7 @@ kick-ops-on-error: false
 
 auto-refresh-interval: -1
 
-opaque-inheritance: true
+opaque-inheritance: false
 
 rank-admin-broadcast: false
 
