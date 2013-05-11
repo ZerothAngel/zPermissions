@@ -132,7 +132,7 @@ public class ZPermissionsPlugin extends JavaPlugin implements ZPermissionsCore, 
     private static final boolean DEFAULT_OPAQUE_INHERITANCE = true;
 
     // Default rank broadcast to admins
-    private static final boolean DEFAULT_RANK_ADMIN_BROADCAST = true;
+    private static final boolean DEFAULT_RANK_ADMIN_BROADCAST = false;
 
     // Default auto-refresh interval
     private static final int DEFAULT_AUTO_REFRESH_INTERVAL = -1;
