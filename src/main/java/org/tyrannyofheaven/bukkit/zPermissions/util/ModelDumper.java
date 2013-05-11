@@ -79,7 +79,7 @@ public class ModelDumper {
                         out.println(String.format("permissions group %s create", entity.getDisplayName()));
                         dumpPermissions(out, entity);
                         dumpMetadata(out, entity);
-                        out.println(String.format("permissions group %s setpriority %d",
+                        out.println(String.format("permissions group %s setweight %d",
                                 entity.getDisplayName(),
                                 entity.getPriority()));
                         if (entity.getParent() != null) {

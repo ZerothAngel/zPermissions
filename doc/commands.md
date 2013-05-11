@@ -33,7 +33,7 @@
 *   `/permissions group <group> purge` &mdash; Delete a group from zPermissions. Removes any permissions and group memberships. If the group is a parent, its child groups are orphaned.
 *   `/permissions group <group> members` &mdash; List the members of the group.
 *   `/permissions group <group> setparent [parent]` &mdash; Set a group's parent group. If `parent` is omitted, the group will have no parent.
-*   `/permissions group <group> setpriority <priority>` &mdash; Set a group's priority.
+*   `/permissions group <group> setweight <weight>` &mdash; Set a group's weight.
 *   `/permissions group <group> add <player>` &mdash; Add a player as a member.
 *   `/permissions group <group> remove <player>` &mdash; Remove a player as a member.
 *   `/permissions group <group> show` &mdash; Show any permissions associated with a group.

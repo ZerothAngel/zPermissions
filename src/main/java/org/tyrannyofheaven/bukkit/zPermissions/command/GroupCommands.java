@@ -131,7 +131,7 @@ public class GroupCommands extends CommonCommands {
         if (entity != null) {
             List<String> lines = new ArrayList<String>();
             lines.add(String.format(colorize("{YELLOW}Declared permissions for {DARK_GREEN}%s{YELLOW}:"), entity.getDisplayName()));
-            lines.add(String.format(colorize("{YELLOW}Priority: {GREEN}%s"), entity.getPriority()));
+            lines.add(String.format(colorize("{YELLOW}Weight: {GREEN}%s"), entity.getPriority()));
             if (entity.getParent() != null) {
                 lines.add(String.format(colorize("{YELLOW}Parent: {DARK_GREEN}%s"), entity.getParent().getDisplayName()));
             }
@@ -188,8 +188,8 @@ public class GroupCommands extends CommonCommands {
         core.refreshAffectedPlayers(groupName);
     }
 
-    @Command(value={"setpriority", "priority"}, description="Set a group's priority")
-    public void setPriority(CommandSender sender, final @Session("entityName") String groupName, final @Option("priority") int priority) {
+    @Command(value={"setweight", "weight", "setpriority", "priority"}, description="Set a group's weight")
+    public void setPriority(CommandSender sender, final @Session("entityName") String groupName, final @Option("weight") int priority) {
         // Set the priority. Will not fail, creates group if necessary
         try {
             storageStrategy.getRetryingTransactionStrategy().execute(new TransactionCallbackWithoutResult() {
@@ -204,7 +204,7 @@ public class GroupCommands extends CommonCommands {
             return;
         }
 
-        sendMessage(sender, colorize("{DARK_GREEN}%s{YELLOW}'s priority is now {GREEN}%d"), groupName, priority);
+        sendMessage(sender, colorize("{DARK_GREEN}%s{YELLOW}'s weight is now {GREEN}%d"), groupName, priority);
         core.refreshAffectedPlayers(groupName);
     }
 

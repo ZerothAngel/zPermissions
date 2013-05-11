@@ -9,7 +9,7 @@ zPermissions more or less implements 100% of the [Vault](http://dev.bukkit.org/s
 *   All player-related methods should work on offline players.
 *   Due to restrictions I've placed on the zPermissions API, all Vault API methods that modify permissions or membership will execute equivalent commands as console.
 *   zPermissions groups are universal &mdash; they apply to all worlds. Therefore the playerAddGroup() and playerRemoveGroup() methods will immediately fail if the "world" argument is not null. (This may be changed in the future, i.e. the methods will just ignore "world.")
-*   zPermissions has no real concept of a "primary group." By default, the primary group of a player is the highest-priority group assigned to that player, i.e. the first group returned when doing a `/permissions player ... groups` or `/permissions mygroups` command.
+*   zPermissions has no real concept of a "primary group." By default, the primary group of a player is the highest-weight group assigned to that player, i.e. the first group returned when doing a `/permissions player ... groups` or `/permissions mygroups` command.
 
 Starting with Vault 1.2.26, the primary group can also be controlled by using a metadata property on a player.
 
@@ -19,7 +19,7 @@ For example:
 
 Assuming Alice has been previously promoted on the Admin track, her primary group will be the highest-ranked group from that track regardless of assignment priorities.
 
-If Alice is not on the Admin track then the behavior returns to the default, i.e. the highest-priority assigned group.
+If Alice is not on the Admin track then the behavior returns to the default, i.e. the highest-weight assigned group.
 
 ### Vault Chat API Notes ###
 
