@@ -1,6 +1,15 @@
 # Frequently Asked Questions #
 
-*  **Where is the '\*' node?**
+*   **Why another permissions plugin?**
+
+    Well, I don't actually get this question much anymore. But in short:
+    
+    1. None of the current plugins *at the time* met my needs. PermissionsBukkit had buggy multi-world support and the developer did not seem very responsive. bPermissions did not have group inheritance and changed its file format at least twice while I used it (without providing an auto-upgrade path). Lastly, I did not want to touch anything that still clinged to the old "Permissions 3" system.
+    2. I wanted region-specific permissions.
+    3. The first plugin I developed ([Excursion](http://dev.bukkit.org/server-mods/excursion/)) was relatively simple. I wanted a bit more practice with the Bukkit API, so I coded zPermissions from scratch.
+    4. It was the primary testbed and driver for development for my [personal plugin library](https://github.com/ZerothAngel/ToHPluginUtils).
+    
+*   **Where is the '\*' node?**
 
     zPermissions adheres strictly to the Bukkit 'SuperPerms' API, which does not support wildcards of any kind. (No, not even `plugin.*` -type permissions are supported &mdash; these need to be implemented by the plugins themselves.) As suggested by mbaxter in his ["Why PEX is broken"](http://goo.gl/MHhbl) document, if you want something like the '*' node, give that user OP status instead. If you don't want them to be able to OP others, negate the nodes for the OP command:
     
@@ -8,6 +17,13 @@
         /permissions player <player> set bukkit.command.op.take false
 
     (Needless to say, you should also negate `zpermissions.*` or at least both `zpermissions.player` and `zpermissions.group` so they can't modify permissions that will allow them to OP others or allow others to OP.)
+
+*   **Do you have a converter for permissions plugin X?**
+
+    No, and there are no plans to add any converter *built-into* zPermissions. Maybe as a separate jar or a separate project. And I would certainly welcome it if someone else stepped up to do so. But I'm not really motivated to do it myself because:
+    
+    1. Permission models tend to vary from plugin to plugin. Though perhaps the closest plugin to zPermissions in terms of model would be PermissionsBukkit and any of its derivatives.
+    2. I have no desire to track the file formats or other details of other plugins in zPermissions. Heck, zPerms' schema/flat file format has changed many times in the last few months. I always aim to make things backwards compatible, and I would rather expend that effort on my own project.
 
 *   **Can zPermissions co-exist with other permissions plugins?**
 
