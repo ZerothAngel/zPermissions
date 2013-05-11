@@ -48,7 +48,7 @@ public class PermissionsResolver {
 
     private String defaultGroup;
 
-    private boolean opaqueInheritance = true;
+    private boolean opaqueInheritance = false;
 
     private boolean includeDefaultInAssigned = true;
 
