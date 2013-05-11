@@ -32,7 +32,7 @@ auto-refresh-interval: -1
 
 opaque-inheritance: true
 
-rank-admin-broadcast: true
+rank-admin-broadcast: false
 
 region-managers:
 - WorldGuard
