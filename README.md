@@ -16,7 +16,7 @@ Please post bugs and/or feature requests as [dev.bukkit.org tickets](http://dev.
 
 *   Group inheritance. Groups may inherit permissions from a single parent group.
 
-*   Players may be members of more than one group. The order of which group permissions are applied is well defined and based on group priority (which is configurable, of course).
+*   Players may be members of more than one group. The order of which group permissions are applied is well defined and based on group weight (which is configurable, of course).
 
 *   Multi-world support. Permissions granted to players and groups may be associated with a specific world.
 
@@ -40,7 +40,7 @@ Please post bugs and/or feature requests as [dev.bukkit.org tickets](http://dev.
 
 *   The most general permissions are applied first. So that means: universal group permissions, world-specific group permissions, region-specific universal permissions, then finally region-specific and world-specific permissions. Then repeat all that, but for player permissions.
 
-*   Players may be members of multiple groups. Groups may be assigned a priority &mdash; a higher priority means the group is applied later so it overrides earlier groups. Groups with the same priority are applied alphabetically.
+*   Players may be members of multiple groups. Groups may be assigned a weight &mdash; a higher weight means the group is applied later so it overrides earlier groups. Groups with the same weight are applied alphabetically.
 
 ## Installation & Usage ##
 
