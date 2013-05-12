@@ -1,14 +1,5 @@
 # Frequently Asked Questions #
 
-*   **Why another permissions plugin?**
-
-    Well, I don't actually get this question much anymore. But in short:
-    
-    1. None of the current plugins *at the time* met my needs. PermissionsBukkit had buggy multi-world support and the developer did not seem very responsive. bPermissions did not have group inheritance and changed its file format at least twice while I used it (without providing an auto-upgrade path). Lastly, I did not want to touch anything that still clinged to the old "Permissions 3" system.
-    2. I wanted region-specific permissions.
-    3. The first plugin I developed ([Excursion](http://dev.bukkit.org/server-mods/excursion/)) was relatively simple. I wanted a bit more practice with the Bukkit API, so I coded zPermissions from scratch.
-    4. It was the primary testbed and driver for development for my [personal plugin library](https://github.com/ZerothAngel/ToHPluginUtils).
-    
 *   **Where is the '\*' node?**
 
     zPermissions adheres strictly to the Bukkit 'SuperPerms' API, which does not support wildcards of any kind. (No, not even `plugin.*` -type permissions are supported &mdash; these need to be implemented by the plugins themselves.) As suggested by mbaxter in his ["Why PEX is broken"](http://goo.gl/MHhbl) document, if you want something like the '*' node, give that user OP status instead. If you don't want them to be able to OP others, negate the nodes for the OP command:
@@ -41,6 +32,15 @@
     
     This disables the reflection-based bulk setting of permissions that zPermissions normally does. This optimization is about the only API-breaking thing zPermissions does... but it is almost necessary on CraftBukkit servers. Disabling it on CraftBukkit servers means updating a player's permissions takes 10-15 times longer due to CraftBukkit recalculating permissions *after every single permission is set*. On my hardware, that means going from <1ms to 150ms or more. That's way more than a single Minecraft tick. I have no idea whether this would affect MCPC+ the same, but just be aware.
 
+*   **Why another permissions plugin?**
+
+    Well, I don't actually get this question much anymore. But in short:
+    
+    1. None of the current plugins *at the time* met my needs. PermissionsBukkit had buggy multi-world support and the developer did not seem very responsive. bPermissions did not have group inheritance and changed its file format at least twice while I used it (without providing an auto-upgrade path). Lastly, I did not want to touch anything that still clung to the old "Permissions 2" system.
+    2. I wanted region-specific permissions.
+    3. The first plugin I developed ([Excursion](http://dev.bukkit.org/server-mods/excursion/)) was relatively simple. I wanted a bit more practice with the Bukkit API, so I coded zPermissions from scratch.
+    4. It was the primary testbed and driver for development for my [personal plugin library](https://github.com/ZerothAngel/ToHPluginUtils).
+    
 *   **What does the `opaque-inheritance` option do?**
 
     When `opaque-inheritance` is true (the default from version 0.9 - 0.9.19), each assigned group is fully resolved before moving on to the next. This means *the ancestor groups* of higher-weight assigned groups take precedence over lower-weight groups.

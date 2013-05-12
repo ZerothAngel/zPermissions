@@ -28,6 +28,8 @@ Please post bugs and/or feature requests as [dev.bukkit.org tickets](http://dev.
 
 *   Temporary group assignments. Assign a group to a player and have their membership expire after 1 day... a few months... or a year! Whatever duration you want.
 
+*   Players and groups can be assigned chat prefixes and suffixes. A Vault-compatible chat-formatting plugin is still required.
+
 *   With the advent of Superperms/Bukkit permissions, the recommended way of testing group membership is by using permissions. zPermissions can automatically set a permission based on the group's name for each group. By default, this configurable permission is `group.<groupname>` (compatible out-of-the-box with WorldEdit and WorldGuard!).
 
 *   The default group (the group assigned to players who have not been explicitly placed into any groups) is named `default`. This may be changed.
