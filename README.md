@@ -30,6 +30,10 @@ Please post bugs and/or feature requests as [dev.bukkit.org tickets](http://dev.
 
 *   Players and groups can be assigned chat prefixes and suffixes. A Vault-compatible chat-formatting plugin is still required.
 
+*   API. zPermissions offers a comprehensive *read-only* API that other plugins can use. (Though I would recommend coding against [Vault](http://dev.bukkit.org/server-mods/vault/) instead.)
+
+*   Metadata support. Players and groups may have arbitrary metadata associated with them. Metadata values may be strings, integers, reals (floating point), and booleans. Metadata may be queried via the native API or Vault Chat API.
+
 *   With the advent of Superperms/Bukkit permissions, the recommended way of testing group membership is by using permissions. zPermissions can automatically set a permission based on the group's name for each group. By default, this configurable permission is `group.<groupname>` (compatible out-of-the-box with WorldEdit and WorldGuard!).
 
 *   The default group (the group assigned to players who have not been explicitly placed into any groups) is named `default`. This may be changed.
