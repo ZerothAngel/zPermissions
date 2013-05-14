@@ -68,6 +68,12 @@ opaque-inheritance: |
   the conglomerate of all assigned groups and their ancestor groups
   are considered at once.
 
+interleaved-player-permissions: |
+  Determines when to apply player permissions. If true, player permissions
+  are interleaved with group-resolved permissions at every "level"
+  (universal, world, region, region/world). If false, all player permissions
+  are applied once all group permissions have been applied.
+
 rank-admin-broadcast: |
   If true, rank commands will broadcast changes to admins by default.
   Otherwise, rank commands will broadcast to players with a custom
