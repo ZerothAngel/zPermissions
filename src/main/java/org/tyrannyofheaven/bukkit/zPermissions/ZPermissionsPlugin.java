@@ -313,9 +313,17 @@ public class ZPermissionsPlugin extends JavaPlugin implements ZPermissionsCore, 
     public void onEnable() {
         log(this, "%s starting...", versionInfo.getVersionString());
 
+        // FIXME Defaults workaround, to be removed after 1.0
+        boolean isUpgrade = new File(getDataFolder(), "config.yml").exists();
+        // FIXME Defaults workaround end
+
         // Read config
         config = ToHFileUtils.getConfig(this);
         config.options().header(null);
+        // FIXME Defaults workaround, to be removed after 1.0
+        if (!isUpgrade)
+            config.set("interleaved-player-permissions", false);
+        // FIXME Defaults workaround end
         readConfig();
 
         // Upgrade/create config

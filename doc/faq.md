@@ -97,7 +97,7 @@
 
 *   **What does the `interleaved-player-permissions` option do?**
 
-    When true (the current default), player permissions are interleaved with group permissions at the same "level" (universal, world, region, region/world):
+    When true (the default from version 0.9 - 0.9.19), player permissions are interleaved with group permissions at the same "level" (universal, world, region, region/world):
 
      1. Universal group permissions
      2. Universal player permissions
