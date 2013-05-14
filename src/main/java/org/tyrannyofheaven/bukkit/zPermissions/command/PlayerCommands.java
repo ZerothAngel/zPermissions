@@ -168,4 +168,14 @@ public class PlayerCommands extends CommonCommands {
         }
     }
 
+    @Command(value={"clone", "copy", "cp"}, description="Clone this player")
+    public void clone(CommandSender sender, @Session("entityName") String playerName, @Option("new-player") String destination) {
+        super.clone(sender, playerName, destination, false);
+    }
+
+    @Command(value={"rename", "ren", "mv"}, description="Rename this player")
+    public void rename(CommandSender sender, @Session("entityName") String playerName, @Option("new-player") String destination) {
+        super.clone(sender, playerName, destination, true);
+    }
+
 }

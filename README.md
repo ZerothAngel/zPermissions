@@ -88,6 +88,5 @@ These builds have not been approved by the BukkitDev staff. Use them at your own
 
 ## To Do ##
 
-*   Commands to clone/copy the permissions for a user or group.
 *   More extensive unit tests, especially on the service interface.
 *   Better organized docs.
