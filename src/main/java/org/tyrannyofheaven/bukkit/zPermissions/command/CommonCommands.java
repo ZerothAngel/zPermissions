@@ -15,11 +15,13 @@
  */
 package org.tyrannyofheaven.bukkit.zPermissions.command;
 
+import static org.tyrannyofheaven.bukkit.util.ToHMessageUtils.broadcastAdmin;
 import static org.tyrannyofheaven.bukkit.util.ToHMessageUtils.colorize;
 import static org.tyrannyofheaven.bukkit.util.ToHMessageUtils.sendMessage;
 import static org.tyrannyofheaven.bukkit.util.command.reader.CommandReader.abortBatchProcessing;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -44,7 +46,10 @@ import org.tyrannyofheaven.bukkit.zPermissions.QualifiedPermission;
 import org.tyrannyofheaven.bukkit.zPermissions.ZPermissionsConfig;
 import org.tyrannyofheaven.bukkit.zPermissions.ZPermissionsCore;
 import org.tyrannyofheaven.bukkit.zPermissions.dao.MissingGroupException;
+import org.tyrannyofheaven.bukkit.zPermissions.model.EntityMetadata;
 import org.tyrannyofheaven.bukkit.zPermissions.model.Entry;
+import org.tyrannyofheaven.bukkit.zPermissions.model.Membership;
+import org.tyrannyofheaven.bukkit.zPermissions.model.PermissionEntity;
 import org.tyrannyofheaven.bukkit.zPermissions.storage.StorageStrategy;
 import org.tyrannyofheaven.bukkit.zPermissions.util.MetadataConstants;
 import org.tyrannyofheaven.bukkit.zPermissions.util.Utils;
@@ -268,6 +273,97 @@ public abstract class CommonCommands {
             return null;
         }
         return metadataCommands;
+    }
+
+    protected void clone(final CommandSender sender, final String name, final String destination, final boolean rename) {
+        storageStrategy.getRetryingTransactionStrategy().execute(new TransactionCallbackWithoutResult() {
+            @Override
+            public void doInTransactionWithoutResult() throws Exception {
+                PermissionEntity entity = storageStrategy.getDao().getEntity(name, group);
+                List<Membership> memberships = Collections.emptyList();
+                if (!group) {
+                    memberships = storageStrategy.getDao().getGroups(name);
+                }
+                if (entity == null && memberships.isEmpty()) {
+                    // Nothing to copy
+                    sendMessage(sender, colorize("{RED}%s %s%s{RED} does not exist."),
+                            (group ? "Group" : "Player"),
+                            (group ? ChatColor.DARK_GREEN : ChatColor.AQUA),
+                            name);
+                    abortBatchProcessing();
+                    return;
+                }
+                if (storageStrategy.getDao().getEntity(destination, group) != null) {
+                    sendMessage(sender, colorize("{RED}%s %s%s{RED} already exists. Purge it if you really want to overwrite."),
+                            (group ? "Group" : "Player"),
+                            (group ? ChatColor.DARK_GREEN : ChatColor.AQUA),
+                            destination);
+                    abortBatchProcessing();
+                    return;
+                }
+                
+                // Create if group
+                if (group) {
+                    storageStrategy.getDao().createGroup(destination);
+                }
+                if (entity != null) {
+                    // Clone permissions
+                    for (Entry entry : entity.getPermissions()) {
+                        storageStrategy.getDao().setPermission(destination, group,
+                                (entry.getRegion() != null ? entry.getRegion().getName() : null),
+                                (entry.getWorld() != null ? entry.getWorld().getName() : null),
+                                entry.getPermission(), entry.isValue());
+                    }
+                    // Clone metadata
+                    for (EntityMetadata metadata : entity.getMetadata()) {
+                        storageStrategy.getDao().setMetadata(destination, group, metadata.getName(), metadata.getValue());
+                    }
+                }
+                if (group) {
+                    // Group-specific stuff
+                    storageStrategy.getDao().setPriority(destination, entity.getPriority());
+                    storageStrategy.getDao().setParent(destination, entity.getParent() != null ? entity.getParent().getDisplayName() : null);
+                }
+                else {
+                    // Player-specific stuff
+                    for (Membership membership : memberships) {
+                        storageStrategy.getDao().addMember(membership.getGroup().getDisplayName(), destination, membership.getExpiration());
+                    }
+                }
+
+                if (rename) {
+                    if (group) {
+                        // Move child groups to destination
+                        Set<PermissionEntity> children = new HashSet<PermissionEntity>(entity.getChildren()); // Make a copy to be safe
+                        for (PermissionEntity child : children) {
+                            storageStrategy.getDao().setParent(child.getDisplayName(), destination);
+                        }
+                        
+                        // Add players to destination
+                        for (Membership membership : entity.getMemberships()) {
+                            storageStrategy.getDao().addMember(destination, membership.getMember(), membership.getExpiration());
+                        }
+                    }
+                    
+                    // NB Nothing more to do for players
+                    
+                    // Delete original
+                    storageStrategy.getDao().deleteEntity(name, group);
+                }
+
+                broadcastAdmin(plugin, "%s %s %s %s to %s", sender.getName(),
+                        (rename ? "renamed" : "cloned"),
+                        (group ? "group" : "player"),
+                        name, destination);
+                sendMessage(sender, colorize("{YELLOW}%s %s%s{YELLOW} %s to %s%s{YELLOW}."),
+                        (group ? "Group" : "Player"),
+                        (group ? ChatColor.DARK_GREEN : ChatColor.AQUA),
+                        name,
+                        (rename ? "renamed" : "cloned"),
+                        (group ? ChatColor.DARK_GREEN : ChatColor.AQUA),
+                        destination);
+            }
+        });
     }
 
     @Command(value="prefix", description="Set chat prefix for this group or player")

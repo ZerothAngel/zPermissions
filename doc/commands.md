@@ -22,6 +22,8 @@
 *   `/permissions player <player> setgroup <group>` &mdash; Removes all of a player's group memberships and adds them to given group.
 *   `/permissions player <player> show` &mdash; Show any permissions associated with a player.
 *   `/permissions player <player> dump [-w <world>] [-f <filter>] [region...]` &mdash; Evaluates permissions for the given player as if they were in the given world and region(s) and recursively dumps all permissions. Note that this will only contain permissions directly or indirectly set by zPermissions. It will not include default permissions or permissions set by other plugins. (Use `/permissions check` to check for effective permissions.) Specify a filter to only display permissions with the given substring.
+*   `/permissions player <player> clone <new-player>` &mdash; Creates a copy of `player`, naming the copy `new-player`. Permissions and memberships are copied over.
+*   `/permissions player <player> rename <new-player>` &mdash; Rename `player` as `new-player`.
 *   `/permissions player <player> has <permission>` &mdash; Simply calls Bukkit's hasPermission() function for the given player and permission and outputs the result (true/false). `permission` must be an unqualified permission &mdash; no world or region qualifiers.
 
 ### Group Commands ###
@@ -37,7 +39,9 @@
 *   `/permissions group <group> add <player>` &mdash; Add a player as a member.
 *   `/permissions group <group> remove <player>` &mdash; Remove a player as a member.
 *   `/permissions group <group> show` &mdash; Show any permissions associated with a group.
-*   `/permissions player <group> dump [-w <world>] [-f <filter>] [region...]` &mdash; Evaluates permissions for the given group as if a member were in the given world and region(s) and recursively dumps all permissions. Note that this will only contain permissions directly or indirectly set by zPermissions. It will not include default permissions or permissions set by other plugins. Specify a filter to only display permissions with the given substring.
+*   `/permissions group <group> dump [-w <world>] [-f <filter>] [region...]` &mdash; Evaluates permissions for the given group as if a member were in the given world and region(s) and recursively dumps all permissions. Note that this will only contain permissions directly or indirectly set by zPermissions. It will not include default permissions or permissions set by other plugins. Specify a filter to only display permissions with the given substring.
+*   `/permissions group <group> clone <new-group>` &mdash; Creates a *shallow* copy of `group`, naming the new copy `new-group`. Permissions, weight, and parent are copied. Since this is a shallow copy only, child groups of `group` are not copied.
+*   `/permissions group <group> rename <new-group>` &mdash; Rename `group` as `new-group`.
 
 ### Rank Commands ###
 

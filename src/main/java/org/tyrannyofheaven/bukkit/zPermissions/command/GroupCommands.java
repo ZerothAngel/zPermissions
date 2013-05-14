@@ -243,4 +243,14 @@ public class GroupCommands extends CommonCommands {
         }
     }
 
+    @Command(value={"clone", "copy", "cp"}, description="Clone this group")
+    public void clone(CommandSender sender, @Session("entityName") String groupName, @Option("new-group") String destination) {
+        super.clone(sender, groupName, destination, false);
+    }
+
+    @Command(value={"rename", "ren", "mv"}, description="Rename this group")
+    public void rename(CommandSender sender, @Session("entityName") String groupName, @Option("new-group") String destination) {
+        super.clone(sender, groupName, destination, true);
+    }
+
 }
