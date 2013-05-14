@@ -50,6 +50,8 @@ public class PermissionsResolver {
 
     private boolean opaqueInheritance = false;
 
+    private boolean interleavedPlayerPermissions = true;
+
     private boolean includeDefaultInAssigned = true;
 
     // For plugin use
@@ -129,6 +131,14 @@ public class PermissionsResolver {
         this.opaqueInheritance = opaqueInheritance;
     }
 
+    private boolean isInterleavedPlayerPermissions() {
+        return interleavedPlayerPermissions;
+    }
+
+    public void setInterleavedPlayerPermissions(boolean interleavedPlayerPermissions) {
+        this.interleavedPlayerPermissions = interleavedPlayerPermissions;
+    }
+
     // Returns whether or not default group should be included in assigned permissions
     private boolean isIncludeDefaultInAssigned() {
         return includeDefaultInAssigned;
@@ -184,10 +194,21 @@ public class PermissionsResolver {
         List<Entry> entries = new ArrayList<Entry>();
         resolveGroupHelper(entries, groups, resolveOrder);
         
-        // Player-specific permissions overrides all group permissions
-        entries.addAll(getDao().getEntries(playerName, false));
-    
-        return new ResolverResult(applyPermissions(entries, regions, world), new LinkedHashSet<String>(resolveOrder));
+        Map<String, Boolean> permissions;
+        if (isInterleavedPlayerPermissions()) {
+            // Player-specific permissions overrides group permissions (at same level)
+            entries.addAll(getDao().getEntries(playerName, false));
+
+            permissions = applyPermissions(entries, regions, world);
+        }
+        else {
+            // Apply all player-specific permissions at the end
+            permissions = applyPermissions(entries, regions, world);
+            
+            permissions.putAll(applyPermissions(getDao().getEntries(playerName, false), regions, world));
+        }
+
+        return new ResolverResult(permissions, new LinkedHashSet<String>(resolveOrder));
     }
 
     /**

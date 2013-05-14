@@ -126,6 +126,7 @@ public abstract class AbstractResolverTest {
     @Before
     public void setUp() {
         resolver.setIncludeDefaultInAssigned(true);
+        resolver.setInterleavedPlayerPermissions(true);
     }
 
     @After
@@ -1132,6 +1133,7 @@ public abstract class AbstractResolverTest {
         assertPermission(permissions, "basic.perm3", false);
     }
 
+    // Test with interleave true (default)
     @Test
     public void testPlayerInterleave() {
         assertTrue(createGroup(TEST_GROUP1));
@@ -1173,6 +1175,52 @@ public abstract class AbstractResolverTest {
         setPermissions(TEST_PLAYER, false, "basic.perm1");
         permissions = resolve(TEST_PLAYER, TEST_WORLD2);
         assertPermission(permissions, "basic.perm1", false);
+    }
+
+    // Now with interleave false
+    @Test
+    public void testPlayerInterleave2() {
+        assertTrue(createGroup(TEST_GROUP1));
+        setPermissionsFalse(TEST_GROUP1, true,
+                TEST_WORLD2 + ":basic.perm1",
+                TEST_REGION + "/basic.perm2",
+                TEST_REGION + "/" + TEST_WORLD2 + ":basic.perm3");
+        setPermissions(TEST_GROUP1, true,
+                "basic.perm1",
+                TEST_WORLD2 + ":basic.perm2",
+                TEST_REGION + "/basic.perm3");
+
+        // Set group
+        begin();
+        try {
+            getDao().setGroup(TEST_PLAYER, TEST_GROUP1, null);
+            commit();
+        }
+        finally {
+            end ();
+        }
+        // Confirm
+        List<String> groups = Utils.toGroupNames(getDao().getGroups(TEST_PLAYER));
+        assertEquals(1, groups.size());
+        assertEquals(TEST_GROUP1, groups.get(0));
+
+        Map<String, Boolean> permissions;
+
+        resolver.setInterleavedPlayerPermissions(false);
+
+        // Same level
+        setPermissionsFalse(TEST_PLAYER, false, "basic.perm1");
+        permissions = resolve(TEST_PLAYER, TEST_WORLD1);
+        assertPermission(permissions, "basic.perm1", false);
+        
+        // More specific level (no change)
+        permissions = resolve(TEST_PLAYER, TEST_WORLD2);
+        assertPermission(permissions, "basic.perm1", false);
+        
+        // Player-specific should override despite specific level
+        setPermissions(TEST_PLAYER, false, "basic.perm1");
+        permissions = resolve(TEST_PLAYER, TEST_WORLD2);
+        assertPermission(permissions, "basic.perm1");
     }
 
 }

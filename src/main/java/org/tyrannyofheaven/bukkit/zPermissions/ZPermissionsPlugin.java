@@ -131,6 +131,9 @@ public class ZPermissionsPlugin extends JavaPlugin implements ZPermissionsCore, 
     // Default opaque inheritance
     private static final boolean DEFAULT_OPAQUE_INHERITANCE = false;
 
+    // Default interleaved player permissions (to be changed at some future version)
+    private static final boolean DEFAULT_INTERLEAVED_PLAYER_PERMISSIONS = true;
+
     // Default rank broadcast to admins
     private static final boolean DEFAULT_RANK_ADMIN_BROADCAST = false;
 
@@ -813,6 +816,7 @@ public class ZPermissionsPlugin extends JavaPlugin implements ZPermissionsCore, 
         }
 
         getResolver().setOpaqueInheritance(config.getBoolean("opaque-inheritance", DEFAULT_OPAQUE_INHERITANCE));
+        getResolver().setInterleavedPlayerPermissions(config.getBoolean("interleaved-player-permissions", DEFAULT_INTERLEAVED_PLAYER_PERMISSIONS));
         getResolver().setIncludeDefaultInAssigned(config.getBoolean("assigned-groups-can-include-default", DEFAULT_ASSIGNED_GROUPS_CAN_INCLUDE_DEFAULT));
 
         value = config.getString("default-group");

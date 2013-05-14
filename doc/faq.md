@@ -41,6 +41,14 @@
     3. The first plugin I developed ([Excursion](http://dev.bukkit.org/server-mods/excursion/)) was relatively simple. I wanted a bit more practice with the Bukkit API, so I coded zPermissions from scratch.
     4. It was the primary testbed and driver for development for my [personal plugin library](https://github.com/ZerothAngel/ToHPluginUtils).
     
+*   **Can zPermissions support region plugin X?**
+
+    It should be easier to do now, so feel free to [create a ticket](http://dev.bukkit.org/server-mods/zpermissions/tickets/). If you provide links to API docs and/or provide configuration examples, you will greatly improve the chance that I will accept it and work on it sooner rather than later. ;)
+    
+    There's only one hard requirement on the region plugin: it must be able to return the name(s) of regions that enclose any given location.
+    
+    If the region plugin is a Maven project and/or is hosted in a Maven repository somewhere, that is also a major plus.
+
 *   **What does the `opaque-inheritance` option do?**
 
     When `opaque-inheritance` is true (the default from version 0.9 - 0.9.19), each assigned group is fully resolved before moving on to the next. This means *the ancestor groups* of higher-weight assigned groups take precedence over lower-weight groups.
@@ -87,10 +95,26 @@
     
     But if you want to treat individual ancestor groups as separate groups in themselves, then `opaque-inheritance` false will give that effect &mdash; *E*, being the base group of both *A* and *C*, can have its permissions potentially overridden by any other group.
 
-*   **Can zPermissions support region plugin X?**
+*   **What does the `interleaved-player-permissions` option do?**
 
-    It should be easier to do now, so feel free to [create a ticket](http://dev.bukkit.org/server-mods/zpermissions/tickets/). If you provide links to API docs and/or provide configuration examples, you will greatly improve the chance that I will accept it and work on it sooner rather than later. ;)
-    
-    There's only one hard requirement on the region plugin: it must be able to return the name(s) of regions that enclose any given location.
-    
-    If the region plugin is a Maven project and/or is hosted in a Maven repository somewhere, that is also a major plus.
+    When true (the current default), player permissions are interleaved with group permissions at the same "level" (universal, world, region, region/world):
+
+     1. Universal group permissions
+     2. Universal player permissions
+     3. World-specific group permissions
+     4. World-specific player permissions
+     5. Region-specific group permissions
+     6. Region-specific player permissions
+     7. Region- and world-specific group permissions
+     8. Region- and world-specific player permissions
+
+    When false, player permissions are only applied once all group permissions have been applied:
+
+     1. Universal group permissions
+     2. World-specific group permissions
+     3. Region-specific group permissions
+     4. Region- and world-specific group permissions
+     5. Universal player permissions
+     6. World-specific player permissions
+     7. Region-specific player permissions
+     8. Region- and world-specific player permissions
