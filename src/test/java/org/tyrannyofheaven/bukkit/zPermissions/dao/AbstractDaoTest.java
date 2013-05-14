@@ -431,6 +431,9 @@ public abstract class AbstractDaoTest {
             assertNotNull(group.getParent());
             assertEquals(TEST_GROUP2, group.getParent().getDisplayName());
             
+            group = getDao().getEntity(TEST_GROUP2, true);
+            assertEquals(1, group.getChildren().size());
+
             // Attempt to set cycle
             boolean good = false;
             try {
@@ -461,9 +464,123 @@ public abstract class AbstractDaoTest {
             PermissionEntity group = getDao().getEntity(TEST_GROUP1, true);
             assertNotNull(group);
             assertNull(group.getParent());
-            
+
+            group = getDao().getEntity(TEST_GROUP2, true);
+            assertTrue(group.getChildren().isEmpty());
+
             // Clean up
             assertTrue(getDao().deleteEntity(TEST_GROUP2, true));
+            assertTrue(getDao().deleteEntity(TEST_GROUP1, true));
+            commit();
+        }
+        finally {
+            end();
+        }
+    }
+
+    // Set up inheritance, delete child
+    @Test
+    public void testInheritanceDelete() {
+        begin();
+        try {
+            // Confirm test groups are not present
+            assertNull(getDao().getEntity(TEST_GROUP1, true));
+            assertNull(getDao().getEntity(TEST_GROUP2, true));
+            
+            // Set up inheritance
+            assertTrue(getDao().createGroup(TEST_GROUP1));
+            assertTrue(getDao().createGroup(TEST_GROUP2));
+            getDao().setParent(TEST_GROUP1, TEST_GROUP2);
+            commit();
+        }
+        finally {
+            end();
+        }
+    
+        begin();
+        try {
+            // Confirm
+            PermissionEntity group = getDao().getEntity(TEST_GROUP1, true);
+            assertNotNull(group);
+            assertNotNull(group.getParent());
+            assertEquals(TEST_GROUP2, group.getParent().getDisplayName());
+            
+            group = getDao().getEntity(TEST_GROUP2, true);
+            assertEquals(1, group.getChildren().size());
+            
+            // Purge child
+            getDao().deleteEntity(TEST_GROUP1, true);
+        }
+        finally {
+            end();
+        }
+
+        begin();
+        try {
+            // Confirm
+            PermissionEntity group = getDao().getEntity(TEST_GROUP1, true);
+            assertNull(group);
+
+            group = getDao().getEntity(TEST_GROUP2, true);
+            assertTrue(group.getChildren().isEmpty());
+
+            // Clean up
+            assertTrue(getDao().deleteEntity(TEST_GROUP2, true));
+            commit();
+        }
+        finally {
+            end();
+        }
+    }
+    
+    // Set up inheritance, delete parent
+    @Test
+    public void testInheritanceDelete2() {
+        begin();
+        try {
+            // Confirm test groups are not present
+            assertNull(getDao().getEntity(TEST_GROUP1, true));
+            assertNull(getDao().getEntity(TEST_GROUP2, true));
+            
+            // Set up inheritance
+            assertTrue(getDao().createGroup(TEST_GROUP1));
+            assertTrue(getDao().createGroup(TEST_GROUP2));
+            getDao().setParent(TEST_GROUP1, TEST_GROUP2);
+            commit();
+        }
+        finally {
+            end();
+        }
+    
+        begin();
+        try {
+            // Confirm
+            PermissionEntity group = getDao().getEntity(TEST_GROUP1, true);
+            assertNotNull(group);
+            assertNotNull(group.getParent());
+            assertEquals(TEST_GROUP2, group.getParent().getDisplayName());
+            
+            group = getDao().getEntity(TEST_GROUP2, true);
+            assertEquals(1, group.getChildren().size());
+            
+            // Purge parent
+            getDao().deleteEntity(TEST_GROUP2, true);
+        }
+        finally {
+            end();
+        }
+
+        begin();
+        try {
+            // Confirm
+            PermissionEntity group = getDao().getEntity(TEST_GROUP1, true);
+            assertNotNull(group);
+            assertNull(group.getParent());
+
+            group = getDao().getEntity(TEST_GROUP2, true);
+            assertNull(group);
+
+            // Clean up
             assertTrue(getDao().deleteEntity(TEST_GROUP1, true));
             commit();
         }

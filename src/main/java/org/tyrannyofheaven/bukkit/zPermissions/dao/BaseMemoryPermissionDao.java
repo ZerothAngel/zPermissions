@@ -408,6 +408,8 @@ public abstract class BaseMemoryPermissionDao implements PermissionDao {
     public void setParent(String groupName, String parentName) {
         PermissionEntity group = getGroup(groupName);
     
+        PermissionEntity oldParent = group.getParent();
+
         if (parentName != null) {
             PermissionEntity parent = getGroup(parentName);
     
@@ -425,6 +427,11 @@ public abstract class BaseMemoryPermissionDao implements PermissionDao {
         }
         else {
             group.setParent(null);
+        }
+        
+        // Remove old relationship (if it was different)
+        if (oldParent != null && !oldParent.equals(group.getParent())) {
+            oldParent.getChildren().remove(group);
         }
         
         setEntityParent(group, group.getParent());
@@ -496,6 +503,9 @@ public abstract class BaseMemoryPermissionDao implements PermissionDao {
             // Deleting a group
             if (entity != null) {
                 // Break parent/child relationship
+                if (entity.getParent() != null) {
+                    entity.getParent().getChildren().remove(entity);
+                }
                 for (PermissionEntity child : entity.getChildren()) {
                     child.setParent(null);
                 }
