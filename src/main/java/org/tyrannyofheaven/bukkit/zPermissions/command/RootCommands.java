@@ -301,10 +301,19 @@ public class RootCommands {
                 String.format("zpermissions.rank.%s", trackName),
                 "zpermissions.rank.*");
 
-        if (rankName != null && !track.contains(rankName)) {
-            sendMessage(sender, colorize("{RED}Rank is not in the track."));
-            abortBatchProcessing();
-            return;
+        if (rankName != null) {
+            boolean found = false;
+            for (String rank : track) {
+                if (rank.equalsIgnoreCase(rankName)) {
+                    found = true;
+                    break;
+                }
+            }
+            if (!found) {
+                sendMessage(sender, colorize("{RED}Rank is not in the track."));
+                abortBatchProcessing();
+                return;
+            }
         }
 
         // Determine what groups the player and the track have in common
