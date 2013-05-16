@@ -46,12 +46,12 @@ Please post bugs and/or feature requests as [dev.bukkit.org tickets](http://dev.
 
 *   There are 4 "levels" of permissions: universal, world-specific, region-specific, and finally region- and world-specific. The most general permissions are applied first, with player permissions overriding group permissions at the same level:
      1. Universal group permissions
-     2. Universal player permissions
-     3. World-specific group permissions
-     4. World-specific player permissions
-     5. Region-specific group permissions
-     6. Region-specific player permissions
-     7. Region- and world-specific group permissions
+     2. World-specific group permissions
+     3. Region-specific group permissions
+     4. Region- and world-specific group permissions
+     5. Universal player permissions
+     6. World-specific player permissions
+     7. Region-specific player permissions
      8. Region- and world-specific player permissions
 
 *   Players may be members of multiple groups. Groups may be assigned a weight &mdash; a higher weight means the group is applied later so it overrides earlier groups. Groups with the same weight are applied alphabetically.

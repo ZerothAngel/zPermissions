@@ -118,3 +118,11 @@
      6. World-specific player permissions
      7. Region-specific player permissions
      8. Region- and world-specific player permissions
+
+*   **What is `auto-refresh-interval` for?**
+
+    The `auto-refresh-interval` option, which is disabled by default (e.g. a negative number), periodically performs the equivalent of `/permissions refresh` at some given interval. Theoretically, you could set up multiple servers to share a single zPermissions database. (However, the fact that this would be configured through bukkit.yml, which is also used by other plugins, limits this somewhat.) More practically, you could have an external website or forum handle player registration and automatically promote players.
+
+    Since zPermissions permanently caches data for performance reasons, you will need some way to tell zPermissions to re-read the database. And that's where `/permissions refresh` and `auto-refresh-interval` come in.
+
+    If you aren't doing either of these things (multi-server or writing to the database from an external source), it is probably best to leave `auto-refresh-interval` disabled.
