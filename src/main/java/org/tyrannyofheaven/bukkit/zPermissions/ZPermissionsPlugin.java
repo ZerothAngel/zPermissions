@@ -376,6 +376,7 @@ public class ZPermissionsPlugin extends JavaPlugin implements ZPermissionsCore, 
             .registerTypeCompleter("group", new GroupTypeCompleter(getDao()))
             .registerTypeCompleter("track", new TrackTypeCompleter(getZPermissionsConfig()))
             .registerTypeCompleter("dump-dir", new DirTypeCompleter(getZPermissionsConfig()))
+            .setQuoteAware(true)
             .registerCommands();
 
         // Detect a region manager
