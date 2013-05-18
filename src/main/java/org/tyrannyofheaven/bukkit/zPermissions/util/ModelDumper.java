@@ -15,6 +15,8 @@
  */
 package org.tyrannyofheaven.bukkit.zPermissions.util;
 
+import static org.tyrannyofheaven.bukkit.util.ToHStringUtils.quoteArgForCommand;
+
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.PrintWriter;
@@ -76,31 +78,31 @@ public class ModelDumper {
                     List<PermissionEntity> groups = sortGroups(storageStrategy.getDao().getEntities(true));
                     for (PermissionEntity entity : groups) {
                         out.println(String.format("# Group %s", entity.getDisplayName()));
-                        out.println(String.format("permissions group %s create", entity.getDisplayName()));
+                        out.println(String.format("permissions group %s create", quoteArgForCommand(entity.getDisplayName())));
                         dumpPermissions(out, entity);
                         dumpMetadata(out, entity);
                         out.println(String.format("permissions group %s setweight %d",
-                                entity.getDisplayName(),
+                                quoteArgForCommand(entity.getDisplayName()),
                                 entity.getPriority()));
                         if (entity.getParent() != null) {
                             out.println(String.format("permissions group %s setparent %s",
-                                    entity.getDisplayName(),
-                                    entity.getParent().getDisplayName()));
+                                    quoteArgForCommand(entity.getDisplayName()),
+                                    quoteArgForCommand(entity.getParent().getDisplayName())));
                         }
                         // Dump memberships
                         for (Membership membership : storageStrategy.getDao().getMembers(entity.getName())) {
                             if (membership.getExpiration() == null) {
                                 out.println(String.format("permissions group %s add %s",
-                                        entity.getDisplayName(),
-                                        membership.getMember()));
+                                        quoteArgForCommand(entity.getDisplayName()),
+                                        quoteArgForCommand(membership.getMember())));
                             }
                             else {
                                 Calendar cal = Calendar.getInstance();
                                 cal.setTime(membership.getExpiration());
                                 out.println(String.format("permissions group %s add %s %s",
-                                        entity.getDisplayName(),
-                                        membership.getMember(),
-                                        DatatypeConverter.printDateTime(cal)));
+                                        quoteArgForCommand(entity.getDisplayName()),
+                                        quoteArgForCommand(membership.getMember()),
+                                        quoteArgForCommand(DatatypeConverter.printDateTime(cal))));
                             }
                         }
                     }
@@ -115,12 +117,13 @@ public class ModelDumper {
     // Dump permissions for a player or group
     private void dumpPermissions(final PrintWriter out, PermissionEntity entity) {
         for (Entry e : Utils.sortPermissions(entity.getPermissions())) {
-            out.println(String.format("permissions %s %s set %s%s%s %s",
+            out.println(String.format("permissions %s %s set %s %s",
                     (entity.isGroup() ? "group" : "player"),
-                    entity.getDisplayName(),
-                    (e.getRegion() == null ? "" : e.getRegion().getName() + "/"),
-                    (e.getWorld() == null ? "" : e.getWorld().getName() + ":"),
-                    e.getPermission(),
+                    quoteArgForCommand(entity.getDisplayName()),
+                    quoteArgForCommand(String.format("%s%s%s",
+                            (e.getRegion() == null ? "" : e.getRegion().getName() + "/"),
+                            (e.getWorld() == null ? "" : e.getWorld().getName() + ":"),
+                            e.getPermission())),
                     e.isValue()));
         }
     }
@@ -137,10 +140,10 @@ public class ModelDumper {
                 suffix = "bool";
             out.println(String.format("permissions %s %s metadata set%s %s %s",
                     (entity.isGroup() ? "group" : "player"),
-                    entity.getDisplayName(),
+                    quoteArgForCommand(entity.getDisplayName()),
                     suffix,
-                    me.getName(),
-                    value));
+                    quoteArgForCommand(me.getName()),
+                    (value instanceof String ? quoteArgForCommand((String)value) : value)));
         }
     }
 
