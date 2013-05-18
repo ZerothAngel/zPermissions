@@ -26,6 +26,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Random;
 import java.util.logging.Level;
 
 import org.bukkit.Bukkit;
@@ -42,6 +43,7 @@ import org.tyrannyofheaven.bukkit.util.command.ParseException;
 import org.tyrannyofheaven.bukkit.util.command.Require;
 import org.tyrannyofheaven.bukkit.util.command.reader.CommandReader;
 import org.tyrannyofheaven.bukkit.util.transaction.TransactionCallback;
+import org.tyrannyofheaven.bukkit.util.transaction.TransactionCallbackWithoutResult;
 import org.tyrannyofheaven.bukkit.zPermissions.PermissionsResolver;
 import org.tyrannyofheaven.bukkit.zPermissions.ZPermissionsConfig;
 import org.tyrannyofheaven.bukkit.zPermissions.ZPermissionsCore;
@@ -57,6 +59,8 @@ import org.tyrannyofheaven.bukkit.zPermissions.util.Utils;
  * @author zerothangel
  */
 public class SubCommands {
+
+    private static final long PURGE_CODE_EXPIRATION = 30000L; // 30 secs
 
     private final ZPermissionsCore core;
 
@@ -76,6 +80,10 @@ public class SubCommands {
 
     // The "/permissions group" handler
     private final GroupCommands groupCommand;
+
+    private PurgeCode purgeCode;
+
+    private final Random random = new Random();
 
     SubCommands(ZPermissionsCore core, StorageStrategy storageStrategy, PermissionsResolver resolver, ModelDumper modelDumper, ZPermissionsConfig config, Plugin plugin) {
         this.core = core;
@@ -351,6 +359,72 @@ public class SubCommands {
         String groups = Utils.displayGroups(resolver.getDefaultGroup(), memberships);
         
         sendMessage(sender, colorize("{YELLOW}You are a member of: %s"), groups);
+    }
+
+    @Command(value="purge", description="Delete all players and groups")
+    @Require("zpermissions.purge")
+    public void purge(CommandSender sender, @Option(value="code", optional=true) Integer code) {
+        if (purgeCode != null) {
+            if (purgeCode.getTimestamp() < System.currentTimeMillis() - PURGE_CODE_EXPIRATION) {
+                // Past expiration
+                sendMessage(sender, colorize("{RED}Too slow. Try again without code."));
+                purgeCode = null;
+            }
+            else if (code == null) {
+                sendMessage(sender, colorize("{RED}Confirmation pending. Try again with code."));
+            }
+            else if (purgeCode.getCode() != code) {
+                sendMessage(sender, colorize("{RED}Code mismatch. Try again."));
+            }
+            else {
+                storageStrategy.getRetryingTransactionStrategy().execute(new TransactionCallbackWithoutResult() {
+                    @Override
+                    public void doInTransactionWithoutResult() throws Exception {
+                        // Purge players
+                        for (PermissionEntity player : storageStrategy.getDao().getEntities(false)) {
+                            storageStrategy.getDao().deleteEntity(player.getDisplayName(), false);
+                        }
+                        // Purge groups
+                        for (PermissionEntity group : storageStrategy.getDao().getEntities(true)) {
+                            storageStrategy.getDao().deleteEntity(group.getDisplayName(), true);
+                        }
+                    }
+                });
+                sendMessage(sender, colorize("{YELLOW}Full system purge successful."));
+                purgeCode = null;
+            }
+        }
+        else {
+            if (code != null) {
+                sendMessage(sender, colorize("{RED}No purge pending. Try again without code."));
+            }
+            else {
+                int codeNumber = 100000 + random.nextInt(900000); // random 6 digit number
+                purgeCode = new PurgeCode(codeNumber, System.currentTimeMillis());
+                sendMessage(sender, colorize("{YELLOW}Issue {DARK_GRAY}/permissions purge %d{YELLOW} to confirm."), codeNumber);
+            }
+        }
+    }
+
+    private static class PurgeCode {
+        
+        private final int code;
+        
+        private final long timestamp;
+
+        private PurgeCode(int code, long timestamp) {
+            this.code = code;
+            this.timestamp = timestamp;
+        }
+
+        public int getCode() {
+            return code;
+        }
+
+        public long getTimestamp() {
+            return timestamp;
+        }
+
     }
 
 }
