@@ -27,7 +27,6 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Queue;
 
 import javax.xml.bind.DatatypeConverter;
 
@@ -155,13 +154,14 @@ public class ModelDumper {
     }
 
     private List<PermissionEntity> sortGroups(Collection<PermissionEntity> groups) {
-        Queue<PermissionEntity> scanList = new LinkedList<PermissionEntity>();
+        LinkedList<PermissionEntity> scanList = new LinkedList<PermissionEntity>();
         
         // Seed with parent-less groups
         for (PermissionEntity group : groups) {
             if (group.getParent() == null)
                 scanList.add(group);
         }
+        Collections.sort(scanList, Utils.PERMISSION_ENTITY_ALPHA_COMPARATOR);
 
         List<PermissionEntity> result = new ArrayList<PermissionEntity>(groups.size());
 
