@@ -16,6 +16,7 @@
 package org.tyrannyofheaven.bukkit.zPermissions.command;
 
 import static org.tyrannyofheaven.bukkit.util.ToHLoggingUtils.log;
+import static org.tyrannyofheaven.bukkit.util.ToHMessageUtils.broadcastAdmin;
 import static org.tyrannyofheaven.bukkit.util.ToHMessageUtils.colorize;
 import static org.tyrannyofheaven.bukkit.util.ToHMessageUtils.sendMessage;
 import static org.tyrannyofheaven.bukkit.util.command.reader.CommandReader.abortBatchProcessing;
@@ -370,6 +371,9 @@ public class SubCommands {
                 sendMessage(sender, colorize("{RED}Too slow. Try again without code."));
                 purgeCode = null;
             }
+            else if (!purgeCode.getExecutor().equals(sender.getName())) {
+                sendMessage(sender, colorize("{RED}Confirmation pending for %s. Ignored."), purgeCode.getExecutor());
+            }
             else if (code == null) {
                 sendMessage(sender, colorize("{RED}Confirmation pending. Try again with code."));
             }
@@ -390,7 +394,8 @@ public class SubCommands {
                         }
                     }
                 });
-                sendMessage(sender, colorize("{YELLOW}Full system purge successful."));
+                broadcastAdmin(plugin, "%s performed full permissions purge", sender.getName());
+                sendMessage(sender, colorize("{YELLOW}Full permissions purge successful."));
                 purgeCode = null;
             }
         }
@@ -400,21 +405,28 @@ public class SubCommands {
             }
             else {
                 int codeNumber = 100000 + random.nextInt(900000); // random 6 digit number
-                purgeCode = new PurgeCode(codeNumber, System.currentTimeMillis());
+                purgeCode = new PurgeCode(sender.getName(), codeNumber, System.currentTimeMillis());
                 sendMessage(sender, colorize("{YELLOW}Issue {DARK_GRAY}/permissions purge %d{YELLOW} to confirm."), codeNumber);
             }
         }
     }
 
     private static class PurgeCode {
-        
+
+        private final String executor;
+
         private final int code;
         
         private final long timestamp;
 
-        private PurgeCode(int code, long timestamp) {
+        private PurgeCode(String executor, int code, long timestamp) {
+            this.executor = executor;
             this.code = code;
             this.timestamp = timestamp;
+        }
+
+        public String getExecutor() {
+            return executor;
         }
 
         public int getCode() {

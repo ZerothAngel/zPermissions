@@ -12,6 +12,7 @@
 *   zpermissions.refresh &mdash; `/permissions refresh` command
 *   zpermissions.export &mdash; `/permissions export` command
 *   zpermissions.import &mdash; `/permissions import` command
+*   zpermissions.purge &mdash; `/permissions purge` command
 
 ### Rank Permissions ###
 
