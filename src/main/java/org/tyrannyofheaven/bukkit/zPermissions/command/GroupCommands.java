@@ -18,9 +18,11 @@ package org.tyrannyofheaven.bukkit.zPermissions.command;
 import static org.tyrannyofheaven.bukkit.util.ToHMessageUtils.broadcastAdmin;
 import static org.tyrannyofheaven.bukkit.util.ToHMessageUtils.colorize;
 import static org.tyrannyofheaven.bukkit.util.ToHMessageUtils.sendMessage;
+import static org.tyrannyofheaven.bukkit.util.ToHStringUtils.delimitedString;
 import static org.tyrannyofheaven.bukkit.util.command.reader.CommandReader.abortBatchProcessing;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
@@ -29,6 +31,7 @@ import org.bukkit.ChatColor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.plugin.Plugin;
 import org.tyrannyofheaven.bukkit.util.ToHMessageUtils;
+import org.tyrannyofheaven.bukkit.util.ToHStringUtils;
 import org.tyrannyofheaven.bukkit.util.command.Command;
 import org.tyrannyofheaven.bukkit.util.command.Option;
 import org.tyrannyofheaven.bukkit.util.command.Session;
@@ -132,8 +135,14 @@ public class GroupCommands extends CommonCommands {
             List<String> lines = new ArrayList<String>();
             lines.add(String.format(colorize("{YELLOW}Declared permissions for {DARK_GREEN}%s{YELLOW}:"), entity.getDisplayName()));
             lines.add(String.format(colorize("{YELLOW}Weight: {GREEN}%s"), entity.getPriority()));
-            if (entity.getParent() != null) {
-                lines.add(String.format(colorize("{YELLOW}Parent: {DARK_GREEN}%s"), entity.getParent().getDisplayName()));
+            List<PermissionEntity> parents = entity.getParents();
+            if (!parents.isEmpty()) {
+                List<String> parentNames = new ArrayList<String>(parents.size());
+                for (PermissionEntity parent : parents)
+                    parentNames.add(parent.getDisplayName());
+                lines.add(String.format(colorize("{YELLOW}Parent%s: {DARK_GREEN}%s"),
+                        (parentNames.size() == 1 ? "" : "s"),
+                        ToHStringUtils.delimitedString(", ", parentNames)));
             }
             if (filter != null) {
                 filter = filter.toLowerCase().trim();
@@ -162,14 +171,16 @@ public class GroupCommands extends CommonCommands {
         }
     }
 
-    @Command(value={"setparent", "parent"}, description="Set a group's parent")
-    public void setParent(CommandSender sender, final @Session("entityName") String groupName, final @Option(value="parent", optional=true, completer="group") String parentName) {
+    @Command(value={"setparents", "parents", "setparent", "parent"}, description="Set a group's parent(s)",
+            completer="group", varargs="parent...")
+    public void setParent(CommandSender sender, final @Session("entityName") String groupName, String[] parents) {
+        final List<String> parentNames = Arrays.asList(parents);
         try {
             // Set parent. Creates group and/or parent if missing.
             storageStrategy.getRetryingTransactionStrategy().execute(new TransactionCallbackWithoutResult() {
                 @Override
                 public void doInTransactionWithoutResult() throws Exception {
-                    storageStrategy.getDao().setParent(groupName, parentName);
+                    storageStrategy.getDao().setParents(groupName, parentNames);
                 }
             });
         }
@@ -184,7 +195,12 @@ public class GroupCommands extends CommonCommands {
             return;
         }
 
-        sendMessage(sender, colorize("{DARK_GREEN}%s{YELLOW}'s parent is now {DARK_GREEN}%s"), groupName, parentName);
+        if (parentNames.isEmpty())
+            sendMessage(sender, colorize("{DARK_GREEN}%s{YELLOW} now has no parents"), groupName);
+        else if (parentNames.size() == 1)
+            sendMessage(sender, colorize("{DARK_GREEN}%s{YELLOW}'s parent is now {DARK_GREEN}%s"), groupName, parentNames.get(0));
+        else
+            sendMessage(sender, colorize("{DARK_GREEN}%s{YELLOW}'s parents are now {DARK_GREEN}%s"), groupName, delimitedString(ChatColor.YELLOW + ", " + ChatColor.DARK_GREEN, parentNames));
         core.refreshAffectedPlayers(groupName);
     }
 

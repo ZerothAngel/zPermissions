@@ -11,6 +11,7 @@ zPermissions has 7 tables. The tables and their default names are:
 *   `PermissionRegion` &mdash; regions
 *   `PermissionWorld` &mdash; worlds
 *   `EntityMetadata` &mdash; metadata
+*   `Inheritance` &mdash; inheritances
 
 To customize the names, simply add something like the following to your config.yml:
 
@@ -22,6 +23,7 @@ To customize the names, simply add something like the following to your config.y
       PermissionRegion: zp_regions
       PermissionWorld: zp_worlds
       EntityMetadata: zp_metadata
+      Inheritance: zp_inheritances
 
 (In this example, the default table names are prefixed with `zp_`.)
 
@@ -47,5 +49,6 @@ For example,
       PermissionRegion: myserver.regions
       PermissionWorld: myserver.worlds
       EntityMetadata: myserver.metadata
+      Inheritance: myserver.inheritances
 
 This would place all your tables in the `myserver` schema. Note that named schema support varies from database to database.

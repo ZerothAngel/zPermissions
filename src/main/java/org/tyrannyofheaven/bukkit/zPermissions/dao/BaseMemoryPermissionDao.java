@@ -20,15 +20,19 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
+import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedHashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 import org.tyrannyofheaven.bukkit.zPermissions.model.EntityMetadata;
 import org.tyrannyofheaven.bukkit.zPermissions.model.Entry;
+import org.tyrannyofheaven.bukkit.zPermissions.model.Inheritance;
 import org.tyrannyofheaven.bukkit.zPermissions.model.Membership;
 import org.tyrannyofheaven.bukkit.zPermissions.model.PermissionEntity;
 import org.tyrannyofheaven.bukkit.zPermissions.model.PermissionRegion;
@@ -406,38 +410,93 @@ public abstract class BaseMemoryPermissionDao implements PermissionDao {
 
     @Override
     public void setParent(String groupName, String parentName) {
-        PermissionEntity group = getGroup(groupName);
-    
-        PermissionEntity oldParent = group.getParent();
+        if (parentName != null)
+            setParents(groupName, Collections.singletonList(parentName));
+        else
+            setParents(groupName, Collections.<String>emptyList());
+    }
 
-        if (parentName != null) {
+    @Override
+    public void setParents(String groupName, List<String> parentNames) {
+        PermissionEntity group = getGroup(groupName);
+        
+        Set<Inheritance> dest = new LinkedHashSet<Inheritance>(parentNames.size());
+        int order = 0;
+        for (String parentName : parentNames) {
             PermissionEntity parent = getGroup(parentName);
-    
+
+            Inheritance i = new Inheritance();
+            i.setChild(group);
+            i.setParent(parent);
+
+            if (dest.contains(i))
+                continue; // Don't bother with cycle check again
+
+            i.setOrdering(order);
+            order += 100;
+
             // Check for a cycle
-            PermissionEntity check = parent;
-            while (check != null) {
+            Deque<PermissionEntity> toCheck = new LinkedList<PermissionEntity>();
+            toCheck.add(parent);
+            while (!toCheck.isEmpty()) {
+                PermissionEntity check = toCheck.removeFirst();
+
                 if (group.equals(check)) {
                     throw new DaoException("This would result in an inheritance cycle!");
                 }
-                check = check.getParent();
+                
+                toCheck.addAll(check.getParents());
             }
-    
-            group.setParent(parent);
-            parent.getChildren().add(group);
+            
+            dest.add(i);
         }
-        else {
-            group.setParent(null);
+
+        // Don't use parent field anymore
+        group.setParent(null);
+        setEntityParent(group, null);
+
+        // Figure out what to add
+        Set<Inheritance> toAdd = new HashSet<Inheritance>(dest);
+        toAdd.removeAll(group.getInheritancesAsChild());
+
+        // Figure out what to delete
+        Set<Inheritance> toDelete = new HashSet<Inheritance>(group.getInheritancesAsChild());
+        toDelete.removeAll(dest);
+
+        // And what to update
+        Set<Inheritance> toUpdate = new HashSet<Inheritance>(group.getInheritancesAsChild());
+        toUpdate.retainAll(dest);
+
+        // Create update map for easy retrieval
+        Map<Inheritance, Inheritance> updateMap = new HashMap<Inheritance, Inheritance>();
+        for (Inheritance i : toUpdate)
+            updateMap.put(i, i);
+
+        // Add entries
+        for (Inheritance i : toAdd) {
+            group.getInheritancesAsChild().add(i);
+            i.getParent().getInheritancesAsParent().add(i);
+            createOrUpdateInheritance(i);
         }
-        
-        // Remove old relationship (if it was different)
-        if (oldParent != null && !oldParent.equals(group.getParent())) {
-            oldParent.getChildren().remove(group);
+
+        // Delete entries
+        for (Inheritance i : toDelete) {
+            group.getInheritancesAsChild().remove(i);
+            i.getParent().getInheritancesAsParent().remove(i);
+            deleteInheritance(i);
         }
-        
-        setEntityParent(group, group.getParent());
+
+        // Update entries (e.g. ordering)
+        for (Inheritance i : toUpdate) {
+            createOrUpdateInheritance(i);
+        }
     }
 
     protected abstract void setEntityParent(PermissionEntity entity, PermissionEntity parent);
+
+    protected abstract void createOrUpdateInheritance(Inheritance inheritance);
+
+    protected abstract void deleteInheritance(Inheritance inheritance);
 
     @Override
     public void setPriority(String groupName, int priority) {
@@ -502,13 +561,16 @@ public abstract class BaseMemoryPermissionDao implements PermissionDao {
         if (group) {
             // Deleting a group
             if (entity != null) {
-                // Break parent/child relationship
-                if (entity.getParent() != null) {
-                    entity.getParent().getChildren().remove(entity);
+                // Break parent/child relationship (in memory)
+                for (Inheritance i : entity.getInheritancesAsChild()) {
+                    i.getParent().getInheritancesAsParent().remove(i);
                 }
-                for (PermissionEntity child : entity.getChildren()) {
-                    child.setParent(null);
+                entity.getInheritancesAsChild().clear(); // meh, don't really have to
+                for (Inheritance i : entity.getInheritancesAsParent()) {
+                    i.getChild().getInheritancesAsChild().remove(i);
                 }
+                entity.getInheritancesAsParent().clear(); // meh, don't really have to
+                // NB database relationships will be deleted by deleteEntity
     
                 // Delete group's entity
                 getGroups().remove(entity.getName());
@@ -561,17 +623,21 @@ public abstract class BaseMemoryPermissionDao implements PermissionDao {
             return new ArrayList<String>();
     
         // Build list of group ancestors
-        List<String> ancestry = new ArrayList<String>();
+        Set<String> ancestry = new LinkedHashSet<String>();
         ancestry.add(group.getDisplayName());
-        while (group.getParent() != null) {
-            group = group.getParent();
+        Deque<PermissionEntity> toAdd = new LinkedList<PermissionEntity>(group.getParents());
+        while (!toAdd.isEmpty()) {
+            group = toAdd.removeFirst();
             ancestry.add(group.getDisplayName());
+            
+            toAdd.addAll(group.getParents());
         }
         
         // Reverse list (will be applying farthest ancestors first)
-        Collections.reverse(ancestry);
+        List<String> ancestryList = new ArrayList<String>(ancestry);
+        Collections.reverse(ancestryList);
     
-        return ancestry;
+        return ancestryList;
     }
 
     @Override

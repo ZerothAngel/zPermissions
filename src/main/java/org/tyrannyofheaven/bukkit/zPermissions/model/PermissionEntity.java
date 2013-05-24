@@ -15,8 +15,12 @@
  */
 package org.tyrannyofheaven.bukkit.zPermissions.model;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -61,9 +65,11 @@ public class PermissionEntity {
     
     private Set<Entry> permissions = new HashSet<Entry>();
 
-    private Set<PermissionEntity> children = new HashSet<PermissionEntity>();
-    
     private Set<Membership> memberships = new HashSet<Membership>();
+
+    private Set<Inheritance> inheritancesAsParent = new HashSet<Inheritance>();
+    
+    private Set<Inheritance> inheritancesAsChild = new HashSet<Inheritance>();
 
     private Set<EntityMetadata> metadata = new HashSet<EntityMetadata>();
 
@@ -132,15 +138,6 @@ public class PermissionEntity {
         this.priority = priority;
     }
 
-    @OneToMany(mappedBy="parent")
-    public Set<PermissionEntity> getChildren() {
-        return children;
-    }
-
-    public void setChildren(Set<PermissionEntity> children) {
-        this.children = children;
-    }
-
     @OneToMany(mappedBy="group", cascade=CascadeType.ALL)
     public Set<Membership> getMemberships() {
         return memberships;
@@ -148,6 +145,42 @@ public class PermissionEntity {
 
     public void setMemberships(Set<Membership> memberships) {
         this.memberships = memberships;
+    }
+
+    @OneToMany(mappedBy="parent", cascade=CascadeType.ALL)
+    public Set<Inheritance> getInheritancesAsParent() {
+        return inheritancesAsParent;
+    }
+
+    public void setInheritancesAsParent(Set<Inheritance> inheritancesAsParent) {
+        this.inheritancesAsParent = inheritancesAsParent;
+    }
+
+    @OneToMany(mappedBy="child", cascade=CascadeType.ALL)
+    public Set<Inheritance> getInheritancesAsChild() {
+        return inheritancesAsChild;
+    }
+
+    public void setInheritancesAsChild(Set<Inheritance> inheritancesAsChild) {
+        this.inheritancesAsChild = inheritancesAsChild;
+    }
+
+    @Transient
+    public List<PermissionEntity> getParents() {
+        List<Inheritance> inheritances = new ArrayList<Inheritance>(getInheritancesAsChild());
+        Collections.sort(inheritances);
+        List<PermissionEntity> result = new ArrayList<PermissionEntity>(inheritances.size());
+        for (Inheritance i : inheritances)
+            result.add(i.getParent());
+        return result;
+    }
+
+    @Transient
+    public Set<PermissionEntity> getChildrenNew() {
+        Set<PermissionEntity> result = new LinkedHashSet<PermissionEntity>(getInheritancesAsParent().size());
+        for (Inheritance i : getInheritancesAsParent())
+            result.add(i.getChild());
+        return result;
     }
 
     @OneToMany(mappedBy="entity", cascade=CascadeType.ALL)

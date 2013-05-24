@@ -14,7 +14,7 @@ Please post bugs and/or feature requests as [dev.bukkit.org tickets](http://dev.
 
 *   **A variety of storage options, from SQL to flat-file.** Uses Bukkit database to store permissions (i.e. settings in bukkit.yml). Should work with most databases supported by [Avaje Ebean](http://www.avaje.org) &mdash; I've specifically tested with PostgreSQL, MySQL, and H2. The default Bukkit database, SQLite, is **not** supported. zPermissions will automatically fall back to flat-file storage if it is used.
 
-*   **Group inheritance.** Groups may inherit permissions from a single parent group.
+*   **Group inheritance.** Groups may inherit permissions from a multiple parent groups.
 
 *   **Players may be members of more than one group.** The order of which group permissions are applied is well defined and based on group weight (which is configurable, of course).
 
@@ -22,7 +22,7 @@ Please post bugs and/or feature requests as [dev.bukkit.org tickets](http://dev.
 
 *   **Optional region support.** Permissions may also be associated with WorldGuard regions or Residence residences.
 
-*   **Multiple promotion tracks!** Using permissions, you can also limit who can promote/demote others and which tracks they may use.
+*   **Multiple promotion tracks!** Using permissions, you can also limit who can promote/demote others and which tracks they may use. In addition, each player may be promoted/demoted along multiple tracks.
 
 *   **Short-term temporary permissions.** Give a player a permission node that lasts anywhere from a few seconds to a few minutes.
 
@@ -44,7 +44,7 @@ Please post bugs and/or feature requests as [dev.bukkit.org tickets](http://dev.
 
 *   However, players and groups may have world-specific and/or region-specific permissions. These permissions are only in effect when the player is in that particular world and/or region.
 
-*   There are 4 "levels" of permissions: universal, world-specific, region-specific, and finally region- and world-specific. The most general permissions are applied first, with player permissions overriding group permissions at the same level:
+*   There are 4 "levels" of permissions: universal, world-specific, region-specific, and finally region- and world-specific. The most general permissions are applied first, with all group permissions applied first finally followed by player permissions:
      1. Universal group permissions
      2. World-specific group permissions
      3. Region-specific group permissions
@@ -55,6 +55,8 @@ Please post bugs and/or feature requests as [dev.bukkit.org tickets](http://dev.
      8. Region- and world-specific player permissions
 
 *   Players may be members of multiple groups. Groups may be assigned a weight &mdash; a higher weight means the group is applied later so it overrides earlier groups. Groups with the same weight are applied alphabetically.
+
+*   Groups may inherit from one or more parent groups. A group's parents are applied in *reverse* order so that a group's first parent overrides all subsequent parents.
 
 ## Installation & Usage ##
 

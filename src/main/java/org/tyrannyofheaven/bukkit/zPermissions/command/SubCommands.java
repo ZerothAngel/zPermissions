@@ -143,7 +143,7 @@ public class SubCommands {
                 .forCommand("unset")
                 .forCommand("purge")
                 .forCommand("members")
-                .forCommand("setparent")
+                .forCommand("setparents")
                 .forCommand("setweight")
                 .forCommand("add")
                 .forCommand("remove")

@@ -322,7 +322,10 @@ public abstract class CommonCommands {
                 if (group) {
                     // Group-specific stuff
                     storageStrategy.getDao().setPriority(destination, entity.getPriority());
-                    storageStrategy.getDao().setParent(destination, entity.getParent() != null ? entity.getParent().getDisplayName() : null);
+                    List<String> parentNames = new ArrayList<String>();
+                    for (PermissionEntity parent : entity.getParents())
+                        parentNames.add(parent.getDisplayName());
+                    storageStrategy.getDao().setParents(destination, parentNames);
                 }
                 else {
                     // Player-specific stuff
@@ -334,9 +337,15 @@ public abstract class CommonCommands {
                 if (rename) {
                     if (group) {
                         // Move child groups to destination
-                        Set<PermissionEntity> children = new HashSet<PermissionEntity>(entity.getChildren()); // Make a copy to be safe
-                        for (PermissionEntity child : children) {
-                            storageStrategy.getDao().setParent(child.getDisplayName(), destination);
+                        for (PermissionEntity child : entity.getChildrenNew()) {
+                            List<String> newParents = new ArrayList<String>();
+                            for (PermissionEntity parent : child.getParents()) {
+                                if (parent.equals(entity))
+                                    newParents.add(destination);
+                                else
+                                    newParents.add(parent.getDisplayName());
+                            }
+                            storageStrategy.getDao().setParents(child.getDisplayName(), newParents);
                         }
                         
                         // Add players to destination

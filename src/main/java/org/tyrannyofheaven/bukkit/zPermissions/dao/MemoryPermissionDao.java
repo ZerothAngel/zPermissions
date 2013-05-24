@@ -35,6 +35,7 @@ import java.util.logging.Logger;
 import org.tyrannyofheaven.bukkit.zPermissions.QualifiedPermission;
 import org.tyrannyofheaven.bukkit.zPermissions.model.EntityMetadata;
 import org.tyrannyofheaven.bukkit.zPermissions.model.Entry;
+import org.tyrannyofheaven.bukkit.zPermissions.model.Inheritance;
 import org.tyrannyofheaven.bukkit.zPermissions.model.Membership;
 import org.tyrannyofheaven.bukkit.zPermissions.model.PermissionEntity;
 import org.tyrannyofheaven.bukkit.zPermissions.model.PermissionRegion;
@@ -266,8 +267,13 @@ public class MemoryPermissionDao extends BaseMemoryPermissionDao {
             groupMap.put("permissions", dumpPermissions(group));
             groupMap.put("metadata", dumpMetadata(group));
             groupMap.put("priority", group.getPriority());
-            if (group.getParent() != null)
-                groupMap.put("parent", group.getParent().getDisplayName());
+            List<PermissionEntity> parents = group.getParents();
+            if (!parents.isEmpty()) {
+                List<String> parentNames = new ArrayList<String>(parents.size());
+                for (PermissionEntity parent : parents)
+                    parentNames.add(parent.getDisplayName());
+                groupMap.put("parents", parentNames);
+            }
             // Permanent members
             List<String> members = new ArrayList<String>();
             List<Map<String, Object>> tempMembers = new ArrayList<Map<String, Object>>();
@@ -316,6 +322,7 @@ public class MemoryPermissionDao extends BaseMemoryPermissionDao {
             Map<String, Boolean> permissions = (Map<String, Boolean>)groupMap.get("permissions");
             Number priority = (Number)groupMap.get("priority");
             String parent = (String)groupMap.get("parent");
+            List<String> parents = (List<String>)groupMap.get("parents");
             List<String> members = (List<String>)groupMap.get("members");
             List<Map<String, Object>> tempMembers = (List<Map<String, Object>>)groupMap.get("tempmembers");
             if (tempMembers == null) // backwards compat
@@ -329,9 +336,33 @@ public class MemoryPermissionDao extends BaseMemoryPermissionDao {
             loadMetadata(metadata, group);
             group.setPriority(priority.intValue());
             if (parent != null) {
+                // Backwards compatibility
                 PermissionEntity parentEntity = getEntity(memoryState, parent, true);
-                group.setParent(parentEntity);
-                parentEntity.getChildren().add(group);
+
+                Inheritance i = new Inheritance();
+                i.setChild(group);
+                i.setParent(parentEntity);
+                i.setOrdering(0);
+
+                // Add to maps
+                group.getInheritancesAsChild().add(i);
+                parentEntity.getInheritancesAsParent().add(i);
+            }
+            else if (parents != null) {
+                int order = 0;
+                for (String p : parents) {
+                    PermissionEntity parentEntity = getEntity(memoryState, p, true);
+                    
+                    Inheritance i = new Inheritance();
+                    i.setChild(group);
+                    i.setParent(parentEntity);
+                    i.setOrdering(order);
+                    order += 100;
+                    
+                    // Add to maps
+                    group.getInheritancesAsChild().add(i);
+                    parentEntity.getInheritancesAsParent().add(i);
+                }
             }
             for (String member : members) {
                 Membership membership = new Membership();
@@ -476,6 +507,16 @@ public class MemoryPermissionDao extends BaseMemoryPermissionDao {
 
     @Override
     protected void deleteMetadata(EntityMetadata metadata) {
+        setDirty();
+    }
+
+    @Override
+    protected void createOrUpdateInheritance(Inheritance inheritance) {
+        setDirty();
+    }
+
+    @Override
+    protected void deleteInheritance(Inheritance inheritance) {
         setDirty();
     }
 
