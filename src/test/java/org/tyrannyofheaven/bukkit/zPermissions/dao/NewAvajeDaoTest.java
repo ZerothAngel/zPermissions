@@ -17,6 +17,7 @@ package org.tyrannyofheaven.bukkit.zPermissions.dao;
 
 import org.tyrannyofheaven.bukkit.zPermissions.model.EntityMetadata;
 import org.tyrannyofheaven.bukkit.zPermissions.model.Entry;
+import org.tyrannyofheaven.bukkit.zPermissions.model.Inheritance;
 import org.tyrannyofheaven.bukkit.zPermissions.model.Membership;
 import org.tyrannyofheaven.bukkit.zPermissions.model.PermissionEntity;
 import org.tyrannyofheaven.bukkit.zPermissions.model.PermissionRegion;
@@ -52,6 +53,7 @@ public class NewAvajeDaoTest extends AbstractDaoTest {
                 config.setDdlRun(true);
 
                 config.addClass(PermissionEntity.class);
+                config.addClass(Inheritance.class);
                 config.addClass(PermissionRegion.class);
                 config.addClass(PermissionWorld.class);
                 config.addClass(Entry.class);

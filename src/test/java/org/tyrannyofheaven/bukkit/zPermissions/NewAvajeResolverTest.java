@@ -21,6 +21,7 @@ import java.util.Collections;
 import org.tyrannyofheaven.bukkit.zPermissions.dao.AvajePermissionDao2;
 import org.tyrannyofheaven.bukkit.zPermissions.model.EntityMetadata;
 import org.tyrannyofheaven.bukkit.zPermissions.model.Entry;
+import org.tyrannyofheaven.bukkit.zPermissions.model.Inheritance;
 import org.tyrannyofheaven.bukkit.zPermissions.model.Membership;
 import org.tyrannyofheaven.bukkit.zPermissions.model.PermissionEntity;
 import org.tyrannyofheaven.bukkit.zPermissions.model.PermissionRegion;
@@ -56,6 +57,7 @@ public class NewAvajeResolverTest extends AbstractResolverTest {
                 config.setDdlRun(true);
 
                 config.addClass(PermissionEntity.class);
+                config.addClass(Inheritance.class);
                 config.addClass(PermissionRegion.class);
                 config.addClass(PermissionWorld.class);
                 config.addClass(Entry.class);

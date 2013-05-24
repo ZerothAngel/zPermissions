@@ -27,6 +27,7 @@ import java.util.logging.Logger;
 
 import org.tyrannyofheaven.bukkit.zPermissions.model.EntityMetadata;
 import org.tyrannyofheaven.bukkit.zPermissions.model.Entry;
+import org.tyrannyofheaven.bukkit.zPermissions.model.Inheritance;
 import org.tyrannyofheaven.bukkit.zPermissions.model.Membership;
 import org.tyrannyofheaven.bukkit.zPermissions.model.PermissionEntity;
 import org.tyrannyofheaven.bukkit.zPermissions.model.PermissionRegion;
@@ -407,9 +408,18 @@ public class AvajePermissionDao2 extends BaseMemoryPermissionDao {
                     return;
                 }
                 
-                if (dbEntity.isGroup()) {
-                    // Break parent/child relationship
-                    for (PermissionEntity child : dbEntity.getChildren()) {
+                if (group) {
+                    getEbeanServer().delete(getEbeanServer().find(Inheritance.class).where()
+                            .eq("child", dbEntity)
+                            .findList());
+                    getEbeanServer().delete(getEbeanServer().find(Inheritance.class).where()
+                            .eq("parent", dbEntity)
+                            .findList());
+                    // backwards compat
+                    for (PermissionEntity child : getEbeanServer().find(PermissionEntity.class).where()
+                            .eq("parent", dbEntity)
+                            .eq("group", true)
+                            .findList()) {
                         child.setParent(null);
                         getEbeanServer().save(child);
                     }
@@ -481,6 +491,88 @@ public class AvajePermissionDao2 extends BaseMemoryPermissionDao {
                 
                 dbEntity.setParent(dbParent);
                 getEbeanServer().save(dbEntity);
+            }
+        });
+    }
+
+    @Override
+    protected void createOrUpdateInheritance(Inheritance inheritance) {
+        final String childName = inheritance.getChild().getDisplayName();
+        final String parentName = inheritance.getParent().getDisplayName();
+        final int ordering = inheritance.getOrdering();
+
+        getExecutor().execute(new Runnable() {
+            @Override
+            public void run() {
+                // Locate dependent objects
+                PermissionEntity child = getEbeanServer().find(PermissionEntity.class).where()
+                        .eq("name", childName.toLowerCase())
+                        .eq("group", true)
+                        .findUnique();
+                if (child == null) {
+                    child = inconsistentEntity(childName, true);
+                }
+
+                PermissionEntity parent = getEbeanServer().find(PermissionEntity.class).where()
+                        .eq("name", parentName.toLowerCase())
+                        .eq("group", true)
+                        .findUnique();
+                if (parent == null) {
+                    parent = inconsistentEntity(parentName, true);
+                }
+                
+                Inheritance dbInheritance = getEbeanServer().find(Inheritance.class).where()
+                        .eq("child", child)
+                        .eq("parent", parent)
+                        .findUnique();
+                if (dbInheritance == null) {
+                    dbInheritance = new Inheritance();
+                    dbInheritance.setChild(child);
+                    dbInheritance.setParent(parent);
+                }
+                dbInheritance.setOrdering(ordering);
+                getEbeanServer().save(dbInheritance);
+            }
+        });
+    }
+
+    @Override
+    protected void deleteInheritance(Inheritance inheritance) {
+        final String childName = inheritance.getChild().getDisplayName();
+        final String parentName = inheritance.getParent().getDisplayName();
+        
+        getExecutor().execute(new Runnable() {
+            @Override
+            public void run() {
+                // Locate dependent objects
+                PermissionEntity child = getEbeanServer().find(PermissionEntity.class).where()
+                        .eq("name", childName.toLowerCase())
+                        .eq("group", true)
+                        .findUnique();
+                if (child == null) {
+                    databaseInconsistency();
+                    return;
+                }
+
+                PermissionEntity parent = getEbeanServer().find(PermissionEntity.class).where()
+                        .eq("name", parentName.toLowerCase())
+                        .eq("group", true)
+                        .findUnique();
+                if (parent == null) {
+                    databaseInconsistency();
+                    return;
+                }
+                
+                Inheritance dbInheritance = getEbeanServer().find(Inheritance.class).where()
+                        .eq("child", child)
+                        .eq("parent", parent)
+                        .findUnique();
+                if (dbInheritance == null) {
+                    databaseInconsistency();
+                    return;
+                }
+                
+                getEbeanServer().delete(dbInheritance);
             }
         });
     }
@@ -640,10 +732,10 @@ public class AvajePermissionDao2 extends BaseMemoryPermissionDao {
 
     public void load() {
         List<PermissionEntity> players = getEbeanServer().createQuery(PermissionEntity.class,
-                "find PermissionEntity fetch permissions where group = false")
+                "find PermissionEntity fetch permissions fetch metadata where group = false")
                 .findList();
         List<PermissionEntity> groups = getEbeanServer().createQuery(PermissionEntity.class,
-                "find PermissionEntity fetch permissions fetch parent (displayName) fetch children fetch memberships where group = true")
+                "find PermissionEntity fetch permissions fetch parent (displayName) fetch inheritancesAsChild fetch memberships fetch metadata where group = true")
                 .findList();
         load(players, groups);
     }
@@ -663,11 +755,36 @@ public class AvajePermissionDao2 extends BaseMemoryPermissionDao {
             loadMetadata(group.getMetadata(), newGroup);
             newGroup.setPriority(group.getPriority());
             if (group.getParent() != null) {
+                // Backwards compatibility
                 PermissionEntity parentEntity = getEntity(memoryState, group.getParent().getDisplayName(), true);
-                newGroup.setParent(parentEntity);
-                parentEntity.getChildren().add(newGroup);
+
+                Inheritance newInheritance = new Inheritance();
+                newInheritance.setChild(newGroup);
+                newInheritance.setParent(parentEntity);
+                newInheritance.setOrdering(0);
+                
+                // Linkages
+                newGroup.getInheritancesAsChild().add(newInheritance);
+                parentEntity.getInheritancesAsParent().add(newInheritance);
             }
-            for (Membership membership : group.getMemberships()) {
+            else {
+                for (Inheritance inheritance : group.getInheritancesAsChild()) {
+                    PermissionEntity parentEntity = getEntity(memoryState, inheritance.getParent().getDisplayName(), true);
+
+                    Inheritance newInheritance = new Inheritance();
+                    newInheritance.setChild(newGroup);
+                    newInheritance.setParent(parentEntity);
+                    newInheritance.setOrdering(inheritance.getOrdering());
+                    
+                    // Linkages
+                    newGroup.getInheritancesAsChild().add(newInheritance);
+                    parentEntity.getInheritancesAsParent().add(newInheritance);
+                }
+            }
+            List<Membership> memberships = getEbeanServer().find(Membership.class).where()
+                    .eq("group", group)
+                    .findList();
+            for (Membership membership : memberships) {
                 Membership newMembership = new Membership();
                 newMembership.setMember(membership.getMember());
                 newMembership.setGroup(newGroup);

@@ -428,11 +428,11 @@ public abstract class AbstractDaoTest {
             // Confirm
             PermissionEntity group = getDao().getEntity(TEST_GROUP1, true);
             assertNotNull(group);
-            assertNotNull(group.getParent());
-            assertEquals(TEST_GROUP2, group.getParent().getDisplayName());
+            assertFalse(group.getParents().isEmpty());
+            assertEquals(TEST_GROUP2, group.getParents().get(0).getDisplayName());
             
             group = getDao().getEntity(TEST_GROUP2, true);
-            assertEquals(1, group.getChildren().size());
+            assertEquals(1, group.getInheritancesAsParent().size());
 
             // Attempt to set cycle
             boolean good = false;
@@ -463,10 +463,10 @@ public abstract class AbstractDaoTest {
             // Confirm
             PermissionEntity group = getDao().getEntity(TEST_GROUP1, true);
             assertNotNull(group);
-            assertNull(group.getParent());
+            assertTrue(group.getParents().isEmpty());
 
             group = getDao().getEntity(TEST_GROUP2, true);
-            assertTrue(group.getChildren().isEmpty());
+            assertTrue(group.getInheritancesAsParent().isEmpty());
 
             // Clean up
             assertTrue(getDao().deleteEntity(TEST_GROUP2, true));
@@ -502,11 +502,11 @@ public abstract class AbstractDaoTest {
             // Confirm
             PermissionEntity group = getDao().getEntity(TEST_GROUP1, true);
             assertNotNull(group);
-            assertNotNull(group.getParent());
-            assertEquals(TEST_GROUP2, group.getParent().getDisplayName());
+            assertFalse(group.getParents().isEmpty());
+            assertEquals(TEST_GROUP2, group.getParents().get(0).getDisplayName());
             
             group = getDao().getEntity(TEST_GROUP2, true);
-            assertEquals(1, group.getChildren().size());
+            assertEquals(1, group.getInheritancesAsParent().size());
             
             // Purge child
             getDao().deleteEntity(TEST_GROUP1, true);
@@ -522,7 +522,7 @@ public abstract class AbstractDaoTest {
             assertNull(group);
 
             group = getDao().getEntity(TEST_GROUP2, true);
-            assertTrue(group.getChildren().isEmpty());
+            assertTrue(group.getInheritancesAsParent().isEmpty());
 
             // Clean up
             assertTrue(getDao().deleteEntity(TEST_GROUP2, true));
@@ -557,11 +557,11 @@ public abstract class AbstractDaoTest {
             // Confirm
             PermissionEntity group = getDao().getEntity(TEST_GROUP1, true);
             assertNotNull(group);
-            assertNotNull(group.getParent());
-            assertEquals(TEST_GROUP2, group.getParent().getDisplayName());
+            assertFalse(group.getParents().isEmpty());
+            assertEquals(TEST_GROUP2, group.getParents().get(0).getDisplayName());
             
             group = getDao().getEntity(TEST_GROUP2, true);
-            assertEquals(1, group.getChildren().size());
+            assertEquals(1, group.getInheritancesAsParent().size());
             
             // Purge parent
             getDao().deleteEntity(TEST_GROUP2, true);
@@ -575,7 +575,7 @@ public abstract class AbstractDaoTest {
             // Confirm
             PermissionEntity group = getDao().getEntity(TEST_GROUP1, true);
             assertNotNull(group);
-            assertNull(group.getParent());
+            assertTrue(group.getParents().isEmpty());
 
             group = getDao().getEntity(TEST_GROUP2, true);
             assertNull(group);

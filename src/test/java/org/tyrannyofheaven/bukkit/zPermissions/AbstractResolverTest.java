@@ -1,6 +1,7 @@
 package org.tyrannyofheaven.bukkit.zPermissions;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
@@ -329,8 +330,8 @@ public abstract class AbstractResolverTest {
         // Confirm
         PermissionEntity entity = getDao().getEntity(TEST_GROUP2, true);
         assertNotNull(entity);
-        assertNotNull(entity.getParent());
-        assertEquals(TEST_GROUP1, entity.getParent().getDisplayName());
+        assertFalse(entity.getParents().isEmpty());
+        assertEquals(TEST_GROUP1, entity.getParents().get(0).getDisplayName());
     
         begin();
         try {
@@ -445,8 +446,8 @@ public abstract class AbstractResolverTest {
         // Confirm
         PermissionEntity entity = getDao().getEntity(TEST_GROUP2, true);
         assertNotNull(entity);
-        assertNotNull(entity.getParent());
-        assertEquals(TEST_GROUP1, entity.getParent().getDisplayName());
+        assertFalse(entity.getParents().isEmpty());
+        assertEquals(TEST_GROUP1, entity.getParents().get(0).getDisplayName());
     
         Map<String, Boolean> permissions;
         permissions = resolve(TEST_PLAYER, TEST_WORLD1);
@@ -528,8 +529,8 @@ public abstract class AbstractResolverTest {
         // Confirm
         PermissionEntity entity = getDao().getEntity(TEST_GROUP2, true);
         assertNotNull(entity);
-        assertNotNull(entity.getParent());
-        assertEquals(TEST_GROUP1, entity.getParent().getDisplayName());
+        assertFalse(entity.getParents().isEmpty());
+        assertEquals(TEST_GROUP1, entity.getParents().get(0).getDisplayName());
     
         Map<String, Boolean> permissions;
         permissions = resolve(TEST_PLAYER, TEST_WORLD1);
@@ -610,8 +611,8 @@ public abstract class AbstractResolverTest {
         // Confirm
         PermissionEntity entity = getDao().getEntity(TEST_GROUP2, true);
         assertNotNull(entity);
-        assertNotNull(entity.getParent());
-        assertEquals(TEST_GROUP1, entity.getParent().getDisplayName());
+        assertFalse(entity.getParents().isEmpty());
+        assertEquals(TEST_GROUP1, entity.getParents().get(0).getDisplayName());
     
         // Switch group
         begin();
@@ -672,8 +673,8 @@ public abstract class AbstractResolverTest {
         // Confirm
         PermissionEntity entity = getDao().getEntity(TEST_GROUP2, true);
         assertNotNull(entity);
-        assertNotNull(entity.getParent());
-        assertEquals(TEST_GROUP1, entity.getParent().getDisplayName());
+        assertFalse(entity.getParents().isEmpty());
+        assertEquals(TEST_GROUP1, entity.getParents().get(0).getDisplayName());
     
         // Switch group
         begin();
@@ -876,13 +877,13 @@ public abstract class AbstractResolverTest {
         // Confirm
         PermissionEntity entity = getDao().getEntity(TEST_GROUP2, true);
         assertNotNull(entity);
-        assertNotNull(entity.getParent());
-        assertEquals(TEST_GROUP1, entity.getParent().getDisplayName());
+        assertFalse(entity.getParents().isEmpty());
+        assertEquals(TEST_GROUP1, entity.getParents().get(0).getDisplayName());
     
         entity = getDao().getEntity(TEST_GROUP3, true);
         assertNotNull(entity);
-        assertNotNull(entity.getParent());
-        assertEquals(TEST_GROUP2, entity.getParent().getDisplayName());
+        assertFalse(entity.getParents().isEmpty());
+        assertEquals(TEST_GROUP2, entity.getParents().get(0).getDisplayName());
 
         Map<String, Boolean> permissions;
         permissions = resolve(TEST_PLAYER, TEST_WORLD1);

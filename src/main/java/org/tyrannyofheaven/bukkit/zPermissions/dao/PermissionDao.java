@@ -57,7 +57,10 @@ public interface PermissionDao {
 
     public void setGroup(String playerName, String groupName, Date expiration);
 
+    // Technically deprecated
     public void setParent(String groupName, String parentName);
+
+    public void setParents(String groupName, List<String> parentNames);
 
     public void setPriority(String groupName, int priority);
 

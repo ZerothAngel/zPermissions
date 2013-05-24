@@ -46,4 +46,9 @@ If you have an unsupported database (something other than the 3 I mentioned), th
     <td>0.9.18</td>
     <td>Adds EntityMetadata table</td>
   <tr>
+  <tr>
+    <td>4</td>
+    <td>1.0</td>
+    <td>Adds Inheritance table</td>
+  </tr>
 </table>

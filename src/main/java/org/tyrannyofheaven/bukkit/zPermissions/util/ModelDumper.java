@@ -15,6 +15,7 @@
  */
 package org.tyrannyofheaven.bukkit.zPermissions.util;
 
+import static org.tyrannyofheaven.bukkit.util.ToHStringUtils.delimitedString;
 import static org.tyrannyofheaven.bukkit.util.ToHStringUtils.quoteArgForCommand;
 
 import java.io.File;
@@ -25,8 +26,10 @@ import java.util.Calendar;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
+import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
 
 import javax.xml.bind.DatatypeConverter;
 
@@ -83,10 +86,14 @@ public class ModelDumper {
                         out.println(String.format("permissions group %s setweight %d",
                                 quoteArgForCommand(entity.getDisplayName()),
                                 entity.getPriority()));
-                        if (entity.getParent() != null) {
-                            out.println(String.format("permissions group %s setparent %s",
+                        List<PermissionEntity> parents = entity.getParents();
+                        if (!parents.isEmpty()) {
+                            List<String> parentNames = new ArrayList<String>(parents.size());
+                            for (PermissionEntity parent : parents)
+                                parentNames.add(quoteArgForCommand(parent.getDisplayName()));
+                            out.println(String.format("permissions group %s setparents %s",
                                     quoteArgForCommand(entity.getDisplayName()),
-                                    quoteArgForCommand(entity.getParent().getDisplayName())));
+                                    delimitedString(" ", parentNames)));
                         }
                         // Dump memberships
                         for (Membership membership : storageStrategy.getDao().getMembers(entity.getName())) {
@@ -158,12 +165,12 @@ public class ModelDumper {
         
         // Seed with parent-less groups
         for (PermissionEntity group : groups) {
-            if (group.getParent() == null)
+            if (group.getParents().isEmpty())
                 scanList.add(group);
         }
         Collections.sort(scanList, Utils.PERMISSION_ENTITY_ALPHA_COMPARATOR);
 
-        List<PermissionEntity> result = new ArrayList<PermissionEntity>(groups.size());
+        Set<PermissionEntity> result = new LinkedHashSet<PermissionEntity>(groups.size());
 
         // BFS from queue to get total ordering
         while (!scanList.isEmpty()) {
@@ -173,8 +180,7 @@ public class ModelDumper {
             result.add(group);
             
             // Grab children and add to end of scanList
-            List<PermissionEntity> children = new ArrayList<PermissionEntity>(group.getChildren().size());
-            children.addAll(group.getChildren());
+            List<PermissionEntity> children = new ArrayList<PermissionEntity>(group.getChildrenNew());
             
             // Sort children alphabetically
             Collections.sort(children, Utils.PERMISSION_ENTITY_ALPHA_COMPARATOR);
@@ -182,7 +188,7 @@ public class ModelDumper {
             scanList.addAll(children);
         }
 
-        return result;
+        return new ArrayList<PermissionEntity>(result);
     }
 
 }

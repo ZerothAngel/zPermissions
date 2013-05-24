@@ -70,6 +70,7 @@ import org.tyrannyofheaven.bukkit.zPermissions.event.ZPermissionsPlayerListener;
 import org.tyrannyofheaven.bukkit.zPermissions.event.ZPermissionsRegionPlayerListener;
 import org.tyrannyofheaven.bukkit.zPermissions.model.EntityMetadata;
 import org.tyrannyofheaven.bukkit.zPermissions.model.Entry;
+import org.tyrannyofheaven.bukkit.zPermissions.model.Inheritance;
 import org.tyrannyofheaven.bukkit.zPermissions.model.Membership;
 import org.tyrannyofheaven.bukkit.zPermissions.model.PermissionEntity;
 import org.tyrannyofheaven.bukkit.zPermissions.model.PermissionRegion;
@@ -454,6 +455,7 @@ public class ZPermissionsPlugin extends JavaPlugin implements ZPermissionsCore, 
         List<Class<?>> result = new ArrayList<Class<?>>();
         result.add(ToHSchemaVersion.class);
         result.add(PermissionEntity.class);
+        result.add(Inheritance.class);
         result.add(PermissionRegion.class);
         result.add(PermissionWorld.class);
         result.add(Entry.class);
