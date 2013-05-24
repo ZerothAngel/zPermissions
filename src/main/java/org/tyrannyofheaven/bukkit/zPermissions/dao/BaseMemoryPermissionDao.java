@@ -464,13 +464,8 @@ public abstract class BaseMemoryPermissionDao implements PermissionDao {
         toDelete.removeAll(dest);
 
         // And what to update
-        Set<Inheritance> toUpdate = new HashSet<Inheritance>(group.getInheritancesAsChild());
-        toUpdate.retainAll(dest);
-
-        // Create update map for easy retrieval
-        Map<Inheritance, Inheritance> updateMap = new HashMap<Inheritance, Inheritance>();
-        for (Inheritance i : toUpdate)
-            updateMap.put(i, i);
+        Set<Inheritance> toUpdate = new HashSet<Inheritance>(dest);
+        toUpdate.retainAll(group.getInheritancesAsChild());
 
         // Add entries
         for (Inheritance i : toAdd) {
