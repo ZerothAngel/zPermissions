@@ -60,8 +60,10 @@ public class AvajeStorageStrategy implements StorageStrategy {
 
     @Override
     public void init() {
+        log(plugin, "Loading all permissions from database...");
 //        plugin.getDatabase().getAdminLogging().setDebugGeneratedSql(true);
         refreshInternal(); // synchronously
+        log(plugin, "Finished initial load.");
     }
 
     @Override
@@ -69,7 +71,7 @@ public class AvajeStorageStrategy implements StorageStrategy {
         executorService.shutdown();
         try {
             long timeout = 60L;
-            log(plugin, "Waiting upto %d seconds for pending write operations...", timeout);
+            log(plugin, "Waiting up to %d seconds for pending write operations...", timeout);
             if (!executorService.awaitTermination(timeout, TimeUnit.SECONDS)) {
                 log(plugin, Level.WARNING, "Timed out before all write operations could finish; expect inconsistencies :(");
             }
