@@ -62,8 +62,9 @@ public class AvajeStorageStrategy implements StorageStrategy {
     public void init() {
         log(plugin, "Loading all permissions from database...");
 //        plugin.getDatabase().getAdminLogging().setDebugGeneratedSql(true);
+        long start = System.currentTimeMillis();
         refreshInternal(); // synchronously
-        log(plugin, "Finished initial load.");
+        log(plugin, "Finished initial load (%d ms).", System.currentTimeMillis() - start);
     }
 
     @Override
