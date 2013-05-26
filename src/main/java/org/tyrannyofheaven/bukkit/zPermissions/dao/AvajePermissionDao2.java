@@ -731,11 +731,16 @@ public class AvajePermissionDao2 extends BaseMemoryPermissionDao {
     }
 
     public void load() {
+        // Current rationale: On any given server, the number of groups will have
+        // an upper bound. However, the number of players will not. Granted, most
+        // players will simply be members and not full-blown entities themselves.
+        // For now, join entities and permissions when fetching players.
         List<PermissionEntity> players = getEbeanServer().createQuery(PermissionEntity.class,
-                "find PermissionEntity fetch permissions fetch metadata where group = false")
+                "find PermissionEntity fetch permissions where group = false")
                 .findList();
+        // But do not bother for groups.
         List<PermissionEntity> groups = getEbeanServer().createQuery(PermissionEntity.class,
-                "find PermissionEntity fetch permissions fetch parent (displayName) fetch inheritancesAsChild fetch memberships fetch metadata where group = true")
+                "find PermissionEntity fetch parent (displayName) where group = true")
                 .findList();
         load(players, groups);
     }
@@ -747,12 +752,18 @@ public class AvajePermissionDao2 extends BaseMemoryPermissionDao {
         for (PermissionEntity player : players) {
             PermissionEntity newPlayer = getEntity(memoryState, player.getDisplayName(), false);
             loadPermissions(memoryState, player.getPermissions(), newPlayer);
-            loadMetadata(player.getMetadata(), newPlayer);
+            loadMetadata(getEbeanServer().find(EntityMetadata.class).where()
+                    .eq("entity", player)
+                    .findList(), newPlayer);
         }
         for (PermissionEntity group : groups) {
             PermissionEntity newGroup = getEntity(memoryState, group.getDisplayName(), true);
-            loadPermissions(memoryState, group.getPermissions(), newGroup);
-            loadMetadata(group.getMetadata(), newGroup);
+            loadPermissions(memoryState, getEbeanServer().find(Entry.class).where()
+                    .eq("entity", group)
+                    .findList(), newGroup);
+            loadMetadata(getEbeanServer().find(EntityMetadata.class).where()
+                    .eq("entity", group)
+                    .findList(), newGroup);
             newGroup.setPriority(group.getPriority());
             if (group.getParent() != null) {
                 // Backwards compatibility
@@ -768,7 +779,11 @@ public class AvajePermissionDao2 extends BaseMemoryPermissionDao {
                 parentEntity.getInheritancesAsParent().add(newInheritance);
             }
             else {
-                for (Inheritance inheritance : group.getInheritancesAsChild()) {
+                List<Inheritance> inheritances = getEbeanServer().find(Inheritance.class).where()
+                        .eq("child", group)
+                        .join("parent", "displayName")
+                        .findList();
+                for (Inheritance inheritance : inheritances) {
                     PermissionEntity parentEntity = getEntity(memoryState, inheritance.getParent().getDisplayName(), true);
 
                     Inheritance newInheritance = new Inheritance();
