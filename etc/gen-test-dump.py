@@ -19,10 +19,50 @@ NUM_PLAYERS_PER_GROUP = 50
 
 PLAYER_MEMBER_POOL_SIZE = 1000
 
+METADATA_TYPES = [str, int, float, bool]
+
+STR_ALPHABET = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz'
+
+NUM_METADATA_PER_PLAYER = 10
+
+NUM_METADATA_PER_GROUP = 10
+
 
 groups_at_depth = []
 for i in range(len(NUM_GROUPS)):
     groups_at_depth.append([])
+
+
+def generate_metadata(name, is_group, count):
+    for i in range(count):
+        type = METADATA_TYPES[random.randint(0, len(METADATA_TYPES) - 1)]
+        suffix = ''
+        if type is str:
+            length = random.randint(5,20)
+            value = []
+            for i in range(length):
+                value.append(STR_ALPHABET[random.randint(0, len(STR_ALPHABET) - 1)])
+            value = ''.join(value)
+        elif type is int:
+            suffix = 'int'
+            value = random.randint(-10000, 10000)
+        elif type is float:
+            suffix = 'real'
+            value = random.random() * 20000.0 - 10000.0
+        elif type is bool:
+            value = 'bool'
+            value = random.randint(0,1)
+            if value == 0:
+                value = 'false'
+            else:
+                value = 'true'
+        print('permissions %s %s metadata set%s metadata.%s.%d %s' % (
+            is_group and 'group' or 'player',
+            name,
+            suffix,
+            name,
+            i,
+            value))
 
 
 def generate_permissions(name, is_group, count):
@@ -70,6 +110,7 @@ def main():
     for p in range(NUM_PLAYERS):
         generate_permissions('TestPlayer%d' % p, False,
                              NUM_PERMISSIONS_PER_PLAYER)
+        generate_metadata('TestPlayer%d' % p, False, NUM_METADATA_PER_PLAYER)
 
     group_count = 0
     for depth, num_at_depth in enumerate(NUM_GROUPS):
@@ -79,6 +120,7 @@ def main():
             generate_group(name, depth)
             generate_permissions(name, True, NUM_PERMISSIONS_PER_GROUP)
             generate_members(name, NUM_PLAYERS_PER_GROUP)
+            generate_metadata(name, True, NUM_METADATA_PER_GROUP)
 
 
 if __name__ == '__main__':
