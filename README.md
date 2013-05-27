@@ -10,6 +10,8 @@ Please post bugs and/or feature requests as [dev.bukkit.org tickets](http://dev.
 
 [ [Quick start documentation](http://dev.bukkit.org/server-mods/zpermissions/pages/quick-start/) | [For Server Admins](http://dev.bukkit.org/server-mods/zpermissions/pages/for-server-admins/) | [FAQ](http://dev.bukkit.org/server-mods/zpermissions/pages/frequently-asked-questions/) ]
 
+More documentation below!
+
 ## Features ##
 
 *   **A variety of storage options, from SQL to flat-file.** Uses Bukkit database to store permissions (i.e. settings in bukkit.yml). Should work with most databases supported by [Avaje Ebean](http://www.avaje.org) &mdash; I've specifically tested with PostgreSQL, MySQL, and H2. The default Bukkit database, SQLite, is **not** supported. zPermissions will automatically fall back to flat-file storage if it is used.
