@@ -8,9 +8,7 @@ I aim to keep zPermissions a simple, yet feature-rich, Superperms provider.
 
 Please post bugs and/or feature requests as [dev.bukkit.org tickets](http://dev.bukkit.org/server-mods/zpermissions/tickets/).
 
-[ [Quick start documentation](http://dev.bukkit.org/server-mods/zpermissions/pages/quick-start/) | [For Server Admins](http://dev.bukkit.org/server-mods/zpermissions/pages/for-server-admins/) | [FAQ](http://dev.bukkit.org/server-mods/zpermissions/pages/frequently-asked-questions/) ]
-
-More documentation below!
+[ [Quick start documentation](http://dev.bukkit.org/server-mods/zpermissions/pages/quick-start/) | [For Server Admins](http://dev.bukkit.org/server-mods/zpermissions/pages/for-server-admins/) | [FAQ](http://dev.bukkit.org/server-mods/zpermissions/pages/frequently-asked-questions/) | More documentation below! ]
 
 ## Features ##
 
