@@ -20,6 +20,7 @@ import static org.tyrannyofheaven.bukkit.util.ToHStringUtils.hasText;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -136,7 +137,7 @@ public class ZPermissionsServiceImpl implements ZPermissionsService {
         if (!hasText(playerName))
             throw new IllegalArgumentException("playerName must have a value");
 
-        final Set<String> result = new HashSet<String>();
+        final Set<String> result = new LinkedHashSet<String>();
 
         getTransactionStrategy().execute(new TransactionCallbackWithoutResult() {
             @Override
