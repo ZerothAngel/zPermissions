@@ -397,6 +397,9 @@ public class SubCommands {
                 broadcastAdmin(plugin, "%s performed full permissions purge", sender.getName());
                 sendMessage(sender, colorize("{YELLOW}Full permissions purge successful."));
                 purgeCode = null;
+                
+                core.refreshPlayers();
+                core.refreshExpirations();
             }
         }
         else {
