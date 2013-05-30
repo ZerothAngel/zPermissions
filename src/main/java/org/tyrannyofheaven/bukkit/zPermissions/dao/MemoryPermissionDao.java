@@ -172,6 +172,11 @@ public class MemoryPermissionDao extends BaseMemoryPermissionDao {
         return super.unsetMetadata(name, group, metadataName);
     }
 
+    @Override
+    public synchronized void setParents(String groupName, List<String> parentNames) {
+        super.setParents(groupName, parentNames);
+    }
+
     /**
      * Save state of entire system to filesyste.
      * 
