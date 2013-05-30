@@ -177,6 +177,11 @@ public class AvajePermissionDao2 extends BaseMemoryPermissionDao {
     }
 
     @Override
+    synchronized public void setParents(String groupName, List<String> parentNames) {
+        super.setParents(groupName, parentNames);
+    }
+
+    @Override
     protected void createRegion(PermissionRegion region) {
         final String name = region.getName();
 
