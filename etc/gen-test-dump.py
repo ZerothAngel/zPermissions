@@ -40,7 +40,7 @@ def generate_metadata(name, is_group, count):
         if type is str:
             length = random.randint(5,20)
             value = []
-            for i in range(length):
+            for j in range(length):
                 value.append(STR_ALPHABET[random.randint(0, len(STR_ALPHABET) - 1)])
             value = ''.join(value)
         elif type is int:
@@ -60,7 +60,7 @@ def generate_metadata(name, is_group, count):
             is_group and 'group' or 'player',
             name,
             suffix,
-            name,
+            name.lower(),
             i,
             value))
 
@@ -80,9 +80,9 @@ def generate_permissions(name, is_group, count):
         print('permissions %s %s set %s%spermission.%s.%d true' % (
             is_group and 'group' or 'player',
             name,
-            region,
-            world,
-            name,
+            region.lower(),
+            world.lower(),
+            name.lower(),
             i))
 
 
@@ -95,15 +95,20 @@ def generate_group(name, depth):
         # Pick random parent of previous depth
         potential_parents = groups_at_depth[depth - 1]
         parent = potential_parents[random.randint(0, len(potential_parents) - 1)]
-        print('permissions group %s setparent %s' % (name, parent))
+        print('permissions group %s setparents %s' % (name, parent))
+    print('permissions group %s setweight 0' % name)
     assert name not in groups_at_depth[depth]
     groups_at_depth[depth].append(name)
 
 
 def generate_members(name, count):
-    for i in range(count):
+    members = set([])
+    while len(members) < count:
         p = random.randint(0, PLAYER_MEMBER_POOL_SIZE - 1)
-        print('permissions group %s add TestPlayer%d' % (name, p))
+        if p in members:
+            continue
+        members.add(p)
+        print('permissions group %s add testplayer%d' % (name, p))
 
 
 def main():
