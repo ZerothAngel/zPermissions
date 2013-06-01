@@ -26,7 +26,6 @@ import static org.tyrannyofheaven.bukkit.util.ToHStringUtils.hasText;
 
 import java.io.File;
 import java.io.IOException;
-import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -45,7 +44,9 @@ import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.metadata.FixedMetadataValue;
 import org.bukkit.metadata.MetadataValue;
+import org.bukkit.permissions.Permission;
 import org.bukkit.permissions.PermissionAttachment;
+import org.bukkit.permissions.PermissionDefault;
 import org.bukkit.permissions.PermissionRemovedExecutor;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.ServicePriority;
@@ -141,14 +142,14 @@ public class ZPermissionsPlugin extends JavaPlugin implements ZPermissionsCore, 
     // Default auto-refresh interval
     private static final int DEFAULT_AUTO_REFRESH_INTERVAL = -1;
 
-    // Default optimize set permissions (using reflection)
-    private static final boolean DEFAULT_OPTIMIZE_SET_PERMISSIONS = true;
-
     // Filename of file-based storage
     private static final String FILE_STORAGE_FILENAME = "data.yml";
 
     // Name of metadata key for our PlayerState instances
     private static final String PLAYER_METADATA_KEY = "zPermissions.PlayerState";
+
+    // Prefix for each player's dynamic permission
+    public static final String DYNAMIC_PERMISSION_PREFIX = "zPermissions_player.";
 
     // Version info (may include build number)
     private VersionInfo versionInfo;
@@ -200,9 +201,6 @@ public class ZPermissionsPlugin extends JavaPlugin implements ZPermissionsCore, 
 
     // Task ID for auto-refresh task
     private int autoRefreshTaskId = -1;
-
-    // Optimize setting permissions in Bukkit PermissionAttachments
-    private boolean optimizeSetPermissions;
 
     // Strategy for permissions storage
     private StorageStrategy storageStrategy;
@@ -473,6 +471,7 @@ public class ZPermissionsPlugin extends JavaPlugin implements ZPermissionsCore, 
             playerState.removeAttachment(); // potential to call a callback
         }
         player.removeMetadata(PLAYER_METADATA_KEY, this);
+        Bukkit.getPluginManager().removePermission(DYNAMIC_PERMISSION_PREFIX + player.getName());
     }
     
     // Update state about a player, resolving effective permissions and
@@ -550,7 +549,12 @@ public class ZPermissionsPlugin extends JavaPlugin implements ZPermissionsCore, 
             }
         });
 
-        // Create attachment and set its permissions
+        // Create dynamic permission to hold all permissions this player should have at this moment
+        Permission perm = new Permission(DYNAMIC_PERMISSION_PREFIX + player.getName(), PermissionDefault.FALSE, resolverResult.getPermissions());
+        Bukkit.getPluginManager().removePermission(perm);
+        Bukkit.getPluginManager().addPermission(perm);
+
+        // Create attachment (if needed) and set its permission
         PermissionAttachment pa = null;
         boolean created = false;
 
@@ -560,43 +564,17 @@ public class ZPermissionsPlugin extends JavaPlugin implements ZPermissionsCore, 
         }
         
         if (pa == null) {
-            // Create brand new one, if needed
-            pa = player.addAttachment(this);
+            // Create brand new one
+            pa = player.addAttachment(this, perm.getName(), true);
             created = true;
+        }
+        else {
+            // Re-set dynamic permission
+            pa.unsetPermission(perm); // Not sure if strictly needed, but just to be safe...
+            pa.setPermission(perm, true);
         }
 
         debug(this, "(Existing PlayerState = %s, existing attachment = %s)", playerState != null, !created);
-
-        boolean succeeded = false;
-        if (optimizeSetPermissions) {
-            try {
-                // This is bad, but pretty much necessary.
-                // Use reflection to get access to the PermissionAttachment's
-                // permissions map. Set our permissions all at once, then call
-                // recalculatePermissions() once.
-                Field perms = pa.getClass().getDeclaredField("permissions");
-                perms.setAccessible(true);
-                @SuppressWarnings("unchecked")
-                Map<String, Boolean> privatePerms = (Map<String, Boolean>)perms.get(pa);
-                privatePerms.clear();
-                privatePerms.putAll(resolverResult.getPermissions());
-                pa.getPermissible().recalculatePermissions();
-                succeeded = true;
-            }
-            catch (Exception e) {
-                // Do nothing
-                warn(this, "Setting permissions the slow way. Is zPermissions up-to-date?");
-            }
-        }
-        if (!succeeded) {
-            // The slow, but legal way
-            if (!created)
-                pa = player.addAttachment(this); // create new one to start from clean slate
-            // Set each permission individually... which unfortunately calls recalculatePermissions each time
-            for (Map.Entry<String, Boolean> me : resolverResult.getPermissions().entrySet()) {
-                pa.setPermission(me.getKey(), me.getValue());
-            }
-        }
 
         // Update state
         PermissionAttachment old = null;
@@ -614,8 +592,10 @@ public class ZPermissionsPlugin extends JavaPlugin implements ZPermissionsCore, 
         }
         
         // Remove old attachment, if there was one and it's different (avoids recalculatePermissions call)
-        if (old != null && old != pa)
+        if (old != null && old != pa) {
+            debug(this, "Removing old PermissionAttachment");
             old.remove();
+        }
     }
 
     // Returns names of regions that contain the location
@@ -845,7 +825,6 @@ public class ZPermissionsPlugin extends JavaPlugin implements ZPermissionsCore, 
         defaultTempPermissionTimeout = config.getInt("default-temp-permission-timeout", DEFAULT_TEMP_PERMISSION_TIMEOUT);
         txnMaxRetries = config.getInt("txn-max-retries", DEFAULT_TXN_MAX_RETRIES); // FIXME hidden
         rankAdminBroadcast = config.getBoolean("rank-admin-broadcast", DEFAULT_RANK_ADMIN_BROADCAST);
-        optimizeSetPermissions = config.getBoolean("optimize-set-permissions", DEFAULT_OPTIMIZE_SET_PERMISSIONS); // FIXME hidden for now
 
         // Read tracks, if any
         ConfigurationSection node = config.getConfigurationSection("tracks");
