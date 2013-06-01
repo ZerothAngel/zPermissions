@@ -52,11 +52,11 @@ public class ExpirationRefreshHandler implements Runnable {
 
     private final Plugin plugin;
 
-    private final Queue<Membership> membershipQueue = new PriorityQueue<Membership>(11, MEMBERSHIP_EXPIRATION_COMPARATOR);
-
     private final ScheduledExecutorService executorService;
 
-    private ScheduledFuture<?> scheduledFuture;
+    private final Queue<Membership> membershipQueue = new PriorityQueue<Membership>(11, MEMBERSHIP_EXPIRATION_COMPARATOR); // synchronized on this
+
+    private ScheduledFuture<?> scheduledFuture; // synchronized on this
 
     public ExpirationRefreshHandler(ZPermissionsCore core, StorageStrategy storageStrategy, Plugin plugin) {
         this.core = core;
@@ -66,7 +66,7 @@ public class ExpirationRefreshHandler implements Runnable {
         executorService = Executors.newSingleThreadScheduledExecutor();
     }
 
-    public void rescan() {
+    public synchronized void rescan() {
         membershipQueue.clear();
         Date now = new Date();
         for (Player player : Bukkit.getOnlinePlayers()) {
@@ -84,7 +84,7 @@ public class ExpirationRefreshHandler implements Runnable {
     }
 
     @Override
-    public void run() {
+    public synchronized void run() {
         Set<String> toRefresh = new LinkedHashSet<String>();
 
         // Gather up memberships that have already expired

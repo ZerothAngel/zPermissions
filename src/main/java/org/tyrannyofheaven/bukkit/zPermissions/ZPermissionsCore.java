@@ -34,6 +34,7 @@ public interface ZPermissionsCore {
 
     public void refreshPlayers();
 
+    // NB called from async thread
     public void refreshPlayers(Collection<String> playerNames);
 
     public void refreshAffectedPlayers(String groupName);
