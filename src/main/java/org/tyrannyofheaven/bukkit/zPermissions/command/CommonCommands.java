@@ -45,6 +45,7 @@ import org.tyrannyofheaven.bukkit.zPermissions.PermissionsResolver;
 import org.tyrannyofheaven.bukkit.zPermissions.QualifiedPermission;
 import org.tyrannyofheaven.bukkit.zPermissions.ZPermissionsConfig;
 import org.tyrannyofheaven.bukkit.zPermissions.ZPermissionsCore;
+import org.tyrannyofheaven.bukkit.zPermissions.ZPermissionsPlugin;
 import org.tyrannyofheaven.bukkit.zPermissions.dao.MissingGroupException;
 import org.tyrannyofheaven.bukkit.zPermissions.model.EntityMetadata;
 import org.tyrannyofheaven.bukkit.zPermissions.model.Entry;
@@ -102,6 +103,9 @@ public abstract class CommonCommands {
         // Get world/permission
         final QualifiedPermission wp = new QualifiedPermission(permission);
 
+        // Don't allow messing with the dynamic permission
+        if (checkDynamicPermission(sender, wp.getPermission())) return;
+
         // Read entry from DAO, if any
         Boolean result = storageStrategy.getRetryingTransactionStrategy().execute(new TransactionCallback<Boolean>() {
             @Override
@@ -126,6 +130,9 @@ public abstract class CommonCommands {
         // Get world/permission
         final QualifiedPermission wp = new QualifiedPermission(permission);
     
+        // Don't allow messing with the dynamic permission
+        if (checkDynamicPermission(sender, wp.getPermission())) return;
+
         // Set permission.
         try {
             storageStrategy.getRetryingTransactionStrategy().execute(new TransactionCallbackWithoutResult() {
@@ -155,6 +162,9 @@ public abstract class CommonCommands {
         // Get world/permission
         final QualifiedPermission wp = new QualifiedPermission(permission);
     
+        // Don't allow messing with the dynamic permission
+        if (checkDynamicPermission(sender, wp.getPermission())) return;
+
         // Delete permission entry.
         Boolean result = storageStrategy.getRetryingTransactionStrategy().execute(new TransactionCallback<Boolean>() {
             @Override
@@ -176,6 +186,15 @@ public abstract class CommonCommands {
                 Utils.checkPlayer(sender, name);
             abortBatchProcessing();
         }
+    }
+
+    private boolean checkDynamicPermission(CommandSender sender, String permission) {
+        permission = permission.toLowerCase();
+        if (permission.startsWith(ZPermissionsPlugin.DYNAMIC_PERMISSION_PREFIX.toLowerCase())) {
+            sendMessage(sender, colorize("{RED}I don't think so."));
+            return true;
+        }
+        return false;
     }
 
     @Command(value="purge", description="Delete this group or player") // doh!

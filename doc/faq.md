@@ -24,14 +24,6 @@
     
     Of course, whether or not it can co-exist with plugin X also depends on whether plugin X also plays nicely...
 
-*   **Does zPermissions work with MCPC+ servers?**
-
-    I don't explicitly test with non-CraftBukkit implementations of the Bukkit API, but I have added a workaround for MCPC+ servers: Simply edit config.yml and add the following option:
-    
-        optimize-set-permissions: false
-    
-    This disables the reflection-based bulk setting of permissions that zPermissions normally does. This optimization is about the only API-breaking thing zPermissions does... but it is almost necessary on CraftBukkit servers. Disabling it on CraftBukkit servers means updating a player's permissions takes 10-15 times longer due to CraftBukkit recalculating permissions *after every single permission is set*. On my hardware, that means going from <1ms to 150ms or more. That's way more than a single Minecraft tick. I have no idea whether this would affect MCPC+ the same, but just be aware.
-
 *   **Why another permissions plugin?**
 
     Well, I don't actually get this question much anymore. But in short:
