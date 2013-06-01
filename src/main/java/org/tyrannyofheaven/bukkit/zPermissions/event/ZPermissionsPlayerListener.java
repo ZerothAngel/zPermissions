@@ -15,11 +15,14 @@
  */
 package org.tyrannyofheaven.bukkit.zPermissions.event;
 
+import static org.tyrannyofheaven.bukkit.util.ToHLoggingUtils.debug;
+
 import org.bukkit.Bukkit;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerChangedWorldEvent;
+import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerLoginEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.plugin.Plugin;
@@ -42,9 +45,28 @@ public class ZPermissionsPlayerListener implements Listener {
         this.plugin = plugin;
     }
 
+    // Do this early for the benefit of anything listening on the same event
     @EventHandler(priority=EventPriority.LOWEST)
     public void onPlayerLogin(PlayerLoginEvent event) {
+        debug(plugin, "%s logged in", event.getPlayer().getName());
         core.updateAttachment(event.getPlayer(), event.getPlayer().getLocation(), true);
+        // NB don't bother with expirations until join
+    }
+
+    @EventHandler(priority=EventPriority.MONITOR)
+    public void onPlayerLoginMonitor(PlayerLoginEvent event) {
+        // If they aren't sticking around...
+        if (event.getResult() != PlayerLoginEvent.Result.ALLOWED) {
+            // Forget about them
+            debug(plugin, "%s is not allowed to log in", event.getPlayer().getName());
+            core.removeAttachment(event.getPlayer());
+        }
+    }
+
+    @EventHandler(priority=EventPriority.MONITOR)
+    public void onPlayerJoin(PlayerJoinEvent event) {
+        debug(plugin, "%s joining", event.getPlayer().getName());
+        core.updateAttachment(event.getPlayer(), event.getPlayer().getLocation(), true); // Does this need to be forced again?
         // Wait for next tick...
         Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, new Runnable() {
             @Override
@@ -56,6 +78,7 @@ public class ZPermissionsPlayerListener implements Listener {
 
     @EventHandler(priority=EventPriority.MONITOR)
     public void onPlayerQuit(PlayerQuitEvent event) {
+        debug(plugin, "%s quitting", event.getPlayer().getName());
         core.removeAttachment(event.getPlayer());
         // Wait for next tick...
         Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, new Runnable() {
