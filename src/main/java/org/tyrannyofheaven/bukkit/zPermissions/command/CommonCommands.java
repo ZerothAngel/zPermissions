@@ -188,7 +188,14 @@ public abstract class CommonCommands {
         }
     }
 
-    private boolean checkDynamicPermission(CommandSender sender, String permission) {
+    /**
+     * Verifies given permission does not start with the dynamic permission prefix.
+     * 
+     * @param sender the CommandSender to complain to if it does
+     * @param permission the permission (must be unqualified)
+     * @return true if it starts with the prefix, false otherwise
+     */
+    protected boolean checkDynamicPermission(CommandSender sender, String permission) {
         permission = permission.toLowerCase();
         if (permission.startsWith(ZPermissionsPlugin.DYNAMIC_PERMISSION_PREFIX.toLowerCase())) {
             sendMessage(sender, colorize("{RED}I don't think so."));
