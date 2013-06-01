@@ -42,11 +42,11 @@ public class RefreshTask implements Runnable {
 
     private final Plugin plugin;
 
-    private final Queue<String> playersToRefresh = new LinkedList<String>();
-
     private int delay;
 
-    private int taskId = -1;
+    private final Queue<String> playersToRefresh = new LinkedList<String>(); // synchronized on this
+
+    private int taskId = -1; // synchronized on this
 
     public RefreshTask(ZPermissionsCore core, Plugin plugin) {
         this.core = core;
@@ -59,7 +59,7 @@ public class RefreshTask implements Runnable {
         this.delay = delay;
     }
 
-    public void start(Collection<String> playerNames) {
+    public synchronized void start(Collection<String> playerNames) {
         if (playerNames == null || playerNames.isEmpty())
             return; // Nothing to do
 
@@ -89,7 +89,7 @@ public class RefreshTask implements Runnable {
         }
     }
 
-    public void stop() {
+    public synchronized void stop() {
         if (taskId > -1) {
             warn(plugin, "RefreshTask cancelled prematurely! Remaining players: %s", delimitedString(", ", playersToRefresh));
             Bukkit.getScheduler().cancelTask(taskId);
@@ -98,7 +98,7 @@ public class RefreshTask implements Runnable {
     }
 
     @Override
-    public void run() {
+    public synchronized void run() {
         taskId = -1;
 
         if (!playersToRefresh.isEmpty()) {
