@@ -141,6 +141,8 @@ public class PlayerCommands extends CommonCommands {
             return;
         }
 
+        if (checkDynamicPermission(sender, permission)) return;
+
         player.addAttachment(plugin, permission, value == null ? true : value, ToHUtils.TICKS_PER_SECOND * timeout);
 
         sendMessage(sender, colorize("{GOLD}%s{YELLOW} set to {GREEN}%s{YELLOW} for {AQUA}%s{YELLOW} for %d second%s"), permission, value == null ? Boolean.TRUE : value, player.getName(), timeout, timeout == 1 ? "" : "s");

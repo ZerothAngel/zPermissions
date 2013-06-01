@@ -47,7 +47,6 @@ import org.bukkit.metadata.MetadataValue;
 import org.bukkit.permissions.Permission;
 import org.bukkit.permissions.PermissionAttachment;
 import org.bukkit.permissions.PermissionDefault;
-import org.bukkit.permissions.PermissionRemovedExecutor;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.ServicePriority;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -295,11 +294,7 @@ public class ZPermissionsPlugin extends JavaPlugin implements ZPermissionsCore, 
 
         // Remove attachments
         for (Player player : Bukkit.getOnlinePlayers()) {
-            PlayerState playerState = getPlayerState(player);
-            if (playerState != null) {
-                playerState.removeAttachment();
-            }
-            player.removeMetadata(PLAYER_METADATA_KEY, this);
+            removeAttachment(player);
         }
 
         log(this, "%s disabled.", versionInfo.getVersionString());
@@ -468,7 +463,7 @@ public class ZPermissionsPlugin extends JavaPlugin implements ZPermissionsCore, 
         debug(this, "Removing attachment for %s", player.getName());
         PlayerState playerState = getPlayerState(player);
         if (playerState != null) {
-            playerState.removeAttachment(); // potential to call a callback
+            playerState.getAttachment().remove(); // potential to call a callback
         }
         player.removeMetadata(PLAYER_METADATA_KEY, this);
         Bukkit.getPluginManager().removePermission(DYNAMIC_PERMISSION_PREFIX + player.getName());
@@ -524,12 +519,10 @@ public class ZPermissionsPlugin extends JavaPlugin implements ZPermissionsCore, 
         PlayerState playerState = getPlayerState(player);
 
         // Check if the player changed regions/worlds or isn't known yet
-        // (Or if attachment mysteriously disappeared...)
         if (!force) {
             force = playerState == null ||
                 !regions.equals(playerState.getRegions()) ||
-                !location.getWorld().getName().equals(playerState.getWorld()) ||
-                playerState.getAttachment() == null;
+                !location.getWorld().getName().equals(playerState.getWorld());
         }
 
         // No need to update yet (most likely called by movement-based event)
@@ -554,47 +547,23 @@ public class ZPermissionsPlugin extends JavaPlugin implements ZPermissionsCore, 
         Bukkit.getPluginManager().removePermission(perm);
         Bukkit.getPluginManager().addPermission(perm);
 
-        // Create attachment (if needed) and set its permission
-        PermissionAttachment pa = null;
-        boolean created = false;
+        debug(this, "(Existing PlayerState = %s)", playerState != null);
 
         if (playerState != null) {
-            // Re-use old attachment
-            pa = playerState.getAttachment(); // NB may be null due to premature removal
-        }
-        
-        if (pa == null) {
-            // Create brand new one
-            pa = player.addAttachment(this, perm.getName(), true);
-            created = true;
-        }
-        else {
             // Re-set dynamic permission
-            pa.unsetPermission(perm); // Not sure if strictly needed, but just to be safe...
-            pa.setPermission(perm, true);
-        }
+            player.recalculatePermissions();
 
-        debug(this, "(Existing PlayerState = %s, existing attachment = %s)", playerState != null, !created);
-
-        // Update state
-        PermissionAttachment old = null;
-        if (playerState == null) {
-            // Doesn't exist yet, add it
-            playerState = new PlayerState(pa, regions, location.getWorld().getName(), resolverResult.getGroups());
-            player.setMetadata(PLAYER_METADATA_KEY, new FixedMetadataValue(this, playerState));
-        }
-        else {
             // Update values
-            old = playerState.setAttachment(pa);
             playerState.setRegions(regions);
             playerState.setWorld(location.getWorld().getName());
             playerState.setGroups(resolverResult.getGroups());
         }
-        
-        // Remove old attachment, if there was one and it's different (avoids recalculatePermissions call)
-        if (old != null && old != pa) {
-            debug(this, "Removing old PermissionAttachment");
-            old.remove();
+        else {
+            // Create brand new attachment and PlayerState
+            PermissionAttachment pa = player.addAttachment(this, perm.getName(), true);
+
+            playerState = new PlayerState(pa, regions, location.getWorld().getName(), resolverResult.getGroups());
+            player.setMetadata(PLAYER_METADATA_KEY, new FixedMetadataValue(this, playerState));
         }
     }
 
@@ -957,9 +926,9 @@ public class ZPermissionsPlugin extends JavaPlugin implements ZPermissionsCore, 
     }
 
     // Encapsulates state about a player
-    private static class PlayerState implements PermissionRemovedExecutor {
+    private static class PlayerState {
         
-        private PermissionAttachment attachment;
+        private final PermissionAttachment attachment;
 
         private Set<String> regions;
 
@@ -968,7 +937,9 @@ public class ZPermissionsPlugin extends JavaPlugin implements ZPermissionsCore, 
         private Set<String> groups;
 
         public PlayerState(PermissionAttachment attachment, Set<String> regions, String world, Set<String> groups) {
-            setAttachment(attachment);
+            if (attachment == null)
+                throw new IllegalArgumentException("attachment cannot be null");
+            this.attachment = attachment;
             setRegions(regions);
             setWorld(world);
             setGroups(groups);
@@ -976,21 +947,6 @@ public class ZPermissionsPlugin extends JavaPlugin implements ZPermissionsCore, 
 
         public PermissionAttachment getAttachment() {
             return attachment;
-        }
-
-        public PermissionAttachment setAttachment(PermissionAttachment attachment) {
-            if (attachment == null)
-                throw new IllegalArgumentException("attachment cannot be null");
-            PermissionAttachment old = this.attachment;
-            this.attachment = attachment;
-            this.attachment.setRemovalCallback(this);
-            return old;
-        }
-
-        public void removeAttachment() {
-            if (attachment != null)
-                attachment.remove();
-            attachment = null;
         }
 
         public void setRegions(Set<String> regions) {
@@ -1022,12 +978,6 @@ public class ZPermissionsPlugin extends JavaPlugin implements ZPermissionsCore, 
                 this.groups.add(group.toLowerCase());
             }
             this.groups = Collections.unmodifiableSet(this.groups);
-        }
-
-        @Override
-        public void attachmentRemoved(PermissionAttachment attachment) {
-            if (attachment == this.attachment)
-                this.attachment = null;
         }
 
     }
