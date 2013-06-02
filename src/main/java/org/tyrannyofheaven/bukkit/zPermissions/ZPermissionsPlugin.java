@@ -472,9 +472,10 @@ public class ZPermissionsPlugin extends JavaPlugin implements ZPermissionsCore, 
     // Update state about a player, resolving effective permissions and
     // creating/updating their attachment
     @Override
-    public void updateAttachment(Player player, Location location, boolean force) {
+    public void updateAttachment(Player player, Location location, boolean force, RefreshCause eventCause) {
+        boolean changed = false;
         try {
-            updateAttachmentInternal(player, location, force);
+            changed = updateAttachmentInternal(player, location, force);
         }
         catch (Error e) {
             throw e; // Never catch errors
@@ -502,6 +503,28 @@ public class ZPermissionsPlugin extends JavaPlugin implements ZPermissionsCore, 
                 sendMessage(player, colorize("{RED}Error determining your permissions; all permissions removed!"));
             }
         }
+        
+        // Fire off event if requested and changed
+        if (eventCause != null && changed) {
+            // Translate RefreshEvent to ZPermissionsPlayerPermissionsChangeEvent.Cause
+            // Kinda dumb, but I don't want internal code to depend on the event class.
+            ZPermissionsPlayerUpdateEvent.Cause cause;
+            switch (eventCause) {
+            case COMMAND:
+                cause = ZPermissionsPlayerUpdateEvent.Cause.COMMAND;
+                break;
+            case GROUP_CHANGE:
+                cause = ZPermissionsPlayerUpdateEvent.Cause.GROUP_CHANGE;
+                break;
+            case MOVEMENT:
+                cause = ZPermissionsPlayerUpdateEvent.Cause.MOVEMENT;
+                break;
+            default:
+                throw new AssertionError("Unhandled RefreshCause: " + eventCause);
+            }
+            ZPermissionsPlayerUpdateEvent event = new ZPermissionsPlayerUpdateEvent(player, cause);
+            Bukkit.getPluginManager().callEvent(event);
+        }
     }
 
     // Simulate failures probabilistically
@@ -513,7 +536,7 @@ public class ZPermissionsPlugin extends JavaPlugin implements ZPermissionsCore, 
 
     // Update state about a player, resolving effective permissions and
     // creating/updating their attachment
-    private void updateAttachmentInternal(final Player player, Location location, boolean force) {
+    private boolean updateAttachmentInternal(final Player player, Location location, boolean force) {
         final Set<String> regions = getRegions(location);
 
         PlayerState playerState = getPlayerState(player);
@@ -526,7 +549,7 @@ public class ZPermissionsPlugin extends JavaPlugin implements ZPermissionsCore, 
         }
 
         // No need to update yet (most likely called by movement-based event)
-        if (!force) return;
+        if (!force) return false;
 
         debug(this, "Updating attachment for %s", player.getName());
         debug(this, "  location = %s", location);
@@ -565,6 +588,8 @@ public class ZPermissionsPlugin extends JavaPlugin implements ZPermissionsCore, 
             playerState = new PlayerState(pa, regions, location.getWorld().getName(), resolverResult.getGroups());
             player.setMetadata(PLAYER_METADATA_KEY, new FixedMetadataValue(this, playerState));
         }
+        
+        return true;
     }
 
     // Returns names of regions that contain the location
@@ -582,11 +607,11 @@ public class ZPermissionsPlugin extends JavaPlugin implements ZPermissionsCore, 
      * @param playerName the name of the player
      */
     @Override
-    public void refreshPlayer(String playerName) {
+    public void refreshPlayer(String playerName, RefreshCause cause) {
         Player player = Bukkit.getPlayerExact(playerName);
         if (player != null) {
             debug(this, "Refreshing player %s", player.getName());
-            updateAttachment(player, player.getLocation(), true);
+            updateAttachment(player, player.getLocation(), true, cause);
         }
     }
 

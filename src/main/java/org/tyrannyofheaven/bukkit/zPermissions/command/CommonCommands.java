@@ -43,6 +43,7 @@ import org.tyrannyofheaven.bukkit.util.transaction.TransactionCallback;
 import org.tyrannyofheaven.bukkit.util.transaction.TransactionCallbackWithoutResult;
 import org.tyrannyofheaven.bukkit.zPermissions.PermissionsResolver;
 import org.tyrannyofheaven.bukkit.zPermissions.QualifiedPermission;
+import org.tyrannyofheaven.bukkit.zPermissions.RefreshCause;
 import org.tyrannyofheaven.bukkit.zPermissions.ZPermissionsConfig;
 import org.tyrannyofheaven.bukkit.zPermissions.ZPermissionsCore;
 import org.tyrannyofheaven.bukkit.zPermissions.ZPermissionsPlugin;
@@ -150,7 +151,7 @@ public abstract class CommonCommands {
         sendMessage(sender, colorize("{GOLD}%s{YELLOW} set to {GREEN}%s{YELLOW} for %s%s"), permission, value == null ? Boolean.TRUE : value, group ? ChatColor.DARK_GREEN : ChatColor.AQUA, name);
         if (!group) {
             Utils.checkPlayer(sender, name);
-            core.refreshPlayer(name);
+            core.refreshPlayer(name, RefreshCause.COMMAND);
         }
         else {
             core.refreshAffectedPlayers(name);
@@ -178,7 +179,7 @@ public abstract class CommonCommands {
             if (group)
                 core.refreshAffectedPlayers(name);
             else
-                core.refreshPlayer(name);
+                core.refreshPlayer(name, RefreshCause.COMMAND);
         }
         else {
             sendMessage(sender, colorize("%s%s{RED} does not set {GOLD}%s"), group ? ChatColor.DARK_GREEN : ChatColor.AQUA, name, permission);
@@ -221,7 +222,7 @@ public abstract class CommonCommands {
             if (group)
                 core.refreshAffectedPlayers(name);
             else
-                core.refreshPlayer(name);
+                core.refreshPlayer(name, RefreshCause.COMMAND);
             core.refreshExpirations();
         }
         else {

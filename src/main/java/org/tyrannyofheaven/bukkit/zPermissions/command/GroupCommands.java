@@ -38,6 +38,7 @@ import org.tyrannyofheaven.bukkit.util.command.Session;
 import org.tyrannyofheaven.bukkit.util.transaction.TransactionCallback;
 import org.tyrannyofheaven.bukkit.util.transaction.TransactionCallbackWithoutResult;
 import org.tyrannyofheaven.bukkit.zPermissions.PermissionsResolver;
+import org.tyrannyofheaven.bukkit.zPermissions.RefreshCause;
 import org.tyrannyofheaven.bukkit.zPermissions.ZPermissionsConfig;
 import org.tyrannyofheaven.bukkit.zPermissions.ZPermissionsCore;
 import org.tyrannyofheaven.bukkit.zPermissions.dao.DaoException;
@@ -99,7 +100,7 @@ public class GroupCommands extends CommonCommands {
 
         sendMessage(sender, colorize("{AQUA}%s{YELLOW} added to {DARK_GREEN}%s"), playerName, groupName);
         Utils.checkPlayer(sender, playerName);
-        core.refreshPlayer(playerName);
+        core.refreshPlayer(playerName, RefreshCause.GROUP_CHANGE);
         
         if (expiration != null)
             core.refreshExpirations(playerName);
@@ -117,7 +118,7 @@ public class GroupCommands extends CommonCommands {
 
         if (result) {
             sendMessage(sender, colorize("{AQUA}%s{YELLOW} removed from {DARK_GREEN}%s"), playerName, groupName);
-            core.refreshPlayer(playerName);
+            core.refreshPlayer(playerName, RefreshCause.GROUP_CHANGE);
             core.refreshExpirations(playerName);
         }
         else {

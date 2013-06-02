@@ -26,6 +26,7 @@ import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerLoginEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.plugin.Plugin;
+import org.tyrannyofheaven.bukkit.zPermissions.RefreshCause;
 import org.tyrannyofheaven.bukkit.zPermissions.ZPermissionsCore;
 
 /**
@@ -49,7 +50,7 @@ public class ZPermissionsPlayerListener implements Listener {
     @EventHandler(priority=EventPriority.LOWEST)
     public void onPlayerLogin(PlayerLoginEvent event) {
         debug(plugin, "%s logged in", event.getPlayer().getName());
-        core.updateAttachment(event.getPlayer(), event.getPlayer().getLocation(), true);
+        core.updateAttachment(event.getPlayer(), event.getPlayer().getLocation(), true, null);
         // NB don't bother with expirations until join
     }
 
@@ -66,7 +67,9 @@ public class ZPermissionsPlayerListener implements Listener {
     @EventHandler(priority=EventPriority.LOWEST)
     public void onPlayerJoin(PlayerJoinEvent event) {
         debug(plugin, "%s joining", event.getPlayer().getName());
-        core.updateAttachment(event.getPlayer(), event.getPlayer().getLocation(), true); // Does this need to be forced again?
+        // NB eventCause is null because it's a given that the player's permissions has changed on join
+        // (ignore the fact that it actually changed on login for now)
+        core.updateAttachment(event.getPlayer(), event.getPlayer().getLocation(), true, null); // Does this need to be forced again?
         // Wait for next tick...
         Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, new Runnable() {
             @Override
@@ -91,7 +94,7 @@ public class ZPermissionsPlayerListener implements Listener {
 
     @EventHandler(priority=EventPriority.LOWEST)
     public void onPlayerChangedWorld(PlayerChangedWorldEvent event) {
-        core.updateAttachment(event.getPlayer(), event.getPlayer().getLocation(), false);
+        core.updateAttachment(event.getPlayer(), event.getPlayer().getLocation(), false, RefreshCause.MOVEMENT);
     }
 
 }

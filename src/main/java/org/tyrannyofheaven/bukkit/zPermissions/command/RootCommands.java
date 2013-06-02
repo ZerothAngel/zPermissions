@@ -37,6 +37,7 @@ import org.tyrannyofheaven.bukkit.util.command.Option;
 import org.tyrannyofheaven.bukkit.util.command.Require;
 import org.tyrannyofheaven.bukkit.util.transaction.TransactionCallback;
 import org.tyrannyofheaven.bukkit.zPermissions.PermissionsResolver;
+import org.tyrannyofheaven.bukkit.zPermissions.RefreshCause;
 import org.tyrannyofheaven.bukkit.zPermissions.ZPermissionsConfig;
 import org.tyrannyofheaven.bukkit.zPermissions.ZPermissionsCore;
 import org.tyrannyofheaven.bukkit.zPermissions.dao.MissingGroupException;
@@ -253,7 +254,7 @@ public class RootCommands {
         
         if (check && (scope.isShouldEcho() || verbose))
             Utils.checkPlayer(sender, playerName);
-        core.refreshPlayer(playerName);
+        core.refreshPlayer(playerName, RefreshCause.GROUP_CHANGE);
         core.refreshExpirations(playerName);
     }
 
@@ -402,7 +403,7 @@ public class RootCommands {
 
         if (check && (scope.isShouldEcho() || verbose))
             Utils.checkPlayer(sender, playerName);
-        core.refreshPlayer(playerName);
+        core.refreshPlayer(playerName, RefreshCause.GROUP_CHANGE);
         core.refreshExpirations(playerName);
     }
 
