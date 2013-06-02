@@ -63,7 +63,7 @@ public class ZPermissionsPlayerListener implements Listener {
         }
     }
 
-    @EventHandler(priority=EventPriority.MONITOR)
+    @EventHandler(priority=EventPriority.LOWEST)
     public void onPlayerJoin(PlayerJoinEvent event) {
         debug(plugin, "%s joining", event.getPlayer().getName());
         core.updateAttachment(event.getPlayer(), event.getPlayer().getLocation(), true); // Does this need to be forced again?
