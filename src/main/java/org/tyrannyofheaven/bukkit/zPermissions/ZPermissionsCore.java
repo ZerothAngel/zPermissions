@@ -30,7 +30,7 @@ public interface ZPermissionsCore {
 
     // Refreshing the attachments of a set of players
 
-    public void refreshPlayer(String playerName);
+    public void refreshPlayer(String playerName, RefreshCause cause);
 
     public void refreshPlayers();
 
@@ -55,7 +55,7 @@ public interface ZPermissionsCore {
 
     // Player attachment control
 
-    public void updateAttachment(Player player, Location location, boolean force);
+    public void updateAttachment(Player player, Location location, boolean force, RefreshCause eventCause);
 
     public void removeAttachment(Player player);
 

@@ -36,6 +36,7 @@ import org.tyrannyofheaven.bukkit.util.command.Option;
 import org.tyrannyofheaven.bukkit.util.command.Session;
 import org.tyrannyofheaven.bukkit.util.transaction.TransactionCallbackWithoutResult;
 import org.tyrannyofheaven.bukkit.zPermissions.PermissionsResolver;
+import org.tyrannyofheaven.bukkit.zPermissions.RefreshCause;
 import org.tyrannyofheaven.bukkit.zPermissions.ZPermissionsConfig;
 import org.tyrannyofheaven.bukkit.zPermissions.ZPermissionsCore;
 import org.tyrannyofheaven.bukkit.zPermissions.dao.MissingGroupException;
@@ -90,7 +91,7 @@ public class PlayerCommands extends CommonCommands {
 
         sendMessage(sender, colorize("{AQUA}%s{YELLOW}'s group set to {DARK_GREEN}%s"), playerName, groupName);
         Utils.checkPlayer(sender, playerName);
-        core.refreshPlayer(playerName);
+        core.refreshPlayer(playerName, RefreshCause.GROUP_CHANGE);
         
         if (expiration != null)
             core.refreshExpirations(playerName);

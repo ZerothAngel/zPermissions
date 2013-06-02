@@ -23,8 +23,6 @@ import java.util.Set;
  * Programmatic interface of read-only operations for things that are not easily
  * done solely by command line (i.e. would involve parsing command output, which
  * would be messy).
- * 
- * @author asaddi
  */
 public interface ZPermissionsService {
 

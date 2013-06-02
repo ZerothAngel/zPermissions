@@ -28,10 +28,11 @@ import java.util.Set;
 
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.Plugin;
+import org.tyrannyofheaven.bukkit.zPermissions.RefreshCause;
 import org.tyrannyofheaven.bukkit.zPermissions.ZPermissionsCore;
 
 /**
- * Periodically calls {@link ZPermissionsCore#refreshPlayer(String)} on the
+ * Periodically calls {@link ZPermissionsCore#refreshPlayer(String, RefreshCause)} on the
  * given queue of players.
  * 
  * @author asaddi
@@ -105,7 +106,7 @@ public class RefreshTask implements Runnable {
             String playerToRefresh = playersToRefresh.remove();
 
             // Refresh single player
-            core.refreshPlayer(playerToRefresh);
+            core.refreshPlayer(playerToRefresh, RefreshCause.GROUP_CHANGE); // NB Assumes all who call start() are doing so for group- or server-wide changes
         }
         
         // Schedule next player
