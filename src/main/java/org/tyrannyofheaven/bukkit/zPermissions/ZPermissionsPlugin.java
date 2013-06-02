@@ -566,15 +566,22 @@ public class ZPermissionsPlugin extends JavaPlugin implements ZPermissionsCore, 
         });
 
         // Create dynamic permission to hold all permissions this player should have at this moment
-        Permission perm = new Permission(DYNAMIC_PERMISSION_PREFIX + player.getName(), PermissionDefault.FALSE, resolverResult.getPermissions());
-        Bukkit.getPluginManager().removePermission(perm);
-        Bukkit.getPluginManager().addPermission(perm);
+        final String permName = DYNAMIC_PERMISSION_PREFIX + player.getName();
+        Permission perm = Bukkit.getPluginManager().getPermission(permName);
+        if (perm == null) {
+            perm = new Permission(permName, PermissionDefault.FALSE, resolverResult.getPermissions());
+            Bukkit.getPluginManager().addPermission(perm);
+        }
+        else {
+            perm.getChildren().clear();
+            perm.getChildren().putAll(resolverResult.getPermissions());
+            perm.recalculatePermissibles();
+        }
 
         debug(this, "(Existing PlayerState = %s)", playerState != null);
 
         if (playerState != null) {
-            // Re-set dynamic permission
-            player.recalculatePermissions();
+            // NB It is assumed that the recalculate step has been taken care of above
 
             // Update values
             playerState.setRegions(regions);
