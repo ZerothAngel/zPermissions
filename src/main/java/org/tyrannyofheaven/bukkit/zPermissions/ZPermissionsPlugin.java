@@ -46,6 +46,7 @@ import org.bukkit.metadata.FixedMetadataValue;
 import org.bukkit.metadata.MetadataValue;
 import org.bukkit.permissions.Permission;
 import org.bukkit.permissions.PermissionAttachment;
+import org.bukkit.permissions.PermissionAttachmentInfo;
 import org.bukkit.permissions.PermissionDefault;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.ServicePriority;
@@ -461,14 +462,24 @@ public class ZPermissionsPlugin extends JavaPlugin implements ZPermissionsCore, 
     @Override
     public void removeAttachment(Player player) {
         debug(this, "Removing attachment for %s", player.getName());
-        PlayerState playerState = getPlayerState(player);
-        if (playerState != null) {
-            playerState.getAttachment().remove(); // potential to call a callback
-        }
+        PermissionAttachment pa = getMyPermissionAttachment(player);
+        if (pa != null)
+            pa.remove();
         player.removeMetadata(PLAYER_METADATA_KEY, this);
         Bukkit.getPluginManager().removePermission(DYNAMIC_PERMISSION_PREFIX + player.getName());
     }
     
+    private PermissionAttachment getMyPermissionAttachment(Player player) {
+        // Ugh... This is technically unbounded
+        for (PermissionAttachmentInfo pai : player.getEffectivePermissions()) {
+            PermissionAttachment pa = pai.getAttachment();
+            if (pa != null && pa.getPlugin() == this) {
+                return pa;
+            }
+        }
+        return null;
+    }
+
     // Update state about a player, resolving effective permissions and
     // creating/updating their attachment
     @Override
@@ -539,13 +550,21 @@ public class ZPermissionsPlugin extends JavaPlugin implements ZPermissionsCore, 
     private boolean updateAttachmentInternal(final Player player, Location location, boolean force) {
         final Set<String> regions = getRegions(location);
 
+        // Fetch existing state
+        final String permName = DYNAMIC_PERMISSION_PREFIX + player.getName();
+        Permission perm = Bukkit.getPluginManager().getPermission(permName);
+
         PlayerState playerState = getPlayerState(player);
 
-        // Check if the player changed regions/worlds or isn't known yet
+        PermissionAttachment pa = getMyPermissionAttachment(player);
+
+        // Check if the player is missing any state or changed worlds/regions
         if (!force) {
-            force = playerState == null ||
-                !regions.equals(playerState.getRegions()) ||
-                !location.getWorld().getName().equals(playerState.getWorld());
+            force = perm == null || 
+                    playerState == null ||
+                    pa == null ||
+                    !regions.equals(playerState.getRegions()) ||
+                    !location.getWorld().getName().equals(playerState.getWorld());
         }
 
         // No need to update yet (most likely called by movement-based event)
@@ -565,9 +584,9 @@ public class ZPermissionsPlugin extends JavaPlugin implements ZPermissionsCore, 
             }
         });
 
+        debug(this, "(Existing Permission: %s, PlayerState: %s, PermissionAttachment: %s)", perm != null, playerState != null, pa != null);
+
         // Create dynamic permission to hold all permissions this player should have at this moment
-        final String permName = DYNAMIC_PERMISSION_PREFIX + player.getName();
-        Permission perm = Bukkit.getPluginManager().getPermission(permName);
         if (perm == null) {
             perm = new Permission(permName, PermissionDefault.FALSE, resolverResult.getPermissions());
             Bukkit.getPluginManager().addPermission(perm);
@@ -578,24 +597,23 @@ public class ZPermissionsPlugin extends JavaPlugin implements ZPermissionsCore, 
             perm.recalculatePermissibles();
         }
 
-        debug(this, "(Existing PlayerState = %s)", playerState != null);
-
         if (playerState != null) {
-            // NB It is assumed that the recalculate step has been taken care of above
-
             // Update values
             playerState.setRegions(regions);
             playerState.setWorld(location.getWorld().getName());
             playerState.setGroups(resolverResult.getGroups());
         }
         else {
-            // Create brand new attachment and PlayerState
-            PermissionAttachment pa = player.addAttachment(this, perm.getName(), true);
-
-            playerState = new PlayerState(pa, regions, location.getWorld().getName(), resolverResult.getGroups());
+            // Create brand new PlayerState
+            playerState = new PlayerState(regions, location.getWorld().getName(), resolverResult.getGroups());
             player.setMetadata(PLAYER_METADATA_KEY, new FixedMetadataValue(this, playerState));
         }
         
+        // Finally, create attachment if missing
+        if (pa == null) {
+            player.addAttachment(this, perm.getName(), true);
+        }
+
         return true;
     }
 
@@ -960,25 +978,16 @@ public class ZPermissionsPlugin extends JavaPlugin implements ZPermissionsCore, 
     // Encapsulates state about a player
     private static class PlayerState {
         
-        private final PermissionAttachment attachment;
-
         private Set<String> regions;
 
         private String world;
 
         private Set<String> groups;
 
-        public PlayerState(PermissionAttachment attachment, Set<String> regions, String world, Set<String> groups) {
-            if (attachment == null)
-                throw new IllegalArgumentException("attachment cannot be null");
-            this.attachment = attachment;
+        public PlayerState(Set<String> regions, String world, Set<String> groups) {
             setRegions(regions);
             setWorld(world);
             setGroups(groups);
-        }
-
-        public PermissionAttachment getAttachment() {
-            return attachment;
         }
 
         public void setRegions(Set<String> regions) {
