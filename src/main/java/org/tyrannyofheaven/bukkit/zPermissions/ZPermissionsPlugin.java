@@ -517,9 +517,10 @@ public class ZPermissionsPlugin extends JavaPlugin implements ZPermissionsCore, 
         
         // Fire off event if requested and changed
         if (eventCause != null && changed) {
+            final String playerName = player.getName();
             // Translate RefreshEvent to ZPermissionsPlayerPermissionsChangeEvent.Cause
             // Kinda dumb, but I don't want internal code to depend on the event class.
-            ZPermissionsPlayerUpdateEvent.Cause cause;
+            final ZPermissionsPlayerUpdateEvent.Cause cause;
             switch (eventCause) {
             case COMMAND:
                 cause = ZPermissionsPlayerUpdateEvent.Cause.COMMAND;
@@ -533,8 +534,17 @@ public class ZPermissionsPlugin extends JavaPlugin implements ZPermissionsCore, 
             default:
                 throw new AssertionError("Unhandled RefreshCause: " + eventCause);
             }
-            ZPermissionsPlayerUpdateEvent event = new ZPermissionsPlayerUpdateEvent(player, cause);
-            Bukkit.getPluginManager().callEvent(event);
+            // Fire it off on the following tick
+            Bukkit.getScheduler().runTask(this, new Runnable() {
+                @Override
+                public void run() {
+                    Player player = Bukkit.getPlayerExact(playerName);
+                    if (player != null) {
+                        ZPermissionsPlayerUpdateEvent event = new ZPermissionsPlayerUpdateEvent(player, cause);
+                        Bukkit.getPluginManager().callEvent(event);
+                    }
+                }
+            });
         }
     }
 
