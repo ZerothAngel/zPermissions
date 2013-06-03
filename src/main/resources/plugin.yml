@@ -9,7 +9,7 @@ load: STARTUP
 commands:
   permissions:
     description: Top-level command for zPermissions
-    aliases: [perm, perms, p]
+    aliases: [perm, perms]
   promote:
     description: Promote a player up a rank
     aliases: rankup
