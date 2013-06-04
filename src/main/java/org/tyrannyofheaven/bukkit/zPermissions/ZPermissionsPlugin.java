@@ -177,10 +177,10 @@ public class ZPermissionsPlugin extends JavaPlugin implements ZPermissionsCore, 
     private int defaultTempPermissionTimeout;
 
     // Whether to kick users if there's any problem determining permissions
-    private boolean kickOnError;
+    private boolean kickOnError = DEFAULT_KICK_ON_ERROR;
 
     // If kickOnError is true, whether or not to kick operators too
-    private boolean kickOpsOnError;
+    private boolean kickOpsOnError = DEFAULT_KICK_OPS_ON_ERROR;
 
     // If WorldGuard is present and this is true, enable region support
     private boolean regionSupportEnable;
@@ -368,8 +368,10 @@ public class ZPermissionsPlugin extends JavaPlugin implements ZPermissionsCore, 
         }
         catch (Throwable t) {
             error(this, "Failed to initialize:", t);
-            error(this, "ALL LOG-INS DISALLOWED");
-            Bukkit.getPluginManager().registerEvents(new ZPermissionsFallbackListener(), this);
+            if (kickOnError) {
+                error(this, "ALL %sLOG-INS DISALLOWED", kickOpsOnError ? "" : "NON-OP ");
+                Bukkit.getPluginManager().registerEvents(new ZPermissionsFallbackListener(kickOpsOnError), this);
+            }
 
             // Not really supposed to eat Errors...
             if (t instanceof Error)
