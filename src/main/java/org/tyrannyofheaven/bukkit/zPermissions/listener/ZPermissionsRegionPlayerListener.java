@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.tyrannyofheaven.bukkit.zPermissions.event;
+package org.tyrannyofheaven.bukkit.zPermissions.listener;
 
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
