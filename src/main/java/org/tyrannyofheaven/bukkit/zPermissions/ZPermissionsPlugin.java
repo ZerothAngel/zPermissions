@@ -490,10 +490,11 @@ public class ZPermissionsPlugin extends JavaPlugin implements ZPermissionsCore, 
     }
     
     private PermissionAttachment getMyPermissionAttachment(Player player) {
+        String permName = (DYNAMIC_PERMISSION_PREFIX + player.getName()).toLowerCase();
         // Ugh... This is technically unbounded
         for (PermissionAttachmentInfo pai : player.getEffectivePermissions()) {
             PermissionAttachment pa = pai.getAttachment();
-            if (pa != null && pa.getPlugin() == this) {
+            if (pa != null && pa.getPlugin() == this && pa.getPermissions().containsKey(permName)) {
                 return pa;
             }
         }
