@@ -67,6 +67,7 @@ import org.tyrannyofheaven.bukkit.zPermissions.command.GroupTypeCompleter;
 import org.tyrannyofheaven.bukkit.zPermissions.command.RootCommands;
 import org.tyrannyofheaven.bukkit.zPermissions.command.TrackTypeCompleter;
 import org.tyrannyofheaven.bukkit.zPermissions.dao.PermissionDao;
+import org.tyrannyofheaven.bukkit.zPermissions.listener.ZPermissionsFallbackListener;
 import org.tyrannyofheaven.bukkit.zPermissions.listener.ZPermissionsPlayerListener;
 import org.tyrannyofheaven.bukkit.zPermissions.listener.ZPermissionsRegionPlayerListener;
 import org.tyrannyofheaven.bukkit.zPermissions.model.EntityMetadata;
@@ -280,7 +281,8 @@ public class ZPermissionsPlugin extends JavaPlugin implements ZPermissionsCore, 
             regionStrategy.shutdown();
 
         // Kill expiration handler
-        expirationRefreshHandler.shutdown();
+        if (expirationRefreshHandler != null)
+            expirationRefreshHandler.shutdown();
 
         // Kill pending refresh, if any
         refreshTask.stop();
@@ -289,7 +291,8 @@ public class ZPermissionsPlugin extends JavaPlugin implements ZPermissionsCore, 
         getServer().getScheduler().cancelTasks(this);
 
         // Ensure storage is shut down properly
-        storageStrategy.shutdown();
+        if (storageStrategy != null)
+            storageStrategy.shutdown();
 
         // Clear any player state
 
@@ -306,24 +309,75 @@ public class ZPermissionsPlugin extends JavaPlugin implements ZPermissionsCore, 
      */
     @Override
     public void onEnable() {
-        log(this, "%s starting...", versionInfo.getVersionString());
+        try {
+            log(this, "%s starting...", versionInfo.getVersionString());
 
-        // FIXME Defaults workaround, to be removed after 1.0
-        boolean isUpgrade = new File(getDataFolder(), "config.yml").exists();
-        // FIXME Defaults workaround end
+            // FIXME Defaults workaround, to be removed after 1.0
+            boolean isUpgrade = new File(getDataFolder(), "config.yml").exists();
+            // FIXME Defaults workaround end
 
-        // Read config
-        config = ToHFileUtils.getConfig(this);
-        config.options().header(null);
-        // FIXME Defaults workaround, to be removed after 1.0
-        if (!isUpgrade)
-            config.set("interleaved-player-permissions", false);
-        // FIXME Defaults workaround end
-        readConfig();
+            // Read config
+            config = ToHFileUtils.getConfig(this);
+            config.options().header(null);
+            // FIXME Defaults workaround, to be removed after 1.0
+            if (!isUpgrade)
+                config.set("interleaved-player-permissions", false);
+            // FIXME Defaults workaround end
+            readConfig();
 
-        // Upgrade/create config
-        ToHFileUtils.upgradeConfig(this, config);
+            // Upgrade/create config
+            ToHFileUtils.upgradeConfig(this, config);
 
+            initializeStorageStrategy();
+
+            modelDumper = new ModelDumper(storageStrategy, this);
+
+            // Install our commands
+            (new ToHCommandExecutor<ZPermissionsPlugin>(this, new RootCommands(getZPermissionsCore(), storageStrategy, getResolver(), getModelDumper(), getZPermissionsConfig(), this)))
+                .registerTypeCompleter("group", new GroupTypeCompleter(getDao()))
+                .registerTypeCompleter("track", new TrackTypeCompleter(getZPermissionsConfig()))
+                .registerTypeCompleter("dump-dir", new DirTypeCompleter(getZPermissionsConfig()))
+                .setQuoteAware(true)
+                .registerCommands();
+
+            // Detect a region manager
+            initializeRegionStrategy();
+            boolean regionSupport = regionStrategy != null && regionSupportEnable; // Need both
+
+            // Install our listeners
+            expirationRefreshHandler = new ExpirationRefreshHandler(getZPermissionsCore(), storageStrategy, this);
+            Bukkit.getPluginManager().registerEvents(new ZPermissionsPlayerListener(getZPermissionsCore(), this), this);
+            if (regionSupport) {
+                Bukkit.getPluginManager().registerEvents(new ZPermissionsRegionPlayerListener(getZPermissionsCore()), this);
+                log(this, "%s region support: %s", regionStrategy.getName(), regionStrategy.isEnabled() ? "Enabled" : "Waiting");
+            }
+
+            // Set up service API
+            getServer().getServicesManager().register(ZPermissionsService.class, new ZPermissionsServiceImpl(getResolver(), getDao(), getRetryingTransactionStrategy(), getZPermissionsConfig()), this, ServicePriority.Normal);
+
+            // Make sure everyone currently online has an attachment
+            refreshPlayers();
+
+            // Start auto-refresh task, if one is configured
+            startAutoRefreshTask();
+
+            // Initialize expiration handler
+            refreshExpirations();
+
+            log(this, "%s enabled.", versionInfo.getVersionString());
+        }
+        catch (Throwable t) {
+            error(this, "Failed to initialize:", t);
+            error(this, "ALL LOG-INS DISALLOWED");
+            Bukkit.getPluginManager().registerEvents(new ZPermissionsFallbackListener(), this);
+
+            // Not really supposed to eat Errors...
+            if (t instanceof Error)
+                throw (Error)t;
+        }
+    }
+
+    private void initializeStorageStrategy() {
         // Set up TransactionStrategy and DAO
         storageStrategy = null;
         if (databaseSupport) {
@@ -363,42 +417,6 @@ public class ZPermissionsPlugin extends JavaPlugin implements ZPermissionsCore, 
             error(this, "Exception initializing storage strategy:", e);
             // TODO Now what?
         }
-
-        modelDumper = new ModelDumper(storageStrategy, this);
-
-        // Install our commands
-        (new ToHCommandExecutor<ZPermissionsPlugin>(this, new RootCommands(getZPermissionsCore(), storageStrategy, getResolver(), getModelDumper(), getZPermissionsConfig(), this)))
-            .registerTypeCompleter("group", new GroupTypeCompleter(getDao()))
-            .registerTypeCompleter("track", new TrackTypeCompleter(getZPermissionsConfig()))
-            .registerTypeCompleter("dump-dir", new DirTypeCompleter(getZPermissionsConfig()))
-            .setQuoteAware(true)
-            .registerCommands();
-
-        // Detect a region manager
-        initializeRegionStrategy();
-        boolean regionSupport = regionStrategy != null && regionSupportEnable; // Need both
-
-        // Install our listeners
-        expirationRefreshHandler = new ExpirationRefreshHandler(getZPermissionsCore(), storageStrategy, this);
-        Bukkit.getPluginManager().registerEvents(new ZPermissionsPlayerListener(getZPermissionsCore(), this), this);
-        if (regionSupport) {
-            Bukkit.getPluginManager().registerEvents(new ZPermissionsRegionPlayerListener(getZPermissionsCore()), this);
-            log(this, "%s region support: %s", regionStrategy.getName(), regionStrategy.isEnabled() ? "Enabled" : "Waiting");
-        }
-
-        // Set up service API
-        getServer().getServicesManager().register(ZPermissionsService.class, new ZPermissionsServiceImpl(getResolver(), getDao(), getRetryingTransactionStrategy(), getZPermissionsConfig()), this, ServicePriority.Normal);
-
-        // Make sure everyone currently online has an attachment
-        refreshPlayers();
-
-        // Start auto-refresh task, if one is configured
-        startAutoRefreshTask();
-
-        // Initialize expiration handler
-        refreshExpirations();
-
-        log(this, "%s enabled.", versionInfo.getVersionString());
     }
 
     private void initializeRegionStrategy() {
