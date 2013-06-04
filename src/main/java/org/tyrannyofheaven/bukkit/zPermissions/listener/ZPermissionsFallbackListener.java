@@ -15,10 +15,13 @@
  */
 package org.tyrannyofheaven.bukkit.zPermissions.listener;
 
+import static org.tyrannyofheaven.bukkit.util.ToHMessageUtils.colorize;
+import static org.tyrannyofheaven.bukkit.util.ToHMessageUtils.sendMessage;
+
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
-import org.bukkit.event.player.AsyncPlayerPreLoginEvent;
+import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerLoginEvent;
 
 /**
@@ -31,16 +34,23 @@ public class ZPermissionsFallbackListener implements Listener {
 
     private static final String KICK_MESSAGE = "zPermissions failed to initialize";
 
-    // NB The following handler is only called if online-mode is true
-    @EventHandler(priority=EventPriority.HIGHEST)
-    public void onAsyncPlayerPreLogin(AsyncPlayerPreLoginEvent event) {
-        event.disallow(AsyncPlayerPreLoginEvent.Result.KICK_OTHER, KICK_MESSAGE);
+    private final boolean kickOpsOnError;
+
+    public ZPermissionsFallbackListener(boolean kickOpsOnError) {
+        this.kickOpsOnError = kickOpsOnError;
     }
 
-    // In case they get this far...
     @EventHandler(priority=EventPriority.HIGHEST)
     public void onPlayerLogin(PlayerLoginEvent event) {
-        event.disallow(PlayerLoginEvent.Result.KICK_OTHER, KICK_MESSAGE);
+        if (kickOpsOnError || !event.getPlayer().isOp())
+            event.disallow(PlayerLoginEvent.Result.KICK_OTHER, KICK_MESSAGE);
+    }
+
+    @EventHandler
+    public void onPlayerJoin(PlayerJoinEvent event) {
+        if (event.getPlayer().isOp()) {
+            sendMessage(event.getPlayer(), colorize("{RED}zPermissions failed to initialize; All non-OP log-ins disallowed!"));
+        }
     }
 
 }
