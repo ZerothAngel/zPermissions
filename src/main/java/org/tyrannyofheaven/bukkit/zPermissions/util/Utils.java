@@ -350,9 +350,10 @@ public class Utils {
      * @param removedHeader Header to display for removed entries
      * @param changedHeader Header to display for modified entries
      * @param sameMessage Message to display if permission sets are identical
+     * @param filter TODO
      */
     public static void displayPermissionsDiff(Plugin plugin, CommandSender sender, Map<String, Boolean> permissions, Map<String, Boolean> otherPermissions, List<String> header,
-            String addedHeader, String removedHeader, String changedHeader, String sameMessage) {
+            String addedHeader, String removedHeader, String changedHeader, String sameMessage, String filter) {
         if (header == null)
             header = Collections.emptyList();
 
@@ -381,19 +382,19 @@ public class Utils {
 
         if (!added.isEmpty()) {
             header0.add(addedHeader);
-            displayPermissions(plugin, sender, lines, header0, getPermissionsSubset(otherPermissions, added), null);
+            displayPermissions(plugin, sender, lines, header0, getPermissionsSubset(otherPermissions, added), filter);
             header0.clear();
         }
         
         if (!removed.isEmpty()) {
             header0.add(removedHeader);
-            displayPermissions(plugin, sender, lines, header0, getPermissionsSubset(permissions, removed), null);
+            displayPermissions(plugin, sender, lines, header0, getPermissionsSubset(permissions, removed), filter);
             header0.clear();
         }
         
         if (!changed.isEmpty()) {
             header0.add(changedHeader);
-            displayPermissions(plugin, sender, lines, header0, getPermissionsSubset(otherPermissions, changed), null);
+            displayPermissions(plugin, sender, lines, header0, getPermissionsSubset(otherPermissions, changed), filter);
         }
         
         if (added.isEmpty() && removed.isEmpty() && changed.isEmpty()) {
