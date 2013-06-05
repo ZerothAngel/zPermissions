@@ -371,7 +371,7 @@ public class SubCommands {
 
     @Command(value="diff", description="Compare effective permissions of a player")
     public void diff(CommandSender sender, @Option(value={"-r", "--region", "--regions"}, valueName="regions") String regions, @Option(value={"-R", "--other-region", "--other-region"}, valueName="other-regions") String otherRegions,
-            @Option(value="qualified-player", completer="player") String player, @Option(value="other-qualified-player", completer="player", optional=true) String otherPlayer) {
+            @Option(value={"-f", "--filter"}, valueName="filter") String filter, @Option(value="qualified-player", completer="player") String player, @Option(value="other-qualified-player", completer="player", optional=true) String otherPlayer) {
         List<String> header = new ArrayList<String>();
 
         // Parse qualifiers for first player
@@ -444,7 +444,7 @@ public class SubCommands {
                     String.format(colorize("{AQUA}%s {YELLOW}on %s%s {WHITE}changes{YELLOW}:"), qother.getPlayerName(), otherWorldName,
                             (otherRegionNames.isEmpty() ? "" : "[" + ToHStringUtils.delimitedString(",", otherRegionNames) + "]")),
                     String.format(colorize("{YELLOW}Players on %s%s have identical effective permissions."), otherWorldName,
-                            (otherRegionNames.isEmpty() ? "" : "[" + ToHStringUtils.delimitedString(",", otherRegionNames) + "]")));
+                            (otherRegionNames.isEmpty() ? "" : "[" + ToHStringUtils.delimitedString(",", otherRegionNames) + "]")), filter);
         }
         else {
             // Diff Bukkit effective permissions against zPerms effective permissions
@@ -467,7 +467,7 @@ public class SubCommands {
                     colorize("{YELLOW}Bukkit effective permissions {WHITE}add:"),
                     colorize("{YELLOW}Bukkit effective permissions {WHITE}remove:"),
                     colorize("{YELLOW}Bukkit effective permissions {WHITE}change:"),
-                    colorize("{YELLOW}Bukkit effective permissions are identical."));
+                    colorize("{YELLOW}Bukkit effective permissions are identical."), filter);
         }
     }
 

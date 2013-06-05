@@ -5,7 +5,7 @@
 *   `/permissions list <what>` &mdash; `what` should be "groups" or "players". Lists groups or players in the system. Note that only players with permissions set will be shown. (Players who are only members will not.)
 *   `/permissions check <permission> [player]` &mdash; Checks if yourself or another player has the given permission. `permission` must be an unqualified permission node &mdash; no world or region qualifiers.
 *   `/permissions inspect [-v] [-f <filter>] [player]` &mdash; Dumps the effective permissions of yourself or another player. Asterisked entries originate outside of zPermissions (e.g. defaults or another plugin). Use -v to also display the source of each permission (-v is default when issued from the console).
-*   `/permissions diff [-r <regions>] [-R <other-regions>] <qualified-player> [other-qualified-player]` &mdash; Compare's a player's effective permissions with either another player or Bukkit's notions of effective permissions. This is a more generalized version of the `player ... diff` command as it allows specifying a different world and region(s) for each player.
+*   `/permissions diff [-r <regions>] [-R <other-regions>] [-f <filter>] <qualified-player> [other-qualified-player]` &mdash; Compare's a player's effective permissions with either another player or Bukkit's notions of effective permissions. This is a more generalized version of the `player ... diff` command as it allows specifying a different world and region(s) for each player.
 *   `/permissions reload` &mdash; Re-reads config.yml.
 *   `/permissions refresh` &mdash; Re-read permissions from storage and update all online players. Needed to recognize any outside changes to the zPermissions database tables.
 *   `/permissions export <filename>` &mdash; Creates a file containing all the zPermissions commands necessary to re-create your database. See config.yml for the output directory.
@@ -23,7 +23,7 @@
 *   `/permissions player <player> setgroup <group>` &mdash; Removes all of a player's group memberships and adds them to given group.
 *   `/permissions player <player> show` &mdash; Show any permissions associated with a player.
 *   `/permissions player <player> dump [-w <world>] [-f <filter>] [region...]` &mdash; Evaluates permissions for the given player as if they were in the given world and region(s) and recursively dumps all permissions. Note that this will only contain permissions directly or indirectly set by zPermissions. It will not include default permissions or permissions set by other plugins. (Use `/permissions check` to check for effective permissions.) Specify a filter to only display permissions with the given substring.
-*   `/permissions player <player> diff [-w <world>] <other> [region...] ` &mdash; Compares effective permissions (as given by zPermissions) with that of another player. *   `/permissions player <player> clone <new-player>` &mdash; Creates a copy of `player`, naming the copy `new-player`. Permissions and memberships are copied over.
+*   `/permissions player <player> diff [-w <world>] [-f <filter>] <other> [region...] ` &mdash; Compares effective permissions (as given by zPermissions) with that of another player. *   `/permissions player <player> clone <new-player>` &mdash; Creates a copy of `player`, naming the copy `new-player`. Permissions and memberships are copied over.
 *   `/permissions player <player> rename <new-player>` &mdash; Rename `player` as `new-player`.
 *   `/permissions player <player> has <permission>` &mdash; Simply calls Bukkit's hasPermission() function for the given player and permission and outputs the result (true/false). `permission` must be an unqualified permission &mdash; no world or region qualifiers.
 
@@ -41,7 +41,7 @@
 *   `/permissions group <group> remove <player>` &mdash; Remove a player as a member.
 *   `/permissions group <group> show` &mdash; Show any permissions associated with a group.
 *   `/permissions group <group> dump [-w <world>] [-f <filter>] [region...]` &mdash; Evaluates permissions for the given group as if a member were in the given world and region(s) and recursively dumps all permissions. Note that this will only contain permissions directly or indirectly set by zPermissions. It will not include default permissions or permissions set by other plugins. Specify a filter to only display permissions with the given substring.
-*   `/permissions group <group> diff [-w <world>] <other> [region...]` &mdash; Compares a group's effective permissions (as given by zPermissions) with that of another.
+*   `/permissions group <group> diff [-w <world>] [-f <filter>] <other> [region...]` &mdash; Compares a group's effective permissions (as given by zPermissions) with that of another.
 *   `/permissions group <group> clone <new-group>` &mdash; Creates a *shallow* copy of `group`, naming the new copy `new-group`. Permissions, weight, and parents are copied. Since this is a shallow copy only, child groups of `group` are not copied.
 *   `/permissions group <group> rename <new-group>` &mdash; Rename `group` as `new-group`.
 

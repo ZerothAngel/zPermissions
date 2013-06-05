@@ -303,7 +303,7 @@ public abstract class CommonCommands {
     }
 
     @Command(value="diff", description="Compare effective permissions of this player or group with another", varargs="region...")
-    public void diff(CommandSender sender, final @Session("entityName") String name, @Option(value={"-w", "--world"}, valueName="world", completer="world") String worldName, @Option("other") final String otherName, String[] regionNames) {
+    public void diff(CommandSender sender, final @Session("entityName") String name, @Option(value={"-w", "--world"}, valueName="world", completer="world") String worldName, @Option(value={"-f", "--filter"}, valueName="filter") String filter, @Option("other") final String otherName, String[] regionNames) {
         List<String> header = new ArrayList<String>();
         worldName = getEffectiveWorld(sender, worldName, header);
         if (worldName == null) return;
@@ -381,7 +381,7 @@ public abstract class CommonCommands {
                 String.format(colorize("%s%s {WHITE}changes {YELLOW}the following permissions:"),
                         (group ? ChatColor.DARK_GREEN : ChatColor.AQUA),
                         otherName),
-                String.format(colorize("{YELLOW}%ss have identical effective permissions."), group ? "Group" : "Player"));
+                String.format(colorize("{YELLOW}%ss have identical effective permissions."), group ? "Group" : "Player"), filter);
     }
 
     @Command(value={"metadata", "meta", "md"}, description="Metadata-related commands")
