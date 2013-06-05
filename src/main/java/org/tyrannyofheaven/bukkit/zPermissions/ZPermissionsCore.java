@@ -16,6 +16,7 @@
 package org.tyrannyofheaven.bukkit.zPermissions;
 
 import java.util.Collection;
+import java.util.Set;
 
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
@@ -58,5 +59,9 @@ public interface ZPermissionsCore {
     public void updateAttachment(Player player, Location location, boolean force, RefreshCause eventCause);
 
     public void removeAttachment(Player player);
+
+    // Utility
+    
+    public Set<String> getRegions(Location location);
 
 }

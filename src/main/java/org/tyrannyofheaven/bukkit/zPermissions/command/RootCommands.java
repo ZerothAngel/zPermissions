@@ -100,7 +100,8 @@ public class RootCommands {
 
     @Command("permissions")
     @Require({"zpermissions.player", "zpermissions.group", "zpermissions.list", "zpermissions.check", "zpermissions.reload",
-        "zpermissions.import", "zpermissions.export", "zpermissions.inspect", "zpermissions.mygroups", "zpermissions.purge"})
+        "zpermissions.import", "zpermissions.export", "zpermissions.inspect", "zpermissions.mygroups", "zpermissions.purge",
+        "zpermissions.diff"})
     public Object perm(HelpBuilder helpBuilder, CommandSender sender, String[] args) {
         if (args.length == 0) {
             helpBuilder.withCommandSender(sender)
@@ -110,6 +111,7 @@ public class RootCommands {
                 .forCommand("list")
                 .forCommand("check")
                 .forCommand("inspect")
+                .forCommand("diff")
                 .forCommand("mygroups")
                 .forCommand("reload")
                 .forCommand("import")

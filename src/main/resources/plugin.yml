@@ -33,6 +33,7 @@ permissions:
       zpermissions.check.other: true
       zpermissions.inspect: true
       zpermissions.inspect.other: true
+      zpermissions.diff: true
       zpermissions.mygroups: true
       zpermissions.reload: true
       zpermissions.refresh: true
@@ -69,6 +70,8 @@ permissions:
     description: Allows use of the /permissions inspect command
   zpermissions.inspect.other:
     description: Allows use of the /permissions inspect command on others
+  zpermissions.diff:
+    description: Allows use of the /permissions diff command
   zpermissions.mygroups:
     description: Allows use of the /permissions mygroups command
   zpermissions.reload:
