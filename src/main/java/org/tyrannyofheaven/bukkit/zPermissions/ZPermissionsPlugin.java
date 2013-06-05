@@ -648,8 +648,13 @@ public class ZPermissionsPlugin extends JavaPlugin implements ZPermissionsCore, 
         return true;
     }
 
-    // Returns names of regions that contain the location
-    private Set<String> getRegions(Location location) {
+    /**
+     * Returns names of regions that contain the location
+     * 
+     * @param location the location
+     * @return set of region names containing location
+     */
+    public Set<String> getRegions(Location location) {
         if (regionSupportEnable && regionStrategy != null && regionStrategy.isEnabled()) {
             return regionStrategy.getRegions(location);
         }

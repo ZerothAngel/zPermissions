@@ -33,7 +33,6 @@ import org.bukkit.ChatColor;
 import org.bukkit.World;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
-import org.bukkit.permissions.Permission;
 import org.bukkit.plugin.Plugin;
 import org.tyrannyofheaven.bukkit.util.command.Command;
 import org.tyrannyofheaven.bukkit.util.command.HelpBuilder;
@@ -234,6 +233,50 @@ public abstract class CommonCommands {
     @Command(value="dump", description="Display permissions for this group or player", varargs="region...")
     public void dump(CommandSender sender, final @Session("entityName") String name, @Option(value={"-w", "--world"}, valueName="world", completer="world") String worldName, @Option(value={"-f", "--filter"}, valueName="filter") String filter, String[] regionNames) {
         List<String> header = new ArrayList<String>();
+        worldName = getEffectiveWorld(sender, worldName, header);
+        if (worldName == null) return;
+
+        if (!group)
+            Utils.validatePlayer(storageStrategy.getDao(), resolver.getDefaultGroup(), name, header);
+
+        // Ensure regions are lowercased
+        final Set<String> regions = new HashSet<String>();
+        for (String region : regionNames) {
+            regions.add(region.toLowerCase());
+        }
+        
+        final String lworldName = worldName.toLowerCase();
+        Map<String, Boolean> rootPermissions;
+        try {
+            // Grab permissions from zPerms
+            rootPermissions = storageStrategy.getTransactionStrategy().execute(new TransactionCallback<Map<String, Boolean>>() {
+                @Override
+                public Map<String, Boolean> doInTransaction() throws Exception {
+                    if (group) {
+                        if (storageStrategy.getDao().getEntity(name, true) == null)
+                            throw new MissingGroupException(name); // Don't really want to handle it in the transaction...
+                        return resolver.resolveGroup(name.toLowerCase(), lworldName, regions);
+                    }
+                    else {
+                        return resolver.resolvePlayer(name.toLowerCase(), lworldName, regions).getPermissions();
+                    }
+                }
+            });
+        }
+        catch (MissingGroupException e) {
+            handleMissingGroup(sender, e);
+            return;
+        }
+
+        // Recursively determine all child permissions
+        Map<String, Boolean> permissions = new HashMap<String, Boolean>();
+        Utils.calculateChildPermissions(permissions, rootPermissions, false);
+        
+        Utils.displayPermissions(plugin, sender, header, permissions, filter);
+    }
+
+    // Given a world name (which may be null), get the world to use for effective permissions calculation
+    private String getEffectiveWorld(CommandSender sender, String worldName, List<String> header) {
         if (worldName == null) {
             // Determine a default world
             if (sender instanceof Player) {
@@ -253,8 +296,21 @@ public abstract class CommonCommands {
             World world = Bukkit.getWorld(worldName);
             if (world == null) {
                 sendMessage(sender, colorize("{RED}Invalid world."));
-                return;
+                return null;
             }
+        }
+        return worldName;
+    }
+
+    @Command(value="diff", description="Compare effective permissions of this player or group with another", varargs="region...")
+    public void diff(CommandSender sender, final @Session("entityName") String name, @Option(value={"-w", "--world"}, valueName="world", completer="world") String worldName, @Option("other") final String otherName, String[] regionNames) {
+        List<String> header = new ArrayList<String>();
+        worldName = getEffectiveWorld(sender, worldName, header);
+        if (worldName == null) return;
+
+        if (!group) {
+            Utils.validatePlayer(storageStrategy.getDao(), resolver.getDefaultGroup(), name, header);
+            Utils.validatePlayer(storageStrategy.getDao(), resolver.getDefaultGroup(), otherName, header);
         }
 
         // Ensure regions are lowercased
@@ -265,23 +321,67 @@ public abstract class CommonCommands {
         
         // Grab permissions from zPerms
         final String lworldName = worldName.toLowerCase();
-        Map<String, Boolean> rootPermissions = storageStrategy.getTransactionStrategy().execute(new TransactionCallback<Map<String, Boolean>>() {
-            @Override
-            public Map<String, Boolean> doInTransaction() throws Exception {
-                if (group) {
-                    return resolver.resolveGroup(name.toLowerCase(), lworldName, regions);
+        Map<String, Boolean> rootPermissions;
+        try {
+            rootPermissions = storageStrategy.getTransactionStrategy().execute(new TransactionCallback<Map<String, Boolean>>() {
+                @Override
+                public Map<String, Boolean> doInTransaction() throws Exception {
+                    if (group) {
+                        if (storageStrategy.getDao().getEntity(name, true) == null)
+                            throw new MissingGroupException(name); // Don't really want to handle it in the transaction...
+                        return resolver.resolveGroup(name.toLowerCase(), lworldName, regions);
+                    }
+                    else {
+                        return resolver.resolvePlayer(name.toLowerCase(), lworldName, regions).getPermissions();
+                    }
                 }
-                else {
-                    return resolver.resolvePlayer(name.toLowerCase(), lworldName, regions).getPermissions();
-                }
-            }
-        });
+            });
+        }
+        catch (MissingGroupException e) {
+            handleMissingGroup(sender, e);
+            return;
+        }
 
         // Recursively determine all child permissions
         Map<String, Boolean> permissions = new HashMap<String, Boolean>();
-        calculateChildPermissions(permissions, rootPermissions, false);
+        Utils.calculateChildPermissions(permissions, rootPermissions, false);
+
+        // Grab permissions of other entity
+        Map<String, Boolean> otherRootPermissions;
+        try {
+            otherRootPermissions = storageStrategy.getTransactionStrategy().execute(new TransactionCallback<Map<String, Boolean>>() {
+                @Override
+                public Map<String, Boolean> doInTransaction() throws Exception {
+                    if (group) {
+                        if (storageStrategy.getDao().getEntity(otherName, true) == null)
+                            throw new MissingGroupException(otherName); // Don't really want to handle it in the transaction...
+                        return resolver.resolveGroup(otherName.toLowerCase(), lworldName, regions);
+                    }
+                    else {
+                        return resolver.resolvePlayer(otherName.toLowerCase(), lworldName, regions).getPermissions();
+                    }
+                }
+            });
+        }
+        catch (MissingGroupException e) {
+            handleMissingGroup(sender, e);
+            return;
+        }
+
+        Map<String, Boolean> otherPermissions = new HashMap<String, Boolean>();
+        Utils.calculateChildPermissions(otherPermissions, otherRootPermissions, false);
         
-        Utils.displayPermissions(plugin, sender, header, permissions, filter);
+        Utils.displayPermissionsDiff(plugin, sender, permissions, otherPermissions, header,
+                String.format(colorize("%s%s {WHITE}adds {YELLOW}the following permissions:"),
+                        (group ? ChatColor.DARK_GREEN : ChatColor.AQUA),
+                        otherName),
+                String.format(colorize("%s%s {WHITE}removes {YELLOW}the following permissions:"),
+                        (group ? ChatColor.DARK_GREEN : ChatColor.AQUA),
+                        otherName),
+                String.format(colorize("%s%s {WHITE}changes {YELLOW}the following permissions:"),
+                        (group ? ChatColor.DARK_GREEN : ChatColor.AQUA),
+                        otherName),
+                String.format(colorize("{YELLOW}%ss have identical effective permissions."), group ? "Group" : "Player"));
     }
 
     @Command(value={"metadata", "meta", "md"}, description="Metadata-related commands")
@@ -419,20 +519,6 @@ public abstract class CommonCommands {
         }
         else {
             metadataCommands.unset(sender, name, MetadataConstants.SUFFIX_KEY);
-        }
-    }
-
-    private void calculateChildPermissions(Map<String, Boolean> permissions, Map<String, Boolean> children, boolean invert) {
-        for (Map.Entry<String, Boolean> me : children.entrySet()) {
-            String key = me.getKey().toLowerCase();
-            Permission perm = Bukkit.getPluginManager().getPermission(key);
-            boolean value = me.getValue() ^ invert;
-            
-            permissions.put(key, value);
-            
-            if (perm != null) {
-                calculateChildPermissions(permissions, perm.getChildren(), !value);
-            }
         }
     }
 

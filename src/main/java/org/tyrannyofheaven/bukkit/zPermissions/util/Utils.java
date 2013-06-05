@@ -24,9 +24,12 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -35,10 +38,12 @@ import javax.xml.bind.DatatypeConverter;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.command.CommandSender;
+import org.bukkit.permissions.Permission;
 import org.bukkit.plugin.Plugin;
 import org.tyrannyofheaven.bukkit.util.ToHMessageUtils;
 import org.tyrannyofheaven.bukkit.util.ToHStringUtils;
 import org.tyrannyofheaven.bukkit.util.command.ParseException;
+import org.tyrannyofheaven.bukkit.zPermissions.dao.PermissionDao;
 import org.tyrannyofheaven.bukkit.zPermissions.model.EntityMetadata;
 import org.tyrannyofheaven.bukkit.zPermissions.model.Entry;
 import org.tyrannyofheaven.bukkit.zPermissions.model.Membership;
@@ -112,14 +117,22 @@ public class Utils {
     }
 
     public static void displayPermissions(Plugin plugin, CommandSender sender, List<String> header, Map<String, Boolean> permissions, String filter) {
+        displayPermissions(plugin, sender, null, header, permissions, filter);
+    }
+
+    public static void displayPermissions(Plugin plugin, CommandSender sender, List<String> lines, List<String> header, Map<String, Boolean> permissions, String filter) {
         List<PermissionInfo> permList = new ArrayList<PermissionInfo>(permissions.size());
         for (Map.Entry<String, Boolean> me : permissions.entrySet()) {
             permList.add(new PermissionInfo(me.getKey(), me.getValue(), null));
         }
-        displayPermissions(plugin, sender, header, permList, filter, false);
+        displayPermissions(plugin, sender, lines, header, permList, filter, false);
     }
 
     public static void displayPermissions(Plugin plugin, CommandSender sender, List<String> header, List<PermissionInfo> permissions, String filter, boolean verbose) {
+        displayPermissions(plugin, sender, null, header, permissions, filter, verbose);
+    }
+
+    public static void displayPermissions(Plugin plugin, CommandSender sender, List<String> lines, List<String> header, List<PermissionInfo> permissions, String filter, boolean verbose) {
         if (header == null)
             header = Collections.emptyList();
 
@@ -128,13 +141,18 @@ public class Utils {
         Collections.sort(permissions, PERMISSION_INFO_COMPARATOR);
 
         // Convert to lines and filter
-        List<String> lines = new ArrayList<String>(header.size() + permissions.size());
+        boolean display = false;
+        if (lines == null) {
+            lines = new ArrayList<String>(header.size() + permissions.size());
+            display = true;
+        }
         lines.addAll(header);
         if (filter != null) {
             filter = filter.toLowerCase().trim();
             if (filter.isEmpty())
                 filter = null;
         }
+        boolean found = false;
         for (PermissionInfo pi : permissions) {
             String key = pi.getPermission();
             if (filter != null && !key.contains(filter)) continue;
@@ -148,12 +166,14 @@ public class Utils {
                 source = notMine? (ChatColor.RED + " *") : "";
             }
             lines.add(String.format(colorize("{DARK_GREEN}- {GOLD}%s{DARK_GREEN}: {GREEN}%s%s"), key, pi.getValue(), source));
+            found = true;
         }
 
-        if (lines.isEmpty()) {
-            sendMessage(sender, colorize("{RED}No %spermissions found."), filter == null ? "" : "matching ");
+        if (!found) {
+            lines.add(String.format(colorize("{RED}No %spermissions found."), filter == null ? "" : "matching "));
         }
-        else {
+
+        if (display) {
             ToHMessageUtils.displayLines(plugin, sender, lines);
         }
     }
@@ -315,6 +335,104 @@ public class Utils {
     public static void checkPlayer(CommandSender sender, String playerName) {
         if (Bukkit.getPlayerExact(playerName) == null) {
             sendMessage(sender, colorize("{GRAY}(Player not online, make sure the name is correct)"));
+        }
+    }
+
+    /**
+     * Display a diff between two sets of permissions.
+     * 
+     * @param plugin the plugin
+     * @param sender the CommandSender to output results to
+     * @param permissions the first set of permissions
+     * @param otherPermissions the second set of permissions
+     * @param header a header to display, if any. May be null.
+     * @param addedHeader Header to display for added entries
+     * @param removedHeader Header to display for removed entries
+     * @param changedHeader Header to display for modified entries
+     * @param sameMessage Message to display if permission sets are identical
+     */
+    public static void displayPermissionsDiff(Plugin plugin, CommandSender sender, Map<String, Boolean> permissions, Map<String, Boolean> otherPermissions, List<String> header,
+            String addedHeader, String removedHeader, String changedHeader, String sameMessage) {
+        if (header == null)
+            header = Collections.emptyList();
+
+        // Make copy of header since we modify it
+        List<String> header0 = new ArrayList<String>(header);
+
+        // Now we diff
+        Set<String> added = new HashSet<String>(otherPermissions.keySet());
+        added.removeAll(permissions.keySet());
+        
+        Set<String> removed = new HashSet<String>(permissions.keySet());
+        removed.removeAll(otherPermissions.keySet());
+        
+        Set<String> changed = new HashSet<String>(permissions.keySet());
+        changed.retainAll(otherPermissions.keySet());
+        // Now we know what's common, actually determine what's different
+        for (Iterator<String> i = changed.iterator(); i.hasNext();) {
+            String key = i.next();
+            if (permissions.get(key).equals(otherPermissions.get(key))) {
+                // Same thing, so remove from set
+                i.remove();
+            }
+        }
+
+        List<String> lines = new ArrayList<String>();
+
+        if (!added.isEmpty()) {
+            header0.add(addedHeader);
+            displayPermissions(plugin, sender, lines, header0, getPermissionsSubset(otherPermissions, added), null);
+            header0.clear();
+        }
+        
+        if (!removed.isEmpty()) {
+            header0.add(removedHeader);
+            displayPermissions(plugin, sender, lines, header0, getPermissionsSubset(permissions, removed), null);
+            header0.clear();
+        }
+        
+        if (!changed.isEmpty()) {
+            header0.add(changedHeader);
+            displayPermissions(plugin, sender, lines, header0, getPermissionsSubset(otherPermissions, changed), null);
+        }
+        
+        if (added.isEmpty() && removed.isEmpty() && changed.isEmpty()) {
+            lines.addAll(header0);
+            lines.add(sameMessage);
+        }
+
+        ToHMessageUtils.displayLines(plugin, sender, lines);
+    }
+
+    // Given a permissions map and a set of keys, extract a subset of that map
+    private static Map<String, Boolean> getPermissionsSubset(Map<String, Boolean> permissions, Set<String> keys) {
+        Map<String, Boolean> result = new LinkedHashMap<String, Boolean>();
+        for (Map.Entry<String, Boolean> me : permissions.entrySet()) {
+            if (keys.contains(me.getKey()))
+                result.put(me.getKey(), me.getValue());
+        }
+        return result;
+    }
+
+    public static void calculateChildPermissions(Map<String, Boolean> permissions, Map<String, Boolean> children, boolean invert) {
+        for (Map.Entry<String, Boolean> me : children.entrySet()) {
+            String key = me.getKey().toLowerCase();
+            Permission perm = Bukkit.getPluginManager().getPermission(key);
+            boolean value = me.getValue() ^ invert;
+            
+            permissions.put(key, value);
+            
+            if (perm != null) {
+                calculateChildPermissions(permissions, perm.getChildren(), !value);
+            }
+        }
+    }
+
+    public static void validatePlayer(PermissionDao dao, String defaultGroup, String playerName, List<String> header) {
+        if (dao.getGroups(playerName).isEmpty() &&
+                dao.getEntity(playerName, false) == null) {
+            // Doesn't exist in the system
+            header.add(String.format(colorize("{GRAY}(Player \"%s\" not in system. Assuming member of group \"%s\")"), playerName, defaultGroup));
         }
     }
 

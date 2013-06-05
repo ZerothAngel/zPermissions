@@ -26,8 +26,12 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
+import java.util.Set;
 import java.util.logging.Level;
 
 import org.bukkit.Bukkit;
@@ -36,6 +40,7 @@ import org.bukkit.command.ConsoleCommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.permissions.PermissionAttachmentInfo;
 import org.bukkit.plugin.Plugin;
+import org.tyrannyofheaven.bukkit.util.ToHStringUtils;
 import org.tyrannyofheaven.bukkit.util.command.Command;
 import org.tyrannyofheaven.bukkit.util.command.CommandSession;
 import org.tyrannyofheaven.bukkit.util.command.HelpBuilder;
@@ -114,6 +119,7 @@ public class SubCommands {
                 .forCommand("setgroup")
                 .forCommand("show")
                 .forCommand("dump")
+                .forCommand("diff")
                 .forCommand("clone")
                 .forCommand("rename")
                 .forCommand("has")
@@ -149,6 +155,7 @@ public class SubCommands {
                 .forCommand("remove")
                 .forCommand("show")
                 .forCommand("dump")
+                .forCommand("diff")
                 .forCommand("clone")
                 .forCommand("rename")
                 .forCommand("metadata")
@@ -362,6 +369,142 @@ public class SubCommands {
         sendMessage(sender, colorize("{YELLOW}You are a member of: %s"), groups);
     }
 
+    @Command(value="diff", description="Compare effective permissions of a player")
+    public void diff(CommandSender sender, @Option(value={"-r", "--region", "--regions"}, valueName="regions") String regions, @Option(value={"-R", "--other-region", "--other-region"}, valueName="other-regions") String otherRegions,
+            @Option(value="qualified-player", completer="player") String player, @Option(value="other-qualified-player", completer="player", optional=true) String otherPlayer) {
+        List<String> header = new ArrayList<String>();
+
+        // Parse qualifiers for first player
+        final QualifiedPlayer qplayer = new QualifiedPlayer(player);
+        Player p = Bukkit.getPlayerExact(qplayer.getPlayerName());
+        final String worldName;
+        final Set<String> regionNames;
+        if (otherPlayer != null) {
+            Utils.validatePlayer(storageStrategy.getDao(), resolver.getDefaultGroup(), qplayer.getPlayerName(), header);
+            worldName = determineWorldName(sender, qplayer, header);
+            if (worldName == null) return;
+            regionNames = parseRegions(regions);
+        }
+        else {
+            // Player must be online
+            if (p == null) {
+                sendMessage(sender, colorize("{RED}Player is not online."));
+                return;
+            }
+            if (qplayer.getWorld() != null)
+                header.add(colorize("{GRAY}(World qualifier ignored when comparing against Bukkit effective permissions)"));
+            worldName = p.getWorld().getName().toLowerCase();
+            if (!parseRegions(regions).isEmpty())
+                header.add(colorize("{GRAY}(Specified regions ignored when comparing against Bukkit effective permissions)"));
+            regionNames = core.getRegions(p.getLocation());
+        }
+
+        // Parse qualifiers for second player
+        final QualifiedPlayer qother;
+        final String otherWorldName;
+        final Set<String> otherRegionNames;
+        if (otherPlayer != null) {
+            qother = new QualifiedPlayer(otherPlayer);
+            Utils.validatePlayer(storageStrategy.getDao(), resolver.getDefaultGroup(), qother.getPlayerName(), header);
+            otherWorldName = determineWorldName(sender, qother, header);
+            if (otherWorldName == null) return;
+            otherRegionNames = parseRegions(otherRegions);
+        }
+        else {
+            qother = null;
+            otherWorldName = null;
+            otherRegionNames = Collections.emptySet();
+        }
+
+        if (qother != null) {
+            // Diff one against the other
+            Map<String, Boolean> rootPermissions = storageStrategy.getTransactionStrategy().execute(new TransactionCallback<Map<String, Boolean>>() {
+                @Override
+                public Map<String, Boolean> doInTransaction() throws Exception {
+                    return resolver.resolvePlayer(qplayer.getPlayerName().toLowerCase(), worldName, regionNames).getPermissions();
+                }
+            });
+            Map<String, Boolean> permissions = new HashMap<String, Boolean>();
+            Utils.calculateChildPermissions(permissions, rootPermissions, false);
+            
+            Map<String, Boolean> otherRootPermissions = storageStrategy.getTransactionStrategy().execute(new TransactionCallback<Map<String, Boolean>>() {
+                @Override
+                public Map<String, Boolean> doInTransaction() throws Exception {
+                    return resolver.resolvePlayer(qother.getPlayerName().toLowerCase(), otherWorldName, otherRegionNames).getPermissions();
+                }
+            });
+            Map<String, Boolean> otherPermissions = new HashMap<String, Boolean>();
+            Utils.calculateChildPermissions(otherPermissions, otherRootPermissions, false);
+
+            Utils.displayPermissionsDiff(plugin, sender, permissions, otherPermissions, header,
+                    String.format(colorize("{AQUA}%s {YELLOW}on %s%s {WHITE}adds{YELLOW}:"), qother.getPlayerName(), otherWorldName,
+                            (otherRegionNames.isEmpty() ? "" : "[" + ToHStringUtils.delimitedString(",", otherRegionNames) + "]")),
+                    String.format(colorize("{AQUA}%s {YELLOW}on %s%s {WHITE}removes{YELLOW}:"), qother.getPlayerName(), otherWorldName,
+                            (otherRegionNames.isEmpty() ? "" : "[" + ToHStringUtils.delimitedString(",", otherRegionNames) + "]")),
+                    String.format(colorize("{AQUA}%s {YELLOW}on %s%s {WHITE}changes{YELLOW}:"), qother.getPlayerName(), otherWorldName,
+                            (otherRegionNames.isEmpty() ? "" : "[" + ToHStringUtils.delimitedString(",", otherRegionNames) + "]")),
+                    String.format(colorize("{YELLOW}Players on %s%s have identical effective permissions."), otherWorldName,
+                            (otherRegionNames.isEmpty() ? "" : "[" + ToHStringUtils.delimitedString(",", otherRegionNames) + "]")));
+        }
+        else {
+            // Diff Bukkit effective permissions against zPerms effective permissions
+            Map<String, Boolean> rootPermissions = storageStrategy.getTransactionStrategy().execute(new TransactionCallback<Map<String, Boolean>>() {
+                @Override
+                public Map<String, Boolean> doInTransaction() throws Exception {
+                    return resolver.resolvePlayer(qplayer.getPlayerName().toLowerCase(), worldName, regionNames).getPermissions();
+                }
+            });
+            Map<String, Boolean> permissions = new HashMap<String, Boolean>();
+            Utils.calculateChildPermissions(permissions, rootPermissions, false);
+
+            // Get Bukkit effective permissions
+            Map<String, Boolean> otherPermissions = new HashMap<String, Boolean>();
+            for (PermissionAttachmentInfo pai : p.getEffectivePermissions()) {
+                otherPermissions.put(pai.getPermission().toLowerCase(), pai.getValue());
+            }
+
+            Utils.displayPermissionsDiff(plugin, sender, permissions, otherPermissions, header,
+                    colorize("{YELLOW}Bukkit effective permissions {WHITE}add:"),
+                    colorize("{YELLOW}Bukkit effective permissions {WHITE}remove:"),
+                    colorize("{YELLOW}Bukkit effective permissions {WHITE}change:"),
+                    colorize("{YELLOW}Bukkit effective permissions are identical."));
+        }
+    }
+
+    private String determineWorldName(CommandSender sender, QualifiedPlayer qplayer, List<String> header) {
+        if (qplayer.getWorld() == null) {
+            String worldName;
+            if (sender instanceof Player) {
+                // Use sender's world
+                worldName = ((Player)sender).getWorld().getName();
+            }
+            else {
+                // Default to first world
+                worldName = Bukkit.getWorlds().get(0).getName();
+            }
+            header.add(String.format(colorize("{GRAY}(Assuming world \"%s\" for player \"%s\")"), worldName, qplayer.getPlayerName()));
+            return worldName.toLowerCase();
+        }
+        else {
+            // Just verify that the given world exists
+            if (Bukkit.getWorld(qplayer.getWorld()) == null) {
+                sendMessage(sender, colorize("{RED}Invalid world for player \"%s\"."), qplayer.getPlayerName());
+                return null;
+            }
+            return qplayer.getWorld().toLowerCase();
+        }
+    }
+
+    private Set<String> parseRegions(String regions) {
+        if (regions == null)
+            return Collections.emptySet();
+        Set<String> result = new LinkedHashSet<String>();
+        for (String region : regions.split("\\s*,\\s*")) {
+            result.add(region.toLowerCase());
+        }
+        return result;
+    }
+
     @Command(value="purge", description="Delete all players and groups")
     @Require("zpermissions.purge")
     public void purge(CommandSender sender, @Option(value="code", optional=true) Integer code) {
@@ -438,6 +581,34 @@ public class SubCommands {
 
         public long getTimestamp() {
             return timestamp;
+        }
+
+    }
+
+    private static class QualifiedPlayer {
+        
+        private final String world;
+        
+        private final String playerName;
+        
+        private QualifiedPlayer(String qualifiedPlayer) {
+            String[] parts = qualifiedPlayer.split(":", 2);
+            if (parts.length > 1) {
+                world = parts[0];
+                playerName = parts[1];
+            }
+            else {
+                world = null;
+                playerName = parts[0];
+            }
+        }
+
+        public String getWorld() {
+            return world;
+        }
+
+        public String getPlayerName() {
+            return playerName;
         }
 
     }
