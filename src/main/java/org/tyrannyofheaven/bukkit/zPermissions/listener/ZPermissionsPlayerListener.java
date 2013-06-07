@@ -60,7 +60,7 @@ public class ZPermissionsPlayerListener implements Listener {
         if (event.getResult() != PlayerLoginEvent.Result.ALLOWED) {
             // Forget about them
             debug(plugin, "%s is not allowed to log in", event.getPlayer().getName());
-            core.removeBukkitPermissions(event.getPlayer(), null);
+            core.removeBukkitPermissions(event.getPlayer(), false); // They're getting booted, no need to recalc
         }
     }
 
@@ -82,7 +82,9 @@ public class ZPermissionsPlayerListener implements Listener {
     @EventHandler(priority=EventPriority.MONITOR)
     public void onPlayerQuit(PlayerQuitEvent event) {
         debug(plugin, "%s quitting", event.getPlayer().getName());
-        core.removeBukkitPermissions(event.getPlayer(), new Runnable() {
+        core.removeBukkitPermissions(event.getPlayer(), false); // They're leaving, no need to recalc
+        // Wait for next tick...
+        Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, new Runnable() {
             @Override
             public void run() {
                 core.refreshExpirations();

@@ -58,7 +58,7 @@ public interface ZPermissionsCore {
 
     public void setBukkitPermissions(Player player, Location location, boolean force, RefreshCause eventCause);
 
-    public void removeBukkitPermissions(Player player, Runnable nextTask);
+    public void removeBukkitPermissions(Player player, boolean recalculate);
 
     // Utility
     

@@ -297,18 +297,10 @@ public class ZPermissionsPlugin extends JavaPlugin implements ZPermissionsCore, 
 
         // Remove permissions
         for (Player player : Bukkit.getOnlinePlayers()) {
-            removePermission(player);
+            removeBukkitPermissions(player, true);
         }
 
         log(this, "%s disabled.", versionInfo.getVersionString());
-    }
-
-    private void removePermission(Player player) {
-        final String permName = DYNAMIC_PERMISSION_PREFIX + player.getName();
-        Bukkit.getPluginManager().removePermission(permName);
-        for (Permissible p : Bukkit.getPluginManager().getPermissionSubscriptions(permName)) {
-            p.recalculatePermissions();
-        }
     }
 
     /* (non-Javadoc)
@@ -490,28 +482,21 @@ public class ZPermissionsPlugin extends JavaPlugin implements ZPermissionsCore, 
 
     // Remove all state associated with a player
     @Override
-    public void removeBukkitPermissions(Player player, final Runnable nextTask) {
-        final String playerName = player.getName();
-        final Plugin realThis = this;
-        // Check on NEXT TICK. This avoids the mess that is Login/Quit/Join that
-        // happens during a crash/reconnect.
-        Bukkit.getScheduler().runTask(this, new Runnable() {
-            @Override
-            public void run() {
-                Player player = Bukkit.getPlayerExact(playerName);
-                // Only remove if they are actually gone
-                if (player == null) {
-                    debug(realThis, "Removing dynamic permission for %s", playerName);
-                    Bukkit.getPluginManager().removePermission(DYNAMIC_PERMISSION_PREFIX + playerName);
-                    
-                    // Only bother running if precondition met (i.e. player is now offline)
-                    if (nextTask != null)
-                        nextTask.run();
-                }
-                else
-                    debug(realThis, "Player %s is still online. Not removing dynamic permission!", playerName);
+    public void removeBukkitPermissions(Player player, boolean recalculate) {
+        debug(this, "Removing permissions for %s", player.getName());
+        // NB Attachment is recycled along with the player instance
+
+        // Disassociate PlayerState
+        player.removeMetadata(PLAYER_METADATA_KEY, this);
+
+        // Remove dynamic permission and recalculate, if wanted
+        final String permName = DYNAMIC_PERMISSION_PREFIX + player.getName();
+        Bukkit.getPluginManager().removePermission(permName);
+        if (recalculate) {
+            for (Permissible p : Bukkit.getPluginManager().getPermissionSubscriptions(permName)) {
+                p.recalculatePermissions();
             }
-        });
+        }
     }
     
     // Update state about a player, resolving effective permissions and
@@ -544,7 +529,7 @@ public class ZPermissionsPlugin extends JavaPlugin implements ZPermissionsCore, 
             }
             else {
                 // Ensure player has no permissions
-                removePermission(player);
+                removeBukkitPermissions(player, true);
                 sendMessage(player, colorize("{RED}Error determining your permissions; all permissions removed!"));
             }
         }
@@ -632,14 +617,19 @@ public class ZPermissionsPlugin extends JavaPlugin implements ZPermissionsCore, 
 
         // Create dynamic permission to hold all permissions this player should have at this moment
         if (perm == null) {
+            // NB This implicitly calls recalculatePermissibles(). However, since it has not been
+            // added yet, permissibles will not pick up its children.
             perm = new Permission(permName, PermissionDefault.FALSE, resolverResult.getPermissions());
             Bukkit.getPluginManager().addPermission(perm);
         }
         else {
             perm.getChildren().clear();
             perm.getChildren().putAll(resolverResult.getPermissions());
-            perm.recalculatePermissibles();
         }
+        // If player already has an attachment, then it will recalculate here.
+        // Otherwise subscribers will be empty and nothing really happens. The
+        // recalculation will then occur when the attachment is added below.
+        perm.recalculatePermissibles();
 
         if (playerState != null) {
             // Update values
