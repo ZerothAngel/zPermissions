@@ -31,7 +31,7 @@ import org.tyrannyofheaven.bukkit.zPermissions.ZPermissionsCore;
 
 /**
  * PlayerListener for zPermissions. Simply updates or removes the zPermissions
- * attachment as appropriate.
+ * permissions as appropriate.
  * 
  * @author asaddi
  */
@@ -50,7 +50,7 @@ public class ZPermissionsPlayerListener implements Listener {
     @EventHandler(priority=EventPriority.LOWEST)
     public void onPlayerLogin(PlayerLoginEvent event) {
         debug(plugin, "%s logged in", event.getPlayer().getName());
-        core.updateAttachment(event.getPlayer(), event.getPlayer().getLocation(), true, null);
+        core.setBukkitPermissions(event.getPlayer(), event.getPlayer().getLocation(), true, null);
         // NB don't bother with expirations until join
     }
 
@@ -60,7 +60,7 @@ public class ZPermissionsPlayerListener implements Listener {
         if (event.getResult() != PlayerLoginEvent.Result.ALLOWED) {
             // Forget about them
             debug(plugin, "%s is not allowed to log in", event.getPlayer().getName());
-            core.removeAttachment(event.getPlayer());
+            core.removeBukkitPermissions(event.getPlayer(), null);
         }
     }
 
@@ -69,7 +69,7 @@ public class ZPermissionsPlayerListener implements Listener {
         debug(plugin, "%s joining", event.getPlayer().getName());
         // NB eventCause is null because it's a given that the player's permissions has changed on join
         // (ignore the fact that it actually changed on login for now)
-        core.updateAttachment(event.getPlayer(), event.getPlayer().getLocation(), true, null); // Does this need to be forced again?
+        core.setBukkitPermissions(event.getPlayer(), event.getPlayer().getLocation(), true, null); // Does this need to be forced again?
         // Wait for next tick...
         Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, new Runnable() {
             @Override
@@ -82,9 +82,7 @@ public class ZPermissionsPlayerListener implements Listener {
     @EventHandler(priority=EventPriority.MONITOR)
     public void onPlayerQuit(PlayerQuitEvent event) {
         debug(plugin, "%s quitting", event.getPlayer().getName());
-        core.removeAttachment(event.getPlayer());
-        // Wait for next tick...
-        Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, new Runnable() {
+        core.removeBukkitPermissions(event.getPlayer(), new Runnable() {
             @Override
             public void run() {
                 core.refreshExpirations();
@@ -94,7 +92,7 @@ public class ZPermissionsPlayerListener implements Listener {
 
     @EventHandler(priority=EventPriority.LOWEST)
     public void onPlayerChangedWorld(PlayerChangedWorldEvent event) {
-        core.updateAttachment(event.getPlayer(), event.getPlayer().getLocation(), false, RefreshCause.MOVEMENT);
+        core.setBukkitPermissions(event.getPlayer(), event.getPlayer().getLocation(), false, RefreshCause.MOVEMENT);
     }
 
 }

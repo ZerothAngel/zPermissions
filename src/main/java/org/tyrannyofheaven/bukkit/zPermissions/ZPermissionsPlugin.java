@@ -44,9 +44,8 @@ import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.metadata.FixedMetadataValue;
 import org.bukkit.metadata.MetadataValue;
+import org.bukkit.permissions.Permissible;
 import org.bukkit.permissions.Permission;
-import org.bukkit.permissions.PermissionAttachment;
-import org.bukkit.permissions.PermissionAttachmentInfo;
 import org.bukkit.permissions.PermissionDefault;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.ServicePriority;
@@ -128,7 +127,7 @@ public class ZPermissionsPlugin extends JavaPlugin implements ZPermissionsCore, 
     // Default database support
     private static final boolean DEFAULT_DATABASE_SUPPORT = true;
 
-    // Default number of ticks to wait between attachment refreshes of all players
+    // Default number of ticks to wait between permissions refreshes of all players
     private static final int DEFAULT_BULK_REFRESH_DELAY = 5;
 
     // Default opaque inheritance
@@ -296,12 +295,20 @@ public class ZPermissionsPlugin extends JavaPlugin implements ZPermissionsCore, 
 
         // Clear any player state
 
-        // Remove attachments
+        // Remove permissions
         for (Player player : Bukkit.getOnlinePlayers()) {
-            removeAttachment(player);
+            removePermission(player);
         }
 
         log(this, "%s disabled.", versionInfo.getVersionString());
+    }
+
+    private void removePermission(Player player) {
+        final String permName = DYNAMIC_PERMISSION_PREFIX + player.getName();
+        Bukkit.getPluginManager().removePermission(permName);
+        for (Permissible p : Bukkit.getPluginManager().getPermissionSubscriptions(permName)) {
+            p.recalculatePermissions();
+        }
     }
 
     /* (non-Javadoc)
@@ -355,8 +362,11 @@ public class ZPermissionsPlugin extends JavaPlugin implements ZPermissionsCore, 
             // Set up service API
             getServer().getServicesManager().register(ZPermissionsService.class, new ZPermissionsServiceImpl(getResolver(), getDao(), getRetryingTransactionStrategy(), getZPermissionsConfig()), this, ServicePriority.Normal);
 
-            // Make sure everyone currently online has an attachment
-            refreshPlayers();
+            // Make sure everyone currently online has permissions
+            // NB Do in foreground
+            for (Player player : Bukkit.getOnlinePlayers()) {
+                refreshPlayer(player.getName(), RefreshCause.GROUP_CHANGE);
+            }
 
             // Start auto-refresh task, if one is configured
             startAutoRefreshTask();
@@ -431,11 +441,11 @@ public class ZPermissionsPlugin extends JavaPlugin implements ZPermissionsCore, 
         RegionStrategy regionStrategy;
 
         // WorldGuard
-        regionStrategy = new WorldGuardRegionStrategy(this);
+        regionStrategy = new WorldGuardRegionStrategy(this, getZPermissionsCore());
         strategies.put(regionStrategy.getName(), regionStrategy);
 
         // Additional region managers are registered here.
-        regionStrategy = new ResidenceRegionStrategy(this);
+        regionStrategy = new ResidenceRegionStrategy(this, getZPermissionsCore());
         strategies.put(regionStrategy.getName(), regionStrategy);
         
         // Run through list in preference order
@@ -478,42 +488,45 @@ public class ZPermissionsPlugin extends JavaPlugin implements ZPermissionsCore, 
         return result;
     }
 
-    // Remove all state associated with a player, including their attachment
+    // Remove all state associated with a player
     @Override
-    public void removeAttachment(Player player) {
-        debug(this, "Removing attachment for %s", player.getName());
-        PermissionAttachment pa = getMyPermissionAttachment(player);
-        if (pa != null)
-            pa.remove();
-        player.removeMetadata(PLAYER_METADATA_KEY, this);
-        Bukkit.getPluginManager().removePermission(DYNAMIC_PERMISSION_PREFIX + player.getName());
+    public void removeBukkitPermissions(Player player, final Runnable nextTask) {
+        final String playerName = player.getName();
+        final Plugin realThis = this;
+        // Check on NEXT TICK. This avoids the mess that is Login/Quit/Join that
+        // happens during a crash/reconnect.
+        Bukkit.getScheduler().runTask(this, new Runnable() {
+            @Override
+            public void run() {
+                Player player = Bukkit.getPlayerExact(playerName);
+                // Only remove if they are actually gone
+                if (player == null) {
+                    debug(realThis, "Removing dynamic permission for %s", playerName);
+                    Bukkit.getPluginManager().removePermission(DYNAMIC_PERMISSION_PREFIX + playerName);
+                    
+                    // Only bother running if precondition met (i.e. player is now offline)
+                    if (nextTask != null)
+                        nextTask.run();
+                }
+                else
+                    debug(realThis, "Player %s is still online. Not removing dynamic permission!", playerName);
+            }
+        });
     }
     
-    private PermissionAttachment getMyPermissionAttachment(Player player) {
-        String permName = (DYNAMIC_PERMISSION_PREFIX + player.getName()).toLowerCase();
-        // Ugh... This is technically unbounded
-        for (PermissionAttachmentInfo pai : player.getEffectivePermissions()) {
-            PermissionAttachment pa = pai.getAttachment();
-            if (pa != null && pa.getPlugin() == this && pa.getPermissions().containsKey(permName)) {
-                return pa;
-            }
-        }
-        return null;
-    }
-
     // Update state about a player, resolving effective permissions and
     // creating/updating their attachment
     @Override
-    public void updateAttachment(Player player, Location location, boolean force, RefreshCause eventCause) {
+    public void setBukkitPermissions(Player player, Location location, boolean force, RefreshCause eventCause) {
         boolean changed = false;
         try {
-            changed = updateAttachmentInternal(player, location, force);
+            changed = setBukkitPermissionsInternal(player, location, force);
         }
         catch (Error e) {
             throw e; // Never catch errors
         }
         catch (Throwable t) {
-            error(this, "Exception while updating attachment for %s", player.getName(), t);
+            error(this, "Exception while updating permissions for %s", player.getName(), t);
             broadcastAdmin(this, colorize("{RED}SEVERE error while determining permissions; see server.log!"));
             
             // Kick the player, if configured to do so
@@ -530,8 +543,8 @@ public class ZPermissionsPlugin extends JavaPlugin implements ZPermissionsCore, 
                 });
             }
             else {
-                // Ensure player has no attachment
-                removeAttachment(player);
+                // Ensure player has no permissions
+                removePermission(player);
                 sendMessage(player, colorize("{RED}Error determining your permissions; all permissions removed!"));
             }
         }
@@ -578,7 +591,7 @@ public class ZPermissionsPlugin extends JavaPlugin implements ZPermissionsCore, 
 
     // Update state about a player, resolving effective permissions and
     // creating/updating their attachment
-    private boolean updateAttachmentInternal(final Player player, Location location, boolean force) {
+    private boolean setBukkitPermissionsInternal(final Player player, Location location, boolean force) {
         final Set<String> regions = getRegions(location);
 
         // Fetch existing state
@@ -587,13 +600,13 @@ public class ZPermissionsPlugin extends JavaPlugin implements ZPermissionsCore, 
 
         PlayerState playerState = getPlayerState(player);
 
-        PermissionAttachment pa = getMyPermissionAttachment(player);
+        boolean hasPermissionAttachment = player.hasPermission(permName);
 
         // Check if the player is missing any state or changed worlds/regions
         if (!force) {
             force = perm == null || 
                     playerState == null ||
-                    pa == null ||
+                    !hasPermissionAttachment ||
                     !regions.equals(playerState.getRegions()) ||
                     !location.getWorld().getName().equals(playerState.getWorld());
         }
@@ -601,7 +614,7 @@ public class ZPermissionsPlugin extends JavaPlugin implements ZPermissionsCore, 
         // No need to update yet (most likely called by movement-based event)
         if (!force) return false;
 
-        debug(this, "Updating attachment for %s", player.getName());
+        debug(this, "Updating permissions for %s", player.getName());
         debug(this, "  location = %s", location);
         debug(this, "  regions = %s", regions);
 
@@ -615,7 +628,7 @@ public class ZPermissionsPlugin extends JavaPlugin implements ZPermissionsCore, 
             }
         });
 
-        debug(this, "(Existing Permission: %s, PlayerState: %s, PermissionAttachment: %s)", perm != null, playerState != null, pa != null);
+        debug(this, "(Existing Permission: %s, PlayerState: %s, PermissionAttachment: %s)", perm != null, playerState != null, hasPermissionAttachment);
 
         // Create dynamic permission to hold all permissions this player should have at this moment
         if (perm == null) {
@@ -641,7 +654,7 @@ public class ZPermissionsPlugin extends JavaPlugin implements ZPermissionsCore, 
         }
         
         // Finally, create attachment if missing
-        if (pa == null) {
+        if (!hasPermissionAttachment) {
             player.addAttachment(this, perm.getName(), true);
         }
 
@@ -672,7 +685,7 @@ public class ZPermissionsPlugin extends JavaPlugin implements ZPermissionsCore, 
         Player player = Bukkit.getPlayerExact(playerName);
         if (player != null) {
             debug(this, "Refreshing player %s", player.getName());
-            updateAttachment(player, player.getLocation(), true, cause);
+            setBukkitPermissions(player, player.getLocation(), true, cause);
         }
     }
 

@@ -41,7 +41,7 @@ public class ZPermissionsRegionPlayerListener implements Listener {
     @EventHandler(priority=EventPriority.MONITOR, ignoreCancelled=true)
     public void onPlayerTeleport(PlayerTeleportEvent event) {
         // Conditionally update if world or region changed
-        core.updateAttachment(event.getPlayer(), event.getTo(), false, RefreshCause.MOVEMENT);
+        core.setBukkitPermissions(event.getPlayer(), event.getTo(), false, RefreshCause.MOVEMENT);
     }
 
     @EventHandler(priority=EventPriority.MONITOR, ignoreCancelled=true)
@@ -51,14 +51,14 @@ public class ZPermissionsRegionPlayerListener implements Listener {
                 event.getFrom().getBlockY() != event.getTo().getBlockY() ||
                 event.getFrom().getBlockZ() != event.getTo().getBlockZ()) {
             // Conditionally update if containing regions changed
-            core.updateAttachment(event.getPlayer(), event.getTo(), false, RefreshCause.MOVEMENT);
+            core.setBukkitPermissions(event.getPlayer(), event.getTo(), false, RefreshCause.MOVEMENT);
         }
     }
 
     @EventHandler(priority=EventPriority.MONITOR, ignoreCancelled=true)
     public void onPlayerRespawn(PlayerRespawnEvent event) {
         // Conditionally update if respawning in a different world or region
-        core.updateAttachment(event.getPlayer(), event.getRespawnLocation(), false, RefreshCause.MOVEMENT);
+        core.setBukkitPermissions(event.getPlayer(), event.getRespawnLocation(), false, RefreshCause.MOVEMENT);
     }
 
 }
