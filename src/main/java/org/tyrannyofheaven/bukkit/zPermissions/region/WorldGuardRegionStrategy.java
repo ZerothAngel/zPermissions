@@ -26,6 +26,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.server.PluginEnableEvent;
 import org.bukkit.plugin.Plugin;
 import org.tyrannyofheaven.bukkit.util.ToHLoggingUtils;
+import org.tyrannyofheaven.bukkit.zPermissions.ZPermissionsCore;
 
 import com.sk89q.worldguard.bukkit.WorldGuardPlugin;
 import com.sk89q.worldguard.protection.ApplicableRegionSet;
@@ -43,10 +44,13 @@ public class WorldGuardRegionStrategy implements RegionStrategy, Listener {
 
     private final Plugin plugin;
 
+    private final ZPermissionsCore core;
+
     private WorldGuardPlugin worldGuardPlugin;
 
-    public WorldGuardRegionStrategy(Plugin plugin) {
+    public WorldGuardRegionStrategy(Plugin plugin, ZPermissionsCore core) {
         this.plugin = plugin;
+        this.core = core;
     }
 
     @Override
@@ -101,8 +105,10 @@ public class WorldGuardRegionStrategy implements RegionStrategy, Listener {
     public void onPluginEnable(PluginEnableEvent event) {
         if (!isEnabled() && RM_PLUGIN_NAME.equals(event.getPlugin().getName())) {
             detectWorldGuardPlugin();
-            if (isEnabled())
+            if (isEnabled()) {
                 ToHLoggingUtils.log(plugin, "%s region support enabled.", getName());
+                core.refreshPlayers();
+            }
         }
     }
 

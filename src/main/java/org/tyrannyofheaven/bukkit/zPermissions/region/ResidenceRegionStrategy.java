@@ -25,6 +25,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.server.PluginEnableEvent;
 import org.bukkit.plugin.Plugin;
 import org.tyrannyofheaven.bukkit.util.ToHLoggingUtils;
+import org.tyrannyofheaven.bukkit.zPermissions.ZPermissionsCore;
 
 import com.bekvon.bukkit.residence.Residence;
 import com.bekvon.bukkit.residence.protection.ClaimedResidence;
@@ -40,10 +41,13 @@ public class ResidenceRegionStrategy implements RegionStrategy, Listener {
 
     private final Plugin plugin;
 
+    private final ZPermissionsCore core;
+
     private boolean enabled;
 
-    public ResidenceRegionStrategy(Plugin plugin) {
+    public ResidenceRegionStrategy(Plugin plugin, ZPermissionsCore core) {
         this.plugin = plugin;
+        this.core = core;
     }
 
     @Override
@@ -88,8 +92,10 @@ public class ResidenceRegionStrategy implements RegionStrategy, Listener {
     public void onPluginEnable(PluginEnableEvent event) {
         if (!isEnabled() && RM_PLUGIN_NAME.equals(event.getPlugin().getName())) {
             detectResidencePlugin();
-            if (isEnabled())
+            if (isEnabled()) {
                 ToHLoggingUtils.log(plugin, "%s region support enabled.", getName());
+                core.refreshPlayers();
+            }
         }
     }
 
