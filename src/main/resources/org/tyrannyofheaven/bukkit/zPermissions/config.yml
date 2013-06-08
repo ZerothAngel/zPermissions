@@ -30,7 +30,7 @@ kick-ops-on-error: false
 
 auto-refresh-interval: -1
 
-opaque-inheritance: false
+opaque-inheritance: true
 
 interleaved-player-permissions: true
 
