@@ -131,7 +131,7 @@ public class ZPermissionsPlugin extends JavaPlugin implements ZPermissionsCore, 
     private static final int DEFAULT_BULK_REFRESH_DELAY = 5;
 
     // Default opaque inheritance
-    private static final boolean DEFAULT_OPAQUE_INHERITANCE = false;
+    private static final boolean DEFAULT_OPAQUE_INHERITANCE = true;
 
     // Default interleaved player permissions (to be changed at some future version)
     private static final boolean DEFAULT_INTERLEAVED_PLAYER_PERMISSIONS = true;
