@@ -43,7 +43,7 @@
 
 *   **What does the `opaque-inheritance` option do?**
 
-    When `opaque-inheritance` is true (the default from version 0.9 - 0.9.19), each assigned group is fully resolved before moving on to the next. This means *the ancestor groups* of higher-weight assigned groups take precedence over lower-weight groups.
+    When `opaque-inheritance` is true (the default setting), each assigned group is fully resolved before moving on to the next. This means *the ancestor groups* of higher-weight assigned groups take precedence over lower-weight groups.
     
     When false, ancestor groups that were already resolved are no longer resolved again.
     
