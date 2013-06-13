@@ -24,14 +24,15 @@ assigned-groups-can-include-default: |
 
 default-group: |
   The default group. Players that are not explicitly members of any group
-  are placed in this group.
+  are considered members of this group.
 
 default-track: |
   The default track. When the track name is omitted while using the /promote,
   /demote, /setrank, and /unsetrank commands, this is the track used.
 
 dump-directory: |
-  Directory (relative to the server root) where to load/store dumps.
+  Directory where to load/store dumps. If this is not an absolute path, it
+  will be interpreted as relative to the server root.
 
 default-temp-permission-timeout: |
   Default timeout for temporary permissions, in seconds
@@ -50,9 +51,10 @@ kick-ops-on-error: |
   an op's permissions, then the op will only be kicked if this is true.
 
 region-support: |
-  Whether region-based permissions are enabled. Requires WorldGuard. Setting
-  this to false will save some processing if you use WorldGuard but don't use
-  region-based permissions. Has no effect if WorldGuard is not present.
+  Whether region-based permissions are enabled. Requires a region plugin such
+  as WorldGuard or Residence. Setting this to false will save some processing
+  if you use a region plugin but don't use region-based permissions. Has no
+  effect if a region plugin is not present.
 
 auto-refresh-interval: |
   Interval, in minutes, in which to automatically refresh permissions from
@@ -60,13 +62,17 @@ auto-refresh-interval: |
   the flat-file storage method. DO NOT SET IT TOO LOW. Otherwise you run
   the risk of refreshes overlapping or permissions changes inexplicably
   being "forgotten."
+  Unless you have an external process modifying zPermissions tables, you
+  should have no need to enable this feature! (And even then, its use is
+  questionable...)
 
 opaque-inheritance: |
   Determines how inherited groups and assigned groups are resolved. When
   true, each assigned group is fully resolved (itself + all ancestors)
-  before applying its permissions in assignment priority. When false,
-  the conglomerate of all assigned groups and their ancestor groups
-  are considered at once.
+  before applying its permissions in assignment priority. (That is, groups
+  are flattened before being applied.) When false, all assigned groups and
+  their ancestor groups are treated as individual groups and are applied
+  in "topological order." <http://en.wikipedia.org/wiki/Topological_sorting>
 
 interleaved-player-permissions: |
   Determines when to apply player permissions. If true, player permissions
