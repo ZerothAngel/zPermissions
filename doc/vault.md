@@ -17,6 +17,10 @@ For example:
 
     /permissions player Alice metadata set Vault.primary-group.track Admin
 
+Or alternatively:
+
+    /permissions player Alice settrack Admin
+
 Assuming Alice has been previously promoted on the Admin track, her primary group will be the highest-ranked group from that track regardless of assignment priorities.
 
 If Alice is not on the Admin track then the behavior returns to the default, i.e. the highest-weight assigned group.
@@ -33,3 +37,5 @@ Examples:
 
     /permissions group VIP md set prefix [VIP]
     /permissions player Bob metadata set prefix &f
+    /permissions group Mod prefix "[Mod: "
+    /permissions group Mod suffix ]
