@@ -42,4 +42,12 @@ region-managers:
 - WorldGuard
 - Residence
 
+native-vault-bridges: true
+
+vault-prefix-includes-group: true
+
+vault-group-test-uses-assigned-only: false
+
+vault-get-groups-uses-assigned-only: false
+
 debug: false
