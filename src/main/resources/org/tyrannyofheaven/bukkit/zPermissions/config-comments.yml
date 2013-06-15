@@ -97,5 +97,31 @@ region-managers: |
   If region-support is enabled, this is the order in which region manager
   plugins will be detected. The first plugin detected will be used.
 
+native-vault-bridges: |
+  If true, the Vault bridges included with zPermissions are used. If false,
+  the bridges that come with Vault are used. Has no effect if Vault is not
+  installed. The included ("native") bridges will almost always certainly
+  be more advanced/featureful. However, the option to turn them off is
+  provided should there be any compatibility problems.
+
+vault-prefix-includes-group: |
+  If true, the Vault Chat API methods getPlayerPrefix() and getPlayerSuffix()
+  will fall back to the player's primary group's prefix/suffix. Only matters
+  if native-vault-bridges is true. This should be enabled if you use a
+  chat formatting plugin that does not perform this fallback behavior
+  itself.
+
+vault-group-test-uses-assigned-only: |
+  Affects the behavior of the Vault Permission playerInGroup() method. If
+  true, playerInGroup() will only test against assigned groups. Otherwise,
+  it will test against assigned groups and their inherited ancestor groups.
+  Only matters if native-vault-bridges is true.
+
+vault-get-groups-uses-assigned-only: |
+  Affects the behavior of the Vault Permission getPlayerGroups() method.
+  If true, getPlayerGroups() will only return assigned groups. Otherwise,
+  it will return assigned groups and their inherited ancestor groups.
+  Only matters if native-vault-bridges is true.
+
 debug: |
   Enable debug logging.

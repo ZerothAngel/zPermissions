@@ -39,4 +39,10 @@ public interface ZPermissionsConfig {
 
     public String getDefaultPrimaryGroupTrack();
 
+    public boolean isVaultPrefixIncludesGroup();
+
+    public boolean isVaultGroupTestUsesAssignedOnly();
+    
+    public boolean isVaultGetGroupsUsesAssignedOnly();
+
 }
