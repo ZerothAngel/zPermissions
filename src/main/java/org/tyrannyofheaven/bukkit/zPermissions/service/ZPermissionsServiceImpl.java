@@ -15,6 +15,7 @@
  */
 package org.tyrannyofheaven.bukkit.zPermissions.service;
 
+import static org.tyrannyofheaven.bukkit.util.ToHLoggingUtils.warn;
 import static org.tyrannyofheaven.bukkit.util.ToHStringUtils.hasText;
 
 import java.util.ArrayList;
@@ -25,6 +26,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.bukkit.plugin.Plugin;
 import org.tyrannyofheaven.bukkit.util.transaction.TransactionCallback;
 import org.tyrannyofheaven.bukkit.util.transaction.TransactionCallbackWithoutResult;
 import org.tyrannyofheaven.bukkit.util.transaction.TransactionStrategy;
@@ -32,6 +34,7 @@ import org.tyrannyofheaven.bukkit.zPermissions.PermissionsResolver;
 import org.tyrannyofheaven.bukkit.zPermissions.ZPermissionsConfig;
 import org.tyrannyofheaven.bukkit.zPermissions.ZPermissionsService;
 import org.tyrannyofheaven.bukkit.zPermissions.dao.PermissionDao;
+import org.tyrannyofheaven.bukkit.zPermissions.util.MetadataConstants;
 import org.tyrannyofheaven.bukkit.zPermissions.util.Utils;
 
 /**
@@ -42,6 +45,8 @@ import org.tyrannyofheaven.bukkit.zPermissions.util.Utils;
 public class ZPermissionsServiceImpl implements ZPermissionsService {
 
     private static final Set<Class<?>> validMetadataTypes;
+
+    private final Plugin plugin;
 
     private final PermissionsResolver resolver;
 
@@ -63,7 +68,9 @@ public class ZPermissionsServiceImpl implements ZPermissionsService {
         validMetadataTypes = Collections.unmodifiableSet(types);
     }
 
-    public ZPermissionsServiceImpl(PermissionsResolver resolver, PermissionDao dao, TransactionStrategy transactionStrategy, ZPermissionsConfig config) {
+    public ZPermissionsServiceImpl(Plugin plugin, PermissionsResolver resolver, PermissionDao dao, TransactionStrategy transactionStrategy, ZPermissionsConfig config) {
+        if (plugin == null)
+            throw new IllegalArgumentException("plugin cannot be null");
         if (resolver == null)
             throw new IllegalArgumentException("resolver cannot be null");
         if (dao == null)
@@ -72,6 +79,7 @@ public class ZPermissionsServiceImpl implements ZPermissionsService {
             throw new IllegalArgumentException("transactionStrategy cannot be null");
         if (config == null)
             throw new IllegalArgumentException("config cannot be null");
+        this.plugin = plugin;
         this.resolver = resolver;
         this.dao = dao;
         this.transactionStrategy = transactionStrategy;
@@ -316,6 +324,38 @@ public class ZPermissionsServiceImpl implements ZPermissionsService {
             throw new IllegalStateException("Track has not been defined");
         // NB make a copy
         return new ArrayList<String>(result);
+    }
+
+    /* (non-Javadoc)
+     * @see org.tyrannyofheaven.bukkit.zPermissions.ZPermissionsService#getPlayerPrimaryGroup(java.lang.String)
+     */
+    @Override
+    public String getPlayerPrimaryGroup(String playerName) {
+        try {
+            String track = getPlayerMetadata(playerName, MetadataConstants.PRIMARY_GROUP_TRACK_KEY, String.class);
+            if (hasText(track)) {
+                List<String> groups = getTrackGroups(track);
+                Collections.reverse(groups); // groups is now high rank to low
+
+                Set<String> trackGroups = new LinkedHashSet<String>(groups);
+                trackGroups.retainAll(getPlayerAssignedGroups(playerName)); // intersection with all assigned groups
+
+                if (!trackGroups.isEmpty())
+                    return trackGroups.iterator().next(); // return highest-ranked group in given track
+            }
+        }
+        catch (IllegalStateException e) {
+            warn(plugin, "Bad property '%s' for %s; is it a string and does the track exist?", MetadataConstants.PRIMARY_GROUP_TRACK_KEY, playerName);
+        }
+
+        // Has no concept of primary group... use highest-priority assigned group instead
+        List<String> groups = getPlayerAssignedGroups(playerName);
+        if (!groups.isEmpty()) {
+            return groups.get(0);
+        } else {
+            // Shouldn't get here, but just in case
+            return resolver.getDefaultGroup();
+        }
     }
 
 }
