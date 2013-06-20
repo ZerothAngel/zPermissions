@@ -145,4 +145,16 @@ public interface ZPermissionsService {
      */
     public List<String> getTrackGroups(String trackName);
 
+    /**
+     * zPermissions does not have any concept of "primary group." The closest
+     * thing to this would be the highest-weight assigned group. However, for
+     * flexibility, there are other ways of determining the primary group, usually
+     * involving metadata of some kind. This method is an attempt to internalize
+     * all that logic within zPermissions (it previously existed solely in Vault).
+     * 
+     * @param playerName the name of the player
+     * @return the name of the player's primary group
+     */
+    public String getPlayerPrimaryGroup(String playerName);
+
 }

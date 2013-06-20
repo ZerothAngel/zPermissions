@@ -352,7 +352,7 @@ public class ZPermissionsPlugin extends JavaPlugin implements ZPermissionsCore, 
             }
 
             // Set up service API
-            getServer().getServicesManager().register(ZPermissionsService.class, new ZPermissionsServiceImpl(getResolver(), getDao(), getRetryingTransactionStrategy(), getZPermissionsConfig()), this, ServicePriority.Normal);
+            getServer().getServicesManager().register(ZPermissionsService.class, new ZPermissionsServiceImpl(this, getResolver(), getDao(), getRetryingTransactionStrategy(), getZPermissionsConfig()), this, ServicePriority.Normal);
 
             // Make sure everyone currently online has permissions
             // NB Do in foreground
