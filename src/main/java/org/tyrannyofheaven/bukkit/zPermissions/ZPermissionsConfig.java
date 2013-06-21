@@ -37,4 +37,6 @@ public interface ZPermissionsConfig {
 
     public int getDefaultTempPermissionTimeout();
 
+    public String getDefaultPrimaryGroupTrack();
+
 }
