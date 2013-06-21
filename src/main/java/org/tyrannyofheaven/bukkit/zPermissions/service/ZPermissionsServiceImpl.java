@@ -333,6 +333,8 @@ public class ZPermissionsServiceImpl implements ZPermissionsService {
     public String getPlayerPrimaryGroup(String playerName) {
         try {
             String track = getPlayerMetadata(playerName, MetadataConstants.PRIMARY_GROUP_TRACK_KEY, String.class);
+            if (!hasText(track))
+                track = config.getDefaultPrimaryGroupTrack();
             if (hasText(track)) {
                 List<String> groups = getTrackGroups(track);
                 Collections.reverse(groups); // groups is now high rank to low

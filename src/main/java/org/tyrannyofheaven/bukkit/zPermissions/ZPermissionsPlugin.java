@@ -142,6 +142,9 @@ public class ZPermissionsPlugin extends JavaPlugin implements ZPermissionsCore, 
     // Default auto-refresh interval
     private static final int DEFAULT_AUTO_REFRESH_INTERVAL = -1;
 
+    // Default primary group track
+    private static final String DEFAULT_PRIMARY_GROUP_TRACK = null;
+
     // Filename of file-based storage
     private static final String FILE_STORAGE_FILENAME = "data.yml";
 
@@ -201,6 +204,9 @@ public class ZPermissionsPlugin extends JavaPlugin implements ZPermissionsCore, 
 
     // Task ID for auto-refresh task
     private int autoRefreshTaskId = -1;
+
+    // Default primary group track
+    private String defaultPrimaryGroupTrack;
 
     // Strategy for permissions storage
     private StorageStrategy storageStrategy;
@@ -806,6 +812,16 @@ public class ZPermissionsPlugin extends JavaPlugin implements ZPermissionsCore, 
         return rankAdminBroadcast;
     }
 
+    /**
+     * Returns the default track used to determine the primary group.
+     * 
+     * @return the default primary group track
+     */
+    @Override
+    public String getDefaultPrimaryGroupTrack() {
+        return defaultPrimaryGroupTrack;
+    }
+
     // Read config.yml
     private void readConfig() {
         // Barebones defaults
@@ -817,6 +833,7 @@ public class ZPermissionsPlugin extends JavaPlugin implements ZPermissionsCore, 
         getResolver().setAssignedGroupPermissionFormats(null);
         tracks.clear();
         trackNames.clear();
+        defaultPrimaryGroupTrack = DEFAULT_PRIMARY_GROUP_TRACK;
         
         String value;
         
@@ -879,6 +896,10 @@ public class ZPermissionsPlugin extends JavaPlugin implements ZPermissionsCore, 
         value = config.getString("dump-directory");
         if (hasText(value))
             dumpDirectory = new File(value);
+
+        value = config.getString("default-primary-group-track");
+        if (hasText(value))
+            defaultPrimaryGroupTrack = value;
 
         defaultTempPermissionTimeout = config.getInt("default-temp-permission-timeout", DEFAULT_TEMP_PERMISSION_TIMEOUT);
         txnMaxRetries = config.getInt("txn-max-retries", DEFAULT_TXN_MAX_RETRIES); // FIXME hidden

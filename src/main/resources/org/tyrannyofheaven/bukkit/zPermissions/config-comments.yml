@@ -41,6 +41,14 @@ tracks: |
   Track definitions. Each key should be the name of the track. The value
   should be a list of group names in ascending order.
 
+default-primary-group-track: |
+  Name of the track used to determine a player's "primary group," a
+  concept often used by other plugins via the native API or Vault. A
+  player that does not have a track explicitly set via the
+  /permissions .. player .. settrack command will use this track
+  instead. Leave blank ('') to disable and use the highest-weight group
+  as the primary group.
+
 kick-on-error: |
   If any problems occur while determining a player's permissions (e.g.
   SQLExceptions, network errors, etc.), kick the player. This may be more

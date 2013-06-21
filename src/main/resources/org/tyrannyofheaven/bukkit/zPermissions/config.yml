@@ -1,4 +1,4 @@
-config-version: 11
+config-version: 12
 
 database-support: true
 
@@ -23,6 +23,8 @@ tracks:
   - default
   - somegroup
   - someothergroup
+
+default-primary-group-track: ''
 
 kick-on-error: true
 
