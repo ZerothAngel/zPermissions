@@ -265,7 +265,7 @@ public class PermissionsResolver {
                     // Add assigned group permissions, if present
                     for (String groupPermissionFormat : getAssignedGroupPermissionFormats()) {
                         Entry groupPerm = new Entry();
-                        groupPerm.setPermission(String.format(groupPermissionFormat, group));
+                        groupPerm.setPermission(String.format(groupPermissionFormat, group).toLowerCase());
                         groupPerm.setValue(true);
                         entries.add(groupPerm);
                     }
@@ -275,7 +275,7 @@ public class PermissionsResolver {
             // Add group permissions, if present
             for (String groupPermissionFormat : getGroupPermissionFormats()) {
                 Entry groupPerm = new Entry();
-                groupPerm.setPermission(String.format(groupPermissionFormat, group));
+                groupPerm.setPermission(String.format(groupPermissionFormat, group).toLowerCase());
                 groupPerm.setValue(true);
                 entries.add(groupPerm);
             }

@@ -53,7 +53,7 @@ public abstract class AbstractResolverTest {
     }
 
     private void assertPermission(Map<String, Boolean> permissions, String permission, boolean value) {
-        Boolean check = permissions.get(permission);
+        Boolean check = permissions.get(permission.toLowerCase());
         if (check == null) check = Boolean.FALSE;
         assertEquals(value, check);
     }
@@ -1222,6 +1222,65 @@ public abstract class AbstractResolverTest {
         setPermissions(TEST_PLAYER, false, "basic.perm1");
         permissions = resolve(TEST_PLAYER, TEST_WORLD2);
         assertPermission(permissions, "basic.perm1");
+    }
+
+    @Test
+    public void testAutoOverride() {
+        // Set up groups
+        assertTrue(createGroup(TEST_GROUP1));
+        assertTrue(createGroup(TEST_GROUP2));
+        setPermissionsFalse(TEST_GROUP2, true,
+                "group." + TEST_GROUP1);
+        setPermissions(TEST_GROUP2, true,
+                "basic.perm1");
+        assertTrue(createGroup(TEST_GROUP3));
+        setPermissionsFalse(TEST_GROUP3, true,
+                "group." + TEST_GROUP1);
+        setPermissions(TEST_GROUP3, true,
+                "basic.perm2");
+        
+        // Set inheritance
+        begin();
+        try {
+            getDao().setParent(TEST_GROUP2, TEST_GROUP1);
+            commit();
+        }
+        finally {
+            end();
+        }
+        begin();
+        try {
+            getDao().setParent(TEST_GROUP3, TEST_GROUP1);
+            commit();
+        }
+        finally {
+            end();
+        }
+
+        // Set groups
+        begin();
+        try {
+            getDao().addMember(TEST_GROUP2, TEST_PLAYER, null);
+            getDao().addMember(TEST_GROUP3, TEST_PLAYER, null);
+            commit();
+        }
+        finally {
+            end();
+        }
+        // Confirm
+        List<String> groups = Utils.toGroupNames(getDao().getGroups(TEST_PLAYER));
+        assertEquals(2, groups.size());
+        assertEquals(TEST_GROUP2, groups.get(0));
+        assertEquals(TEST_GROUP3, groups.get(1));
+
+        Map<String, Boolean> permissions;
+        permissions = resolve(TEST_PLAYER, TEST_WORLD1);
+        
+        assertPermission(permissions, "group.Group1", false);
+        assertPermission(permissions, "group.Group2");
+        assertPermission(permissions, "group.Group3");
+        assertPermission(permissions, "basic.perm1");
+        assertPermission(permissions, "basic.perm2");
     }
 
 }
