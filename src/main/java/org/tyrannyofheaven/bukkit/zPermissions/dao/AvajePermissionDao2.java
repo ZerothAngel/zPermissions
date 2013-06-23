@@ -826,7 +826,7 @@ public class AvajePermissionDao2 extends BaseMemoryPermissionDao {
 
             newEntry.setRegion(entry.getRegion() == null ? null : getRegion(memoryState, entry.getRegion().getName()));
             newEntry.setWorld(entry.getWorld() == null ? null : getWorld(memoryState, entry.getWorld().getName()));
-            newEntry.setPermission(entry.getPermission());
+            newEntry.setPermission(entry.getPermission().toLowerCase());
             newEntry.setValue(entry.isValue());
 
             newEntry.setEntity(entity);
