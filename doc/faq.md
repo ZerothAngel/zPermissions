@@ -11,10 +11,12 @@
 
 *   **Do you have a converter for permissions plugin X?**
 
-    No, and there are no plans to add any converter *built-into* zPermissions. Maybe as a separate jar or a separate project. And I would certainly welcome it if someone else stepped up to do so. But I'm not really motivated to do it myself because:
+    No\*, and there are no plans to add any converter *built-into* zPermissions. Maybe as a separate jar or a separate project. And I would certainly welcome it if someone else stepped up to do so. But I'm not really motivated to do it myself because:
     
     1. Permission models tend to vary from plugin to plugin. Though perhaps the closest plugin to zPermissions in terms of model would be PermissionsBukkit and any of its derivatives.
     2. I have no desire to track the file formats or other details of other plugins in zPermissions. Heck, zPerms' schema/flat file format has changed many times in the last few months. I always aim to make things backwards compatible, and I would rather expend that effort on my own project.
+
+    \* Despite having said all that, I do have a [very basic converter](https://bitbucket.org/ZerothAngel/tozperms) available. It currently only supports PEX, and performs a lossy conversion at best.
 
 *   **Can zPermissions co-exist with other permissions plugins?**
 
