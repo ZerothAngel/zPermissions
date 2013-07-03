@@ -26,6 +26,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -185,6 +186,12 @@ public class SubCommands {
         }
 
         List<String> entityNames = storageStrategy.getDao().getEntityNames(group);
+        Collections.sort(entityNames, new Comparator<String>() {
+            @Override
+            public int compare(String a, String b) {
+                return a.compareToIgnoreCase(b);
+            }
+        });
 
         if (entityNames.isEmpty()) {
             sendMessage(sender, colorize("{YELLOW}No %s found."), group ? "groups" : "players");
