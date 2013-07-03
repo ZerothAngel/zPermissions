@@ -40,6 +40,7 @@ import org.tyrannyofheaven.bukkit.zPermissions.model.Membership;
 import org.tyrannyofheaven.bukkit.zPermissions.model.PermissionEntity;
 import org.tyrannyofheaven.bukkit.zPermissions.model.PermissionRegion;
 import org.tyrannyofheaven.bukkit.zPermissions.model.PermissionWorld;
+import org.tyrannyofheaven.bukkit.zPermissions.util.Utils;
 import org.yaml.snakeyaml.DumperOptions;
 import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.constructor.SafeConstructor;
@@ -256,7 +257,7 @@ public class MemoryPermissionDao extends BaseMemoryPermissionDao {
     private Map<String, Object> dump() {
         // Players first
         List<Map<String, Object>> players = new ArrayList<Map<String, Object>>();
-        for (PermissionEntity player : getPlayers().values()) {
+        for (PermissionEntity player : Utils.sortPlayers(getPlayers().values())) {
             Map<String, Object> playerMap = new LinkedHashMap<String, Object>();
             playerMap.put("name", player.getDisplayName());
             playerMap.put("permissions", dumpPermissions(player));
@@ -266,7 +267,7 @@ public class MemoryPermissionDao extends BaseMemoryPermissionDao {
 
         // Groups next
         List<Map<String, Object>> groups = new ArrayList<Map<String, Object>>();
-        for (PermissionEntity group : getGroups().values()) {
+        for (PermissionEntity group : Utils.sortGroups(getGroups().values())) {
             Map<String, Object> groupMap = new LinkedHashMap<String, Object>();
             groupMap.put("name", group.getDisplayName());
             groupMap.put("permissions", dumpPermissions(group));
@@ -395,8 +396,8 @@ public class MemoryPermissionDao extends BaseMemoryPermissionDao {
 
     // Create a map that describes permissions for a PermissionEntity
     private Map<String, Boolean> dumpPermissions(PermissionEntity entity) {
-        Map<String, Boolean> result = new HashMap<String, Boolean>();
-        for (Entry e : entity.getPermissions()) {
+        Map<String, Boolean> result = new LinkedHashMap<String, Boolean>();
+        for (Entry e : Utils.sortPermissions(entity.getPermissions())) {
             QualifiedPermission wp = new QualifiedPermission(e.getRegion() == null ? null : e.getRegion().getName(),
                     e.getWorld() == null ? null : e.getWorld().getName(), e.getPermission());
             result.put(wp.toString(), e.isValue());
@@ -421,8 +422,8 @@ public class MemoryPermissionDao extends BaseMemoryPermissionDao {
     }
 
     private Map<String, Object> dumpMetadata(PermissionEntity entity) {
-        Map<String, Object> result = new HashMap<String, Object>();
-        for (EntityMetadata em : entity.getMetadata()) {
+        Map<String, Object> result = new LinkedHashMap<String, Object>();
+        for (EntityMetadata em : Utils.sortMetadata(entity.getMetadata())) {
             result.put(em.getName(), em.getValue());
         }
         return result;

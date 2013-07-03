@@ -23,13 +23,8 @@ import java.io.FileNotFoundException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.Collection;
-import java.util.Collections;
 import java.util.Date;
-import java.util.LinkedHashSet;
-import java.util.LinkedList;
 import java.util.List;
-import java.util.Set;
 
 import javax.xml.bind.DatatypeConverter;
 
@@ -70,14 +65,14 @@ public class ModelDumper {
                             plugin.getDescription().getVersion(),
                             new Date()));
                     // Dump players first
-                    List<PermissionEntity> players = sortPlayers(storageStrategy.getDao().getEntities(false));
+                    List<PermissionEntity> players = Utils.sortPlayers(storageStrategy.getDao().getEntities(false));
                     for (PermissionEntity entity : players) {
                         out.println(String.format("# Player %s", entity.getDisplayName()));
                         dumpPermissions(out, entity);
                         dumpMetadata(out, entity);
                     }
                     // Dump groups
-                    List<PermissionEntity> groups = sortGroups(storageStrategy.getDao().getEntities(true));
+                    List<PermissionEntity> groups = Utils.sortGroups(storageStrategy.getDao().getEntities(true));
                     for (PermissionEntity entity : groups) {
                         out.println(String.format("# Group %s", entity.getDisplayName()));
                         out.println(String.format("permissions group %s create", quoteArgForCommand(entity.getDisplayName())));
@@ -151,44 +146,6 @@ public class ModelDumper {
                     quoteArgForCommand(me.getName()),
                     (value instanceof String ? quoteArgForCommand((String)value) : value)));
         }
-    }
-
-    private List<PermissionEntity> sortPlayers(Collection<PermissionEntity> players) {
-        List<PermissionEntity> result = new ArrayList<PermissionEntity>(players);
-        // Just sort alphabetically
-        Collections.sort(result, Utils.PERMISSION_ENTITY_ALPHA_COMPARATOR);
-        return result;
-    }
-
-    private List<PermissionEntity> sortGroups(Collection<PermissionEntity> groups) {
-        LinkedList<PermissionEntity> scanList = new LinkedList<PermissionEntity>();
-        
-        // Seed with parent-less groups
-        for (PermissionEntity group : groups) {
-            if (group.getParents().isEmpty())
-                scanList.add(group);
-        }
-        Collections.sort(scanList, Utils.PERMISSION_ENTITY_ALPHA_COMPARATOR);
-
-        Set<PermissionEntity> result = new LinkedHashSet<PermissionEntity>(groups.size());
-
-        // BFS from queue to get total ordering
-        while (!scanList.isEmpty()) {
-            PermissionEntity group = scanList.remove();
-            
-            // Add to result
-            result.add(group);
-            
-            // Grab children and add to end of scanList
-            List<PermissionEntity> children = new ArrayList<PermissionEntity>(group.getChildrenNew());
-            
-            // Sort children alphabetically
-            Collections.sort(children, Utils.PERMISSION_ENTITY_ALPHA_COMPARATOR);
-
-            scanList.addAll(children);
-        }
-
-        return new ArrayList<PermissionEntity>(result);
     }
 
 }

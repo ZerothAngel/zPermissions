@@ -27,6 +27,8 @@ import java.util.Date;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -103,6 +105,44 @@ public class Utils {
             return a.getName().compareToIgnoreCase(b.getName());
         }
     };
+
+    public static List<PermissionEntity> sortPlayers(Collection<PermissionEntity> players) {
+        List<PermissionEntity> result = new ArrayList<PermissionEntity>(players);
+        // Just sort alphabetically
+        Collections.sort(result, PERMISSION_ENTITY_ALPHA_COMPARATOR);
+        return result;
+    }
+
+    public static List<PermissionEntity> sortGroups(Collection<PermissionEntity> groups) {
+        LinkedList<PermissionEntity> scanList = new LinkedList<PermissionEntity>();
+        
+        // Seed with parent-less groups
+        for (PermissionEntity group : groups) {
+            if (group.getParents().isEmpty())
+                scanList.add(group);
+        }
+        Collections.sort(scanList, PERMISSION_ENTITY_ALPHA_COMPARATOR);
+
+        Set<PermissionEntity> result = new LinkedHashSet<PermissionEntity>(groups.size());
+
+        // BFS from queue to get total ordering
+        while (!scanList.isEmpty()) {
+            PermissionEntity group = scanList.remove();
+            
+            // Add to result
+            result.add(group);
+            
+            // Grab children and add to end of scanList
+            List<PermissionEntity> children = new ArrayList<PermissionEntity>(group.getChildrenNew());
+            
+            // Sort children alphabetically
+            Collections.sort(children, PERMISSION_ENTITY_ALPHA_COMPARATOR);
+
+            scanList.addAll(children);
+        }
+
+        return new ArrayList<PermissionEntity>(result);
+    }
 
     public static List<Entry> sortPermissions(Collection<Entry> entries) {
         List<Entry> result = new ArrayList<Entry>(entries);
