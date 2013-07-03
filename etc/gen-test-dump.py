@@ -50,7 +50,7 @@ def generate_metadata(name, is_group, count):
             suffix = 'real'
             value = random.random() * 20000.0 - 10000.0
         elif type is bool:
-            value = 'bool'
+            suffix = 'bool'
             value = random.randint(0,1)
             if value == 0:
                 value = 'false'
