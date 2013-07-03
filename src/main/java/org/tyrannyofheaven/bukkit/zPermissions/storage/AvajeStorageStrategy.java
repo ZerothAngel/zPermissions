@@ -87,7 +87,7 @@ public class AvajeStorageStrategy implements StorageStrategy {
 
     @Override
     public void refresh(final Runnable finishTask) {
-        Bukkit.getScheduler().runTaskAsynchronously(plugin, new Runnable() {
+        executorService.execute(new Runnable() {
             @Override
             public void run() {
                 refreshInternal();
