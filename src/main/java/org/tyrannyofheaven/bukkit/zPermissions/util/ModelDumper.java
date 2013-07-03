@@ -90,7 +90,7 @@ public class ModelDumper {
                                     quoteArgForCommand(entity.getDisplayName()),
                                     delimitedString(" ", parentNames)));
                         }
-                        // Dump memberships
+                        // Dump memberships (NB getMembers() is already sorting them)
                         for (Membership membership : storageStrategy.getDao().getMembers(entity.getName())) {
                             if (membership.getExpiration() == null) {
                                 out.println(String.format("permissions group %s add %s",

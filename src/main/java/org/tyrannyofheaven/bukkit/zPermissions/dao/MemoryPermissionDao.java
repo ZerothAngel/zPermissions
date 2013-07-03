@@ -25,7 +25,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -283,12 +282,12 @@ public class MemoryPermissionDao extends BaseMemoryPermissionDao {
             // Permanent members
             List<String> members = new ArrayList<String>();
             List<Map<String, Object>> tempMembers = new ArrayList<Map<String, Object>>();
-            for (Membership membership : group.getMemberships()) {
+            for (Membership membership : Utils.sortMemberships(group.getMemberships())) {
                 if (membership.getExpiration() == null) {
                     members.add(membership.getMember());
                 }
                 else {
-                    Map<String, Object> tempMemberMap = new HashMap<String, Object>();
+                    Map<String, Object> tempMemberMap = new LinkedHashMap<String, Object>();
                     tempMemberMap.put("member", membership.getMember());
                     tempMemberMap.put("expiration", membership.getExpiration());
 

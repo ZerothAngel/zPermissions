@@ -106,6 +106,13 @@ public class Utils {
         }
     };
 
+    private static final Comparator<Membership> MEMBERSHIP_COMPARATOR = new Comparator<Membership>() {
+        @Override
+        public int compare(Membership a, Membership b) {
+            return a.getMember().compareToIgnoreCase(b.getMember());
+        }
+    };
+
     public static List<PermissionEntity> sortPlayers(Collection<PermissionEntity> players) {
         List<PermissionEntity> result = new ArrayList<PermissionEntity>(players);
         // Just sort alphabetically
@@ -153,6 +160,12 @@ public class Utils {
     public static List<EntityMetadata> sortMetadata(Collection<EntityMetadata> metadata) {
         List<EntityMetadata> result = new ArrayList<EntityMetadata>(metadata);
         Collections.sort(result, METADATA_COMPARATOR);
+        return result;
+    }
+
+    public static List<Membership> sortMemberships(Collection<Membership> memberships) {
+        List<Membership> result = new ArrayList<Membership>(memberships);
+        Collections.sort(result, MEMBERSHIP_COMPARATOR);
         return result;
     }
 
