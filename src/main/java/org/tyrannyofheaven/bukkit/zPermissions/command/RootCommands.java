@@ -144,21 +144,9 @@ public class RootCommands {
     // Perform the actual promotion/demotion
     private void rankChange(final CommandSender sender, final String playerName, String trackName, final boolean rankUp, final BroadcastScope scope, final boolean verbose) {
         // Resolve track
-        if (!hasText(trackName))
-            trackName = config.getDefaultTrack();
-        
-        final List<String> track = config.getTrack(trackName);
-        if (track == null || track.isEmpty()) {
-            sendMessage(sender, colorize("{RED}Track has not been defined."));
-            abortBatchProcessing();
+        final List<String> track = getTrack(sender, rankUp ? "promote" : "demote", trackName);
+        if (track == null)
             return;
-        }
-
-        requireOnePermission(sender, true,
-                String.format("zpermissions.%s.%s", rankUp ? "promote" : "demote", trackName),
-                String.format("zpermissions.%s.*", rankUp ? "promote" : "demote"),
-                String.format("zpermissions.rank.%s", trackName),
-                "zpermissions.rank.*");
 
         // Determine what groups the player and the track have in common
         final Set<String> trackGroupNames = new HashSet<String>(track);
@@ -285,24 +273,10 @@ public class RootCommands {
 
     // Set rank to a specified rank on a track
     private void rankSet(final CommandSender sender, final String playerName, String trackName, final String rankName, final BroadcastScope scope, final boolean verbose) {
-        // TODO lots of duped code from rankChange, refactor
-
         // Resolve track
-        if (!hasText(trackName))
-            trackName = config.getDefaultTrack();
-        
-        final List<String> track = config.getTrack(trackName);
-        if (track == null || track.isEmpty()) {
-            sendMessage(sender, colorize("{RED}Track has not been defined."));
-            abortBatchProcessing();
+        final List<String> track = getTrack(sender, rankName == null ? "unsetrank" : "setrank", trackName);
+        if (track == null)
             return;
-        }
-
-        requireOnePermission(sender, true,
-                String.format("zpermissions.%s.%s", (rankName == null ? "unsetrank" : "setrank"), trackName),
-                String.format("zpermissions.%s.*", rankName == null ? "unsetrank" : "setrank"),
-                String.format("zpermissions.rank.%s", trackName),
-                "zpermissions.rank.*");
 
         if (rankName != null) {
             boolean found = false;
@@ -419,6 +393,61 @@ public class RootCommands {
     @Require("zpermissions.unsetrank")
     public void unsetrank(CommandSender sender, @Option("-q") boolean quiet, @Option("-Q") boolean loud, @Option("-v") boolean verbose, @Option(value="player", completer="player") String playerName, @Option(value="track", optional=true, completer="track") String trackName) {
         rankSet(sender, playerName, trackName, null, determineScope(quiet, loud), verbose);
+    }
+
+    // Returns names of tracks this permissible has access to
+    private Set<String> getAvailableTracks(CommandSender sender, String command) {
+        final String prefix = "zpermissions." + command + ".";
+        Set<String> result = new HashSet<String>();
+        for (String track : config.getTracks()) {
+            boolean found = false;
+            for (String perm : new String[] { prefix + track, prefix + "*", "zpermissions.rank." + track, "zpermissions.rank.*" }) {
+                if (sender.hasPermission(perm)) {
+                    found = true; // continue search (for negations)
+                }
+                else if (sender.isPermissionSet(perm)) {
+                    found = false; // explicit negation
+                    break;
+                }
+            }
+            if (found)
+                result.add(track);
+        }
+        return result;
+    }
+
+    // Returns ranks for the specified track, determining default
+    // accordingly. Returns null if invalid.
+    private List<String> getTrack(CommandSender sender, String command, String trackName) {
+        if (!hasText(trackName)) { // Use default track
+            // Figure out what player has access to
+            Set<String> playerTracks = getAvailableTracks(sender, command);
+            if (playerTracks.size() == 1) {
+                // Exactly one choice, use it
+                trackName = playerTracks.iterator().next();
+            }
+            else {
+                // Fall back to configured default
+                trackName = config.getDefaultTrack();
+            }
+            sendMessage(sender, colorize("{GRAY}(Defaulting to track \"%s\")"), trackName);
+        }
+        
+        final List<String> track = config.getTrack(trackName);
+        if (track == null || track.isEmpty()) {
+            sendMessage(sender, colorize("{RED}Track has not been defined."));
+            abortBatchProcessing();
+            return null;
+        }
+
+        // TODO Permission checked twice in some cases. Any way around it?
+        requireOnePermission(sender, true,
+                String.format("zpermissions.%s.%s", command, trackName),
+                String.format("zpermissions.%s.*", command),
+                String.format("zpermissions.rank.%s", trackName),
+                "zpermissions.rank.*");
+
+        return track;
     }
 
 }
