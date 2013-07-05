@@ -77,6 +77,7 @@ The rank commands are `/promote`, `/demote`, `/setrank`, and `/unsetrank` and wi
 
 *   [Permissions](http://dev.bukkit.org/server-mods/zpermissions/pages/permissions)
 *   [Detailed Command Usage](http://dev.bukkit.org/server-mods/zpermissions/pages/commands)
+*   [Temporary Permissions & Groups](http://dev.bukkit.org/bukkit-plugins/zpermissions/pages/temporary-permissions-groups/)
 *   [Customizing Table Names](http://dev.bukkit.org/server-mods/zpermissions/pages/customizing-table-names/)
 *   [Vault Support](http://dev.bukkit.org/server-mods/zpermissions/pages/vault-support)
 *   [For Plugin Developers](http://dev.bukkit.org/server-mods/zpermissions/pages/for-plugin-developers/)
