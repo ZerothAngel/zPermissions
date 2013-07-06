@@ -806,7 +806,7 @@ public class AvajePermissionDao2 extends BaseMemoryPermissionDao {
                     .findList();
             for (Membership membership : memberships) {
                 Membership newMembership = new Membership();
-                newMembership.setMember(membership.getMember());
+                newMembership.setMember(membership.getMember().toLowerCase());
                 newMembership.setGroup(newGroup);
                 newMembership.setExpiration(membership.getExpiration());
                 newGroup.getMemberships().add(newMembership);
@@ -838,7 +838,7 @@ public class AvajePermissionDao2 extends BaseMemoryPermissionDao {
         for (EntityMetadata em : metadata) {
             EntityMetadata newMetadata = new EntityMetadata();
 
-            newMetadata.setName(em.getName());
+            newMetadata.setName(em.getName().toLowerCase());
             newMetadata.setValue(em.getValue());
 
             newMetadata.setEntity(entity);
