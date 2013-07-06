@@ -183,17 +183,17 @@ public class AvajePermissionDao2 extends BaseMemoryPermissionDao {
 
     @Override
     protected void createRegion(PermissionRegion region) {
-        final String name = region.getName();
+        final String name = region.getName().toLowerCase();
 
         getExecutor().execute(new Runnable() {
             @Override
             public void run() {
                 PermissionRegion dbRegion = getEbeanServer().find(PermissionRegion.class).where()
-                        .eq("name", name.toLowerCase())
+                        .eq("name", name)
                         .findUnique();
                 if (dbRegion == null) {
                     dbRegion = new PermissionRegion();
-                    dbRegion.setName(name.toLowerCase());
+                    dbRegion.setName(name);
                     getEbeanServer().save(dbRegion);
                 }
             }
@@ -202,17 +202,17 @@ public class AvajePermissionDao2 extends BaseMemoryPermissionDao {
 
     @Override
     protected void createWorld(PermissionWorld world) {
-        final String name = world.getName();
+        final String name = world.getName().toLowerCase();
 
         getExecutor().execute(new Runnable() {
             @Override
             public void run() {
                 PermissionWorld dbWorld = getEbeanServer().find(PermissionWorld.class).where()
-                        .eq("name", name.toLowerCase())
+                        .eq("name", name)
                         .findUnique();
                 if (dbWorld == null) {
                     dbWorld = new PermissionWorld();
-                    dbWorld.setName(name.toLowerCase());
+                    dbWorld.setName(name);
                     getEbeanServer().save(dbWorld);
                 }
             }
@@ -227,13 +227,14 @@ public class AvajePermissionDao2 extends BaseMemoryPermissionDao {
         executor.execute(new Runnable() {
             @Override
             public void run() {
+                final String lname = name.toLowerCase();
                 PermissionEntity dbEntity = getEbeanServer().find(PermissionEntity.class).where()
-                        .eq("name", name.toLowerCase())
+                        .eq("name", lname)
                         .eq("group", group)
                         .findUnique();
                 if (dbEntity == null) {
                     dbEntity = new PermissionEntity();
-                    dbEntity.setName(name.toLowerCase());
+                    dbEntity.setName(lname);
                     dbEntity.setGroup(group);
                     dbEntity.setDisplayName(name);
                     // NB assumes name/group/displayName are only attributes that need saving
@@ -249,7 +250,7 @@ public class AvajePermissionDao2 extends BaseMemoryPermissionDao {
         final boolean group = entry.getEntity().isGroup();
         final String regionName = entry.getRegion() == null ? null : entry.getRegion().getName();
         final String worldName = entry.getWorld() == null ? null : entry.getWorld().getName();
-        final String permission = entry.getPermission();
+        final String permission = entry.getPermission().toLowerCase();
         final boolean value = entry.isValue();
 
         getExecutor().execute(new Runnable() {
@@ -288,14 +289,14 @@ public class AvajePermissionDao2 extends BaseMemoryPermissionDao {
                         .eq("entity", entity)
                         .eq("region", region)
                         .eq("world", world)
-                        .eq("permission", permission.toLowerCase())
+                        .eq("permission", permission)
                         .findUnique();
                 if (dbEntry == null) {
                     dbEntry = new Entry();
                     dbEntry.setEntity(entity);
                     dbEntry.setRegion(region);
                     dbEntry.setWorld(world);
-                    dbEntry.setPermission(permission.toLowerCase());
+                    dbEntry.setPermission(permission);
                 }
                 
                 dbEntry.setValue(value);
@@ -366,7 +367,7 @@ public class AvajePermissionDao2 extends BaseMemoryPermissionDao {
     @Override
     protected void createOrUpdateMembership(Membership membership) {
         final String name = membership.getGroup().getDisplayName();
-        final String member = membership.getMember();
+        final String member = membership.getMember().toLowerCase();
         final Date expiration = membership.getExpiration();
 
         getExecutor().execute(new Runnable() {
@@ -671,7 +672,7 @@ public class AvajePermissionDao2 extends BaseMemoryPermissionDao {
     protected void createOrUpdateMetadata(EntityMetadata metadata) {
         final String name = metadata.getEntity().getDisplayName();
         final boolean group = metadata.getEntity().isGroup();
-        final String metadataName = metadata.getName();
+        final String metadataName = metadata.getName().toLowerCase();
         final Object value = metadata.getValue();
         
         getExecutor().execute(new Runnable() {
@@ -688,12 +689,12 @@ public class AvajePermissionDao2 extends BaseMemoryPermissionDao {
 
                 EntityMetadata dbMetadata = getEbeanServer().find(EntityMetadata.class).where()
                         .eq("entity", entity)
-                        .eq("name", metadataName.toLowerCase())
+                        .eq("name", metadataName)
                         .findUnique();
                 if (dbMetadata == null) {
                     dbMetadata = new EntityMetadata();
                     dbMetadata.setEntity(entity);
-                    dbMetadata.setName(metadataName.toLowerCase());
+                    dbMetadata.setName(metadataName);
                 }
 
                 dbMetadata.setValue(value);
