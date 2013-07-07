@@ -26,8 +26,6 @@ import javax.persistence.Temporal;
 import javax.persistence.TemporalType;
 import javax.persistence.UniqueConstraint;
 
-import com.avaje.ebean.annotation.CacheStrategy;
-
 /**
  * Represents group membership.
  * 
@@ -36,7 +34,6 @@ import com.avaje.ebean.annotation.CacheStrategy;
 @Entity
 @Table(name="memberships")
 @UniqueConstraint(columnNames={"member", "group_id"})
-@CacheStrategy(useBeanCache=true)
 public class Membership {
 
     private Long id;

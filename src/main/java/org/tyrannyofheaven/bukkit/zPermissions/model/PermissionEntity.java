@@ -34,8 +34,6 @@ import javax.persistence.Table;
 import javax.persistence.Transient;
 import javax.persistence.UniqueConstraint;
 
-import com.avaje.ebean.annotation.CacheStrategy;
-
 /**
  * The permission entity &mdash; something that can have a set of permission
  * entries. Originally I had different classes for players and groups, but
@@ -48,7 +46,6 @@ import com.avaje.ebean.annotation.CacheStrategy;
 @Entity
 @Table(name="entities")
 @UniqueConstraint(columnNames={"name", "is_group"})
-@CacheStrategy(useBeanCache=true)
 public class PermissionEntity {
 
     private Long id;
