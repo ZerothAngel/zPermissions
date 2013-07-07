@@ -20,8 +20,6 @@ import javax.persistence.Id;
 import javax.persistence.Table;
 import javax.persistence.UniqueConstraint;
 
-import com.avaje.ebean.annotation.CacheStrategy;
-
 /**
  * Represents a region that permission entries may be associated with.
  * 
@@ -30,7 +28,6 @@ import com.avaje.ebean.annotation.CacheStrategy;
 @Entity
 @Table(name="regions")
 @UniqueConstraint(columnNames="name")
-@CacheStrategy(useBeanCache=true)
 public class PermissionRegion {
 
     private Long id;

@@ -24,12 +24,9 @@ import javax.persistence.Table;
 import javax.persistence.Transient;
 import javax.persistence.UniqueConstraint;
 
-import com.avaje.ebean.annotation.CacheStrategy;
-
 @Entity
 @Table(name="metadata")
 @UniqueConstraint(columnNames={"entity_id", "name"})
-@CacheStrategy(useBeanCache=true)
 public class EntityMetadata {
 
     private Long id;
