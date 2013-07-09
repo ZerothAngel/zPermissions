@@ -427,7 +427,7 @@ public class ZPermissionsPlugin extends JavaPlugin implements ZPermissionsCore, 
         // Set up TransactionStrategy and DAO
         storageStrategy = null;
         if (databaseSupport) {
-            ebeanServer = ToHDatabaseUtils.createEbeanServer(this, getClassLoader(), namingConvention);
+            ebeanServer = ToHDatabaseUtils.createEbeanServer(this, getClassLoader(), namingConvention, config);
 
             SpiEbeanServer spiEbeanServer = (SpiEbeanServer)ebeanServer;
             if (spiEbeanServer.getDatabasePlatform().getName().contains("sqlite")) {
