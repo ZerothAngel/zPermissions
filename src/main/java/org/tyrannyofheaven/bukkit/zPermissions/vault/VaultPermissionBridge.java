@@ -32,8 +32,6 @@ import org.tyrannyofheaven.bukkit.zPermissions.storage.StorageStrategy;
 // Current as of Permission.java 73a0c8f5ab6d15033296c3833ea727bec453192c
 public class VaultPermissionBridge extends Permission implements Listener {
 
-    private final Plugin plugin;
-
     private final StorageStrategy storageStrategy;
 
     private final ZPermissionsCore core;
