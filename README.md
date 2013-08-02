@@ -6,7 +6,7 @@ There is no built-in build protection (I rely on other plugins for that). zPermi
 
 I aim to keep zPermissions a simple, yet feature-rich, Superperms provider.
 
-Please post bugs and/or feature requests as [dev.bukkit.org tickets](http://dev.bukkit.org/server-mods/zpermissions/tickets/).
+Please post bugs and/or feature requests as [dev.bukkit.org tickets](http://dev.bukkit.org/server-mods/zpermissions/tickets/). **But before doing so, please check the [known issues](http://dev.bukkit.org/bukkit-plugins/zpermissions/pages/known-issues/) as well as the [FAQ](http://dev.bukkit.org/server-mods/zpermissions/pages/frequently-asked-questions/).**
 
 [ [Quick start documentation](http://dev.bukkit.org/server-mods/zpermissions/pages/quick-start/) | [For Server Admins](http://dev.bukkit.org/server-mods/zpermissions/pages/for-server-admins/) | [FAQ](http://dev.bukkit.org/server-mods/zpermissions/pages/frequently-asked-questions/) | More documentation below! ]
 
