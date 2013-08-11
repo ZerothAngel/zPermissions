@@ -18,6 +18,7 @@ package org.tyrannyofheaven.bukkit.zPermissions;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -53,6 +54,8 @@ public class PermissionsResolver {
     private boolean interleavedPlayerPermissions = true;
 
     private boolean includeDefaultInAssigned = true;
+
+    private final Map<String, String> worldAliases = new HashMap<String, String>();
 
     // For plugin use
     PermissionsResolver(ZPermissionsPlugin plugin) {
@@ -153,6 +156,14 @@ public class PermissionsResolver {
      */
     public void setIncludeDefaultInAssigned(boolean includeDefaultInAssigned) {
         this.includeDefaultInAssigned = includeDefaultInAssigned;
+    }
+
+    public void addWorldAlias(String world, String target) {
+        worldAliases.put(world.toLowerCase(), target.toLowerCase());
+    }
+
+    public void clearWorldAliases() {
+        worldAliases.clear();
     }
 
     // Output debug message
@@ -288,6 +299,8 @@ public class PermissionsResolver {
     // (ones not assigned to any specific world) are applied first. They are
     // then overridden by any world-specific permissions.
     private Map<String, Boolean> applyPermissions(List<Entry> entries, Set<String> regions, String world) {
+        String worldAlias = worldAliases.get(world);
+
         Map<String, Boolean> permissions = new LinkedHashMap<String, Boolean>();
 
         Map<String, Boolean> regionPermissions = new LinkedHashMap<String, Boolean>();
@@ -303,28 +316,44 @@ public class PermissionsResolver {
                 if (regions.contains(e.getRegion().getName()))
                     regionPermissions.put(e.getPermission(), e.isValue());
             }
-            else if (e.getWorld().getName().equals(world)) {
+            else if (e.getWorld().getName().equals(world) || e.getWorld().getName().equals(worldAlias)) {
                 worldPermissions.add(e);
             }
         }
 
         // Then override with world-specific permissions
+        Map<String, Boolean> specificWorldPermissions = new LinkedHashMap<String, Boolean>();
+        Map<String, Boolean> regionWorldAliasPermissions = new LinkedHashMap<String, Boolean>();
         Map<String, Boolean> regionWorldPermissions = new LinkedHashMap<String, Boolean>();
         for (Entry e : worldPermissions) {
             if (e.getRegion() == null) {
                 // Non region-specific
-                permissions.put(e.getPermission(), e.isValue());
+                if (e.getWorld().getName().equals(worldAlias)) {
+                    permissions.put(e.getPermission(), e.isValue());
+                }
+                else {
+                    specificWorldPermissions.put(e.getPermission(), e.isValue());
+                }
             }
             else {
-                if (regions.contains(e.getRegion().getName()))
-                    regionWorldPermissions.put(e.getPermission(), e.isValue());
+                if (regions.contains(e.getRegion().getName())) {
+                    if (e.getWorld().getName().equals(worldAlias)) {
+                        regionWorldAliasPermissions.put(e.getPermission(), e.isValue());
+                    }
+                    else {
+                        regionWorldPermissions.put(e.getPermission(), e.isValue());
+                    }
+                }
             }
         }
         
+        permissions.putAll(specificWorldPermissions);
+
         // Override with universal, region-specific permissions
         permissions.putAll(regionPermissions);
 
         // Finally, override with region- and world-specific permissions
+        permissions.putAll(regionWorldAliasPermissions);
         permissions.putAll(regionWorldPermissions);
         
         return permissions;
