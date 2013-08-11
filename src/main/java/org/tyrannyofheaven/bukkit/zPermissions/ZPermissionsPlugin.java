@@ -875,6 +875,9 @@ public class ZPermissionsPlugin extends JavaPlugin implements ZPermissionsCore, 
 
     // Read config.yml
     private void readConfig() {
+        // Set debug logging
+        getLogger().setLevel(config.getBoolean("debug", false) ? Level.FINE : null);
+
         // Barebones defaults
         databaseSupport = config.getBoolean("database-support", DEFAULT_DATABASE_SUPPORT);
         getResolver().setDefaultGroup(DEFAULT_GROUP);
@@ -1023,8 +1026,33 @@ public class ZPermissionsPlugin extends JavaPlugin implements ZPermissionsCore, 
             regionManagers.add("Residence");
         }
 
-        // Set debug logging
-        getLogger().setLevel(config.getBoolean("debug", false) ? Level.FINE : null);
+        configureWorldMirrors();
+    }
+
+    private void configureWorldMirrors() {
+        getResolver().clearWorldAliases();
+        ConfigurationSection mirrors = config.getConfigurationSection("mirrors");
+        boolean header = false;
+        if (mirrors != null) {
+            for (String target : mirrors.getKeys(false)) {
+                List<?> list = mirrors.getList(target);
+                if (list == null) {
+                    warn(this, "Mirror %s must be a list", target);
+                    continue;
+                }
+                
+                for (Object o : list) {
+                    getResolver().addWorldAlias(o.toString(), target);
+                    
+                    if (!header) {
+                        debug(this, "World mirrors:");
+                        header = true;
+                    }
+                    
+                    debug(this, "  %s -> %s", o.toString(), target);
+                }
+            }
+        }
     }
 
     /**
