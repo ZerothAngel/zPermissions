@@ -27,6 +27,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
 import org.bukkit.plugin.Plugin;
 import org.tyrannyofheaven.bukkit.util.ToHLoggingUtils;
@@ -40,6 +41,7 @@ import org.tyrannyofheaven.bukkit.zPermissions.PermissionsResolver;
 import org.tyrannyofheaven.bukkit.zPermissions.RefreshCause;
 import org.tyrannyofheaven.bukkit.zPermissions.ZPermissionsConfig;
 import org.tyrannyofheaven.bukkit.zPermissions.ZPermissionsCore;
+import org.tyrannyofheaven.bukkit.zPermissions.ZPermissionsRankChangeEvent;
 import org.tyrannyofheaven.bukkit.zPermissions.dao.MissingGroupException;
 import org.tyrannyofheaven.bukkit.zPermissions.storage.StorageStrategy;
 import org.tyrannyofheaven.bukkit.zPermissions.util.ModelDumper;
@@ -144,9 +146,10 @@ public class RootCommands {
     // Perform the actual promotion/demotion
     private void rankChange(final CommandSender sender, final String playerName, String trackName, final boolean rankUp, final BroadcastScope scope, final boolean verbose) {
         // Resolve track
-        final List<String> track = getTrack(sender, rankUp ? "promote" : "demote", trackName);
-        if (track == null)
+        final TrackMetaData trackMetaData = getTrack(sender, rankUp ? "promote" : "demote", trackName);
+        if (trackMetaData == null)
             return;
+        final List<String> track = trackMetaData.getTrack();
 
         // Determine what groups the player and the track have in common
         final Set<String> trackGroupNames = new HashSet<String>(track);
@@ -184,6 +187,7 @@ public class RootCommands {
                         announce("promote", scope, "%s added %s to %s", sender.getName(), playerName, group);
                         if (scope.isShouldEcho() || verbose)
                             sendMessage(sender, colorize("{YELLOW}Adding {AQUA}%s{YELLOW} to {DARK_GREEN}%s"), playerName, group);
+                        fireRankEvent(playerName, trackMetaData.getTrackName(), null, group);
                     }
                     else {
                         sendMessage(sender, colorize("{RED}Player is not in any groups in that track."));
@@ -205,6 +209,7 @@ public class RootCommands {
                         announce(rankUp ? "promote" : "demote", scope, "%s removed %s from %s", sender.getName(), playerName, oldGroup);
                         if (scope.isShouldEcho() || verbose)
                             sendMessage(sender, colorize("{YELLOW}Removing {AQUA}%s{YELLOW} from {DARK_GREEN}%s"), playerName, oldGroup);
+                        fireRankEvent(playerName, trackMetaData.getTrackName(), oldGroup, null);
                     }
                     else {
                         // Constrain rank to [1..track.size() - 1]
@@ -235,6 +240,7 @@ public class RootCommands {
                                     playerName,
                                     oldGroup,
                                     newGroup);
+                        fireRankEvent(playerName, trackMetaData.getTrackName(), oldGroup, newGroup);
                     }
                     
                     return false;
@@ -274,9 +280,10 @@ public class RootCommands {
     // Set rank to a specified rank on a track
     private void rankSet(final CommandSender sender, final String playerName, String trackName, final String rankName, final BroadcastScope scope, final boolean verbose) {
         // Resolve track
-        final List<String> track = getTrack(sender, rankName == null ? "unsetrank" : "setrank", trackName);
-        if (track == null)
+        final TrackMetaData trackMetaData = getTrack(sender, rankName == null ? "unsetrank" : "setrank", trackName);
+        if (trackMetaData == null)
             return;
+        final List<String> track = trackMetaData.getTrack();
 
         if (rankName != null) {
             boolean found = false;
@@ -328,6 +335,7 @@ public class RootCommands {
                         announce("setrank", scope, "%s added %s to %s", sender.getName(), playerName, rankName);
                         if (scope.isShouldEcho() || verbose)
                             sendMessage(sender, colorize("{YELLOW}Adding {AQUA}%s{YELLOW} to {DARK_GREEN}%s"), playerName, rankName);
+                        fireRankEvent(playerName, trackMetaData.getTrackName(), null, rankName);
                     }
                     else {
                         sendMessage(sender, colorize("{RED}Player is not in any groups in that track."));
@@ -363,6 +371,7 @@ public class RootCommands {
                                     playerName,
                                     oldGroup,
                                     rankName);
+                        fireRankEvent(playerName, trackMetaData.getTrackName(), oldGroup, rankName);
                     }
                     else {
                         // Remove from old group
@@ -371,6 +380,7 @@ public class RootCommands {
                         announce("unsetrank", scope, "%s removed %s from %s", sender.getName(), playerName, oldGroup);
                         if (scope.isShouldEcho() || verbose)
                             sendMessage(sender, colorize("{YELLOW}Removing {AQUA}%s{YELLOW} from {DARK_GREEN}%s"), playerName, oldGroup);
+                        fireRankEvent(playerName, trackMetaData.getTrackName(), oldGroup, null);
                     }
                     return false;
                 }
@@ -418,7 +428,7 @@ public class RootCommands {
 
     // Returns ranks for the specified track, determining default
     // accordingly. Returns null if invalid.
-    private List<String> getTrack(CommandSender sender, String command, String trackName) {
+    private TrackMetaData getTrack(CommandSender sender, String command, String trackName) {
         if (!hasText(trackName)) { // Use default track
             // Figure out what player has access to
             Set<String> playerTracks = getAvailableTracks(sender, command);
@@ -447,7 +457,33 @@ public class RootCommands {
                 String.format("zpermissions.rank.%s", trackName),
                 "zpermissions.rank.*");
 
-        return track;
+        return new TrackMetaData(track, trackName);
+    }
+
+    private void fireRankEvent(String playerName, String track, String fromGroup, String toGroup) {
+        ZPermissionsRankChangeEvent event = new ZPermissionsRankChangeEvent(playerName, track, fromGroup, toGroup);
+        Bukkit.getPluginManager().callEvent(event);
+    }
+
+    private static class TrackMetaData {
+        
+        private final List<String> track;
+        
+        private final String trackName;
+
+        public TrackMetaData(List<String> track, String trackName) {
+            this.track = track;
+            this.trackName = trackName;
+        }
+
+        public List<String> getTrack() {
+            return track;
+        }
+
+        public String getTrackName() {
+            return trackName;
+        }
+        
     }
 
 }
