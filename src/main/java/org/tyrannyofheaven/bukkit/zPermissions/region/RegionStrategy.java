@@ -18,6 +18,7 @@ package org.tyrannyofheaven.bukkit.zPermissions.region;
 import java.util.Set;
 
 import org.bukkit.Location;
+import org.bukkit.entity.Player;
 
 /**
  * Generic strategy for region support. Only requirement from region plugins is
@@ -72,9 +73,10 @@ public interface RegionStrategy {
      * Retrieve the name of all regions that contain the given ocation.
      * 
      * @param location the location
+     * @param player the player in question (for supplemental info)
      * @return name of containing regions or empty set. Never null. Region names
      *     must be in all lowercase.
      */
-    public Set<String> getRegions(Location location);
+    public Set<String> getRegions(Location location, Player player);
 
 }

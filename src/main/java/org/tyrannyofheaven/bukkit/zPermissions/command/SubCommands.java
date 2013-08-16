@@ -403,7 +403,7 @@ public class SubCommands {
             worldName = p.getWorld().getName().toLowerCase();
             if (!parseRegions(regions).isEmpty())
                 header.add(colorize("{GRAY}(Specified regions ignored when comparing against Bukkit effective permissions)"));
-            regionNames = core.getRegions(p.getLocation());
+            regionNames = core.getRegions(p.getLocation(), p);
         }
 
         // Parse qualifiers for second player

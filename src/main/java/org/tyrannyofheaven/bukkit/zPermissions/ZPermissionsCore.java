@@ -62,6 +62,6 @@ public interface ZPermissionsCore {
 
     // Utility
     
-    public Set<String> getRegions(Location location);
+    public Set<String> getRegions(Location location, Player player);
 
 }

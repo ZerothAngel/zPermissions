@@ -76,6 +76,7 @@ import org.tyrannyofheaven.bukkit.zPermissions.model.Membership;
 import org.tyrannyofheaven.bukkit.zPermissions.model.PermissionEntity;
 import org.tyrannyofheaven.bukkit.zPermissions.model.PermissionRegion;
 import org.tyrannyofheaven.bukkit.zPermissions.model.PermissionWorld;
+import org.tyrannyofheaven.bukkit.zPermissions.region.FactionsRegionStrategy;
 import org.tyrannyofheaven.bukkit.zPermissions.region.RegionStrategy;
 import org.tyrannyofheaven.bukkit.zPermissions.region.ResidenceRegionStrategy;
 import org.tyrannyofheaven.bukkit.zPermissions.region.WorldGuardRegionStrategy;
@@ -482,6 +483,9 @@ public class ZPermissionsPlugin extends JavaPlugin implements ZPermissionsCore, 
         regionStrategy = new ResidenceRegionStrategy(this, getZPermissionsCore());
         strategies.put(regionStrategy.getName(), regionStrategy);
         
+        regionStrategy = new FactionsRegionStrategy(this, getZPermissionsCore());
+        strategies.put(regionStrategy.getName(), regionStrategy);
+
         // Run through list in preference order
         for (String rmName : regionManagers) {
             regionStrategy = strategies.get(rmName);
@@ -619,7 +623,7 @@ public class ZPermissionsPlugin extends JavaPlugin implements ZPermissionsCore, 
     // Update state about a player, resolving effective permissions and
     // creating/updating their attachment
     private boolean setBukkitPermissionsInternal(final Player player, Location location, boolean force) {
-        final Set<String> regions = getRegions(location);
+        final Set<String> regions = getRegions(location, player);
 
         // Fetch existing state
         final String permName = DYNAMIC_PERMISSION_PREFIX + player.getName();
@@ -697,11 +701,12 @@ public class ZPermissionsPlugin extends JavaPlugin implements ZPermissionsCore, 
      * Returns names of regions that contain the location
      * 
      * @param location the location
+     * @param player the player in question (for supplemental info)
      * @return set of region names containing location
      */
-    public Set<String> getRegions(Location location) {
+    public Set<String> getRegions(Location location, Player player) {
         if (regionSupportEnable && regionStrategy != null && regionStrategy.isEnabled()) {
-            return regionStrategy.getRegions(location);
+            return regionStrategy.getRegions(location, player);
         }
         return Collections.emptySet();
     }

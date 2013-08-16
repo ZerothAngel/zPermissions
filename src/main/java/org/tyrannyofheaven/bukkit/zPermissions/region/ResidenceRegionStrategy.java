@@ -20,6 +20,7 @@ import java.util.Set;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
+import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.server.PluginEnableEvent;
@@ -80,7 +81,7 @@ public class ResidenceRegionStrategy implements RegionStrategy, Listener {
     }
 
     @Override
-    public Set<String> getRegions(Location location) {
+    public Set<String> getRegions(Location location, Player player) {
         ClaimedResidence res = Residence.getResidenceManager().getByLoc(location);
         if (res != null) {
             return Collections.singleton(res.getName().toLowerCase());
