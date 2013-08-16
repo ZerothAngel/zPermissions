@@ -52,7 +52,7 @@ public interface ZPermissionsCore {
 
     // Storage reload
 
-    public void refresh(Runnable runnable);
+    public void refresh(boolean force, Runnable runnable);
 
     // Player attachment control
 

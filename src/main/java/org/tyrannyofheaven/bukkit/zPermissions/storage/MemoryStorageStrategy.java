@@ -92,7 +92,7 @@ public class MemoryStorageStrategy implements StorageStrategy, TransactionStrate
     }
 
     @Override
-    public void refresh(Runnable finishTask) {
+    public void refresh(boolean force, Runnable finishTask) {
         // Do nothing
         if (finishTask != null)
             finishTask.run();

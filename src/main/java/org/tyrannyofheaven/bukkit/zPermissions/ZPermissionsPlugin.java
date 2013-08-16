@@ -69,6 +69,7 @@ import org.tyrannyofheaven.bukkit.zPermissions.dao.PermissionDao;
 import org.tyrannyofheaven.bukkit.zPermissions.listener.ZPermissionsFallbackListener;
 import org.tyrannyofheaven.bukkit.zPermissions.listener.ZPermissionsPlayerListener;
 import org.tyrannyofheaven.bukkit.zPermissions.listener.ZPermissionsRegionPlayerListener;
+import org.tyrannyofheaven.bukkit.zPermissions.model.DataVersion;
 import org.tyrannyofheaven.bukkit.zPermissions.model.EntityMetadata;
 import org.tyrannyofheaven.bukkit.zPermissions.model.Entry;
 import org.tyrannyofheaven.bukkit.zPermissions.model.Inheritance;
@@ -145,6 +146,9 @@ public class ZPermissionsPlugin extends JavaPlugin implements ZPermissionsCore, 
     // Default auto-refresh interval
     private static final int DEFAULT_AUTO_REFRESH_INTERVAL = -1;
 
+    // Default auto-refresh forced refreshes
+    private static final boolean DEFAULT_AUTO_REFRESH_FORCE = false;
+
     // Default primary group track
     private static final String DEFAULT_PRIMARY_GROUP_TRACK = null;
 
@@ -216,6 +220,9 @@ public class ZPermissionsPlugin extends JavaPlugin implements ZPermissionsCore, 
 
     // Interval for auto-refresh
     private int autoRefreshInterval;
+
+    // Whether or not auto-refreshes should be forced refreshes
+    private boolean autoRefreshForce;
 
     // Task ID for auto-refresh task
     private int autoRefreshTaskId = -1;
@@ -523,6 +530,7 @@ public class ZPermissionsPlugin extends JavaPlugin implements ZPermissionsCore, 
         result.add(Entry.class);
         result.add(Membership.class);
         result.add(EntityMetadata.class);
+        result.add(DataVersion.class);
         return result;
     }
 
@@ -999,6 +1007,7 @@ public class ZPermissionsPlugin extends JavaPlugin implements ZPermissionsCore, 
         // FIXME currently hidden option
         refreshTask.setDelay(config.getInt("bulk-refresh-delay", DEFAULT_BULK_REFRESH_DELAY));
         autoRefreshInterval = config.getInt("auto-refresh-interval", DEFAULT_AUTO_REFRESH_INTERVAL);
+        autoRefreshForce = config.getBoolean("auto-refresh-force", DEFAULT_AUTO_REFRESH_FORCE);
         nativeVaultBridges = config.getBoolean("native-vault-bridges", DEFAULT_NATIVE_VAULT_BRIDGES);
         vaultPrefixIncludesGroup = config.getBoolean("vault-prefix-includes-group", DEFAULT_VAULT_PREFIX_INCLUDES_GROUP);
         vaultGroupTestUsesAssignedOnly = config.getBoolean("vault-group-test-uses-assigned-only", DEFAULT_VAULT_GROUP_TEST_USES_ASSIGNED_ONLY);
@@ -1068,7 +1077,7 @@ public class ZPermissionsPlugin extends JavaPlugin implements ZPermissionsCore, 
         config = ToHFileUtils.getConfig(this);
         readConfig();
         startAutoRefreshTask();
-        refresh(new Runnable() {
+        refresh(true, new Runnable() {
             @Override
             public void run() {
                 refreshPlayers();
@@ -1081,8 +1090,8 @@ public class ZPermissionsPlugin extends JavaPlugin implements ZPermissionsCore, 
      * Refresh permissions store
      */
     @Override
-    public void refresh(Runnable finishTask) {
-        storageStrategy.refresh(finishTask);
+    public void refresh(boolean force, Runnable finishTask) {
+        storageStrategy.refresh(force, finishTask);
     }
 
     // Cancel existing auto-refresh task and start a new one if autoRefreshInterval is valid
@@ -1099,7 +1108,7 @@ public class ZPermissionsPlugin extends JavaPlugin implements ZPermissionsCore, 
                 @Override
                 public void run() {
                     log(plugin, "Refreshing from database...");
-                    refresh(new Runnable() {
+                    refresh(autoRefreshForce, new Runnable() {
                         @Override
                         public void run() {
                             // This is executed after the storage refresh is done.

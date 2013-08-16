@@ -1,4 +1,4 @@
-config-version: 12
+config-version: 13
 
 database-support: true
 
@@ -31,6 +31,8 @@ kick-on-error: true
 kick-ops-on-error: false
 
 auto-refresh-interval: -1
+
+auto-refresh-force: false
 
 opaque-inheritance: true
 

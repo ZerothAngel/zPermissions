@@ -74,6 +74,13 @@ auto-refresh-interval: |
   should have no need to enable this feature! (And even then, its use is
   questionable...)
 
+auto-refresh-force: |
+  By default, the refreshes set by auto-refresh-interval are conditional.
+  That is, the refreshes do not actually occur unless the data version
+  number (found in the table named DATA_VERSION by default) is different.
+  Set this to true if you wish to perform an unconditional refresh instead.
+  (Prior to 1.1, the refreshes were always unconditional.)
+
 opaque-inheritance: |
   Determines how inherited groups and assigned groups are resolved. When
   true, each assigned group is fully resolved (itself + all ancestors)

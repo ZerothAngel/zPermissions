@@ -30,7 +30,7 @@ public interface StorageStrategy {
     
     public void shutdown();
     
-    public void refresh(Runnable finishTask);
+    public void refresh(boolean force, Runnable finishTask);
 
     public PermissionDao getDao();
     
