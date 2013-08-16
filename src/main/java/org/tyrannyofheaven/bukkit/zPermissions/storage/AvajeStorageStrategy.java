@@ -21,8 +21,7 @@ import java.util.Date;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.logging.Level;
 
 import org.bukkit.Bukkit;
@@ -53,9 +52,7 @@ public class AvajeStorageStrategy implements StorageStrategy, PreCommitHook {
 
     private final ExecutorService executorService;
 
-    private final Lock loadLock = new ReentrantLock();
-
-    private Long lastLoadedVersion = null; // protected by loadLock
+    private final AtomicLong lastLoadedVersion = new AtomicLong(0L);
 
     public AvajeStorageStrategy(Plugin plugin, int maxRetries) {
         // Following will be used to actually execute async
@@ -110,22 +107,14 @@ public class AvajeStorageStrategy implements StorageStrategy, PreCommitHook {
             @Override
             public Boolean doInTransaction() throws Exception {
                 DataVersion currentVersion = getCurrentDataVersion();
-                boolean doLoad;
 
-                loadLock.lock();
-                try {
-                    doLoad = force || lastLoadedVersion == null || lastLoadedVersion != currentVersion.getVersion();
-                }
-                finally {
-                    loadLock.unlock();
-                }
-
-                if (doLoad) {
+                if (force || lastLoadedVersion.get() != currentVersion.getVersion()) {
                     ((AvajePermissionDao2)dao).load();
-                    setLastLoadedVersion(currentVersion.getVersion());
+                    lastLoadedVersion.set(currentVersion.getVersion());
+                    return true;
                 }
                 
-                return doLoad;
+                return false;
             }
         }, true);
     }
@@ -166,23 +155,17 @@ public class AvajeStorageStrategy implements StorageStrategy, PreCommitHook {
         if (readOnly) return; // Do nothing for read-only transactions
         
         DataVersion dv = getCurrentDataVersion();
+
+        // Only update our internal data version if it matches the current version
+        long previousVersion = dv.getVersion();
+
         // Increment version and update timestamp
         dv.setVersion(dv.getVersion() + 1L);
         dv.setTimestamp(new Date());
         // Save
         plugin.getDatabase().save(dv);
 
-        setLastLoadedVersion(dv.getVersion()); // probably not the appropriate place. Should really be post-commit...
-    }
-
-    private void setLastLoadedVersion(long version) {
-        loadLock.lock();
-        try {
-            lastLoadedVersion = version;
-        }
-        finally {
-            loadLock.unlock();
-        }
+        lastLoadedVersion.compareAndSet(previousVersion, dv.getVersion()); // probably not the appropriate place. Should really be post-commit...
     }
 
 }
