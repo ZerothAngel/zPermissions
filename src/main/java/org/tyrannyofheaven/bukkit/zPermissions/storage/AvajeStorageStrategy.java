@@ -104,7 +104,7 @@ public class AvajeStorageStrategy implements StorageStrategy {
             public void doInTransactionWithoutResult() throws Exception {
                 ((AvajePermissionDao2)dao).load();
             }
-        });
+        }, true);
     }
 
     @Override

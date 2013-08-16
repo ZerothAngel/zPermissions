@@ -162,7 +162,7 @@ public class ZPermissionsServiceImpl implements ZPermissionsService {
                     result.addAll(ancestors);
                 }
             }
-        });
+        }, true);
 
         // If totally empty, then they are in the default group.
         if (result.isEmpty())
@@ -194,7 +194,7 @@ public class ZPermissionsServiceImpl implements ZPermissionsService {
             public Map<String, Boolean> doInTransaction() throws Exception {
                 return getResolver().resolveGroup(groupName.toLowerCase(), worldName.toLowerCase(), regions);
             }
-        });
+        }, true);
 
         return permissions;
     }
@@ -222,7 +222,7 @@ public class ZPermissionsServiceImpl implements ZPermissionsService {
             public Map<String, Boolean> doInTransaction() throws Exception {
                 return getResolver().resolvePlayer(playerName.toLowerCase(), worldName.toLowerCase(), regions).getPermissions();
             }
-        });
+        }, true);
 
         return permissions;
     }
@@ -286,7 +286,7 @@ public class ZPermissionsServiceImpl implements ZPermissionsService {
             public Object doInTransaction() throws Exception {
                 return getDao().getMetadata(name, group, metadataName);
             }
-        });
+        }, true);
 
         if (value == null)
             return null;

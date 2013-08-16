@@ -322,7 +322,7 @@ public class SubCommands {
                     }
                     return true;
                 }
-            })) {
+            }, true)) {
                 return;
             }
 
@@ -430,7 +430,7 @@ public class SubCommands {
                 public Map<String, Boolean> doInTransaction() throws Exception {
                     return resolver.resolvePlayer(qplayer.getPlayerName().toLowerCase(), worldName, regionNames).getPermissions();
                 }
-            });
+            }, true);
             Map<String, Boolean> permissions = new HashMap<String, Boolean>();
             Utils.calculateChildPermissions(permissions, rootPermissions, false);
             
@@ -439,7 +439,7 @@ public class SubCommands {
                 public Map<String, Boolean> doInTransaction() throws Exception {
                     return resolver.resolvePlayer(qother.getPlayerName().toLowerCase(), otherWorldName, otherRegionNames).getPermissions();
                 }
-            });
+            }, true);
             Map<String, Boolean> otherPermissions = new HashMap<String, Boolean>();
             Utils.calculateChildPermissions(otherPermissions, otherRootPermissions, false);
 
@@ -460,7 +460,7 @@ public class SubCommands {
                 public Map<String, Boolean> doInTransaction() throws Exception {
                     return resolver.resolvePlayer(qplayer.getPlayerName().toLowerCase(), worldName, regionNames).getPermissions();
                 }
-            });
+            }, true);
             Map<String, Boolean> permissions = new HashMap<String, Boolean>();
             Utils.calculateChildPermissions(permissions, rootPermissions, false);
 

@@ -112,7 +112,7 @@ public abstract class CommonCommands {
             public Boolean doInTransaction() throws Exception {
                 return storageStrategy.getDao().getPermission(name, group, wp.getRegion(), wp.getWorld(), wp.getPermission());
             }
-        });
+        }, true);
         
         if (result == null) {
             sendMessage(sender, colorize("%s%s{YELLOW} does not set {GOLD}%s"), group ? ChatColor.DARK_GREEN : ChatColor.AQUA, name, permission);
@@ -261,7 +261,7 @@ public abstract class CommonCommands {
                         return resolver.resolvePlayer(name.toLowerCase(), lworldName, regions).getPermissions();
                     }
                 }
-            });
+            }, true);
         }
         catch (MissingGroupException e) {
             handleMissingGroup(sender, e);
@@ -335,7 +335,7 @@ public abstract class CommonCommands {
                         return resolver.resolvePlayer(name.toLowerCase(), lworldName, regions).getPermissions();
                     }
                 }
-            });
+            }, true);
         }
         catch (MissingGroupException e) {
             handleMissingGroup(sender, e);
@@ -361,7 +361,7 @@ public abstract class CommonCommands {
                         return resolver.resolvePlayer(otherName.toLowerCase(), lworldName, regions).getPermissions();
                     }
                 }
-            });
+            }, true);
         }
         catch (MissingGroupException e) {
             handleMissingGroup(sender, e);

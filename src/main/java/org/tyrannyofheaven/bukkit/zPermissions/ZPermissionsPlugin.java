@@ -657,7 +657,7 @@ public class ZPermissionsPlugin extends JavaPlugin implements ZPermissionsCore, 
 //                fakeFailureChance();
                 return getResolver().resolvePlayer(player.getName(), world, regions);
             }
-        });
+        }, true);
 
         debug(this, "(Existing Permission: %s, PlayerState: %s, PermissionAttachment: %s)", perm != null, playerState != null, hasPermissionAttachment);
 
