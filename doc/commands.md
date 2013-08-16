@@ -7,7 +7,7 @@
 *   `/permissions inspect [-v] [-f <filter>] [player]` &mdash; Dumps the effective permissions of yourself or another player. Asterisked entries originate outside of zPermissions (e.g. defaults or another plugin). Use -v to also display the source of each permission (-v is default when issued from the console).
 *   `/permissions diff [-r <regions>] [-R <other-regions>] [-f <filter>] <qualified-player> [other-qualified-player]` &mdash; Compare's a player's effective permissions with either another player or Bukkit's notions of effective permissions. This is a more generalized version of the `player ... diff` command as it allows specifying a different world and region(s) for each player.
 *   `/permissions reload` &mdash; Re-reads config.yml.
-*   `/permissions refresh` &mdash; Re-read permissions from storage and update all online players. Needed to recognize any outside changes to the zPermissions database tables.
+*   `/permissions refresh [-c]` &mdash; Re-read permissions from storage and update all online players. Needed to recognize any outside changes to the zPermissions database tables. If given the -c option, the refresh will be performed conditionally, meaning the DATA_VERSION table will be checked and the refresh performed only if the version is different.
 *   `/permissions export <filename>` &mdash; Creates a file containing all the zPermissions commands necessary to re-create your database. See config.yml for the output directory.
 *   `/permissions import <filename>` &mdash; Executes a file containing zPermissions commands. Only works on an empty database!
 *   `/permissions mygroups` &mdash; Displays a list of groups that you are a member of.

@@ -51,4 +51,9 @@ If you have an unsupported database (something other than the 3 I mentioned), th
     <td>1.0</td>
     <td>Adds Inheritance table</td>
   </tr>
+  <tr>
+    <td>5</td>
+    <td>1.1</td>
+    <td>Adds DataVersion table</td>
+  </tr>
 </table>

@@ -283,8 +283,10 @@ public class SubCommands {
 
     @Command(value="refresh", description="Re-read permissions from storage")
     @Require("zpermissions.refresh")
-    public void refresh(CommandSender sender) {
-        core.refresh(new Runnable() {
+    public void refresh(CommandSender sender, @Option(value={ "-c", "--conditional" }, optional=true) Boolean conditional) {
+        if (conditional == null)
+            conditional = Boolean.FALSE; // backwards compatibility
+        core.refresh(!conditional, new Runnable() {
             @Override
             public void run() {
                 core.refreshPlayers();
