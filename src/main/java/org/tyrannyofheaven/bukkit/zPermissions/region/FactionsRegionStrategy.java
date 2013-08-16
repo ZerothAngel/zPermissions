@@ -16,7 +16,6 @@
 package org.tyrannyofheaven.bukkit.zPermissions.region;
 
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.Set;
 
 import org.bukkit.Bukkit;
@@ -29,27 +28,28 @@ import org.bukkit.plugin.Plugin;
 import org.tyrannyofheaven.bukkit.util.ToHLoggingUtils;
 import org.tyrannyofheaven.bukkit.zPermissions.ZPermissionsCore;
 
-import com.sk89q.worldguard.bukkit.WorldGuardPlugin;
-import com.sk89q.worldguard.protection.ApplicableRegionSet;
-import com.sk89q.worldguard.protection.managers.RegionManager;
-import com.sk89q.worldguard.protection.regions.ProtectedRegion;
+import com.massivecraft.factions.Rel;
+import com.massivecraft.factions.entity.BoardColls;
+import com.massivecraft.factions.entity.Faction;
+import com.massivecraft.factions.entity.UPlayer;
+import com.massivecraft.mcore.ps.PS;
 
 /**
- * RegionStrategy implementation for WorldGuard.
+ * RegionStrategy implementation for Factions.
  * 
  * @author asaddi
  */
-public class WorldGuardRegionStrategy implements RegionStrategy, Listener {
+public class FactionsRegionStrategy implements RegionStrategy, Listener {
 
-    private static final String RM_PLUGIN_NAME = "WorldGuard";
+    private static final String RM_PLUGIN_NAME = "Factions";
 
     private final Plugin plugin;
 
     private final ZPermissionsCore core;
 
-    private WorldGuardPlugin worldGuardPlugin;
+    private boolean factionsEnabled;
 
-    public WorldGuardRegionStrategy(Plugin plugin, ZPermissionsCore core) {
+    public FactionsRegionStrategy(Plugin plugin, ZPermissionsCore core) {
         this.plugin = plugin;
         this.core = core;
     }
@@ -66,7 +66,7 @@ public class WorldGuardRegionStrategy implements RegionStrategy, Listener {
 
     @Override
     public void init() {
-        detectWorldGuardPlugin();
+        detectFactionsPlugin();
         if (!isEnabled()) {
             // Not yet loaded, listen for its enable event
             Bukkit.getPluginManager().registerEvents(this, plugin);
@@ -75,29 +75,20 @@ public class WorldGuardRegionStrategy implements RegionStrategy, Listener {
 
     @Override
     public boolean isEnabled() {
-        return worldGuardPlugin != null;
+        return factionsEnabled;
     }
 
     @Override
     public void shutdown() {
-        worldGuardPlugin = null;
+        factionsEnabled = false;
     }
 
     @Override
     public Set<String> getRegions(Location location, Player player) {
         if (isEnabled()) {
-            RegionManager rm = worldGuardPlugin.getRegionManager(location.getWorld());
-            if (rm != null) {
-                ApplicableRegionSet ars = rm.getApplicableRegions(location);
-
-                Set<String> result = new HashSet<String>();
-                for (ProtectedRegion pr : ars) {
-                    // Ignore global region
-                    if (!"__global__".equals(pr.getId())) // NB: Hardcoded and not available as constant in WorldGuard
-                        result.add(pr.getId().toLowerCase());
-                }
-                return result;
-            }
+            // This indirection is necessary to avoid NoClassDefErrors when
+            // Factions is not present.
+            return FactionsHelper.getRegions(location, player);
         }
         return Collections.emptySet();
     }
@@ -105,7 +96,7 @@ public class WorldGuardRegionStrategy implements RegionStrategy, Listener {
     @EventHandler
     public void onPluginEnable(PluginEnableEvent event) {
         if (!isEnabled() && RM_PLUGIN_NAME.equals(event.getPlugin().getName())) {
-            detectWorldGuardPlugin();
+            detectFactionsPlugin();
             if (isEnabled()) {
                 ToHLoggingUtils.log(plugin, "%s region support enabled.", getName());
                 core.refreshPlayers();
@@ -113,14 +104,25 @@ public class WorldGuardRegionStrategy implements RegionStrategy, Listener {
         }
     }
 
-    private void detectWorldGuardPlugin() {
+    private void detectFactionsPlugin() {
         Plugin plugin = Bukkit.getPluginManager().getPlugin(RM_PLUGIN_NAME);
-        if (plugin instanceof WorldGuardPlugin && plugin.isEnabled()) {
-            worldGuardPlugin = (WorldGuardPlugin)plugin;
+        factionsEnabled = plugin.isEnabled();
+    }
+
+    private static class FactionsHelper {
+
+        private static Set<String> getRegions(Location location, Player player) {
+            Faction faction = BoardColls.get().getFactionAt(PS.valueOf(location));
+            UPlayer uplayer = UPlayer.get(player);
+            if (faction != null && uplayer != null) {
+                Rel rel = uplayer.getRelationTo(faction);
+                if (rel != null) {
+                    return Collections.singleton(rel.name().toLowerCase());
+                }
+            }
+            return Collections.emptySet();
         }
-        else {
-            worldGuardPlugin = null;
-        }
+
     }
 
 }

@@ -41,6 +41,7 @@ rank-admin-broadcast: false
 region-managers:
 - WorldGuard
 - Residence
+- Factions
 
 native-vault-bridges: true
 
