@@ -115,6 +115,11 @@ public class MemoryStorageStrategy implements StorageStrategy, TransactionStrate
 
     @Override
     public <T> T execute(TransactionCallback<T> callback) {
+        return execute(callback, false);
+    }
+
+    @Override
+    public <T> T execute(TransactionCallback<T> callback, boolean readOnly) {
         if (callback == null)
             throw new IllegalArgumentException("callback cannot be null");
         try {

@@ -51,7 +51,7 @@ public class MetadataCommands {
             public Object doInTransaction() throws Exception {
                 return storageStrategy.getDao().getMetadata(name, group, metadataName);
             }
-        });
+        }, true);
         
         if (result == null) {
             sendMessage(sender, colorize("%s%s{YELLOW} does not set {GOLD}%s"), group ? ChatColor.DARK_GREEN : ChatColor.AQUA, name, metadataName);
