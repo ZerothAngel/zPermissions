@@ -105,7 +105,7 @@ public class SubCommands {
     }
 
     @Command(value={"player", "pl", "p"}, description="Player-related commands")
-    @Require("zpermissions.player")
+    @Require({"zpermissions.player.view", "zpermissions.player.manage", "zpermissions.player.chat"})
     public PlayerCommands player(HelpBuilder helpBuilder, CommandSender sender, CommandSession session, @Option(value="player", nullable=true, completer="player") String playerName, String[] args) {
         if (args.length == 0) {
             // Display sub-command help
@@ -138,7 +138,7 @@ public class SubCommands {
     }
 
     @Command(value={"group", "gr", "g"}, description="Group-related commands")
-    @Require("zpermissions.group")
+    @Require({"zpermissions.group.view", "zpermissions.group.manage", "zpermissions.group.chat"})
     public CommonCommands group(HelpBuilder helpBuilder, CommandSender sender, CommandSession session, @Option(value="group", nullable=true, completer="group") String groupName, String[] args) {
         if (args.length == 0) {
             // Display sub-command help

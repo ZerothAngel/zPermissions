@@ -1,7 +1,22 @@
 ## Permissions ##
 
-*   zpermissions.player &mdash; `/permissions player` commands
-*   zpermissions.group &mdash; `/permissions group` commands
+### Meta-Permissions ###
+
+*   zpermissions.* &mdash; All-inclusive permission. Given to ops by default.
+*   zpermissions.player.* &mdash; All `/permissions player` commands
+*   zpermissions.group.* &mdash; All `/permissions group` commands
+*   zpermissions.rank &mdash; Use of all rank commands
+*   zpermissions.rank.* &mdash; Allows rank commands on all tracks
+*   zpermissions.rank.&lt;track> &mdash; Allows rank commands on a specific track
+
+### General Permissions ###
+
+*   zpermissions.player.view &mdash; `/permissions player` read-only management commands
+*   zpermissions.player.manage &mdash; `/permissions player` management commands
+*   zpermissions.player.chat &mdash; `/permissions player` chat commands
+*   zpermissions.group.view &mdash; `/permissions group` read-only management commands
+*   zpermissions.group.manage &mdash; `/permissions group` management commands
+*   zpermissions.group.chat &mdash; `/permissions group` chat commands
 *   zpermissions.list &mdash; `/permissions list` command
 *   zpermissions.check &mdash; `/permissions check` command
 *   zpermissions.check.other &mdash; `/permissions check` on other players
@@ -29,13 +44,6 @@
 *   zpermissions.unsetrank &mdash; `/unsetrank` command
 *   zpermissions.unsetrank.* &mdash; Allows `/unsetrank` on all tracks
 *   zpermissions.unsetrank.&lt;track> &mdash; Allows `/unsetrank` on a specific track
-
-### Meta-Permissions ###
-
-*   zpermissions.* &mdash; All-inclusive permission. Given to ops by default.
-*   zpermissions.rank &mdash; Use of all rank commands
-*   zpermissions.rank.* &mdash; Allows rank commands on all tracks
-*   zpermissions.rank.&lt;track> &mdash; Allows rank commands on a specific track
 
 ### Notification Permissions ###
 *   zpermissions.notify.* &mdash; Receives all notifications.

@@ -24,6 +24,7 @@ import org.bukkit.command.CommandSender;
 import org.tyrannyofheaven.bukkit.util.ToHStringUtils;
 import org.tyrannyofheaven.bukkit.util.command.Command;
 import org.tyrannyofheaven.bukkit.util.command.Option;
+import org.tyrannyofheaven.bukkit.util.command.Require;
 import org.tyrannyofheaven.bukkit.util.command.Session;
 import org.tyrannyofheaven.bukkit.util.transaction.TransactionCallback;
 import org.tyrannyofheaven.bukkit.util.transaction.TransactionCallbackWithoutResult;
@@ -33,6 +34,7 @@ import org.tyrannyofheaven.bukkit.zPermissions.model.PermissionEntity;
 import org.tyrannyofheaven.bukkit.zPermissions.storage.StorageStrategy;
 import org.tyrannyofheaven.bukkit.zPermissions.util.Utils;
 
+// TODO Break class up into player and group versions for better control over permissions
 public class MetadataCommands {
 
     private final StorageStrategy storageStrategy;
@@ -45,6 +47,8 @@ public class MetadataCommands {
     }
 
     @Command(value="get", description="Retrieve metadata value")
+    @Require({"zpermissions.player.view", "zpermissions.player.manage", "zpermissions.player.chat",
+        "zpermissions.group.view", "zpermissions.group.manage", "zpermissions.group.chat"})
     public void get(CommandSender sender, final @Session("entityName") String name, final @Option("name") String metadataName) {
         Object result = storageStrategy.getRetryingTransactionStrategy().execute(new TransactionCallback<Object>() {
             @Override
@@ -63,6 +67,7 @@ public class MetadataCommands {
     }
 
     @Command(value="set", description="Set metadata (string)")
+    @Require({"zpermissions.player.manage", "zpermissions.group.manage"})
     public void set(CommandSender sender, final @Session("entityName") String name, final @Option("name") String metadataName, @Option("value") String value, String[] rest) {
         final StringBuilder stringValue = new StringBuilder(value);
         if (rest.length > 0) {
@@ -90,21 +95,25 @@ public class MetadataCommands {
     }
 
     @Command(value="setint", description="Set metadata (integer)")
+    @Require({"zpermissions.player.manage", "zpermissions.group.manage"})
     public void set(CommandSender sender, final @Session("entityName") String name, final @Option("name") String metadataName, @Option("value") long value) {
         set0(sender, name, metadataName, value);
     }
 
     @Command(value="setreal", description="Set metadata (real)")
+    @Require({"zpermissions.player.manage", "zpermissions.group.manage"})
     public void set(CommandSender sender, final @Session("entityName") String name, final @Option("name") String metadataName, @Option("value") double value) {
         set0(sender, name, metadataName, value);
     }
 
     @Command(value="setbool", description="Set metadata (boolean)")
+    @Require({"zpermissions.player.manage", "zpermissions.group.manage"})
     public void set(CommandSender sender, final @Session("entityName") String name, final @Option("name") String metadataName, @Option(value="value", optional=true) Boolean value) {
         set0(sender, name, metadataName, value == null ? Boolean.TRUE : value);
     }
 
     @Command(value="unset", description="Remove metadata value")
+    @Require({"zpermissions.player.manage", "zpermissions.group.manage"})
     public void unset(CommandSender sender, final @Session("entityName") String name, final @Option("name") String metadataName) {
         Boolean result = storageStrategy.getRetryingTransactionStrategy().execute(new TransactionCallback<Boolean>() {
             @Override
@@ -123,6 +132,8 @@ public class MetadataCommands {
     }
 
     @Command(value={"show", "list", "ls"}, description="List all metadata")
+    @Require({"zpermissions.player.view", "zpermissions.player.manage", "zpermissions.player.chat",
+        "zpermissions.group.view", "zpermissions.group.manage", "zpermissions.group.chat"})
     public void list(CommandSender sender, final @Session("entityName") String name) {
         PermissionEntity entity = storageStrategy.getDao().getEntity(name, group);
         if (entity == null || entity.getMetadata().isEmpty()) {

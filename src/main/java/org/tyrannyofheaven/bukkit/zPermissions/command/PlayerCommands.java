@@ -32,7 +32,9 @@ import org.tyrannyofheaven.bukkit.util.ToHMessageUtils;
 import org.tyrannyofheaven.bukkit.util.ToHStringUtils;
 import org.tyrannyofheaven.bukkit.util.ToHUtils;
 import org.tyrannyofheaven.bukkit.util.command.Command;
+import org.tyrannyofheaven.bukkit.util.command.HelpBuilder;
 import org.tyrannyofheaven.bukkit.util.command.Option;
+import org.tyrannyofheaven.bukkit.util.command.Require;
 import org.tyrannyofheaven.bukkit.util.command.Session;
 import org.tyrannyofheaven.bukkit.util.transaction.TransactionCallbackWithoutResult;
 import org.tyrannyofheaven.bukkit.zPermissions.PermissionsResolver;
@@ -59,7 +61,66 @@ public class PlayerCommands extends CommonCommands {
         super(core, storageStrategy, resolver, config, plugin, false);
     }
 
+    // Common commands
+
+    @Command(value="get", description="View a permission")
+    @Require("zpermissions.player.view")
+    public void get(CommandSender sender, final @Session("entityName") String name, @Option("permission") String permission) {
+        super._get(sender, name, permission);
+    }
+
+    @Command(value="set", description="Set a permission")
+    @Require("zpermissions.player.manage")
+    public void set(CommandSender sender, final @Session("entityName") String name, @Option("permission") String permission, final @Option(value="value", optional=true) Boolean value) {
+        super._set(sender, name, permission, value);
+    }
+
+    @Command(value="unset", description="Remove a permission")
+    @Require("zpermissions.player.manage")
+    public void unset(CommandSender sender, final @Session("entityName") String name, @Option("permission") String permission) {
+        super._unset(sender, name, permission);
+    }
+
+    @Command(value="purge", description="Delete this player") // doh!
+    @Require("zpermissions.player.manage")
+    public void delete(CommandSender sender, final @Session("entityName") String name) {
+        super._delete(sender, name);
+    }
+
+    @Command(value="dump", description="Display permissions for this player", varargs="region...")
+    @Require("zpermissions.player.view")
+    public void dump(CommandSender sender, final @Session("entityName") String name, @Option(value={"-w", "--world"}, valueName="world", completer="world") String worldName, @Option(value={"-f", "--filter"}, valueName="filter") String filter, String[] regionNames) {
+        super._dump(sender, name, worldName, filter, regionNames);
+    }
+
+    @Command(value="diff", description="Compare effective permissions of this player with another", varargs="region...")
+    @Require("zpermissions.player.view")
+    public void diff(CommandSender sender, final @Session("entityName") String name, @Option(value={"-w", "--world"}, valueName="world", completer="world") String worldName, @Option(value={"-f", "--filter"}, valueName="filter") String filter, @Option("other") final String otherName, String[] regionNames) {
+        super._diff(sender, name, worldName, filter, otherName, regionNames);
+    }
+
+    @Command(value={"metadata", "meta", "md"}, description="Metadata-related commands")
+    @Require({"zpermissions.player.view", "zpermissions.player.manage", "zpermissions.player.chat"})
+    public MetadataCommands metadata(HelpBuilder helpBuilder, CommandSender sender, String[] args) {
+        return super._metadata(helpBuilder, sender, args);
+    }
+
+    @Command(value="prefix", description="Set chat prefix for this player")
+    @Require("zpermissions.player.chat")
+    public void prefix(CommandSender sender, @Session("entityName") String name, @Option(value="prefix", optional=true) String prefix, String[] rest) {
+        super._prefix(sender, name, prefix, rest);
+    }
+
+    @Command(value="suffix", description="Set chat suffix for this player")
+    @Require("zpermissions.player.chat")
+    public void suffix(CommandSender sender, @Session("entityName") String name, @Option(value="suffix", optional=true) String suffix, String[] rest) {
+        super._suffix(sender, name, suffix, rest);
+    }
+
+    // Player-specific commands
+
     @Command(value="groups", description="List groups this player is a member of")
+    @Require("zpermissions.player.view")
     public void getGroups(CommandSender sender, @Session("entityName") String name) {
         List<Membership> memberships = storageStrategy.getDao().getGroups(name);
         Collections.reverse(memberships); // Order from highest to lowest
@@ -73,6 +134,7 @@ public class PlayerCommands extends CommonCommands {
     }
 
     @Command(value={"setgroup", "group"}, description="Set this player's singular group")
+    @Require("zpermissions.player.manage")
     public void setGroup(CommandSender sender, final @Session("entityName") String playerName, final @Option(value="group", completer="group") String groupName, @Option(value="duration/timestamp", optional=true) String duration, String[] args) {
         final Date expiration = Utils.parseDurationTimestamp(duration, args);
 
@@ -98,6 +160,7 @@ public class PlayerCommands extends CommonCommands {
     }
 
     @Command(value={"show", "sh"}, description="Show information about a player")
+    @Require("zpermissions.player.view")
     public void show(CommandSender sender, @Session("entityName") String playerName, @Option(value={"-f", "--filter"}, valueName="filter") String filter) {
         PermissionEntity entity = storageStrategy.getDao().getEntity(playerName, false);
 
@@ -126,6 +189,7 @@ public class PlayerCommands extends CommonCommands {
     }
 
     @Command(value={"settemp", "temp", "tmp"}, description="Set a temporary permission")
+    @Require("zpermissions.player.manage")
     public void settemp(CommandSender sender, @Session("entityName") String playerName, @Option("permission") String permission, @Option(value="value", optional=true) Boolean value, @Option(value={"-t", "--timeout"}, valueName="timeout") Integer timeout) {
         Player player = Bukkit.getPlayer(playerName);
         if (player == null) {
@@ -150,6 +214,7 @@ public class PlayerCommands extends CommonCommands {
     }
 
     @Command(value="has", description="Bukkit hasPermission() check")
+    @Require("zpermissions.player.view")
     public void has(CommandSender sender, @Session("entityName") String playerName, @Option("permission") String permission) {
         Player player = Bukkit.getPlayer(playerName);
         if (player == null) {
@@ -162,6 +227,7 @@ public class PlayerCommands extends CommonCommands {
     }
 
     @Command(value="settrack", description="Set track which determines primary group for Vault")
+    @Require("zpermissions.player.chat")
     public void settrack(CommandSender sender, @Session("entityName") String playerName, @Option(value="track", optional=true, completer="track") String track) {
         if (ToHStringUtils.hasText(track)) {
             getMetadataCommands().set(sender, playerName, MetadataConstants.PRIMARY_GROUP_TRACK_KEY, track, new String[0]);
@@ -172,11 +238,13 @@ public class PlayerCommands extends CommonCommands {
     }
 
     @Command(value={"clone", "copy", "cp"}, description="Clone this player")
+    @Require("zpermissions.player.manage")
     public void clone(CommandSender sender, @Session("entityName") String playerName, @Option("new-player") String destination) {
         super.clone(sender, playerName, destination, false);
     }
 
     @Command(value={"rename", "ren", "mv"}, description="Rename this player")
+    @Require("zpermissions.player.manage")
     public void rename(CommandSender sender, @Session("entityName") String playerName, @Option("new-player") String destination) {
         super.clone(sender, playerName, destination, true);
     }

@@ -34,10 +34,7 @@ import org.bukkit.World;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
-import org.tyrannyofheaven.bukkit.util.command.Command;
 import org.tyrannyofheaven.bukkit.util.command.HelpBuilder;
-import org.tyrannyofheaven.bukkit.util.command.Option;
-import org.tyrannyofheaven.bukkit.util.command.Session;
 import org.tyrannyofheaven.bukkit.util.transaction.TransactionCallback;
 import org.tyrannyofheaven.bukkit.util.transaction.TransactionCallbackWithoutResult;
 import org.tyrannyofheaven.bukkit.zPermissions.PermissionsResolver;
@@ -94,12 +91,11 @@ public abstract class CommonCommands {
         metadataCommands = new MetadataCommands(storageStrategy, group);
     }
 
-    protected MetadataCommands getMetadataCommands() {
+    protected final MetadataCommands getMetadataCommands() {
         return metadataCommands;
     }
 
-    @Command(value="get", description="View a permission")
-    public void get(CommandSender sender, final @Session("entityName") String name, @Option("permission") String permission) {
+    protected final void _get(CommandSender sender, final String name, String permission) {
         // Get world/permission
         final QualifiedPermission wp = new QualifiedPermission(permission);
 
@@ -125,8 +121,7 @@ public abstract class CommonCommands {
         }
     }
 
-    @Command(value="set", description="Set a permission")
-    public void set(CommandSender sender, final @Session("entityName") String name, @Option("permission") String permission, final @Option(value="value", optional=true) Boolean value) {
+    protected final void _set(CommandSender sender, final String name, String permission, final Boolean value) {
         // Get world/permission
         final QualifiedPermission wp = new QualifiedPermission(permission);
     
@@ -157,8 +152,7 @@ public abstract class CommonCommands {
         }
     }
 
-    @Command(value="unset", description="Remove a permission")
-    public void unset(CommandSender sender, final @Session("entityName") String name, @Option("permission") String permission) {
+    protected final void _unset(CommandSender sender, final String name, String permission) {
         // Get world/permission
         final QualifiedPermission wp = new QualifiedPermission(permission);
     
@@ -195,7 +189,7 @@ public abstract class CommonCommands {
      * @param permission the permission (must be unqualified)
      * @return true if it starts with the prefix, false otherwise
      */
-    protected boolean checkDynamicPermission(CommandSender sender, String permission) {
+    protected final boolean checkDynamicPermission(CommandSender sender, String permission) {
         permission = permission.toLowerCase();
         if (permission.startsWith(ZPermissionsPlugin.DYNAMIC_PERMISSION_PREFIX.toLowerCase())) {
             sendMessage(sender, colorize("{RED}I don't think so."));
@@ -204,8 +198,7 @@ public abstract class CommonCommands {
         return false;
     }
 
-    @Command(value="purge", description="Delete this group or player") // doh!
-    public void delete(CommandSender sender, final @Session("entityName") String name) {
+    protected final void _delete(CommandSender sender, final String name) {
         boolean result = storageStrategy.getRetryingTransactionStrategy().execute(new TransactionCallback<Boolean>() {
             @Override
             public Boolean doInTransaction() throws Exception {
@@ -230,8 +223,7 @@ public abstract class CommonCommands {
         }
     }
 
-    @Command(value="dump", description="Display permissions for this group or player", varargs="region...")
-    public void dump(CommandSender sender, final @Session("entityName") String name, @Option(value={"-w", "--world"}, valueName="world", completer="world") String worldName, @Option(value={"-f", "--filter"}, valueName="filter") String filter, String[] regionNames) {
+    protected final void _dump(CommandSender sender, final String name, String worldName, String filter, String[] regionNames) {
         List<String> header = new ArrayList<String>();
         worldName = getEffectiveWorld(sender, worldName, header);
         if (worldName == null) return;
@@ -302,8 +294,7 @@ public abstract class CommonCommands {
         return worldName;
     }
 
-    @Command(value="diff", description="Compare effective permissions of this player or group with another", varargs="region...")
-    public void diff(CommandSender sender, final @Session("entityName") String name, @Option(value={"-w", "--world"}, valueName="world", completer="world") String worldName, @Option(value={"-f", "--filter"}, valueName="filter") String filter, @Option("other") final String otherName, String[] regionNames) {
+    protected final void _diff(CommandSender sender, final String name, String worldName, String filter, final String otherName, String[] regionNames) {
         List<String> header = new ArrayList<String>();
         worldName = getEffectiveWorld(sender, worldName, header);
         if (worldName == null) return;
@@ -384,8 +375,7 @@ public abstract class CommonCommands {
                 String.format(colorize("{YELLOW}%ss have identical effective permissions."), group ? "Group" : "Player"), filter);
     }
 
-    @Command(value={"metadata", "meta", "md"}, description="Metadata-related commands")
-    public MetadataCommands metadata(HelpBuilder helpBuilder, CommandSender sender, String[] args) {
+    protected final MetadataCommands _metadata(HelpBuilder helpBuilder, CommandSender sender, String[] args) {
         if (args.length == 0) {
             helpBuilder.withCommandSender(sender)
                 .withHandler(metadataCommands)
@@ -402,7 +392,7 @@ public abstract class CommonCommands {
         return metadataCommands;
     }
 
-    protected void clone(final CommandSender sender, final String name, final String destination, final boolean rename) {
+    protected final void clone(final CommandSender sender, final String name, final String destination, final boolean rename) {
         storageStrategy.getRetryingTransactionStrategy().execute(new TransactionCallbackWithoutResult() {
             @Override
             public void doInTransactionWithoutResult() throws Exception {
@@ -502,8 +492,7 @@ public abstract class CommonCommands {
         });
     }
 
-    @Command(value="prefix", description="Set chat prefix for this group or player")
-    public void prefix(CommandSender sender, @Session("entityName") String name, @Option(value="prefix", optional=true) String prefix, String[] rest) {
+    protected final void _prefix(CommandSender sender, String name, String prefix, String[] rest) {
         if ((prefix != null && !prefix.isEmpty()) || rest.length > 0) {
             metadataCommands.set(sender, name, MetadataConstants.PREFIX_KEY, prefix, rest);
         }
@@ -512,8 +501,7 @@ public abstract class CommonCommands {
         }
     }
 
-    @Command(value="suffix", description="Set chat suffix for this group or player")
-    public void suffix(CommandSender sender, @Session("entityName") String name, @Option(value="suffix", optional=true) String suffix, String[] rest) {
+    protected final void _suffix(CommandSender sender, String name, String suffix, String[] rest) {
         if ((suffix != null && !suffix.isEmpty()) || rest.length > 0) {
             metadataCommands.set(sender, name, MetadataConstants.SUFFIX_KEY, suffix, rest);
         }
@@ -522,7 +510,7 @@ public abstract class CommonCommands {
         }
     }
 
-    protected String formatEntry(CommandSender sender, Entry e) {
+    protected final String formatEntry(CommandSender sender, Entry e) {
         return String.format(colorize("{DARK_GREEN}- {GOLD}%s%s%s{DARK_GREEN}: {GREEN}%s"),
                 (e.getRegion() == null ? "" : e.getRegion().getName() + colorize("{DARK_GREEN}/{GOLD}")),
                 (e.getWorld() == null ? "" : e.getWorld().getName() + colorize("{DARK_GREEN}:{GOLD}")),
@@ -530,7 +518,7 @@ public abstract class CommonCommands {
                 e.isValue());
     }
 
-    protected void handleMissingGroup(CommandSender sender, MissingGroupException e) {
+    protected final void handleMissingGroup(CommandSender sender, MissingGroupException e) {
         sendMessage(sender, colorize("{RED}Group {DARK_GREEN}%s{RED} does not exist."), e.getGroupName());
         abortBatchProcessing();
     }

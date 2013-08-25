@@ -33,7 +33,9 @@ import org.bukkit.plugin.Plugin;
 import org.tyrannyofheaven.bukkit.util.ToHMessageUtils;
 import org.tyrannyofheaven.bukkit.util.ToHStringUtils;
 import org.tyrannyofheaven.bukkit.util.command.Command;
+import org.tyrannyofheaven.bukkit.util.command.HelpBuilder;
 import org.tyrannyofheaven.bukkit.util.command.Option;
+import org.tyrannyofheaven.bukkit.util.command.Require;
 import org.tyrannyofheaven.bukkit.util.command.Session;
 import org.tyrannyofheaven.bukkit.util.transaction.TransactionCallback;
 import org.tyrannyofheaven.bukkit.util.transaction.TransactionCallbackWithoutResult;
@@ -61,7 +63,66 @@ public class GroupCommands extends CommonCommands {
         super(core, storageStrategy, resolver, config, plugin, true);
     }
 
+    // Common commands
+
+    @Command(value="get", description="View a permission")
+    @Require("zpermissions.group.view")
+    public void get(CommandSender sender, final @Session("entityName") String name, @Option("permission") String permission) {
+        super._get(sender, name, permission);
+    }
+
+    @Command(value="set", description="Set a permission")
+    @Require("zpermissions.group.manage")
+    public void set(CommandSender sender, final @Session("entityName") String name, @Option("permission") String permission, final @Option(value="value", optional=true) Boolean value) {
+        super._set(sender, name, permission, value);
+    }
+
+    @Command(value="unset", description="Remove a permission")
+    @Require("zpermissions.group.manage")
+    public void unset(CommandSender sender, final @Session("entityName") String name, @Option("permission") String permission) {
+        super._unset(sender, name, permission);
+    }
+
+    @Command(value="purge", description="Delete this group")
+    @Require("zpermissions.group.manage")
+    public void delete(CommandSender sender, final @Session("entityName") String name) {
+        super._delete(sender, name);
+    }
+
+    @Command(value="dump", description="Display permissions for this group", varargs="region...")
+    @Require("zpermissions.group.view")
+    public void dump(CommandSender sender, final @Session("entityName") String name, @Option(value={"-w", "--world"}, valueName="world", completer="world") String worldName, @Option(value={"-f", "--filter"}, valueName="filter") String filter, String[] regionNames) {
+        super._dump(sender, name, worldName, filter, regionNames);
+    }
+
+    @Command(value="diff", description="Compare effective permissions of this group with another", varargs="region...")
+    @Require("zpermissions.group.view")
+    public void diff(CommandSender sender, final @Session("entityName") String name, @Option(value={"-w", "--world"}, valueName="world", completer="world") String worldName, @Option(value={"-f", "--filter"}, valueName="filter") String filter, @Option("other") final String otherName, String[] regionNames) {
+        super._diff(sender, name, worldName, filter, otherName, regionNames);
+    }
+
+    @Command(value={"metadata", "meta", "md"}, description="Metadata-related commands")
+    @Require({"zpermissions.group.view", "zpermissions.group.manage", "zpermissions.group.chat"})
+    public MetadataCommands metadata(HelpBuilder helpBuilder, CommandSender sender, String[] args) {
+        return super._metadata(helpBuilder, sender, args);
+    }
+
+    @Command(value="prefix", description="Set chat prefix for this group")
+    @Require("zpermissions.group.chat")
+    public void prefix(CommandSender sender, @Session("entityName") String name, @Option(value="prefix", optional=true) String prefix, String[] rest) {
+        super._prefix(sender, name, prefix, rest);
+    }
+
+    @Command(value="suffix", description="Set chat suffix for this group")
+    @Require("zpermissions.group.chat")
+    public void suffix(CommandSender sender, @Session("entityName") String name, @Option(value="suffix", optional=true) String suffix, String[] rest) {
+        super._suffix(sender, name, suffix, rest);
+    }
+
+    // Group-specific commands
+
     @Command(value="create", description="Create a group")
+    @Require("zpermissions.group.manage")
     public void create(CommandSender sender, final @Session("entityName") String groupName) {
         boolean result = storageStrategy.getRetryingTransactionStrategy().execute(new TransactionCallback<Boolean>() {
             @Override
@@ -81,6 +142,7 @@ public class GroupCommands extends CommonCommands {
     }
 
     @Command(value="add", description="Add a player to a group")
+    @Require("zpermissions.group.manage")
     public void addMember(CommandSender sender, final @Session("entityName") String groupName, final @Option(value="player", completer="player") String playerName, @Option(value="duration/timestamp", optional=true) String duration, String[] args) {
         final Date expiration = Utils.parseDurationTimestamp(duration, args);
 
@@ -107,6 +169,7 @@ public class GroupCommands extends CommonCommands {
     }
 
     @Command(value={"remove", "rm"}, description="Remove a player from a group")
+    @Require("zpermissions.group.manage")
     public void removeMember(CommandSender sender, final @Session("entityName") String groupName, final @Option(value="player", completer="player") String playerName) {
         // Remove player from group
         Boolean result = storageStrategy.getRetryingTransactionStrategy().execute(new TransactionCallback<Boolean>() {
@@ -129,6 +192,7 @@ public class GroupCommands extends CommonCommands {
     }
 
     @Command(value={"show", "sh"}, description="Show information about a group")
+    @Require("zpermissions.group.view")
     public void show(CommandSender sender, @Session("entityName") String groupName, @Option(value={"-f", "--filter"}, valueName="filter") String filter) {
         PermissionEntity entity = storageStrategy.getDao().getEntity(groupName, true);
 
@@ -174,6 +238,7 @@ public class GroupCommands extends CommonCommands {
 
     @Command(value={"setparents", "parents", "setparent", "parent"}, description="Set a group's parent(s)",
             completer="group", varargs="parent...")
+    @Require("zpermissions.group.manage")
     public void setParent(CommandSender sender, final @Session("entityName") String groupName, String[] parents) {
         final List<String> parentNames = Arrays.asList(parents);
         try {
@@ -206,6 +271,7 @@ public class GroupCommands extends CommonCommands {
     }
 
     @Command(value={"setweight", "weight", "setpriority", "priority"}, description="Set a group's weight")
+    @Require("zpermissions.group.manage")
     public void setPriority(CommandSender sender, final @Session("entityName") String groupName, final @Option("weight") int priority) {
         // Set the priority. Will not fail, creates group if necessary
         try {
@@ -226,6 +292,7 @@ public class GroupCommands extends CommonCommands {
     }
 
     @Command(value="members", description="List members of a group")
+    @Require("zpermissions.group.view")
     public void members(CommandSender sender, @Session("entityName") String groupName) {
         List<Membership> memberships = storageStrategy.getDao().getMembers(groupName);
         
@@ -261,11 +328,13 @@ public class GroupCommands extends CommonCommands {
     }
 
     @Command(value={"clone", "copy", "cp"}, description="Clone this group")
+    @Require("zpermissions.group.manage")
     public void clone(CommandSender sender, @Session("entityName") String groupName, @Option("new-group") String destination) {
         super.clone(sender, groupName, destination, false);
     }
 
     @Command(value={"rename", "ren", "mv"}, description="Rename this group")
+    @Require("zpermissions.group.manage")
     public void rename(CommandSender sender, @Session("entityName") String groupName, @Option("new-group") String destination) {
         super.clone(sender, groupName, destination, true);
     }
