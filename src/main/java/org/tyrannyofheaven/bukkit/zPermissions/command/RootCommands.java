@@ -101,9 +101,10 @@ public class RootCommands {
     }
 
     @Command("permissions")
-    @Require({"zpermissions.player", "zpermissions.group", "zpermissions.list", "zpermissions.check", "zpermissions.reload",
-        "zpermissions.import", "zpermissions.export", "zpermissions.inspect", "zpermissions.mygroups", "zpermissions.purge",
-        "zpermissions.diff"})
+    @Require({"zpermissions.player.view", "zpermissions.player.manage", "zpermissions.player.chat",
+        "zpermissions.group.view", "zpermissions.group.manage", "zpermissions.group.chat",
+        "zpermissions.list", "zpermissions.check", "zpermissions.reload", "zpermissions.import", "zpermissions.export", "zpermissions.inspect",
+        "zpermissions.mygroups", "zpermissions.purge", "zpermissions.diff"})
     public Object perm(HelpBuilder helpBuilder, CommandSender sender, String[] args) {
         if (args.length == 0) {
             helpBuilder.withCommandSender(sender)

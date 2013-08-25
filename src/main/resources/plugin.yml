@@ -26,8 +26,8 @@ permissions:
     description: All-inclusive permission for zPermissions
     default: op
     children:
-      zpermissions.player: true
-      zpermissions.group: true
+      zpermissions.player.*: true
+      zpermissions.group.*: true
       zpermissions.list: true
       zpermissions.check: true
       zpermissions.check.other: true
@@ -58,8 +58,28 @@ permissions:
       zpermissions.unsetrank.*: true
   zpermissions.player:
     description: Allows use of the /permissions player command
+    children:
+      zpermissions.player.*: true
+  zpermissions.player.*:
+    description: Allows use of the /permissions player command
+    children:
+      zpermissions.player.manage: true
+  zpermissions.player.manage:
+    children:
+      zpermissions.player.view: true
+      zpermissions.player.chat: true
   zpermissions.group:
     description: Allows use of the /permissions group command
+    children:
+      zpermissions.group.*: true
+  zpermissions.group.*:
+    description: Allows use of the /permissions group command
+    children:
+      zpermissions.group.manage: true
+  zpermissions.group.manage:
+    children:
+      zpermissions.group.view: true
+      zpermissions.group.chat: true
   zpermissions.list:
     description: Allows use of the /permissions list command
   zpermissions.check:
