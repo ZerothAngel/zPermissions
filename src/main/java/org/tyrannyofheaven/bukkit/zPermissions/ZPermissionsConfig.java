@@ -41,6 +41,8 @@ public interface ZPermissionsConfig {
 
     public boolean isVaultPrefixIncludesGroup();
 
+    public boolean isVaultMetadataIncludesGroup();
+
     public boolean isVaultGroupTestUsesAssignedOnly();
     
     public boolean isVaultGetGroupsUsesAssignedOnly();
