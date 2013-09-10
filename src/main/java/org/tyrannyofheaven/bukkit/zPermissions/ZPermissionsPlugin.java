@@ -158,6 +158,9 @@ public class ZPermissionsPlugin extends JavaPlugin implements ZPermissionsCore, 
     // Default Vault player prefix group fallback
     private static final boolean DEFAULT_VAULT_PREFIX_INCLUDES_GROUP = true;
 
+    // Default Vault player metadata group fallback
+    private static final boolean DEFAULT_VAULT_METADATA_INCLUDES_GROUP = true;
+
     // Default Vault behavior for playerInGroup()
     private static final boolean DEFAULT_VAULT_GROUP_TEST_USES_ASSIGNED_ONLY = false;
 
@@ -236,6 +239,10 @@ public class ZPermissionsPlugin extends JavaPlugin implements ZPermissionsCore, 
     // Whether the native Vault bridge's getPlayerPrefix/getPlayerSuffix should
     // fall back to the primary group
     private boolean vaultPrefixIncludesGroup;
+
+    // Wehther the native Vault bridge's getPlayerInfo* methods should
+    // fall back to the primary group
+    private boolean vaultMetadataIncludesGroup;
 
     // Whether Vault playerInGroup() should use assigned groups only
     private boolean vaultGroupTestUsesAssignedOnly;
@@ -877,6 +884,11 @@ public class ZPermissionsPlugin extends JavaPlugin implements ZPermissionsCore, 
     }
 
     @Override
+    public boolean isVaultMetadataIncludesGroup() {
+        return vaultMetadataIncludesGroup;
+    }
+
+    @Override
     public boolean isVaultGroupTestUsesAssignedOnly() {
         return vaultGroupTestUsesAssignedOnly;
     }
@@ -1010,6 +1022,7 @@ public class ZPermissionsPlugin extends JavaPlugin implements ZPermissionsCore, 
         autoRefreshForce = config.getBoolean("auto-refresh-force", DEFAULT_AUTO_REFRESH_FORCE);
         nativeVaultBridges = config.getBoolean("native-vault-bridges", DEFAULT_NATIVE_VAULT_BRIDGES);
         vaultPrefixIncludesGroup = config.getBoolean("vault-prefix-includes-group", DEFAULT_VAULT_PREFIX_INCLUDES_GROUP);
+        vaultMetadataIncludesGroup = config.getBoolean("vault-metadata-includes-group", DEFAULT_VAULT_METADATA_INCLUDES_GROUP);
         vaultGroupTestUsesAssignedOnly = config.getBoolean("vault-group-test-uses-assigned-only", DEFAULT_VAULT_GROUP_TEST_USES_ASSIGNED_ONLY);
         vaultGetGroupsUsesAssignedOnly = config.getBoolean("vault-get-groups-uses-assigned-only", DEFAULT_VAULT_GET_GROUPS_USES_ASSIGNED_ONLY);
 

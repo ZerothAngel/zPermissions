@@ -118,6 +118,13 @@ vault-prefix-includes-group: |
   chat formatting plugin that does not perform this fallback behavior
   itself.
 
+vault-metadata-includes-group: |
+  If true, the Vault Chat API methods getPlayerInfo*() will fall back to the
+  player's primary group's metadata. Only matters if native-vault-bridges
+  is true. This should be enabled if you use a metadata-using plugin
+  that does not perform this fallback behavior itself. Note it will affect
+  all Vault-using plugins.
+
 vault-group-test-uses-assigned-only: |
   Affects the behavior of the Vault Permission playerInGroup() method. If
   true, playerInGroup() will only test against assigned groups. Otherwise,

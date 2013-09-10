@@ -86,6 +86,9 @@ public class VaultChatBridge extends Chat {
     @Override
     public boolean getPlayerInfoBoolean(String world, String player, String node, boolean defaultValue) {
         Boolean result = service.getPlayerMetadata(player, node, Boolean.class);
+        if (result == null && config.isVaultMetadataIncludesGroup())
+            result = service.getGroupMetadata(getPrimaryGroup(world, player), node, Boolean.class);
+
         if (result == null)
             return defaultValue;
         else
@@ -95,6 +98,9 @@ public class VaultChatBridge extends Chat {
     @Override
     public double getPlayerInfoDouble(String world, String player, String node, double defaultValue) {
         Double result = service.getPlayerMetadata(player, node, Double.class);
+        if (result == null && config.isVaultMetadataIncludesGroup())
+            result = service.getGroupMetadata(getPrimaryGroup(world, player), node, Double.class);
+
         if (result == null)
             return defaultValue;
         else
@@ -104,6 +110,9 @@ public class VaultChatBridge extends Chat {
     @Override
     public int getPlayerInfoInteger(String world, String player, String node, int defaultValue) {
         Integer result = service.getPlayerMetadata(player, node, Integer.class);
+        if (result == null && config.isVaultMetadataIncludesGroup())
+            result = service.getGroupMetadata(getPrimaryGroup(world, player), node, Integer.class);
+
         if (result == null)
             return defaultValue;
         else
@@ -113,6 +122,9 @@ public class VaultChatBridge extends Chat {
     @Override
     public String getPlayerInfoString(String world, String player, String node, String defaultValue) {
         String result = service.getPlayerMetadata(player, node, String.class);
+        if (result == null && config.isVaultMetadataIncludesGroup())
+            result = service.getGroupMetadata(getPrimaryGroup(world, player), node, String.class);
+
         if (result == null)
             return defaultValue;
         else
@@ -121,18 +133,26 @@ public class VaultChatBridge extends Chat {
 
     @Override
     public String getPlayerPrefix(String world, String player) {
-        String prefix = getPlayerInfoString(world, player, MetadataConstants.PREFIX_KEY, "");
-        if (config.isVaultPrefixIncludesGroup() && prefix.isEmpty())
-            prefix = getGroupPrefix(world, getPrimaryGroup(world, player));
-        return prefix;
+        String prefix = service.getPlayerMetadata(player, MetadataConstants.PREFIX_KEY, String.class);
+        if (prefix == null && config.isVaultPrefixIncludesGroup())
+            prefix = service.getGroupMetadata(getPrimaryGroup(world, player), MetadataConstants.PREFIX_KEY, String.class);
+        
+        if (prefix == null)
+            return "";
+        else
+            return prefix;
     }
 
     @Override
     public String getPlayerSuffix(String world, String player) {
-        String suffix = getPlayerInfoString(world, player, MetadataConstants.SUFFIX_KEY, "");
-        if (config.isVaultPrefixIncludesGroup() && suffix.isEmpty())
-            suffix = getGroupSuffix(world, getPrimaryGroup(world, player));
-        return suffix;
+        String suffix = service.getPlayerMetadata(player, MetadataConstants.SUFFIX_KEY, String.class);
+        if (suffix == null && config.isVaultPrefixIncludesGroup())
+            suffix = service.getGroupMetadata(getPrimaryGroup(world, player), MetadataConstants.SUFFIX_KEY, String.class);
+        
+        if (suffix == null)
+            return "";
+        else
+            return suffix;
     }
 
     @Override
