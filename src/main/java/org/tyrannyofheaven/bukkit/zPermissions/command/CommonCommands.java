@@ -22,6 +22,7 @@ import static org.tyrannyofheaven.bukkit.util.command.reader.CommandReader.abort
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -521,6 +522,52 @@ public abstract class CommonCommands {
     protected final void handleMissingGroup(CommandSender sender, MissingGroupException e) {
         sendMessage(sender, colorize("{RED}Group {DARK_GREEN}%s{RED} does not exist."), e.getGroupName());
         abortBatchProcessing();
+    }
+
+    protected final void addGroupMember(CommandSender sender, final String groupName, final String playerName, String duration, String[] args) {
+        final Date expiration = Utils.parseDurationTimestamp(duration, args);
+    
+        // Add player to group.
+        try {
+            storageStrategy.getRetryingTransactionStrategy().execute(new TransactionCallbackWithoutResult() {
+                @Override
+                public void doInTransactionWithoutResult() throws Exception {
+                    storageStrategy.getDao().addMember(groupName, playerName, expiration);
+                }
+            });
+        }
+        catch (MissingGroupException e) {
+            handleMissingGroup(sender, e);
+            return;
+        }
+    
+        sendMessage(sender, colorize("{AQUA}%s{YELLOW} added to {DARK_GREEN}%s"), playerName, groupName);
+        Utils.checkPlayer(sender, playerName);
+        core.refreshPlayer(playerName, RefreshCause.GROUP_CHANGE);
+        
+        if (expiration != null)
+            core.refreshExpirations(playerName);
+    }
+
+    protected final void removeGroupMember(CommandSender sender, final String groupName, final String playerName) {
+        // Remove player from group
+        Boolean result = storageStrategy.getRetryingTransactionStrategy().execute(new TransactionCallback<Boolean>() {
+            @Override
+            public Boolean doInTransaction() throws Exception {
+                return storageStrategy.getDao().removeMember(groupName, playerName);
+            }
+        });
+    
+        if (result) {
+            sendMessage(sender, colorize("{AQUA}%s{YELLOW} removed from {DARK_GREEN}%s"), playerName, groupName);
+            core.refreshPlayer(playerName, RefreshCause.GROUP_CHANGE);
+            core.refreshExpirations(playerName);
+        }
+        else {
+            sendMessage(sender, colorize("{DARK_GREEN}%s{RED} does not exist or {AQUA}%s{RED} is not a member"), groupName, playerName);
+            Utils.checkPlayer(sender, playerName);
+            abortBatchProcessing();
+        }
     }
 
 }

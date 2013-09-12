@@ -159,6 +159,18 @@ public class PlayerCommands extends CommonCommands {
             core.refreshExpirations(playerName);
     }
 
+    @Command(value={"addgroup", "add"}, description="Add this player to a group")
+    @Require("zpermissions.player.manage")
+    public void addGroup(CommandSender sender, @Session("entityName") String playerName, @Option(value="group", completer="group") String groupName, @Option(value="duration/timestamp", optional=true) String duration, String[] args) {
+        addGroupMember(sender, groupName, playerName, duration, args);
+    }
+
+    @Command(value={"removegroup", "rmgroup", "remove", "rm"}, description="Remove this player from a group")
+    @Require("zpermissions.player.manage")
+    public void removeGroup(CommandSender sender, @Session("entityName") String playerName, @Option(value="group", completer="group") String groupName, @Option(value="duration/timestamp", optional=true) String duration, String[] args) {
+        removeGroupMember(sender, groupName, playerName);
+    }
+
     @Command(value={"show", "sh"}, description="Show information about a player")
     @Require("zpermissions.player.view")
     public void show(CommandSender sender, @Session("entityName") String playerName, @Option(value={"-f", "--filter"}, valueName="filter") String filter) {
