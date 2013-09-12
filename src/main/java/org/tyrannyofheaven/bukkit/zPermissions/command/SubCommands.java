@@ -118,6 +118,8 @@ public class SubCommands {
                 .forCommand("purge")
                 .forCommand("groups")
                 .forCommand("setgroup")
+                .forCommand("addgroup")
+                .forCommand("removegroup")
                 .forCommand("show")
                 .forCommand("dump")
                 .forCommand("diff")

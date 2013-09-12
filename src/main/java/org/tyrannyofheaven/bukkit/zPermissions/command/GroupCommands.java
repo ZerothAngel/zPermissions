@@ -40,7 +40,6 @@ import org.tyrannyofheaven.bukkit.util.command.Session;
 import org.tyrannyofheaven.bukkit.util.transaction.TransactionCallback;
 import org.tyrannyofheaven.bukkit.util.transaction.TransactionCallbackWithoutResult;
 import org.tyrannyofheaven.bukkit.zPermissions.PermissionsResolver;
-import org.tyrannyofheaven.bukkit.zPermissions.RefreshCause;
 import org.tyrannyofheaven.bukkit.zPermissions.ZPermissionsConfig;
 import org.tyrannyofheaven.bukkit.zPermissions.ZPermissionsCore;
 import org.tyrannyofheaven.bukkit.zPermissions.dao.DaoException;
@@ -143,52 +142,14 @@ public class GroupCommands extends CommonCommands {
 
     @Command(value="add", description="Add a player to a group")
     @Require("zpermissions.group.manage")
-    public void addMember(CommandSender sender, final @Session("entityName") String groupName, final @Option(value="player", completer="player") String playerName, @Option(value="duration/timestamp", optional=true) String duration, String[] args) {
-        final Date expiration = Utils.parseDurationTimestamp(duration, args);
-
-        // Add player to group.
-        try {
-            storageStrategy.getRetryingTransactionStrategy().execute(new TransactionCallbackWithoutResult() {
-                @Override
-                public void doInTransactionWithoutResult() throws Exception {
-                    storageStrategy.getDao().addMember(groupName, playerName, expiration);
-                }
-            });
-        }
-        catch (MissingGroupException e) {
-            handleMissingGroup(sender, e);
-            return;
-        }
-
-        sendMessage(sender, colorize("{AQUA}%s{YELLOW} added to {DARK_GREEN}%s"), playerName, groupName);
-        Utils.checkPlayer(sender, playerName);
-        core.refreshPlayer(playerName, RefreshCause.GROUP_CHANGE);
-        
-        if (expiration != null)
-            core.refreshExpirations(playerName);
+    public void addMember(CommandSender sender, @Session("entityName") String groupName, @Option(value="player", completer="player") String playerName, @Option(value="duration/timestamp", optional=true) String duration, String[] args) {
+        addGroupMember(sender, groupName, playerName, duration, args);
     }
 
     @Command(value={"remove", "rm"}, description="Remove a player from a group")
     @Require("zpermissions.group.manage")
-    public void removeMember(CommandSender sender, final @Session("entityName") String groupName, final @Option(value="player", completer="player") String playerName) {
-        // Remove player from group
-        Boolean result = storageStrategy.getRetryingTransactionStrategy().execute(new TransactionCallback<Boolean>() {
-            @Override
-            public Boolean doInTransaction() throws Exception {
-                return storageStrategy.getDao().removeMember(groupName, playerName);
-            }
-        });
-
-        if (result) {
-            sendMessage(sender, colorize("{AQUA}%s{YELLOW} removed from {DARK_GREEN}%s"), playerName, groupName);
-            core.refreshPlayer(playerName, RefreshCause.GROUP_CHANGE);
-            core.refreshExpirations(playerName);
-        }
-        else {
-            sendMessage(sender, colorize("{DARK_GREEN}%s{RED} does not exist or {AQUA}%s{RED} is not a member"), groupName, playerName);
-            Utils.checkPlayer(sender, playerName);
-            abortBatchProcessing();
-        }
+    public void removeMember(CommandSender sender, @Session("entityName") String groupName, @Option(value="player", completer="player") String playerName) {
+        removeGroupMember(sender, groupName, playerName);
     }
 
     @Command(value={"show", "sh"}, description="Show information about a group")
