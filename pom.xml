@@ -20,6 +20,10 @@
 
   <repositories>
     <repository>
+      <id>bukkit-repo</id>
+      <url>http://repo.bukkit.org/content/groups/public</url>
+    </repository>
+    <repository>
       <id>tyrannyofheaven.org</id>
       <url>http://maven.tyrannyofheaven.org</url>
     </repository>
