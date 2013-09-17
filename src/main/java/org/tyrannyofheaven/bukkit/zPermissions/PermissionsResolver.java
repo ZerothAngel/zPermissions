@@ -180,7 +180,7 @@ public class PermissionsResolver {
      * NB: world and regions should all be in lowercase!
      * 
      * @param playerName the player's name
-     * @param world the desination world name in lowercase
+     * @param world the desination world name in lowercase or null
      * @param regions the name of the regions containing the destination, all
      *   in lowercase
      * @return effective permissions for this player
@@ -228,7 +228,7 @@ public class PermissionsResolver {
      * finally ending with the group itself.)
      * 
      * @param groupName the group's name
-     * @param world the destination world name in lowercase
+     * @param world the destination world name in lowercase or null
      * @param regions the name of the regions containing the destination, all
      *   in lowercase
      * @return effective permissions for this group
@@ -299,7 +299,7 @@ public class PermissionsResolver {
     // (ones not assigned to any specific world) are applied first. They are
     // then overridden by any world-specific permissions.
     private Map<String, Boolean> applyPermissions(List<Entry> entries, Set<String> regions, String world) {
-        String worldAlias = worldAliases.get(world);
+        String worldAlias = world != null ? worldAliases.get(world) : null;
 
         Map<String, Boolean> permissions = new LinkedHashMap<String, Boolean>();
 

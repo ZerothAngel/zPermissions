@@ -47,7 +47,7 @@ public interface ZPermissionsService {
      * <strong>not</strong> replicate the behavior of hasPermissions()! You
      * must take defaults into account. I leave that to the caller...
      * 
-     * @param worldName the name of the target world
+     * @param worldName the name of the target world. May be <code>null</code>.
      * @param regionNames set of region names. May be <code>null</code>.
      * @param playerName the player's name
      * @return effective permissions for this player
@@ -91,7 +91,7 @@ public interface ZPermissionsService {
      * Bukkit's hasPermissions() method. See {@link #getPlayerPermissions(String, Set, String)}
      * for further explanation.
      * 
-     * @param worldName the name of the target world
+     * @param worldName the name of the target world. May be <code>null</code>.
      * @param regionNames set of region names. May be <code>null</code>.
      * @param groupName the group's name
      * @return effective permissions for this group

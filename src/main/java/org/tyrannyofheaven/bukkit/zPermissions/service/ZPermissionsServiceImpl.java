@@ -175,9 +175,8 @@ public class ZPermissionsServiceImpl implements ZPermissionsService {
      * @see org.tyrannyofheaven.bukkit.zPermissions.ZPermissionsService#getGroupPermissions(java.lang.String, java.util.Set, java.lang.String)
      */
     @Override
-    public Map<String, Boolean> getGroupPermissions(final String worldName, Set<String> regionNames, final String groupName) {
-        if (!hasText(worldName))
-            throw new IllegalArgumentException("worldName must have a value");
+    public Map<String, Boolean> getGroupPermissions(String worldName, Set<String> regionNames, final String groupName) {
+        final String lworldName = hasText(worldName) ? worldName.toLowerCase() : null;
         if (regionNames == null)
             regionNames = Collections.emptySet();
         if (!hasText(groupName))
@@ -192,7 +191,7 @@ public class ZPermissionsServiceImpl implements ZPermissionsService {
         Map<String, Boolean> permissions = getTransactionStrategy().execute(new TransactionCallback<Map<String, Boolean>>() {
             @Override
             public Map<String, Boolean> doInTransaction() throws Exception {
-                return getResolver().resolveGroup(groupName.toLowerCase(), worldName.toLowerCase(), regions);
+                return getResolver().resolveGroup(groupName.toLowerCase(), lworldName, regions);
             }
         }, true);
 
@@ -203,9 +202,8 @@ public class ZPermissionsServiceImpl implements ZPermissionsService {
      * @see org.tyrannyofheaven.bukkit.zPermissions.ZPermissionsService#getPlayerPermissions(java.lang.String, java.util.Set, java.lang.String)
      */
     @Override
-    public Map<String, Boolean> getPlayerPermissions(final String worldName, Set<String> regionNames, final String playerName) {
-        if (!hasText(worldName))
-            throw new IllegalArgumentException("worldName must have a value");
+    public Map<String, Boolean> getPlayerPermissions(String worldName, Set<String> regionNames, final String playerName) {
+        final String lworldName = hasText(worldName) ? worldName.toLowerCase() : null;
         if (regionNames == null)
             regionNames = Collections.emptySet();
         if (!hasText(playerName))
@@ -220,7 +218,7 @@ public class ZPermissionsServiceImpl implements ZPermissionsService {
         Map<String, Boolean> permissions = getTransactionStrategy().execute(new TransactionCallback<Map<String, Boolean>>() {
             @Override
             public Map<String, Boolean> doInTransaction() throws Exception {
-                return getResolver().resolvePlayer(playerName.toLowerCase(), worldName.toLowerCase(), regions).getPermissions();
+                return getResolver().resolvePlayer(playerName.toLowerCase(), lworldName, regions).getPermissions();
             }
         }, true);
 
