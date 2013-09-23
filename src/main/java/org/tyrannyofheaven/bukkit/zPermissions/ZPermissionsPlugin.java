@@ -789,7 +789,7 @@ public class ZPermissionsPlugin extends JavaPlugin implements ZPermissionsCore, 
      * @param groupName the affected group
      */
     @Override
-    public void refreshAffectedPlayers(String groupName) {
+    public boolean refreshAffectedPlayers(String groupName) {
         groupName = groupName.toLowerCase();
         Set<String> toRefresh = new HashSet<String>();
         for (Player player : Bukkit.getOnlinePlayers()) {
@@ -800,11 +800,13 @@ public class ZPermissionsPlugin extends JavaPlugin implements ZPermissionsCore, 
         }
         
         if (toRefresh.isEmpty())
-            return; // Nothing to do
+            return false; // Nothing to do
 
         if (getLogger().isLoggable(Level.FINE))
             debug(this, "Refreshing players: %s", ToHStringUtils.delimitedString(", ", toRefresh));
         refreshTask.start(toRefresh);
+        
+        return true;
     }
 
     /**

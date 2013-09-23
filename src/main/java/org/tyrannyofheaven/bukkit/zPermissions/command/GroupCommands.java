@@ -82,10 +82,43 @@ public class GroupCommands extends CommonCommands {
         super._unset(sender, name, permission);
     }
 
-    @Command(value="purge", description="Delete this group")
+    @Command(value="purge", description="Delete this group or purge its members")
     @Require("zpermissions.group.manage")
-    public void delete(CommandSender sender, final @Session("entityName") String name) {
-        super._delete(sender, name);
+    public void delete(CommandSender sender, final @Session("entityName") String name, @Option(value={"-m", "--members-only"}) boolean membersOnly) {
+        if (!membersOnly) {
+            super._delete(sender, name);
+        }
+        else {
+            boolean result;
+            try {
+                result = storageStrategy.getRetryingTransactionStrategy().execute(new TransactionCallback<Boolean>() {
+                    @Override
+                    public Boolean doInTransaction() throws Exception {
+                        List<Membership> memberships = storageStrategy.getDao().getMembers(name);
+
+                        for (Membership membership : memberships) {
+                            storageStrategy.getDao().removeMember(name, membership.getMember());
+                        }
+
+                        return !memberships.isEmpty();
+                    }
+                });
+            }
+            catch (MissingGroupException e) {
+                handleMissingGroup(sender, e);
+                return;
+            }
+            
+            if (result) {
+                sendMessage(sender, colorize("{YELLOW}Group {DARK_GREEN}%s{YELLOW} purged of members."), name);
+                if (core.refreshAffectedPlayers(name))
+                    core.refreshExpirations();
+            }
+            else {
+                // Nothing happened for one reason or another
+                sendMessage(sender, colorize("{YELLOW}Group has no members or does not exist."));
+            }
+        }
     }
 
     @Command(value="dump", description="Display permissions for this group", varargs="region...")
