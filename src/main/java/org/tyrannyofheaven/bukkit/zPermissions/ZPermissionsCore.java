@@ -38,7 +38,7 @@ public interface ZPermissionsCore {
     // NB called from async thread
     public void refreshPlayers(Collection<String> playerNames);
 
-    public void refreshAffectedPlayers(String groupName);
+    public boolean refreshAffectedPlayers(String groupName);
 
     // Refreshing the temporary group membership timer
 
