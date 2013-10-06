@@ -1,7 +1,6 @@
 # zPermissions &mdash; A Superperms plugin for Bukkit #
 
-zPermissions is primarily an SQL database-backed Superperms (aka Bukkit permissions) implementation. It also supports flat-file storage. Notable features are: multi-world support, ranks with multiple tracks/ladders, group inheritance of arbitrary depth (within reason), and optional region-specific permissions using [WorldGuard](http://dev.bukkit.org/server-mods/worldguard/) regions, [Residence](http://dev.bukkit.org/server-mods/residence/) residences, or
-[Factions](http://dev.bukkit.org/bukkit-plugins/factions/) territories.
+zPermissions is primarily an SQL database-backed Superperms (aka Bukkit permissions) implementation. It also supports flat-file storage. Notable features are: multi-world support, ranks with multiple tracks/ladders, group inheritance of arbitrary depth (within reason), and optional region-specific permissions using [WorldGuard](http://dev.bukkit.org/server-mods/worldguard/) regions, [Residence](http://dev.bukkit.org/server-mods/residence/) residences, or [Factions](http://dev.bukkit.org/bukkit-plugins/factions/) territories.
 
 There is no built-in build protection (I rely on other plugins for that). zPermissions focuses on permissions and only permissions.
 
