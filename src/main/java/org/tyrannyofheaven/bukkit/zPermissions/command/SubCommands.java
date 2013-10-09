@@ -57,6 +57,7 @@ import org.tyrannyofheaven.bukkit.zPermissions.ZPermissionsCore;
 import org.tyrannyofheaven.bukkit.zPermissions.model.Membership;
 import org.tyrannyofheaven.bukkit.zPermissions.model.PermissionEntity;
 import org.tyrannyofheaven.bukkit.zPermissions.storage.StorageStrategy;
+import org.tyrannyofheaven.bukkit.zPermissions.util.MetadataConstants;
 import org.tyrannyofheaven.bukkit.zPermissions.util.ModelDumper;
 import org.tyrannyofheaven.bukkit.zPermissions.util.Utils;
 
@@ -378,6 +379,88 @@ public class SubCommands {
         String groups = Utils.displayGroups(resolver.getDefaultGroup(), memberships);
         
         sendMessage(sender, colorize("{YELLOW}You are a member of: %s"), groups);
+    }
+
+    @Command(value="prefix", description="Modify your chat prefix")
+    @Require("zpermissions.mychat")
+    public void prefix(final CommandSender sender, @Option({"-c", "--clear"}) boolean clear, @Option(value="prefix", optional=true) String prefix, String[] rest) {
+        selfServeChat(sender, MetadataConstants.PREFIX_KEY, clear, prefix, rest);
+    }
+
+    @Command(value="suffix", description="Modify your chat suffix")
+    @Require("zpermissions.mychat")
+    public void suffix(final CommandSender sender, @Option({"-c", "--clear"}) boolean clear, @Option(value="suffix", optional=true) String suffix, String[] rest) {
+        selfServeChat(sender, MetadataConstants.SUFFIX_KEY, clear, suffix, rest);
+    }
+
+    private void selfServeChat(CommandSender sender, String metadataName, boolean clear, String value, String[] rest) {
+        if (!(sender instanceof Player)) {
+            sendMessage(sender, colorize("{RED}Command only valid for players."));
+            return;
+        }
+        if ((value != null && !value.isEmpty()) || rest.length > 0) {
+            setPlayerMetadataString(sender, metadataName, value, rest);
+        }
+        else if (clear) {
+            unsetPlayerMetadataString(sender, metadataName);
+        }
+        else {
+            showPlayerMetadataString(sender, metadataName);
+        }
+    }
+
+    // Possible dupe with stuff in MetadataCommands. Refactor someday?
+    private void showPlayerMetadataString(final CommandSender sender, final String metadataName) {
+        Object result = storageStrategy.getRetryingTransactionStrategy().execute(new TransactionCallback<Object>() {
+            @Override
+            public Object doInTransaction() throws Exception {
+                return storageStrategy.getDao().getMetadata(sender.getName(), false, metadataName);
+            }
+        }, true);
+
+        if (result == null) {
+            sendMessage(sender, colorize("{YELLOW}You do not have a {GOLD}%s"), metadataName);
+            abortBatchProcessing();
+        }
+        else {
+            sendMessage(sender, colorize("{YELLOW}Your {GOLD}%s{YELLOW} is {GREEN}%s"), metadataName, result);
+            sendMessage(sender, colorize("{GRAY}(Add -c option to clear)"));
+        }
+    }
+
+    // Possible dupe with stuff in MetadataCommands. Refactor someday?
+    private void setPlayerMetadataString(final CommandSender sender, final String metadataName, String value, String[] rest) {
+        final StringBuilder stringValue = new StringBuilder(value);
+        if (rest.length > 0) {
+            stringValue.append(' ')
+                .append(ToHStringUtils.delimitedString(" ", (Object[])rest));
+        }
+        storageStrategy.getRetryingTransactionStrategy().execute(new TransactionCallbackWithoutResult() {
+            @Override
+            public void doInTransactionWithoutResult() throws Exception {
+                storageStrategy.getDao().setMetadata(sender.getName(), false, metadataName, stringValue.toString());
+            }
+        });
+
+        sendMessage(sender, colorize("{YELLOW}Your {GOLD}%s{YELLOW} has been set to {GREEN}%s{YELLOW}"), metadataName, stringValue);
+    }
+
+    // Possible dupe with stuff in MetadataCommands. Refactor someday?
+    private void unsetPlayerMetadataString(final CommandSender sender, final String metadataName) {
+        Boolean result = storageStrategy.getRetryingTransactionStrategy().execute(new TransactionCallback<Boolean>() {
+            @Override
+            public Boolean doInTransaction() throws Exception {
+                return storageStrategy.getDao().unsetMetadata(sender.getName(), false, metadataName);
+            }
+        });
+        
+        if (result) {
+            sendMessage(sender, colorize("{YELLOW}Your {GOLD}%s{YELLOW} has been unset"), metadataName);
+        }
+        else {
+            sendMessage(sender, colorize("{YELLOW}You do not have a {GOLD}%s"), metadataName);
+            abortBatchProcessing();
+        }
     }
 
     @Command(value="diff", description="Compare effective permissions of a player")
