@@ -39,6 +39,8 @@ import java.util.logging.Level;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
+import org.bukkit.command.Command;
+import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
@@ -57,6 +59,7 @@ import org.tyrannyofheaven.bukkit.util.ToHSchemaVersion;
 import org.tyrannyofheaven.bukkit.util.ToHStringUtils;
 import org.tyrannyofheaven.bukkit.util.ToHUtils;
 import org.tyrannyofheaven.bukkit.util.VersionInfo;
+import org.tyrannyofheaven.bukkit.util.command.CommandExceptionHandler;
 import org.tyrannyofheaven.bukkit.util.command.ToHCommandExecutor;
 import org.tyrannyofheaven.bukkit.util.transaction.TransactionCallback;
 import org.tyrannyofheaven.bukkit.util.transaction.TransactionStrategy;
@@ -99,7 +102,7 @@ import com.avaje.ebeaninternal.api.SpiEbeanServer;
  * 
  * @author zerothangel
  */
-public class ZPermissionsPlugin extends JavaPlugin implements ZPermissionsCore, ZPermissionsConfig {
+public class ZPermissionsPlugin extends JavaPlugin implements ZPermissionsCore, ZPermissionsConfig, CommandExceptionHandler {
 
     // Name of the default group, in absence of a config file
     private static final String DEFAULT_GROUP = "default";
@@ -172,6 +175,9 @@ public class ZPermissionsPlugin extends JavaPlugin implements ZPermissionsCore, 
 
     // Name of metadata key for our PlayerState instances
     private static final String PLAYER_METADATA_KEY = "zPermissions.PlayerState";
+
+    // Default read-only flag
+    private static final boolean DEFAULT_DATABASE_READ_ONLY = false;
 
     // Prefix for each player's dynamic permission
     public static final String DYNAMIC_PERMISSION_PREFIX = "zPermissions_player.";
@@ -249,6 +255,9 @@ public class ZPermissionsPlugin extends JavaPlugin implements ZPermissionsCore, 
     
     // Whether Vault getPlayerGroups() should use assigned groups only
     private boolean vaultGetGroupsUsesAssignedOnly;
+
+    // Whether the database should be read-only
+    private boolean databaseReadOnly;
 
     // Strategy for permissions storage
     private StorageStrategy storageStrategy;
@@ -385,6 +394,7 @@ public class ZPermissionsPlugin extends JavaPlugin implements ZPermissionsCore, 
                 .registerTypeCompleter("track", new TrackTypeCompleter(getZPermissionsConfig()))
                 .registerTypeCompleter("dump-dir", new DirTypeCompleter(getZPermissionsConfig()))
                 .setQuoteAware(true)
+                .setExceptionHandler(this)
                 .registerCommands();
 
             // Detect a region manager
@@ -460,7 +470,7 @@ public class ZPermissionsPlugin extends JavaPlugin implements ZPermissionsCore, 
                 }
 
                 log(this, "Using database storage strategy.");
-                storageStrategy = new AvajeStorageStrategy(this, txnMaxRetries);
+                storageStrategy = new AvajeStorageStrategy(this, txnMaxRetries, databaseReadOnly);
             }
         }
         
@@ -907,6 +917,7 @@ public class ZPermissionsPlugin extends JavaPlugin implements ZPermissionsCore, 
 
         // Barebones defaults
         databaseSupport = config.getBoolean("database-support", DEFAULT_DATABASE_SUPPORT);
+        databaseReadOnly = config.getBoolean("database-read-only", DEFAULT_DATABASE_READ_ONLY);
         getResolver().setDefaultGroup(DEFAULT_GROUP);
         defaultTrack = DEFAULT_TRACK;
         dumpDirectory = new File(DEFAULT_DUMP_DIRECTORY);
@@ -1193,6 +1204,15 @@ public class ZPermissionsPlugin extends JavaPlugin implements ZPermissionsCore, 
             this.groups = Collections.unmodifiableSet(this.groups);
         }
 
+    }
+
+    @Override
+    public boolean handleException(CommandSender sender, Command command, String label, String[] args, Throwable t) {
+        if (t instanceof ReadOnlyException) {
+            sendMessage(sender, colorize("{RED}Server set to read-only mode."));
+            return true;
+        }
+        return false;
     }
 
 }

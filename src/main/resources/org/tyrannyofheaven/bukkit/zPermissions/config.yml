@@ -1,6 +1,8 @@
-config-version: 14
+config-version: 15
 
 database-support: true
+
+database-read-only: false
 
 region-support: true
 

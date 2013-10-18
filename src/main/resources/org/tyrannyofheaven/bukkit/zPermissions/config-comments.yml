@@ -2,6 +2,12 @@ database-support: |
   Enable database support. Disabling database support switches
   zPermissions to its flat-file-based permissions store.
 
+database-read-only: |
+  Set to true if this server should be in read-only mode. Only valid when
+  actually using a database. If set to read-only, the database account
+  for this server should also be granted read-only permissions on
+  zPermissions tables. (Not strictly required though.)
+
 group-permission: |
   Groups may have a group permission node automatically assigned to their
   members. This is the name of that permission node. It must be a string
