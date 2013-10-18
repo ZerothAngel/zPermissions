@@ -27,10 +27,12 @@ import java.util.logging.Level;
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.Plugin;
 import org.tyrannyofheaven.bukkit.util.transaction.AsyncTransactionStrategy;
+import org.tyrannyofheaven.bukkit.util.transaction.PreBeginHook;
 import org.tyrannyofheaven.bukkit.util.transaction.PreCommitHook;
 import org.tyrannyofheaven.bukkit.util.transaction.RetryingAvajeTransactionStrategy;
 import org.tyrannyofheaven.bukkit.util.transaction.TransactionCallback;
 import org.tyrannyofheaven.bukkit.util.transaction.TransactionStrategy;
+import org.tyrannyofheaven.bukkit.zPermissions.ReadOnlyException;
 import org.tyrannyofheaven.bukkit.zPermissions.dao.AvajePermissionDao2;
 import org.tyrannyofheaven.bukkit.zPermissions.dao.PermissionDao;
 import org.tyrannyofheaven.bukkit.zPermissions.model.DataVersion;
@@ -40,7 +42,7 @@ import org.tyrannyofheaven.bukkit.zPermissions.model.DataVersion;
  * 
  * @author asaddi
  */
-public class AvajeStorageStrategy implements StorageStrategy, PreCommitHook {
+public class AvajeStorageStrategy implements StorageStrategy, PreBeginHook, PreCommitHook {
 
     private final PermissionDao dao;
 
@@ -54,14 +56,17 @@ public class AvajeStorageStrategy implements StorageStrategy, PreCommitHook {
 
     private final AtomicLong lastLoadedVersion = new AtomicLong(0L);
 
-    public AvajeStorageStrategy(Plugin plugin, int maxRetries) {
+    private final boolean readOnlyMode;
+
+    public AvajeStorageStrategy(Plugin plugin, int maxRetries, boolean readOnlyMode) {
         // Following will be used to actually execute async
         executorService = Executors.newSingleThreadExecutor();
 
-        transactionStrategy = new AsyncTransactionStrategy(new RetryingAvajeTransactionStrategy(plugin.getDatabase(), maxRetries, null, this), executorService);
+        transactionStrategy = new AsyncTransactionStrategy(new RetryingAvajeTransactionStrategy(plugin.getDatabase(), maxRetries, null, this), executorService, this);
         dao = new AvajePermissionDao2(plugin.getDatabase(), transactionStrategy.getExecutor());
         retryingTransactionStrategy = new RetryingAvajeTransactionStrategy(plugin.getDatabase(), maxRetries); // NB no need for pre-commit hook since it's read-only
         this.plugin = plugin;
+        this.readOnlyMode = readOnlyMode;
     }
 
     @Override
@@ -166,6 +171,14 @@ public class AvajeStorageStrategy implements StorageStrategy, PreCommitHook {
         plugin.getDatabase().save(dv);
 
         lastLoadedVersion.compareAndSet(previousVersion, dv.getVersion()); // probably not the appropriate place. Should really be post-commit...
+    }
+
+    @Override
+    public void preBegin(boolean readOnly) throws Exception {
+        if (readOnly) return;
+        
+        if (readOnlyMode)
+            throw new ReadOnlyException();
     }
 
 }
