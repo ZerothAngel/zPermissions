@@ -58,7 +58,7 @@ public class AvajeStorageStrategy implements StorageStrategy, PreCommitHook {
         // Following will be used to actually execute async
         executorService = Executors.newSingleThreadExecutor();
 
-        transactionStrategy = new AsyncTransactionStrategy(new RetryingAvajeTransactionStrategy(plugin.getDatabase(), maxRetries, this), executorService);
+        transactionStrategy = new AsyncTransactionStrategy(new RetryingAvajeTransactionStrategy(plugin.getDatabase(), maxRetries, null, this), executorService);
         dao = new AvajePermissionDao2(plugin.getDatabase(), transactionStrategy.getExecutor());
         retryingTransactionStrategy = new RetryingAvajeTransactionStrategy(plugin.getDatabase(), maxRetries); // NB no need for pre-commit hook since it's read-only
         this.plugin = plugin;
