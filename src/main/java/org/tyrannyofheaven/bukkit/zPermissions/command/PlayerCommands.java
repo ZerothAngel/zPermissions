@@ -135,14 +135,16 @@ public class PlayerCommands extends CommonCommands {
 
     @Command(value={"setgroup", "group"}, description="Set this player's singular group")
     @Require("zpermissions.player.manage")
-    public void setGroup(CommandSender sender, final @Session("entityName") String playerName, final @Option(value="group", completer="group") String groupName, @Option(value="duration/timestamp", optional=true) String duration, String[] args) {
+    public void setGroup(CommandSender sender, final @Session("entityName") String playerName, final @Option({"-a", "--add"}) boolean add, final @Option(value="group", completer="group") String groupName, @Option(value="duration/timestamp", optional=true) String duration, String[] args) {
         final Date expiration = Utils.parseDurationTimestamp(duration, args);
 
         try {
             storageStrategy.getRetryingTransactionStrategy().execute(new TransactionCallbackWithoutResult() {
                 @Override
                 public void doInTransactionWithoutResult() throws Exception {
-                    storageStrategy.getDao().setGroup(playerName, groupName, expiration);
+                    Date newExpiration = handleExtendExpiration(groupName, playerName, add, expiration);
+
+                    storageStrategy.getDao().setGroup(playerName, groupName, newExpiration);
                 }
             });
         }
@@ -161,8 +163,8 @@ public class PlayerCommands extends CommonCommands {
 
     @Command(value={"addgroup", "add"}, description="Add this player to a group")
     @Require("zpermissions.player.manage")
-    public void addGroup(CommandSender sender, @Session("entityName") String playerName, @Option(value="group", completer="group") String groupName, @Option(value="duration/timestamp", optional=true) String duration, String[] args) {
-        addGroupMember(sender, groupName, playerName, duration, args);
+    public void addGroup(CommandSender sender, @Session("entityName") String playerName, @Option({"-a", "--add"}) boolean add, @Option(value="group", completer="group") String groupName, @Option(value="duration/timestamp", optional=true) String duration, String[] args) {
+        addGroupMember(sender, groupName, playerName, duration, args, add);
     }
 
     @Command(value={"removegroup", "rmgroup", "remove", "rm"}, description="Remove this player from a group")

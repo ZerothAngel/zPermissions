@@ -175,8 +175,8 @@ public class GroupCommands extends CommonCommands {
 
     @Command(value="add", description="Add a player to a group")
     @Require("zpermissions.group.manage")
-    public void addMember(CommandSender sender, @Session("entityName") String groupName, @Option(value="player", completer="player") String playerName, @Option(value="duration/timestamp", optional=true) String duration, String[] args) {
-        addGroupMember(sender, groupName, playerName, duration, args);
+    public void addMember(CommandSender sender, @Session("entityName") String groupName, @Option({"-a", "--add"}) boolean add, @Option(value="player", completer="player") String playerName, @Option(value="duration/timestamp", optional=true) String duration, String[] args) {
+        addGroupMember(sender, groupName, playerName, duration, args, add);
     }
 
     @Command(value={"remove", "rm"}, description="Remove a player from a group")
