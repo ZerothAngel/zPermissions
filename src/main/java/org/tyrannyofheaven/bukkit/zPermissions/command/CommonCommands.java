@@ -524,7 +524,7 @@ public abstract class CommonCommands {
         abortBatchProcessing();
     }
 
-    protected final void addGroupMember(CommandSender sender, final String groupName, final String playerName, String duration, String[] args) {
+    protected final void addGroupMember(CommandSender sender, final String groupName, final String playerName, String duration, String[] args, final boolean add) {
         final Date expiration = Utils.parseDurationTimestamp(duration, args);
     
         // Add player to group.
@@ -532,7 +532,9 @@ public abstract class CommonCommands {
             storageStrategy.getRetryingTransactionStrategy().execute(new TransactionCallbackWithoutResult() {
                 @Override
                 public void doInTransactionWithoutResult() throws Exception {
-                    storageStrategy.getDao().addMember(groupName, playerName, expiration);
+                    Date newExpiration = handleExtendExpiration(groupName, playerName, add, expiration);
+
+                    storageStrategy.getDao().addMember(groupName, playerName, newExpiration);
                 }
             });
         }
@@ -568,6 +570,39 @@ public abstract class CommonCommands {
             Utils.checkPlayer(sender, playerName);
             abortBatchProcessing();
         }
+    }
+
+    protected Date handleExtendExpiration(final String groupName, final String playerName, final boolean add, final Date expiration) {
+        Date newExpiration = expiration;
+        if (add) {
+            if (expiration != null) {
+                Date now = new Date();
+
+                List<Membership> memberships = storageStrategy.getDao().getGroups(playerName);
+
+                // Determine a previous duration, if any
+                long previousDuration = 0L;
+                for (Membership membership : memberships) {
+                    if (membership.getGroup().getName().equalsIgnoreCase(groupName)) {
+                        if (membership.getExpiration() != null) {
+                            previousDuration = membership.getExpiration().getTime() - now.getTime();
+                            // Sanity
+                            if (previousDuration < 0L)
+                                previousDuration = 0L;
+                        }
+                        break;
+                    }
+                }
+
+                long newDuration = expiration.getTime() - now.getTime();
+                if (newDuration < 0L)
+                    newDuration = 0L;
+                
+                // Set new expiration
+                newExpiration = new Date(now.getTime() + previousDuration + newDuration);
+            }
+        }
+        return newExpiration;
     }
 
 }
