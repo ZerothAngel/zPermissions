@@ -1,10 +1,12 @@
 package org.tyrannyofheaven.bukkit.zPermissions.vault;
 
 import static org.tyrannyofheaven.bukkit.util.ToHLoggingUtils.debug;
+import static org.tyrannyofheaven.bukkit.util.ToHStringUtils.hasText;
 
 import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
+import java.util.logging.Level;
 
 import net.milkbowl.vault.permission.Permission;
 import net.milkbowl.vault.permission.plugins.Permission_zPermissions;
@@ -28,6 +30,8 @@ import org.tyrannyofheaven.bukkit.zPermissions.ZPermissionsService;
 import org.tyrannyofheaven.bukkit.zPermissions.dao.MissingGroupException;
 import org.tyrannyofheaven.bukkit.zPermissions.dao.PermissionDao;
 import org.tyrannyofheaven.bukkit.zPermissions.storage.StorageStrategy;
+
+import com.google.common.base.Joiner;
 
 // Current as of Permission.java 73a0c8f5ab6d15033296c3833ea727bec453192c
 public class VaultPermissionBridge extends Permission implements Listener {
@@ -75,12 +79,20 @@ public class VaultPermissionBridge extends Permission implements Listener {
     }
 
     @Override
-    public boolean groupAdd(final String world, final String group, final String permission) {
+    public boolean groupAdd(String world, final String group, final String permission) {
+        if (!hasText(world))
+            world = null;
+        if (!hasText(group) || !hasText(permission)) {
+            complainInvalidArguments();
+            return false;
+        }
+
+        final String permWorld = world;
         try {
             getTransactionStrategy().execute(new TransactionCallbackWithoutResult() {
                 @Override
                 public void doInTransactionWithoutResult() throws Exception {
-                    getDao().setPermission(group, true, null, world, permission, true);
+                    getDao().setPermission(group, true, null, permWorld, permission, true);
                 }
             });
             core.refreshAffectedPlayers(group);
@@ -108,11 +120,19 @@ public class VaultPermissionBridge extends Permission implements Listener {
     }
 
     @Override
-    public boolean groupRemove(final String world, final String group, final String permission) {
+    public boolean groupRemove(String world, final String group, final String permission) {
+        if (!hasText(world))
+            world = null;
+        if (!hasText(group) || !hasText(permission)) {
+            complainInvalidArguments();
+            return false;
+        }
+
+        final String permWorld = world;
         boolean result = getTransactionStrategy().execute(new TransactionCallback<Boolean>() {
             @Override
             public Boolean doInTransaction() throws Exception {
-                return getDao().unsetPermission(group, false, null, world, permission);
+                return getDao().unsetPermission(group, false, null, permWorld, permission);
             }
         });
         if (result)
@@ -136,11 +156,19 @@ public class VaultPermissionBridge extends Permission implements Listener {
     }
 
     @Override
-    public boolean playerAdd(final String world, final String player, final String permission) {
+    public boolean playerAdd(String world, final String player, final String permission) {
+        if (!hasText(world))
+            world = null;
+        if (!hasText(player) || !hasText(permission)) {
+            complainInvalidArguments();
+            return false;
+        }
+
+        final String permWorld = world;
         getTransactionStrategy().execute(new TransactionCallbackWithoutResult() {
             @Override
             public void doInTransactionWithoutResult() throws Exception {
-                getDao().setPermission(player, false, null, world, permission, true);
+                getDao().setPermission(player, false, null, permWorld, permission, true);
             }
         });
         core.refreshPlayer(player, RefreshCause.COMMAND);
@@ -149,6 +177,11 @@ public class VaultPermissionBridge extends Permission implements Listener {
 
     @Override
     public boolean playerAddGroup(String world, final String player, final String group) {
+        if (!hasText(player) || !hasText(group)) {
+            complainInvalidArguments();
+            return false;
+        }
+
         // NB world ignored
         try {
             getTransactionStrategy().execute(new TransactionCallbackWithoutResult() {
@@ -205,11 +238,19 @@ public class VaultPermissionBridge extends Permission implements Listener {
     }
 
     @Override
-    public boolean playerRemove(final String world, final String player, final String permission) {
+    public boolean playerRemove(String world, final String player, final String permission) {
+        if (!hasText(world))
+            world = null;
+        if (!hasText(player) || !hasText(permission)) {
+            complainInvalidArguments();
+            return false;
+        }
+
+        final String permWorld = world;
         boolean result = getTransactionStrategy().execute(new TransactionCallback<Boolean>() {
             @Override
             public Boolean doInTransaction() throws Exception {
-                return getDao().unsetPermission(player, false, null, world, permission);
+                return getDao().unsetPermission(player, false, null, permWorld, permission);
             }
         });
         if (result)
@@ -219,6 +260,11 @@ public class VaultPermissionBridge extends Permission implements Listener {
 
     @Override
     public boolean playerRemoveGroup(String world, final String player, final String group) {
+        if (!hasText(player) || !hasText(group)) {
+            complainInvalidArguments();
+            return false;
+        }
+
         // NB world ignored
         try {
             getTransactionStrategy().execute(new TransactionCallback<Boolean>() {
@@ -269,6 +315,13 @@ public class VaultPermissionBridge extends Permission implements Listener {
                 provider.getPriority() == ServicePriority.Highest) {
             debug(plugin, "There can be only one! Removing Vault's Permission handler for zPermissions");
             Bukkit.getServicesManager().unregister(Permission.class, provider.getProvider());
+        }
+    }
+
+    private void complainInvalidArguments() {
+        if (plugin.getLogger().isLoggable(Level.FINE)) {
+            StackTraceElement[] ste = (new Throwable()).getStackTrace();
+            plugin.getLogger().fine("Vault method called with invalid arguments:\n        at " + Joiner.on("\n        at ").join(ste));
         }
     }
 
