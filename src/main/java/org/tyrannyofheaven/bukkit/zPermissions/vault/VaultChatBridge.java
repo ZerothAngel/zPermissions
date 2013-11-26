@@ -1,5 +1,9 @@
 package org.tyrannyofheaven.bukkit.zPermissions.vault;
 
+import static org.tyrannyofheaven.bukkit.util.ToHStringUtils.hasText;
+
+import java.util.logging.Level;
+
 import net.milkbowl.vault.chat.Chat;
 import net.milkbowl.vault.permission.Permission;
 
@@ -12,6 +16,8 @@ import org.tyrannyofheaven.bukkit.zPermissions.ZPermissionsService;
 import org.tyrannyofheaven.bukkit.zPermissions.dao.MissingGroupException;
 import org.tyrannyofheaven.bukkit.zPermissions.storage.StorageStrategy;
 import org.tyrannyofheaven.bukkit.zPermissions.util.MetadataConstants;
+
+import com.google.common.base.Joiner;
 
 // Current as of Chat.java 4305efde9212d556fafaa4dc78836f575a80ec91
 public class VaultChatBridge extends Chat {
@@ -225,6 +231,11 @@ public class VaultChatBridge extends Chat {
     }
 
     private void set(final String name, final boolean group, final String metadataName, final Object value) {
+        if (!hasText(name) || !hasText(metadataName)) {
+            complainInvalidArguments();
+            return;
+        }
+
         try {
             storageStrategy.getRetryingTransactionStrategy().execute(new TransactionCallbackWithoutResult() {
                 @Override
@@ -238,6 +249,14 @@ public class VaultChatBridge extends Chat {
         }
         catch (MissingGroupException e) {
             // Ignore
+        }
+    }
+
+    private void complainInvalidArguments() {
+        plugin.getLogger().warning("Vault method called with invalid arguments. Broken plugin? Enable zPermissions debug to see stack trace.");
+        if (plugin.getLogger().isLoggable(Level.FINE)) {
+            StackTraceElement[] ste = (new Throwable()).getStackTrace();
+            plugin.getLogger().fine("Vault method called with invalid arguments:\n        at " + Joiner.on("\n        at ").join(ste));
         }
     }
 
