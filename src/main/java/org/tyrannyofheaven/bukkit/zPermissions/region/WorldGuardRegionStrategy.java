@@ -15,8 +15,10 @@
  */
 package org.tyrannyofheaven.bukkit.zPermissions.region;
 
+import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Set;
 
 import org.bukkit.Bukkit;
@@ -29,6 +31,7 @@ import org.bukkit.plugin.Plugin;
 import org.tyrannyofheaven.bukkit.util.ToHLoggingUtils;
 import org.tyrannyofheaven.bukkit.zPermissions.ZPermissionsCore;
 
+import com.google.common.collect.Iterables;
 import com.sk89q.worldguard.bukkit.WorldGuardPlugin;
 import com.sk89q.worldguard.protection.ApplicableRegionSet;
 import com.sk89q.worldguard.protection.managers.RegionManager;
@@ -89,9 +92,13 @@ public class WorldGuardRegionStrategy implements RegionStrategy, Listener {
             RegionManager rm = worldGuardPlugin.getRegionManager(location.getWorld());
             if (rm != null) {
                 ApplicableRegionSet ars = rm.getApplicableRegions(location);
+                // Note, sorted from high to low priority, i.e. reverse application order
+                List<ProtectedRegion> sorted = new ArrayList<ProtectedRegion>();
+                Iterables.addAll(sorted, ars);
+                Collections.reverse(sorted); // Now it is in application order
 
-                Set<String> result = new HashSet<String>();
-                for (ProtectedRegion pr : ars) {
+                Set<String> result = new LinkedHashSet<String>(); // Preserve ordering for resolver
+                for (ProtectedRegion pr : sorted) {
                     // Ignore global region
                     if (!"__global__".equals(pr.getId())) // NB: Hardcoded and not available as constant in WorldGuard
                         result.add(pr.getId().toLowerCase());

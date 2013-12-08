@@ -6,7 +6,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import java.util.Date;
-import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -32,7 +32,9 @@ public abstract class AbstractResolverTest {
 
     private static final String TEST_WORLD2 = "WorldB";
 
-    private static final String TEST_REGION = "MyRegion";
+    private static final String TEST_REGION1 = "MyRegion1";
+
+    private static final String TEST_REGION2 = "MyRegion2";
 
     protected PermissionDao dao;
 
@@ -110,7 +112,7 @@ public abstract class AbstractResolverTest {
         Map<String, Boolean> permissions;
         begin();
         try {
-            Set<String> regionSet = new HashSet<String>();
+            Set<String> regionSet = new LinkedHashSet<String>();
             for (String region : regions) {
                 regionSet.add(region.toLowerCase());
             }
@@ -182,7 +184,7 @@ public abstract class AbstractResolverTest {
     public void testBasicRegionResolve() {
         setPermissions(TEST_PLAYER, false,
                 "basic.perm1",
-                TEST_REGION + "/" + TEST_WORLD1 + ":basic.perm2",
+                TEST_REGION1 + "/" + TEST_WORLD1 + ":basic.perm2",
                 TEST_WORLD2 + ":basic.perm3");
     
         Map<String, Boolean> permissions;
@@ -192,7 +194,7 @@ public abstract class AbstractResolverTest {
         assertPermission(permissions, "basic.perm2", false);
         assertPermission(permissions, "basic.perm3", false);
     
-        permissions = resolve(TEST_PLAYER, TEST_WORLD1, TEST_REGION);
+        permissions = resolve(TEST_PLAYER, TEST_WORLD1, TEST_REGION1);
     
         assertPermission(permissions, "basic.perm1");
         assertPermission(permissions, "basic.perm2");
@@ -204,7 +206,7 @@ public abstract class AbstractResolverTest {
         assertPermission(permissions, "basic.perm2", false);
         assertPermission(permissions, "basic.perm3");
     
-        permissions = resolve(TEST_PLAYER, TEST_WORLD2, TEST_REGION);
+        permissions = resolve(TEST_PLAYER, TEST_WORLD2, TEST_REGION1);
     
         assertPermission(permissions, "basic.perm1");
         assertPermission(permissions, "basic.perm2", false);
@@ -1101,12 +1103,12 @@ public abstract class AbstractResolverTest {
     public void testQualifierPrecedence() {
         setPermissionsFalse(TEST_PLAYER, false,
                 TEST_WORLD2 + ":basic.perm1",
-                TEST_REGION + "/basic.perm2",
-                TEST_REGION + "/" + TEST_WORLD2 + ":basic.perm3");
+                TEST_REGION1 + "/basic.perm2",
+                TEST_REGION1 + "/" + TEST_WORLD2 + ":basic.perm3");
         setPermissions(TEST_PLAYER, false,
                 "basic.perm1",
                 TEST_WORLD2 + ":basic.perm2",
-                TEST_REGION + "/basic.perm3");
+                TEST_REGION1 + "/basic.perm3");
 
         Map<String, Boolean> permissions;
         permissions = resolve(TEST_PLAYER, TEST_WORLD1);
@@ -1115,7 +1117,7 @@ public abstract class AbstractResolverTest {
         assertPermission(permissions, "basic.perm2", false);
         assertPermission(permissions, "basic.perm3", false);
         
-        permissions = resolve(TEST_PLAYER, TEST_WORLD1, TEST_REGION);
+        permissions = resolve(TEST_PLAYER, TEST_WORLD1, TEST_REGION1);
         
         assertPermission(permissions, "basic.perm1");
         assertPermission(permissions, "basic.perm2", false);
@@ -1127,7 +1129,7 @@ public abstract class AbstractResolverTest {
         assertPermission(permissions, "basic.perm2");
         assertPermission(permissions, "basic.perm3", false);
 
-        permissions = resolve(TEST_PLAYER, TEST_WORLD2, TEST_REGION);
+        permissions = resolve(TEST_PLAYER, TEST_WORLD2, TEST_REGION1);
         
         assertPermission(permissions, "basic.perm1", false);
         assertPermission(permissions, "basic.perm2", false);
@@ -1140,12 +1142,12 @@ public abstract class AbstractResolverTest {
         assertTrue(createGroup(TEST_GROUP1));
         setPermissionsFalse(TEST_GROUP1, true,
                 TEST_WORLD2 + ":basic.perm1",
-                TEST_REGION + "/basic.perm2",
-                TEST_REGION + "/" + TEST_WORLD2 + ":basic.perm3");
+                TEST_REGION1 + "/basic.perm2",
+                TEST_REGION1 + "/" + TEST_WORLD2 + ":basic.perm3");
         setPermissions(TEST_GROUP1, true,
                 "basic.perm1",
                 TEST_WORLD2 + ":basic.perm2",
-                TEST_REGION + "/basic.perm3");
+                TEST_REGION1 + "/basic.perm3");
 
         // Set group
         begin();
@@ -1184,12 +1186,12 @@ public abstract class AbstractResolverTest {
         assertTrue(createGroup(TEST_GROUP1));
         setPermissionsFalse(TEST_GROUP1, true,
                 TEST_WORLD2 + ":basic.perm1",
-                TEST_REGION + "/basic.perm2",
-                TEST_REGION + "/" + TEST_WORLD2 + ":basic.perm3");
+                TEST_REGION1 + "/basic.perm2",
+                TEST_REGION1 + "/" + TEST_WORLD2 + ":basic.perm3");
         setPermissions(TEST_GROUP1, true,
                 "basic.perm1",
                 TEST_WORLD2 + ":basic.perm2",
-                TEST_REGION + "/basic.perm3");
+                TEST_REGION1 + "/basic.perm3");
 
         // Set group
         begin();
@@ -1279,6 +1281,77 @@ public abstract class AbstractResolverTest {
         assertPermission(permissions, "group.Group1", false);
         assertPermission(permissions, "group.Group2");
         assertPermission(permissions, "group.Group3");
+        assertPermission(permissions, "basic.perm1");
+        assertPermission(permissions, "basic.perm2");
+    }
+
+    @Test
+    public void testRegionOrdering() {
+        setPermissionsFalse(TEST_PLAYER, false,
+                TEST_REGION2 + "/basic.perm2");
+        setPermissions(TEST_PLAYER, false,
+                "basic.perm1",
+                TEST_REGION1 + "/basic.perm2");
+    
+        Map<String, Boolean> permissions;
+        permissions = resolve(TEST_PLAYER, TEST_WORLD1);
+    
+        assertPermission(permissions, "basic.perm1");
+        assertPermission(permissions, "basic.perm2", false);
+    
+        permissions = resolve(TEST_PLAYER, TEST_WORLD1, TEST_REGION1);
+    
+        assertPermission(permissions, "basic.perm1");
+        assertPermission(permissions, "basic.perm2");
+    
+        permissions = resolve(TEST_PLAYER, TEST_WORLD1, TEST_REGION2);
+    
+        assertPermission(permissions, "basic.perm1");
+        assertPermission(permissions, "basic.perm2", false);
+
+        permissions = resolve(TEST_PLAYER, TEST_WORLD1, TEST_REGION1, TEST_REGION2);
+        
+        assertPermission(permissions, "basic.perm1");
+        assertPermission(permissions, "basic.perm2", false);
+
+        permissions = resolve(TEST_PLAYER, TEST_WORLD1, TEST_REGION2, TEST_REGION1);
+        
+        assertPermission(permissions, "basic.perm1");
+        assertPermission(permissions, "basic.perm2");
+    }
+
+    @Test
+    public void testRegionWorldOrdering() {
+        // Same as above, but with world
+        setPermissionsFalse(TEST_PLAYER, false,
+                TEST_REGION2 + "/" + TEST_WORLD1 + ":basic.perm2");
+        setPermissions(TEST_PLAYER, false,
+                "basic.perm1",
+                TEST_REGION1 + "/" + TEST_WORLD1 + ":basic.perm2");
+    
+        Map<String, Boolean> permissions;
+        permissions = resolve(TEST_PLAYER, TEST_WORLD1);
+    
+        assertPermission(permissions, "basic.perm1");
+        assertPermission(permissions, "basic.perm2", false);
+    
+        permissions = resolve(TEST_PLAYER, TEST_WORLD1, TEST_REGION1);
+    
+        assertPermission(permissions, "basic.perm1");
+        assertPermission(permissions, "basic.perm2");
+    
+        permissions = resolve(TEST_PLAYER, TEST_WORLD1, TEST_REGION2);
+    
+        assertPermission(permissions, "basic.perm1");
+        assertPermission(permissions, "basic.perm2", false);
+
+        permissions = resolve(TEST_PLAYER, TEST_WORLD1, TEST_REGION1, TEST_REGION2);
+        
+        assertPermission(permissions, "basic.perm1");
+        assertPermission(permissions, "basic.perm2", false);
+
+        permissions = resolve(TEST_PLAYER, TEST_WORLD1, TEST_REGION2, TEST_REGION1);
+        
         assertPermission(permissions, "basic.perm1");
         assertPermission(permissions, "basic.perm2");
     }
