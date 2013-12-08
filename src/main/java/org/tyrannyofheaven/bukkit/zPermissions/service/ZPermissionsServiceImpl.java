@@ -183,7 +183,7 @@ public class ZPermissionsServiceImpl implements ZPermissionsService {
             throw new IllegalArgumentException("groupName must have a value");
 
         // Ensure all region names are lowercased
-        final Set<String> regions = new HashSet<String>();
+        final Set<String> regions = new LinkedHashSet<String>();
         for (String regionName : regionNames) {
             regions.add(regionName.toLowerCase());
         }
@@ -210,7 +210,7 @@ public class ZPermissionsServiceImpl implements ZPermissionsService {
             throw new IllegalArgumentException("playerName must have a value");
 
         // Ensure all region names are lowercased
-        final Set<String> regions = new HashSet<String>();
+        final Set<String> regions = new LinkedHashSet<String>();
         for (String regionName : regionNames) {
             regions.add(regionName.toLowerCase());
         }

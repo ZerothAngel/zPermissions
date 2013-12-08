@@ -303,7 +303,7 @@ public class PermissionsResolver {
 
         Map<String, Boolean> permissions = new LinkedHashMap<String, Boolean>();
 
-        Map<String, Boolean> regionPermissions = new LinkedHashMap<String, Boolean>();
+        Map<String, Map<String, Boolean>> regionPermissions = new HashMap<String, Map<String, Boolean>>();
         List<Entry> worldPermissions = new ArrayList<Entry>();
 
         // Apply non-region-specific, non-world-specific permissions first
@@ -313,8 +313,9 @@ public class PermissionsResolver {
             }
             else if (e.getRegion() != null && e.getWorld() == null) {
                 // Universal region-specific (should these really be supported?)
-                if (regions.contains(e.getRegion().getName()))
-                    regionPermissions.put(e.getPermission(), e.isValue());
+                if (regions.contains(e.getRegion().getName())) {
+                    addRegionPermission(regionPermissions, e);
+                }
             }
             else if (e.getWorld().getName().equals(world) || e.getWorld().getName().equals(worldAlias)) {
                 worldPermissions.add(e);
@@ -323,8 +324,8 @@ public class PermissionsResolver {
 
         // Then override with world-specific permissions
         Map<String, Boolean> specificWorldPermissions = new LinkedHashMap<String, Boolean>();
-        Map<String, Boolean> regionWorldAliasPermissions = new LinkedHashMap<String, Boolean>();
-        Map<String, Boolean> regionWorldPermissions = new LinkedHashMap<String, Boolean>();
+        Map<String, Map<String, Boolean>> regionWorldAliasPermissions = new HashMap<String, Map<String, Boolean>>();
+        Map<String, Map<String, Boolean>> regionWorldPermissions = new HashMap<String, Map<String, Boolean>>();
         for (Entry e : worldPermissions) {
             if (e.getRegion() == null) {
                 // Non region-specific
@@ -338,10 +339,10 @@ public class PermissionsResolver {
             else {
                 if (regions.contains(e.getRegion().getName())) {
                     if (e.getWorld().getName().equals(worldAlias)) {
-                        regionWorldAliasPermissions.put(e.getPermission(), e.isValue());
+                        addRegionPermission(regionWorldAliasPermissions, e);
                     }
                     else {
-                        regionWorldPermissions.put(e.getPermission(), e.isValue());
+                        addRegionPermission(regionWorldPermissions, e);
                     }
                 }
             }
@@ -350,13 +351,34 @@ public class PermissionsResolver {
         permissions.putAll(specificWorldPermissions);
 
         // Override with universal, region-specific permissions
-        permissions.putAll(regionPermissions);
+        applyRegionPermissions(permissions, regionPermissions, regions);
 
         // Finally, override with region- and world-specific permissions
-        permissions.putAll(regionWorldAliasPermissions);
-        permissions.putAll(regionWorldPermissions);
+        applyRegionPermissions(permissions, regionWorldAliasPermissions, regions);
+        applyRegionPermissions(permissions, regionWorldPermissions, regions);
         
         return permissions;
+    }
+
+    private void addRegionPermission(Map<String, Map<String, Boolean>> regionPermissions, Entry e) {
+        String region = e.getRegion().getName();
+        Map<String, Boolean> regionPerms = regionPermissions.get(region);
+        if (regionPerms == null) {
+            regionPerms = new LinkedHashMap<String, Boolean>();
+            regionPermissions.put(region, regionPerms);
+        }
+        regionPerms.put(e.getPermission(), e.isValue());
+    }
+
+    private void applyRegionPermissions(Map<String, Boolean> permissions, Map<String, Map<String, Boolean>> regionPermissions, Set<String> regions) {
+        // Depends on iteration order of regions set.
+        // If ordering matters, pass a LinkedHashSet to resolvePlayer/resolveGroup
+        // NB Ordering must be lowest to highest priority
+        for (String region : regions) {
+            Map<String, Boolean> regionPerms = regionPermissions.get(region);
+            if (regionPerms != null)
+                permissions.putAll(regionPerms);
+        }
     }
 
     public static class ResolverResult {

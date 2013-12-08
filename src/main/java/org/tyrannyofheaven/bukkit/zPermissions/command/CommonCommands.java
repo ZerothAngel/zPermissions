@@ -25,6 +25,7 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -233,7 +234,7 @@ public abstract class CommonCommands {
             Utils.validatePlayer(storageStrategy.getDao(), resolver.getDefaultGroup(), name, header);
 
         // Ensure regions are lowercased
-        final Set<String> regions = new HashSet<String>();
+        final Set<String> regions = new LinkedHashSet<String>();
         for (String region : regionNames) {
             regions.add(region.toLowerCase());
         }
@@ -306,7 +307,7 @@ public abstract class CommonCommands {
         }
 
         // Ensure regions are lowercased
-        final Set<String> regions = new HashSet<String>();
+        final Set<String> regions = new LinkedHashSet<String>();
         for (String region : regionNames) {
             regions.add(region.toLowerCase());
         }
