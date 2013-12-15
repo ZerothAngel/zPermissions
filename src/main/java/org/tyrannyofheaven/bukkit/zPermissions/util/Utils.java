@@ -65,7 +65,7 @@ public class Utils {
         }
     };
 
-    private final static Pattern DURATION_PATTERN = Pattern.compile("^(\\d+)\\s*(h(?:ours?)?|d(?:ays?)?|m(?:onths?)?|y(?:ears?)?)?$", Pattern.CASE_INSENSITIVE);
+    private final static Pattern DURATION_PATTERN = Pattern.compile("^(\\d+)\\s*(m(?:inutes?)?|h(?:ours?)?|d(?:ays?)?|mo(?:nths?)?|y(?:ears?)?)?$", Pattern.CASE_INSENSITIVE);
 
     public final static Comparator<Entry> ENTRY_COMPARATOR = new Comparator<Entry>() {
         @Override
@@ -323,16 +323,18 @@ public class Utils {
             if (units != null) {
                 units = units.toLowerCase();
 
-                if ("hours".equals(units) || "hour".equals(units) || "h".equals(units))
+                if ("minutes".equals(units) || "minute".equals(units) || "m".equals(units))
+                    unitsInt = Calendar.MINUTE;
+                else if ("hours".equals(units) || "hour".equals(units) || "h".equals(units))
                     unitsInt = Calendar.HOUR;
                 else if ("days".equals(units) || "day".equals(units) || "d".equals(units))
                     unitsInt = Calendar.DAY_OF_MONTH;
-                else if ("months".equals(units) || "month".equals(units) || "m".equals(units))
+                else if ("months".equals(units) || "month".equals(units) || "mo".equals(units))
                     unitsInt = Calendar.MONTH;
                 else if ("years".equals(units) || "year".equals(units) || "y".equals(units))
                     unitsInt = Calendar.YEAR;
                 else
-                    throw new ParseException("units must be hours, days, months, years");
+                    throw new ParseException("units must be minutes, hours, days, months, years");
             }
 
             Calendar cal = Calendar.getInstance();
