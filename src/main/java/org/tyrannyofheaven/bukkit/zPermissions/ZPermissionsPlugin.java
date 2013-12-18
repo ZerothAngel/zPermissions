@@ -1009,7 +1009,7 @@ public class ZPermissionsPlugin extends JavaPlugin implements ZPermissionsCore, 
 
                 List<String> members = new ArrayList<String>();
                 for (Object o : list) {
-                    members.add(o.toString());
+                    members.add(o.toString().toLowerCase());
                 }
                 tracks.put(trackName.toLowerCase(), members);
                 trackNames.add(trackName);
