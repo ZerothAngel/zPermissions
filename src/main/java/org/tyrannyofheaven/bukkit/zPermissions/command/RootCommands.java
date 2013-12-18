@@ -23,7 +23,9 @@ import static org.tyrannyofheaven.bukkit.util.ToHUtils.assertFalse;
 import static org.tyrannyofheaven.bukkit.util.command.reader.CommandReader.abortBatchProcessing;
 import static org.tyrannyofheaven.bukkit.util.permissions.PermissionUtils.requireOnePermission;
 
+import java.util.Collection;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -154,9 +156,6 @@ public class RootCommands {
             return;
         final List<String> track = trackMetaData.getTrack();
 
-        // Determine what groups the player and the track have in common
-        final Set<String> trackGroupNames = new HashSet<String>(track);
-
         // Do everything in one ginormous transaction.
         Boolean check = storageStrategy.getTransactionStrategy().execute(new TransactionCallback<Boolean>() {
             @Override
@@ -166,7 +165,8 @@ public class RootCommands {
                 if (playerGroupNames.isEmpty())
                     playerGroupNames.add(resolver.getDefaultGroup());
         
-                playerGroupNames.retainAll(trackGroupNames);
+                // Determine what groups the player and the track have in common
+                playerGroupNames = getCommonGroups(playerGroupNames, track);
                 
                 if (playerGroupNames.size() > 1) {
                     // Hmm, player is member of 2 or more groups in track. Don't know
@@ -303,9 +303,6 @@ public class RootCommands {
             }
         }
 
-        // Determine what groups the player and the track have in common
-        final Set<String> trackGroupNames = new HashSet<String>(track);
-
         // Do everything in one ginormous transaction.
         Boolean check = storageStrategy.getTransactionStrategy().execute(new TransactionCallback<Boolean>() {
             @Override
@@ -315,7 +312,8 @@ public class RootCommands {
                 if (playerGroupNames.isEmpty())
                     playerGroupNames.add(resolver.getDefaultGroup());
         
-                playerGroupNames.retainAll(trackGroupNames);
+                // Determine what groups the player and the track have in common
+                playerGroupNames = getCommonGroups(playerGroupNames, track);
                 
                 if (playerGroupNames.size() > 1) {
                     // Hmm, player is member of 2 or more groups in track. Don't know
@@ -466,6 +464,16 @@ public class RootCommands {
     private void fireRankEvent(String playerName, String track, String fromGroup, String toGroup) {
         ZPermissionsRankChangeEvent event = new ZPermissionsRankChangeEvent(playerName, track, fromGroup, toGroup);
         Bukkit.getPluginManager().callEvent(event);
+    }
+
+    private Set<String> getCommonGroups(Collection<String> currentGroups, Collection<String> trackGroups) {
+        Set<String> result = new LinkedHashSet<String>(currentGroups.size());
+        // Lowercase all group names
+        for (String group : currentGroups) {
+            result.add(group.toLowerCase());
+        }
+        result.retainAll(trackGroups);
+        return result;
     }
 
     private static class TrackMetaData {
