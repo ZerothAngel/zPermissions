@@ -24,6 +24,7 @@ The duration defaults to days and may be modified by adding any of the following
 
 <table>
 <tr><th>Suffix</th><th>Units</th></tr>
+<tr><td>min, mins, minute, minutes</td><td>Minutes</td></tr>
 <tr><td>h, hour, hours</td><td>Hours</td></tr>
 <tr><td>d, day, days</td><td>Days</td></tr>
 <tr><td>m, month, months</td><td>Months</td></tr>
