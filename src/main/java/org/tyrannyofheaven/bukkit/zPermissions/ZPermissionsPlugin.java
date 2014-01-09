@@ -1149,7 +1149,7 @@ public class ZPermissionsPlugin extends JavaPlugin implements ZPermissionsCore, 
             autoRefreshTaskId = -1;
         }
         // Start up new task at new interval
-        if (autoRefreshInterval > 0) {
+        if (databaseSupport && autoRefreshInterval > 0) {
             final Plugin plugin = this;
             autoRefreshTaskId = Bukkit.getScheduler().scheduleSyncRepeatingTask(this, new Runnable() {
                 @Override
