@@ -30,6 +30,7 @@ import org.bukkit.plugin.Plugin;
 import org.tyrannyofheaven.bukkit.util.transaction.TransactionCallback;
 import org.tyrannyofheaven.bukkit.util.transaction.TransactionCallbackWithoutResult;
 import org.tyrannyofheaven.bukkit.util.transaction.TransactionStrategy;
+import org.tyrannyofheaven.bukkit.zPermissions.MetadataManager;
 import org.tyrannyofheaven.bukkit.zPermissions.PermissionsResolver;
 import org.tyrannyofheaven.bukkit.zPermissions.ZPermissionsConfig;
 import org.tyrannyofheaven.bukkit.zPermissions.ZPermissionsService;
@@ -52,6 +53,8 @@ public class ZPermissionsServiceImpl implements ZPermissionsService {
 
     private final PermissionDao dao;
 
+    private final MetadataManager metadataManager;
+
     private final TransactionStrategy transactionStrategy;
 
     private final ZPermissionsConfig config;
@@ -68,13 +71,15 @@ public class ZPermissionsServiceImpl implements ZPermissionsService {
         validMetadataTypes = Collections.unmodifiableSet(types);
     }
 
-    public ZPermissionsServiceImpl(Plugin plugin, PermissionsResolver resolver, PermissionDao dao, TransactionStrategy transactionStrategy, ZPermissionsConfig config) {
+    public ZPermissionsServiceImpl(Plugin plugin, PermissionsResolver resolver, PermissionDao dao, MetadataManager metadataManager, TransactionStrategy transactionStrategy, ZPermissionsConfig config) {
         if (plugin == null)
             throw new IllegalArgumentException("plugin cannot be null");
         if (resolver == null)
             throw new IllegalArgumentException("resolver cannot be null");
         if (dao == null)
             throw new IllegalArgumentException("dao cannot be null");
+        if (metadataManager == null)
+            throw new IllegalArgumentException("metadataManager cannot be null");
         if (transactionStrategy == null)
             throw new IllegalArgumentException("transactionStrategy cannot be null");
         if (config == null)
@@ -82,6 +87,7 @@ public class ZPermissionsServiceImpl implements ZPermissionsService {
         this.plugin = plugin;
         this.resolver = resolver;
         this.dao = dao;
+        this.metadataManager = metadataManager;
         this.transactionStrategy = transactionStrategy;
         this.config = config;
     }
@@ -92,6 +98,10 @@ public class ZPermissionsServiceImpl implements ZPermissionsService {
     
     private PermissionDao getDao() {
         return dao;
+    }
+
+    private MetadataManager getMetadataManager() {
+        return metadataManager;
     }
 
     private TransactionStrategy getTransactionStrategy() {
@@ -279,12 +289,19 @@ public class ZPermissionsServiceImpl implements ZPermissionsService {
         if (!validMetadataTypes.contains(type))
             throw new IllegalArgumentException("Unsupported metadata type");
         
-        Object value = getTransactionStrategy().execute(new TransactionCallback<Object>() {
-            @Override
-            public Object doInTransaction() throws Exception {
-                return getDao().getMetadata(name, group, metadataName);
-            }
-        }, true);
+        Object value;
+        if (config.isInheritedMetadata()) {
+            // Use metadata manager to resolve metadata
+            value = getMetadataManager().getMetadata(name, group, metadataName);
+        }
+        else {
+            value = getTransactionStrategy().execute(new TransactionCallback<Object>() {
+                @Override
+                public Object doInTransaction() throws Exception {
+                    return getDao().getMetadata(name, group, metadataName);
+                }
+            }, true);
+        }
 
         if (value == null)
             return null;

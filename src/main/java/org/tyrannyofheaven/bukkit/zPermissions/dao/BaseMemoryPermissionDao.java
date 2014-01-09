@@ -683,6 +683,15 @@ public abstract class BaseMemoryPermissionDao implements PermissionDao {
     }
 
     @Override
+    public List<EntityMetadata> getAllMetadata(String name, boolean group) {
+        PermissionEntity entity = getEntity(name, group, false);
+        if (entity == null)
+            return Collections.emptyList();
+        
+        return new ArrayList<EntityMetadata>(entity.getMetadata());
+    }
+
+    @Override
     public void setMetadata(String name, boolean group, String metadataName, Object value) {
         PermissionEntity owner;
         if (group) {

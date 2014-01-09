@@ -18,6 +18,7 @@ package org.tyrannyofheaven.bukkit.zPermissions.dao;
 import java.util.Date;
 import java.util.List;
 
+import org.tyrannyofheaven.bukkit.zPermissions.model.EntityMetadata;
 import org.tyrannyofheaven.bukkit.zPermissions.model.Entry;
 import org.tyrannyofheaven.bukkit.zPermissions.model.Membership;
 import org.tyrannyofheaven.bukkit.zPermissions.model.PermissionEntity;
@@ -77,6 +78,8 @@ public interface PermissionDao {
     public List<String> getEntityNames(boolean group);
 
     public Object getMetadata(String name, boolean group, String metadataName);
+
+    public List<EntityMetadata> getAllMetadata(String name, boolean group);
 
     public void setMetadata(String name, boolean group, String metadataName, Object value);
 

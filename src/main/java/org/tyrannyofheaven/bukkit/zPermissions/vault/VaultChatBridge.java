@@ -12,6 +12,7 @@ import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.ServicePriority;
 import org.tyrannyofheaven.bukkit.util.transaction.TransactionCallbackWithoutResult;
 import org.tyrannyofheaven.bukkit.zPermissions.ZPermissionsConfig;
+import org.tyrannyofheaven.bukkit.zPermissions.ZPermissionsCore;
 import org.tyrannyofheaven.bukkit.zPermissions.ZPermissionsService;
 import org.tyrannyofheaven.bukkit.zPermissions.dao.MissingGroupException;
 import org.tyrannyofheaven.bukkit.zPermissions.storage.StorageStrategy;
@@ -24,15 +25,18 @@ public class VaultChatBridge extends Chat {
 
     private final Plugin plugin;
 
+    private final ZPermissionsCore core;
+
     private final StorageStrategy storageStrategy;
 
     private final ZPermissionsService service;
 
     private final ZPermissionsConfig config;
 
-    public VaultChatBridge(Plugin plugin, StorageStrategy storageStrategy, ZPermissionsService service, ZPermissionsConfig config) {
+    public VaultChatBridge(Plugin plugin, ZPermissionsCore core, StorageStrategy storageStrategy, ZPermissionsService service, ZPermissionsConfig config) {
         super(Bukkit.getServicesManager().load(Permission.class));
         this.plugin = plugin;
+        this.core = core;
         this.storageStrategy = storageStrategy;
         this.service = service;
         this.config = config;
@@ -246,6 +250,7 @@ public class VaultChatBridge extends Chat {
                         storageStrategy.getDao().unsetMetadata(name, group, metadataName);
                 }
             });
+            core.invalidateMetadataCache(name, group);
         }
         catch (MissingGroupException e) {
             // Ignore

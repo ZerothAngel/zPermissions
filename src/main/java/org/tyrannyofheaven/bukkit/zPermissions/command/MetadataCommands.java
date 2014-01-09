@@ -28,6 +28,7 @@ import org.tyrannyofheaven.bukkit.util.command.Require;
 import org.tyrannyofheaven.bukkit.util.command.Session;
 import org.tyrannyofheaven.bukkit.util.transaction.TransactionCallback;
 import org.tyrannyofheaven.bukkit.util.transaction.TransactionCallbackWithoutResult;
+import org.tyrannyofheaven.bukkit.zPermissions.ZPermissionsCore;
 import org.tyrannyofheaven.bukkit.zPermissions.dao.MissingGroupException;
 import org.tyrannyofheaven.bukkit.zPermissions.model.EntityMetadata;
 import org.tyrannyofheaven.bukkit.zPermissions.model.PermissionEntity;
@@ -37,11 +38,14 @@ import org.tyrannyofheaven.bukkit.zPermissions.util.Utils;
 // TODO Break class up into player and group versions for better control over permissions
 public class MetadataCommands {
 
+    private final ZPermissionsCore core;
+
     private final StorageStrategy storageStrategy;
 
     private final boolean group;
 
-    MetadataCommands(StorageStrategy storageStrategy, boolean group) {
+    MetadataCommands(ZPermissionsCore core, StorageStrategy storageStrategy, boolean group) {
+        this.core = core;
         this.storageStrategy = storageStrategy;
         this.group = group;
     }
@@ -85,6 +89,7 @@ public class MetadataCommands {
                     storageStrategy.getDao().setMetadata(name, group, metadataName, value);
                 }
             });
+            core.invalidateMetadataCache(name, group);
         }
         catch (MissingGroupException e) {
             handleMissingGroup(sender, e);
@@ -124,6 +129,7 @@ public class MetadataCommands {
         
         if (result) {
             sendMessage(sender, colorize("{GOLD}%s{YELLOW} unset for %s%s"), metadataName, group ? ChatColor.DARK_GREEN : ChatColor.AQUA, name);
+            core.invalidateMetadataCache(name, group);
         }
         else {
             sendMessage(sender, colorize("%s%s{RED} does not set {GOLD}%s"), group ? ChatColor.DARK_GREEN : ChatColor.AQUA, name, metadataName);

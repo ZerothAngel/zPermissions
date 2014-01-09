@@ -443,6 +443,7 @@ public class SubCommands {
         });
 
         sendMessage(sender, colorize("{YELLOW}Your {GOLD}%s{YELLOW} has been set to {GREEN}%s{YELLOW}"), metadataName, stringValue);
+        core.invalidateMetadataCache(sender.getName(), false);
     }
 
     // Possible dupe with stuff in MetadataCommands. Refactor someday?
@@ -456,6 +457,7 @@ public class SubCommands {
         
         if (result) {
             sendMessage(sender, colorize("{YELLOW}Your {GOLD}%s{YELLOW} has been unset"), metadataName);
+            core.invalidateMetadataCache(sender.getName(), false);
         }
         else {
             sendMessage(sender, colorize("{YELLOW}You do not have a {GOLD}%s"), metadataName);
@@ -637,6 +639,7 @@ public class SubCommands {
                 
                 core.refreshPlayers();
                 core.refreshExpirations();
+                core.invalidateMetadataCache();
             }
         }
         else {

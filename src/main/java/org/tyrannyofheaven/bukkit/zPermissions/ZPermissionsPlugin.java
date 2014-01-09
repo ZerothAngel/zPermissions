@@ -179,6 +179,9 @@ public class ZPermissionsPlugin extends JavaPlugin implements ZPermissionsCore, 
     // Default read-only flag
     private static final boolean DEFAULT_DATABASE_READ_ONLY = false;
 
+    // Default metadata inheritance
+    private static final boolean DEFAULT_INHERITED_METADATA = false;
+
     // Prefix for each player's dynamic permission
     public static final String DYNAMIC_PERMISSION_PREFIX = "zPermissions_player.";
 
@@ -279,6 +282,12 @@ public class ZPermissionsPlugin extends JavaPlugin implements ZPermissionsCore, 
 
     // Region managers to use in preference order
     private List<String> regionManagers;
+
+    // Manager for metadata
+    private MetadataManager metadataManager;
+
+    // Whether metadata should follow group inheritance rules
+    private boolean inheritedMetadata;
 
     /**
      * Retrieve this plugin's retrying TransactionStrategy
@@ -409,15 +418,18 @@ public class ZPermissionsPlugin extends JavaPlugin implements ZPermissionsCore, 
                 log(this, "%s region support: %s", regionStrategy.getName(), regionStrategy.isEnabled() ? "Enabled" : "Waiting");
             }
 
+            // Set up MetadataManager
+            metadataManager = new MetadataManager(getResolver(), getRetryingTransactionStrategy());
+
             // Set up service API
-            ZPermissionsService service = new ZPermissionsServiceImpl(this, getResolver(), getDao(), getRetryingTransactionStrategy(), getZPermissionsConfig());
+            ZPermissionsService service = new ZPermissionsServiceImpl(this, getResolver(), getDao(), metadataManager, getRetryingTransactionStrategy(), getZPermissionsConfig());
             getServer().getServicesManager().register(ZPermissionsService.class, service, this, ServicePriority.Normal);
 
             if (nativeVaultBridges && Bukkit.getPluginManager().getPlugin("Vault") != null) {
                 // Set up Vault bridges
                 new VaultPermissionBridge(this, storageStrategy, getZPermissionsCore(), service, getZPermissionsConfig()).register();
                 log(this, "Installed native Vault Permissions bridge");
-                new VaultChatBridge(this, storageStrategy, service, getZPermissionsConfig()).register();
+                new VaultChatBridge(this, getZPermissionsCore(), storageStrategy, service, getZPermissionsConfig()).register();
                 log(this, "Installed native Vault Chat bridge");
             }
 
@@ -910,6 +922,14 @@ public class ZPermissionsPlugin extends JavaPlugin implements ZPermissionsCore, 
         return vaultGetGroupsUsesAssignedOnly;
     }
 
+    public boolean isInheritedMetadata() {
+        return inheritedMetadata;
+    }
+
+    public void setInheritedMetadata(boolean inheritedMetadata) {
+        this.inheritedMetadata = inheritedMetadata;
+    }
+
     // Read config.yml
     private void readConfig() {
         // Set debug logging
@@ -1038,6 +1058,7 @@ public class ZPermissionsPlugin extends JavaPlugin implements ZPermissionsCore, 
         vaultMetadataIncludesGroup = config.getBoolean("vault-metadata-includes-group", DEFAULT_VAULT_METADATA_INCLUDES_GROUP);
         vaultGroupTestUsesAssignedOnly = config.getBoolean("vault-group-test-uses-assigned-only", DEFAULT_VAULT_GROUP_TEST_USES_ASSIGNED_ONLY);
         vaultGetGroupsUsesAssignedOnly = config.getBoolean("vault-get-groups-uses-assigned-only", DEFAULT_VAULT_GET_GROUPS_USES_ASSIGNED_ONLY);
+        inheritedMetadata = config.getBoolean("inherited-metadata", DEFAULT_INHERITED_METADATA);
 
         ToHDatabaseUtils.populateNamingConvention(config, namingConvention);
 
@@ -1213,6 +1234,16 @@ public class ZPermissionsPlugin extends JavaPlugin implements ZPermissionsCore, 
             return true;
         }
         return false;
+    }
+
+    @Override
+    public void invalidateMetadataCache(String name, boolean group) {
+        metadataManager.invalidateMetadata(name, group);
+    }
+
+    @Override
+    public void invalidateMetadataCache() {
+        metadataManager.invalidateAllMetadata();
     }
 
 }

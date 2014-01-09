@@ -255,6 +255,7 @@ public class RootCommands {
             Utils.checkPlayer(sender, playerName);
         core.refreshPlayer(playerName, RefreshCause.GROUP_CHANGE);
         core.refreshExpirations(playerName);
+        core.invalidateMetadataCache(playerName, false);
     }
 
     private BroadcastScope determineScope(boolean quiet, boolean loud) {
@@ -392,6 +393,7 @@ public class RootCommands {
             Utils.checkPlayer(sender, playerName);
         core.refreshPlayer(playerName, RefreshCause.GROUP_CHANGE);
         core.refreshExpirations(playerName);
+        core.invalidateMetadataCache(playerName, false);
     }
 
     @Command("setrank")

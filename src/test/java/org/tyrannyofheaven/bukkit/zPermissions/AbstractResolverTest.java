@@ -1356,4 +1356,151 @@ public abstract class AbstractResolverTest {
         assertPermission(permissions, "basic.perm2");
     }
 
+    private void setMetadata(String name, boolean group, String metadataName, Object value) {
+        begin();
+        try {
+            getDao().setMetadata(name, group, metadataName, value);
+            commit();
+        }
+        finally {
+            end();
+        }
+    }
+
+    private Map<String, Object> resolveMetadata(String name, boolean group) {
+        begin();
+        try {
+            Map<String, Object> result;
+            if (group)
+                result = getResolver().resolveGroupMetadata(name).getMetadata();
+            else
+                result = getResolver().resolvePlayerMetadata(name).getMetadata();
+            commit();
+            return result;
+        }
+        finally {
+            end();
+        }
+    }
+
+    @Test
+    public void testPlayerMetadataBasic() {
+        setMetadata(TEST_PLAYER, false, "Test.Meta", "foo");
+        
+        Map<String, Object> metadata;
+        metadata = resolveMetadata(TEST_PLAYER, false);
+        
+        assertEquals(1, metadata.size());
+        assertNotNull(metadata.get("test.meta")); // NB diff case as well
+        assertEquals("foo", metadata.get("test.meta"));
+    }
+
+    @Test
+    public void testGroupMetadataBasic() {
+        assertTrue(createGroup(TEST_GROUP1));
+        setMetadata(TEST_GROUP1, true, "Test.Meta", "bar");
+
+        Map<String, Object> metadata;
+        metadata = resolveMetadata(TEST_GROUP1, true);
+        
+        assertEquals(1, metadata.size());
+        assertNotNull(metadata.get("test.meta")); // NB diff case as well
+        assertEquals("bar", metadata.get("test.meta"));
+    }
+    
+    @Test
+    public void testGroupMetadataInheritance() {
+        assertTrue(createGroup(TEST_GROUP1));
+        setMetadata(TEST_GROUP1, true, "Test.Meta", "bar");
+        setMetadata(TEST_GROUP1, true, "Test.MetaToo", "foo");
+
+        assertTrue(createGroup(TEST_GROUP2));
+        setMetadata(TEST_GROUP2, true, "Test.MetaToo", "bar");
+        
+        begin();
+        try {
+            getDao().setParent(TEST_GROUP2, TEST_GROUP1);
+            commit();
+        }
+        finally {
+            end();
+        }
+
+        Map<String, Object> metadata;
+        metadata = resolveMetadata(TEST_GROUP1, true);
+        
+        assertEquals(2, metadata.size());
+        assertEquals("bar", metadata.get("test.meta"));
+        assertEquals("foo", metadata.get("test.metatoo"));
+        
+        metadata = resolveMetadata(TEST_GROUP2, true);
+        
+        assertEquals(2, metadata.size());
+        assertEquals("bar", metadata.get("test.meta"));
+        assertEquals("bar", metadata.get("test.metatoo"));
+    }
+
+    @Test
+    public void testPlayerMetadataInheritance() {
+        assertTrue(createGroup(TEST_GROUP1));
+        setMetadata(TEST_GROUP1, true, "Test.Meta", "bar");
+        setMetadata(TEST_GROUP1, true, "Test.MetaToo", "foo");
+
+        assertTrue(createGroup(TEST_GROUP2));
+        setMetadata(TEST_GROUP2, true, "Test.MetaToo", "bar");
+        
+        begin();
+        try {
+            getDao().setParent(TEST_GROUP2, TEST_GROUP1);
+            commit();
+        }
+        finally {
+            end();
+        }
+
+        begin();
+        try {
+            getDao().setGroup(TEST_PLAYER, TEST_GROUP1, null);
+            commit();
+        }
+        finally {
+            end();
+        }
+
+        Map<String, Object> metadata;
+        metadata = resolveMetadata(TEST_PLAYER, false);
+        
+        assertEquals(2, metadata.size());
+        assertEquals("bar", metadata.get("test.meta"));
+        assertEquals("foo", metadata.get("test.metatoo"));
+        
+        // Re-assign to group 2
+        begin();
+        try {
+            getDao().setGroup(TEST_PLAYER, TEST_GROUP2, null);
+            commit();
+        }
+        finally {
+            end();
+        }
+        
+        metadata = resolveMetadata(TEST_PLAYER, false);
+        
+        assertEquals(2, metadata.size());
+        assertEquals("bar", metadata.get("test.meta"));
+        assertEquals("bar", metadata.get("test.metatoo"));
+        
+        // Override a value
+        setMetadata(TEST_PLAYER, false, "test.meta", "garply");
+        // And set a new value
+        setMetadata(TEST_PLAYER, false, "Test.MetaThree", "baz");
+
+        metadata = resolveMetadata(TEST_PLAYER, false);
+        
+        assertEquals(3, metadata.size());
+        assertEquals("garply", metadata.get("test.meta"));
+        assertEquals("bar", metadata.get("test.metatoo"));
+        assertEquals("baz", metadata.get("test.metathree"));
+    }
+
 }

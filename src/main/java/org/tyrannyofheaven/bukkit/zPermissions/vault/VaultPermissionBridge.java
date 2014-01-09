@@ -195,6 +195,7 @@ public class VaultPermissionBridge extends Permission implements Listener {
             return false;
         }
         core.refreshPlayer(player, RefreshCause.GROUP_CHANGE);
+        core.invalidateMetadataCache(player, false);
         return true;
     }
 
@@ -278,6 +279,7 @@ public class VaultPermissionBridge extends Permission implements Listener {
             return false;
         }
         core.refreshPlayer(player, RefreshCause.GROUP_CHANGE);
+        core.invalidateMetadataCache(player, false);
         return true;
     }
 
