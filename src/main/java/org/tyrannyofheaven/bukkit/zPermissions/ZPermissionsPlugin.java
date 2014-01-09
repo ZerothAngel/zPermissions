@@ -25,7 +25,6 @@ import static org.tyrannyofheaven.bukkit.util.ToHMessageUtils.sendMessage;
 import static org.tyrannyofheaven.bukkit.util.ToHStringUtils.hasText;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -184,6 +183,12 @@ public class ZPermissionsPlugin extends JavaPlugin implements ZPermissionsCore, 
 
     // Prefix for each player's dynamic permission
     public static final String DYNAMIC_PERMISSION_PREFIX = "zPermissions_player.";
+
+    // Initial delay after initialization failure (ms)
+    private static final int STARTING_INITIALIZATION_RETRY_DELAY = 30 * 1000;
+
+    // Maximum delay after initialization failure (ms)
+    private static final int MAX_INITIALIZATION_RETRY_DELAY = 8 * 60 * 1000;
 
     // Version info (may include build number)
     private VersionInfo versionInfo;
@@ -392,9 +397,86 @@ public class ZPermissionsPlugin extends JavaPlugin implements ZPermissionsCore, 
 
             // Upgrade/create config
             ToHFileUtils.upgradeConfig(this, config);
+        }
+        catch (Exception e) {
+            unrecoverableError("config", e);
+            return;
+        }
 
-            initializeStorageStrategy();
+        // Attempt to initialize storage, retrying indefinitely (with exponential backoff)
+        int initializationRetryDelay = STARTING_INITIALIZATION_RETRY_DELAY;
 
+        while (!initializeStorageStrategy()) {
+            error(this, "Will retry after %d seconds...", initializationRetryDelay / 1000);
+            error(this, "(You may CTRL-C to stop the server)");
+            try {
+                Thread.sleep(initializationRetryDelay);
+            }
+            catch (InterruptedException e) {
+                // Just get outta here
+                // Not sure if this is ever reached. But just to be safe...
+                Bukkit.getServer().shutdown();
+                return;
+            }
+            
+            // Increase retry delay
+            initializationRetryDelay = Math.min(2 * initializationRetryDelay, MAX_INITIALIZATION_RETRY_DELAY);
+        }
+
+        initializeEverythingElse();
+    }
+
+    private void unrecoverableError(String module, Exception e) {
+        error(this, "Failed to initialize (%s): ", module, e);
+        if (kickOnError) {
+            error(this, "ALL %sLOG-INS DISALLOWED", kickOpsOnError ? "" : "NON-OP ");
+            Bukkit.getPluginManager().registerEvents(new ZPermissionsFallbackListener(kickOpsOnError), this);
+        }
+        error(this, "THIS IS NON-RECOVERABLE. You must /reload or restart to try again.");
+    }
+
+    private boolean initializeStorageStrategy() {
+        try {
+            // Set up TransactionStrategy and DAO
+            storageStrategy = null;
+            if (databaseSupport) {
+                ebeanServer = ToHDatabaseUtils.createEbeanServer(this, getClassLoader(), namingConvention, config);
+   
+                SpiEbeanServer spiEbeanServer = (SpiEbeanServer)ebeanServer;
+                if (spiEbeanServer.getDatabasePlatform().getName().contains("sqlite")) {
+                    log(this, Level.WARNING, "This plugin is NOT compatible with SQLite.");
+                    log(this, Level.WARNING, "Edit bukkit.yml to switch databases or disable database support in config.yml.");
+                    log(this, Level.WARNING, "Falling back to file-based storage strategy.");
+                    // Do nothing else (storageStrategy still null)
+                }
+                else {
+                    ToHDatabaseUtils.upgradeDatabase(this, namingConvention, getClassLoader(), "sql");
+   
+                    log(this, "Using database storage strategy.");
+                    storageStrategy = new AvajeStorageStrategy(this, txnMaxRetries, databaseReadOnly);
+                }
+            }
+            
+            // If still no storage strategy at this point, use flat-file one
+            if (storageStrategy == null) {
+                log(this, "Using file-based storage strategy.");
+                storageStrategy = new MemoryStorageStrategy(this, new File(getDataFolder(), FILE_STORAGE_FILENAME));
+            }
+            
+            // Initialize storage strategy
+            storageStrategy.init();
+        }
+        catch (Exception e) {
+            error(this, "Failed to initialize (storage): ", e);
+            return false;
+        }
+        
+        return true;
+    }
+
+    // Initialization of everything else post-storage
+    private void initializeEverythingElse() {
+        try {
             modelDumper = new ModelDumper(storageStrategy, this);
 
             // Install our commands
@@ -444,61 +526,11 @@ public class ZPermissionsPlugin extends JavaPlugin implements ZPermissionsCore, 
 
             // Initialize expiration handler
             refreshExpirations();
-
+            
             log(this, "%s enabled.", versionInfo.getVersionString());
         }
-        catch (Throwable t) {
-            error(this, "Failed to initialize:", t);
-            if (kickOnError) {
-                error(this, "ALL %sLOG-INS DISALLOWED", kickOpsOnError ? "" : "NON-OP ");
-                Bukkit.getPluginManager().registerEvents(new ZPermissionsFallbackListener(kickOpsOnError), this);
-            }
-
-            // Not really supposed to eat Errors...
-            if (t instanceof Error)
-                throw (Error)t;
-        }
-    }
-
-    private void initializeStorageStrategy() {
-        // Set up TransactionStrategy and DAO
-        storageStrategy = null;
-        if (databaseSupport) {
-            ebeanServer = ToHDatabaseUtils.createEbeanServer(this, getClassLoader(), namingConvention, config);
-
-            SpiEbeanServer spiEbeanServer = (SpiEbeanServer)ebeanServer;
-            if (spiEbeanServer.getDatabasePlatform().getName().contains("sqlite")) {
-                log(this, Level.WARNING, "This plugin is NOT compatible with SQLite.");
-                log(this, Level.WARNING, "Edit bukkit.yml to switch databases or disable database support in config.yml.");
-                log(this, Level.WARNING, "Falling back to file-based storage strategy.");
-                // Do nothing else (storageStrategy still null)
-            }
-            else {
-                try {
-                    ToHDatabaseUtils.upgradeDatabase(this, namingConvention, getClassLoader(), "sql");
-                }
-                catch (IOException e) {
-                    error(this, "Exception upgrading database schema:", e);
-                }
-
-                log(this, "Using database storage strategy.");
-                storageStrategy = new AvajeStorageStrategy(this, txnMaxRetries, databaseReadOnly);
-            }
-        }
-        
-        // If still no storage strategy at this point, use flat-file one
-        if (storageStrategy == null) {
-            log(this, "Using file-based storage strategy.");
-            storageStrategy = new MemoryStorageStrategy(this, new File(getDataFolder(), FILE_STORAGE_FILENAME));
-        }
-        
-        // Initialize storage strategy
-        try {
-            storageStrategy.init();
-        }
         catch (Exception e) {
-            error(this, "Exception initializing storage strategy:", e);
-            // TODO Now what?
+            unrecoverableError("everything else", e);
         }
     }
 
