@@ -29,6 +29,7 @@ import java.util.logging.Logger;
 
 import org.tyrannyofheaven.bukkit.util.ToHLoggingUtils;
 import org.tyrannyofheaven.bukkit.zPermissions.dao.PermissionDao;
+import org.tyrannyofheaven.bukkit.zPermissions.model.EntityMetadata;
 import org.tyrannyofheaven.bukkit.zPermissions.model.Entry;
 import org.tyrannyofheaven.bukkit.zPermissions.util.Utils;
 
@@ -381,6 +382,56 @@ public class PermissionsResolver {
         }
     }
 
+    public MetadataResult resolvePlayerMetadata(String playerName) {
+        // Get this player's groups
+        List<String> groups = Utils.toGroupNames(Utils.filterExpired(getDao().getGroups(playerName)));
+        if (groups.isEmpty()) {
+            // If no groups, use the default group
+            groups.add(getDefaultGroup());
+        }
+ 
+        // Resolve each group in turn (highest priority resolved last)
+        List<String> resolveOrder = new ArrayList<String>();
+        for (String group : groups) {
+            calculateResolutionOrder(resolveOrder, group);
+        }
+        
+        List<EntityMetadata> metadata = new ArrayList<EntityMetadata>();
+        for (String group : resolveOrder) {
+            metadata.addAll(getDao().getAllMetadata(group, true));
+        }
+        
+        // NB There's only one level, so interleavedPlayerPermissions doesn't matter
+        // Always resolve player last
+        metadata.addAll(getDao().getAllMetadata(playerName, false));
+        
+        return new MetadataResult(applyMetadata(metadata), new LinkedHashSet<String>(resolveOrder));
+    }
+
+    public MetadataResult resolveGroupMetadata(String groupName) {
+        List<String> resolveOrder = new ArrayList<String>();
+        calculateResolutionOrder(resolveOrder, groupName);
+
+        List<EntityMetadata> metadata = new ArrayList<EntityMetadata>();
+        for (String group : resolveOrder) {
+            metadata.addAll(getDao().getAllMetadata(group, true));
+        }
+        
+        return new MetadataResult(applyMetadata(metadata), new LinkedHashSet<String>(resolveOrder));
+    }
+
+    private Map<String, Object> applyMetadata(List<EntityMetadata> metadata) {
+        Map<String, Object> result = new LinkedHashMap<String, Object>();
+
+        // Since there are no world-specific or region-specific metadata,
+        // simply apply them in order. Last one wins.
+        for (EntityMetadata em : metadata) {
+            result.put(em.getName(), em.getValue());
+        }
+
+        return result;
+    }
+
     public static class ResolverResult {
         
         private final Map<String, Boolean> permissions;
@@ -400,6 +451,27 @@ public class PermissionsResolver {
             return groups;
         }
         
+    }
+
+    public static class MetadataResult {
+        
+        private final Map<String, Object> metadata;
+        
+        private final Set<String> groups;
+
+        public MetadataResult(Map<String, Object> metadata, Set<String> groups) {
+            this.metadata = metadata;
+            this.groups = groups;
+        }
+
+        public Map<String, Object> getMetadata() {
+            return metadata;
+        }
+
+        public Set<String> getGroups() {
+            return groups;
+        }
+
     }
 
 }

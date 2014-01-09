@@ -89,7 +89,7 @@ public abstract class CommonCommands {
         this.plugin = plugin;
         this.group = group;
         
-        metadataCommands = new MetadataCommands(storageStrategy, group);
+        metadataCommands = new MetadataCommands(core, storageStrategy, group);
     }
 
     protected final MetadataCommands getMetadataCommands() {
@@ -217,6 +217,7 @@ public abstract class CommonCommands {
             else
                 core.refreshPlayer(name, RefreshCause.COMMAND);
             core.refreshExpirations();
+            core.invalidateMetadataCache(name, group);
         }
         else {
             sendMessage(sender, colorize("{RED}%s not found."), group ? "Group" : "Player");
@@ -476,6 +477,7 @@ public abstract class CommonCommands {
                     
                     // Delete original
                     storageStrategy.getDao().deleteEntity(name, group);
+                    core.invalidateMetadataCache(name, group);
                 }
 
                 broadcastAdmin(plugin, "%s %s %s %s to %s", sender.getName(),
@@ -549,6 +551,8 @@ public abstract class CommonCommands {
         
         if (expiration != null)
             core.refreshExpirations(playerName);
+        
+        core.invalidateMetadataCache(playerName, false);
     }
 
     protected final void removeGroupMember(CommandSender sender, final String groupName, final String playerName) {
@@ -564,6 +568,7 @@ public abstract class CommonCommands {
             sendMessage(sender, colorize("{AQUA}%s{YELLOW} removed from {DARK_GREEN}%s"), playerName, groupName);
             core.refreshPlayer(playerName, RefreshCause.GROUP_CHANGE);
             core.refreshExpirations(playerName);
+            core.invalidateMetadataCache(playerName, false);
         }
         else {
             sendMessage(sender, colorize("{DARK_GREEN}%s{RED} does not exist or {AQUA}%s{RED} is not a member"), groupName, playerName);

@@ -163,6 +163,11 @@ public class MemoryPermissionDao extends BaseMemoryPermissionDao {
     }
 
     @Override
+    public synchronized List<EntityMetadata> getAllMetadata(String name, boolean group) {
+        return super.getAllMetadata(name, group);
+    }
+
+    @Override
     public synchronized void setMetadata(String name, boolean group, String metadataName, Object value) {
         super.setMetadata(name, group, metadataName, value);
     }

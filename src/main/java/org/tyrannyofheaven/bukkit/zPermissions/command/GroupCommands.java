@@ -113,6 +113,7 @@ public class GroupCommands extends CommonCommands {
                 sendMessage(sender, colorize("{YELLOW}Group {DARK_GREEN}%s{YELLOW} purged of members."), name);
                 if (core.refreshAffectedPlayers(name))
                     core.refreshExpirations();
+                core.invalidateMetadataCache(name, true);
             }
             else {
                 // Nothing happened for one reason or another
@@ -262,6 +263,7 @@ public class GroupCommands extends CommonCommands {
         else
             sendMessage(sender, colorize("{DARK_GREEN}%s{YELLOW}'s parents are now {DARK_GREEN}%s"), groupName, delimitedString(ChatColor.YELLOW + ", " + ChatColor.DARK_GREEN, parentNames));
         core.refreshAffectedPlayers(groupName);
+        core.invalidateMetadataCache(groupName, true);
     }
 
     @Command(value={"setweight", "weight", "setpriority", "priority"}, description="Set a group's weight")
@@ -283,6 +285,7 @@ public class GroupCommands extends CommonCommands {
 
         sendMessage(sender, colorize("{DARK_GREEN}%s{YELLOW}'s weight is now {GREEN}%d"), groupName, priority);
         core.refreshAffectedPlayers(groupName);
+        core.invalidateMetadataCache(groupName, true);
     }
 
     @Command(value="members", description="List members of a group")

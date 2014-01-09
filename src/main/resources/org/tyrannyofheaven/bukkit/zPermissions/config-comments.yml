@@ -110,6 +110,10 @@ region-managers: |
   If region-support is enabled, this is the order in which region manager
   plugins will be detected. The first plugin detected will be used.
 
+inherited-metadata: |
+  If true, metadata resolution will follow group inheritence rules, exactly
+  like permissions.
+
 native-vault-bridges: |
   If true, the Vault bridges included with zPermissions are used. If false,
   the bridges that come with Vault are used. Has no effect if Vault is not

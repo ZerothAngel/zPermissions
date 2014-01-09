@@ -1,4 +1,4 @@
-config-version: 15
+config-version: 16
 
 database-support: true
 
@@ -46,6 +46,8 @@ region-managers:
 - WorldGuard
 - Residence
 - Factions
+
+inherited-metadata: false
 
 native-vault-bridges: true
 

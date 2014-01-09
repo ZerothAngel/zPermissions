@@ -47,4 +47,6 @@ public interface ZPermissionsConfig {
     
     public boolean isVaultGetGroupsUsesAssignedOnly();
 
+    public boolean isInheritedMetadata();
+
 }

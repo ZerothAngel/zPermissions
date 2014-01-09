@@ -159,6 +159,8 @@ public class PlayerCommands extends CommonCommands {
         
         if (expiration != null)
             core.refreshExpirations(playerName);
+        
+        core.invalidateMetadataCache(playerName, false);
     }
 
     @Command(value={"addgroup", "add"}, description="Add this player to a group")

@@ -167,6 +167,11 @@ public class AvajePermissionDao2 extends BaseMemoryPermissionDao {
     }
 
     @Override
+    synchronized public List<EntityMetadata> getAllMetadata(String name, boolean group) {
+        return super.getAllMetadata(name, group);
+    }
+
+    @Override
     synchronized public void setMetadata(String name, boolean group, String metadataName, Object value) {
         super.setMetadata(name, group, metadataName, value);
     }
