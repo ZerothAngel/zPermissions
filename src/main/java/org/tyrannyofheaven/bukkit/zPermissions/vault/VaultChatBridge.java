@@ -251,6 +251,8 @@ public class VaultChatBridge extends Chat {
                 }
             });
             core.invalidateMetadataCache(name, group);
+            core.logExternalChange("Metadata '%s' for %s %s set via Vault", metadataName,
+                    group ? "group" : "player", name);
         }
         catch (MissingGroupException e) {
             // Ignore

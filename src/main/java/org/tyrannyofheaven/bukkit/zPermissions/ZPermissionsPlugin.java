@@ -169,6 +169,9 @@ public class ZPermissionsPlugin extends JavaPlugin implements ZPermissionsCore, 
     // Default Vault behavior for getPlayerGroups()
     private static final boolean DEFAULT_VAULT_GET_GROUPS_USES_ASSIGNED_ONLY = false;
 
+    // Default logging for Vault changes
+    private static final boolean DEFAULT_LOG_VAULT_CHANGES = true;
+
     // Filename of file-based storage
     private static final String FILE_STORAGE_FILENAME = "data.yml";
 
@@ -263,6 +266,9 @@ public class ZPermissionsPlugin extends JavaPlugin implements ZPermissionsCore, 
     
     // Whether Vault getPlayerGroups() should use assigned groups only
     private boolean vaultGetGroupsUsesAssignedOnly;
+
+    // Whether to log Vault changes at INFO level
+    private boolean logVaultChanges;
 
     // Whether the database should be read-only
     private boolean databaseReadOnly;
@@ -1090,6 +1096,7 @@ public class ZPermissionsPlugin extends JavaPlugin implements ZPermissionsCore, 
         vaultMetadataIncludesGroup = config.getBoolean("vault-metadata-includes-group", DEFAULT_VAULT_METADATA_INCLUDES_GROUP);
         vaultGroupTestUsesAssignedOnly = config.getBoolean("vault-group-test-uses-assigned-only", DEFAULT_VAULT_GROUP_TEST_USES_ASSIGNED_ONLY);
         vaultGetGroupsUsesAssignedOnly = config.getBoolean("vault-get-groups-uses-assigned-only", DEFAULT_VAULT_GET_GROUPS_USES_ASSIGNED_ONLY);
+        logVaultChanges = config.getBoolean("log-vault-changes", DEFAULT_LOG_VAULT_CHANGES);
         inheritedMetadata = config.getBoolean("inherited-metadata", DEFAULT_INHERITED_METADATA);
 
         ToHDatabaseUtils.populateNamingConvention(config, namingConvention);
@@ -1276,6 +1283,16 @@ public class ZPermissionsPlugin extends JavaPlugin implements ZPermissionsCore, 
     @Override
     public void invalidateMetadataCache() {
         metadataManager.invalidateAllMetadata();
+    }
+
+    @Override
+    public void logExternalChange(String message, Object... args) {
+        if (logVaultChanges) {
+            log(this, message, args);
+        }
+        else {
+            debug(this, message, args);
+        }
     }
 
 }

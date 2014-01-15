@@ -1,4 +1,4 @@
-config-version: 16
+config-version: 17
 
 database-support: true
 
@@ -58,5 +58,7 @@ vault-metadata-includes-group: true
 vault-group-test-uses-assigned-only: false
 
 vault-get-groups-uses-assigned-only: false
+
+log-vault-changes: true
 
 debug: false
