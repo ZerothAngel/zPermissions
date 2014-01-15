@@ -23,6 +23,7 @@ import org.bukkit.plugin.ServicePriority;
 import org.tyrannyofheaven.bukkit.util.transaction.TransactionCallback;
 import org.tyrannyofheaven.bukkit.util.transaction.TransactionCallbackWithoutResult;
 import org.tyrannyofheaven.bukkit.util.transaction.TransactionStrategy;
+import org.tyrannyofheaven.bukkit.zPermissions.QualifiedPermission;
 import org.tyrannyofheaven.bukkit.zPermissions.RefreshCause;
 import org.tyrannyofheaven.bukkit.zPermissions.ZPermissionsConfig;
 import org.tyrannyofheaven.bukkit.zPermissions.ZPermissionsCore;
@@ -96,6 +97,8 @@ public class VaultPermissionBridge extends Permission implements Listener {
                 }
             });
             core.refreshAffectedPlayers(group);
+            core.logExternalChange("Added permission '%s' to group %s via Vault",
+                    new QualifiedPermission(null, world, permission), group);
             return true;
         }
         catch (MissingGroupException e) {
@@ -135,8 +138,11 @@ public class VaultPermissionBridge extends Permission implements Listener {
                 return getDao().unsetPermission(group, false, null, permWorld, permission);
             }
         });
-        if (result)
+        if (result) {
             core.refreshAffectedPlayers(group);
+            core.logExternalChange("Removed permission '%s' from group %s via Vault",
+                    new QualifiedPermission(null, world, permission), group);
+        }
         return result;
     }
 
@@ -172,6 +178,8 @@ public class VaultPermissionBridge extends Permission implements Listener {
             }
         });
         core.refreshPlayer(player, RefreshCause.COMMAND);
+        core.logExternalChange("Added permission '%s' to player %s via Vault",
+                new QualifiedPermission(null, world, permission), player);
         return true;
     }
 
@@ -196,6 +204,8 @@ public class VaultPermissionBridge extends Permission implements Listener {
         }
         core.refreshPlayer(player, RefreshCause.GROUP_CHANGE);
         core.invalidateMetadataCache(player, false);
+        core.logExternalChange("Added player %s to group %s via Vault",
+                player, group);
         return true;
     }
 
@@ -254,8 +264,11 @@ public class VaultPermissionBridge extends Permission implements Listener {
                 return getDao().unsetPermission(player, false, null, permWorld, permission);
             }
         });
-        if (result)
+        if (result) {
             core.refreshPlayer(player, RefreshCause.COMMAND);
+            core.logExternalChange("Removed permission '%s' from player %s via Vault",
+                    new QualifiedPermission(null, world, permission), player);
+        }
         return result;
     }
 
@@ -280,7 +293,32 @@ public class VaultPermissionBridge extends Permission implements Listener {
         }
         core.refreshPlayer(player, RefreshCause.GROUP_CHANGE);
         core.invalidateMetadataCache(player, false);
+        core.logExternalChange("Removed player %s from group %s via Vault",
+                player, group);
         return true;
+    }
+
+    // Following transient methods overridden for sole purpose of logging
+
+    @Override
+    public boolean playerAddTransient(Player player, String permission) {
+        boolean result = super.playerAddTransient(player, permission);
+        // Always true, but eh
+        if (result) {
+            core.logExternalChange("Added transient permission '%s' to player %s via Vault",
+                    permission, player.getName());
+        }
+        return result;
+    }
+
+    @Override
+    public boolean playerRemoveTransient(Player player, String permission) {
+        boolean result = super.playerRemoveTransient(player, permission);
+        if (result) {
+            core.logExternalChange("Removed transient permission '%s' from player %s via Vault",
+                    permission, player.getName());
+        }
+        return result;
     }
 
     public void register() {

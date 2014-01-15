@@ -64,6 +64,8 @@ public interface ZPermissionsCore {
     
     public Set<String> getRegions(Location location, Player player);
 
+    public void logExternalChange(String message, Object...args);
+
     // Metadata cache management
     
     public void invalidateMetadataCache(String name, boolean group);

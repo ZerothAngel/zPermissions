@@ -147,5 +147,9 @@ vault-get-groups-uses-assigned-only: |
   it will return assigned groups and their inherited ancestor groups.
   Only matters if native-vault-bridges is true.
 
+log-vault-changes: |
+  If true, any permissions/membership/metadata changes made through Vault
+  are logged at INFO level. Otherwise, they are logged at FINE (debug).
+
 debug: |
   Enable debug logging.
