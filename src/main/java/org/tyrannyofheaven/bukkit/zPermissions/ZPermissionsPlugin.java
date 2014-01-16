@@ -862,7 +862,7 @@ public class ZPermissionsPlugin extends JavaPlugin implements ZPermissionsCore, 
         if (toRefresh.isEmpty())
             return false; // Nothing to do
 
-        if (getLogger().isLoggable(Level.FINE))
+        if (getLogger().isLoggable(Level.CONFIG))
             debug(this, "Refreshing players: %s", ToHStringUtils.delimitedString(", ", toRefresh));
         refreshTask.start(toRefresh);
         
@@ -971,7 +971,7 @@ public class ZPermissionsPlugin extends JavaPlugin implements ZPermissionsCore, 
     // Read config.yml
     private void readConfig() {
         // Set debug logging
-        getLogger().setLevel(config.getBoolean("debug", false) ? Level.FINE : null);
+        getLogger().setLevel(config.getBoolean("debug", false) ? Level.CONFIG : null);
 
         // Barebones defaults
         databaseSupport = config.getBoolean("database-support", DEFAULT_DATABASE_SUPPORT);
