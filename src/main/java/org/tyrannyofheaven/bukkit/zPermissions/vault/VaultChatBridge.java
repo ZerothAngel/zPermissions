@@ -261,9 +261,9 @@ public class VaultChatBridge extends Chat {
 
     private void complainInvalidArguments() {
         plugin.getLogger().warning("Vault method called with invalid arguments. Broken plugin? Enable zPermissions debug to see stack trace.");
-        if (plugin.getLogger().isLoggable(Level.FINE)) {
+        if (plugin.getLogger().isLoggable(Level.CONFIG)) {
             StackTraceElement[] ste = (new Throwable()).getStackTrace();
-            plugin.getLogger().fine("Vault method called with invalid arguments:\n        at " + Joiner.on("\n        at ").join(ste));
+            plugin.getLogger().config("Vault method called with invalid arguments:\n        at " + Joiner.on("\n        at ").join(ste));
         }
     }
 
