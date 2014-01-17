@@ -367,13 +367,15 @@ public class SubCommands {
 
     @Command(value="mygroups", description="List groups you are a member of")
     @Require("zpermissions.mygroups")
-    public void mygroups(CommandSender sender) {
+    public void mygroups(CommandSender sender, @Option({"-v", "--verbose"}) boolean verbose) {
         if (!(sender instanceof Player)) {
             sendMessage(sender, colorize("{RED}Command only valid for players."));
             return;
         }
         
         List<Membership> memberships = storageStrategy.getDao().getGroups(sender.getName());
+        if (!verbose)
+            memberships = Utils.filterExpired(memberships);
         Collections.reverse(memberships); // Order from highest to lowest
 
         String groups = Utils.displayGroups(resolver.getDefaultGroup(), memberships);

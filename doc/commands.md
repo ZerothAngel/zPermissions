@@ -10,7 +10,7 @@
 *   `/permissions refresh [-c]` &mdash; Re-read permissions from storage and update all online players. Needed to recognize any outside changes to the zPermissions database tables. If given the -c option, the refresh will be performed conditionally, meaning the DATA_VERSION table will be checked and the refresh performed only if the version is different.
 *   `/permissions export <filename>` &mdash; Creates a file containing all the zPermissions commands necessary to re-create your database. See config.yml for the output directory.
 *   `/permissions import <filename>` &mdash; Executes a file containing zPermissions commands. Only works on an empty database!
-*   `/permissions mygroups` &mdash; Displays a list of groups that you are a member of.
+*   `/permissions mygroups [-v]` &mdash; Displays a list of groups that you are a member of. Use -v to list expired memberships as well.
 
 ### Player Commands ###
 
