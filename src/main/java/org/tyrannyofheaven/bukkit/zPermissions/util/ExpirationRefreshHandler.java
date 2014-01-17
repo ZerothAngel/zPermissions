@@ -16,6 +16,7 @@
 package org.tyrannyofheaven.bukkit.zPermissions.util;
 
 import static org.tyrannyofheaven.bukkit.util.ToHLoggingUtils.debug;
+import static org.tyrannyofheaven.bukkit.util.ToHMessageUtils.broadcast;
 
 import java.util.Comparator;
 import java.util.Date;
@@ -86,6 +87,7 @@ public class ExpirationRefreshHandler implements Runnable {
     @Override
     public synchronized void run() {
         Set<String> toRefresh = new LinkedHashSet<String>();
+        final Set<Membership> expired = new LinkedHashSet<Membership>();
 
         // Gather up memberships that have already expired
         Date now = new Date();
@@ -94,6 +96,7 @@ public class ExpirationRefreshHandler implements Runnable {
             membershipQueue.remove();
 
             toRefresh.add(next.getMember());
+            expired.add(next);
 
             now = new Date();
             next = membershipQueue.peek();
@@ -101,6 +104,20 @@ public class ExpirationRefreshHandler implements Runnable {
 
         debug(plugin, "Refreshing expired players: %s", toRefresh);
         core.refreshPlayers(toRefresh);
+
+        // Send notifications
+        if (!expired.isEmpty()) {
+            Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, new Runnable() {
+                @Override
+                public void run() {
+                    for (Membership membership : expired) {
+                        broadcast(plugin, "zpermissions.notify.expiration",
+                                "Player %s is no longer a member of %s",
+                                membership.getMember(), membership.getGroup().getDisplayName());
+                    }
+                }
+            });
+        }
 
         // Cancel previous task
         if (scheduledFuture != null) {

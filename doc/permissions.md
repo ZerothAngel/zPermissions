@@ -52,5 +52,6 @@
 *   zpermissions.notify.demote &mdash; Receives all `/demote` notifications.
 *   zpermissions.notify.setrank &mdash; Receives all `/setrank` notifications.
 *   zpermissions.notify.unsetrank &mdash; Receives all `/unsetrank` notifications.
+*   zpermissions.notify.expiration &mdash; Receives temporary membership expiration notifications.
 
 For zpermissions.notify.rank (and related permissions) to work, the config.yml option rank-admin-broadcast must be set to false.

@@ -128,6 +128,7 @@ permissions:
     default: false
     children:
       zpermissions.notify.rank: true
+      zpermissions.notify.expiration: true
   zpermissions.notify.rank:
     description: Receives rank command notitifications
     default: false
@@ -147,4 +148,7 @@ permissions:
     default: false
   zpermissions.notify.unsetrank:
     description: Receives /unsetrank notifications
+    default: false
+  zpermissions.notify.expiration:
+    description: Receives temporary membership expiration notifications
     default: false
