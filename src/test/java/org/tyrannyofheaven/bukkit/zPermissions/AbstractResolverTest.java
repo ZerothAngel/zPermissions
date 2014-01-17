@@ -130,6 +130,7 @@ public abstract class AbstractResolverTest {
     public void setUp() {
         resolver.setIncludeDefaultInAssigned(true);
         resolver.setInterleavedPlayerPermissions(true);
+        resolver.clearWorldAliases();
     }
 
     @After
@@ -1501,6 +1502,56 @@ public abstract class AbstractResolverTest {
         assertEquals("garply", metadata.get("test.meta"));
         assertEquals("bar", metadata.get("test.metatoo"));
         assertEquals("baz", metadata.get("test.metathree"));
+    }
+
+    @Test
+    public void testWorldAlias() {
+        // First no mirroring
+        setPermissions(TEST_PLAYER, false,
+                TEST_WORLD1 + ":basic.perm1");
+        setPermissions(TEST_PLAYER, false,
+                TEST_WORLD2 + ":basic.perm2");
+        
+        Map<String, Boolean> permissions;
+
+        permissions = resolve(TEST_PLAYER, TEST_WORLD1);
+        assertPermission(permissions, "basic.perm1");
+        assertPermission(permissions, "basic.perm2", false);
+        permissions = resolve(TEST_PLAYER, TEST_WORLD2);
+        assertPermission(permissions, "basic.perm1", false);
+        assertPermission(permissions, "basic.perm2");
+        
+        // Now make TEST_WORLD2 a mirror of TEST_WORLD1
+        getResolver().addWorldAlias(TEST_WORLD2, TEST_WORLD1);
+
+        permissions = resolve(TEST_PLAYER, TEST_WORLD1);
+        assertPermission(permissions, "basic.perm1");
+        assertPermission(permissions, "basic.perm2", false);
+        permissions = resolve(TEST_PLAYER, TEST_WORLD2);
+        assertPermission(permissions, "basic.perm1");
+        assertPermission(permissions, "basic.perm2");
+        
+        // Override basic.perm1 in TEST_WORLD2
+        setPermissionsFalse(TEST_PLAYER, false,
+                TEST_WORLD2 + ":basic.perm1");
+
+        permissions = resolve(TEST_PLAYER, TEST_WORLD1);
+        assertPermission(permissions, "basic.perm1");
+        assertPermission(permissions, "basic.perm2", false);
+        permissions = resolve(TEST_PLAYER, TEST_WORLD2);
+        assertPermission(permissions, "basic.perm1", false);
+        assertPermission(permissions, "basic.perm2");
+
+        // Flip the mirror
+        getResolver().clearWorldAliases();
+        getResolver().addWorldAlias(TEST_WORLD1, TEST_WORLD2);
+
+        permissions = resolve(TEST_PLAYER, TEST_WORLD1);
+        assertPermission(permissions, "basic.perm1");
+        assertPermission(permissions, "basic.perm2");
+        permissions = resolve(TEST_PLAYER, TEST_WORLD2);
+        assertPermission(permissions, "basic.perm1", false);
+        assertPermission(permissions, "basic.perm2");
     }
 
 }
