@@ -41,6 +41,7 @@ permissions:
       zpermissions.export: true
       zpermissions.import: true
       zpermissions.purge: true
+      zpermissions.cleanup: true
       zpermissions.rank: true
       zpermissions.rank.*: true
   zpermissions.rank:
@@ -107,6 +108,8 @@ permissions:
     description: Allows use of the /permissions import command
   zpermissions.purge:
     description: Allows use of the /permissions purge command
+  zpermissions.cleanup:
+    description: Allows use of the /permissions cleanup command
   zpermissions.promote:
     description: Allows use of the /promote command
   zpermissions.promote.*:

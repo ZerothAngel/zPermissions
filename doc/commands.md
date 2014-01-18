@@ -54,6 +54,13 @@
 *   `/setrank <player> <rank> [track]` &mdash; Set the player's rank on the given track. If `track` is omitted, the default track is used.
 *   `/unsetrank <player> [track]` &mdash; Remove the player from the given track. If `track` is omitted, the default track is used.
 
+### Hidden Commands ###
+
+Commands you probably shouldn't run often.
+
+*   `/permissions purge [<code>]` &mdash; Deletes all players and groups. You will need to issue the command twice: once without an argument and again with the code that it gives you. Typically, the only practical use for this command is to clear permissions storage before performing a `/permissions import`
+*   `/permissions cleanup` &mdash; Deletes all expired memberships. Expired memberships are basically "invisible" as far as permissions resolution is concerned. However, they will still exist in permissions storage and can still be seen (although "greyed out") using the group..members and player..groups commands. This deletes expired memberships if you really must get rid of them. Since it iterates over every single group membership, expect the command to hang your server momentarily if you have many large groups.
+
 ### Aliases ###
 
 Convenient aliases for setting Vault-related metadata properties. See [Vault Support](http://dev.bukkit.org/server-mods/zpermissions/pages/vault-support) for more details.
