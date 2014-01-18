@@ -27,6 +27,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -654,6 +655,41 @@ public class SubCommands {
                 sendMessage(sender, colorize("{YELLOW}Issue {DARK_GRAY}/permissions purge %d{YELLOW} to confirm."), codeNumber);
             }
         }
+    }
+
+    @Command(value={"cleanup", "gc"}, description="Perform optional cleanup of permissions storage")
+    @Require("zpermissions.cleanup")
+    public void cleanup(CommandSender sender) {
+        storageStrategy.getRetryingTransactionStrategy().execute(new TransactionCallbackWithoutResult() {
+            @Override
+            public void doInTransactionWithoutResult() throws Exception {
+                List<Membership> toDelete = new ArrayList<Membership>();
+                Date now = new Date();
+                // For each group...
+                for (PermissionEntity group : storageStrategy.getDao().getEntities(true)) {
+                    // Check each membership
+                    for (Membership membership : group.getMemberships()) {
+                        if (membership.getExpiration() != null && !membership.getExpiration().after(now)) {
+                            // Expired
+                            toDelete.add(membership);
+                        }
+                    }
+                }
+                
+                // This is going to be slow and inefficient since the DAO scans each member
+                for (Membership membership : toDelete) {
+                    storageStrategy.getDao().removeMember(membership.getGroup().getDisplayName(), membership.getMember());
+                }
+            }
+        });
+        broadcastAdmin(plugin, "%s performed cleanup", sender.getName());
+        sendMessage(sender, colorize("{YELLOW}Cleanup successful."));
+
+        // Theoretically we haven't touched any visible memberships. However,
+        // just in case something expired during cleanup...
+        core.refreshPlayers();
+        core.refreshExpirations();
+        core.invalidateMetadataCache();
     }
 
     private static class PurgeCode {
