@@ -23,6 +23,7 @@ import static org.tyrannyofheaven.bukkit.util.ToHMessageUtils.broadcastAdmin;
 import static org.tyrannyofheaven.bukkit.util.ToHMessageUtils.colorize;
 import static org.tyrannyofheaven.bukkit.util.ToHMessageUtils.sendMessage;
 import static org.tyrannyofheaven.bukkit.util.ToHStringUtils.hasText;
+import static org.tyrannyofheaven.bukkit.util.command.reader.CommandReader.abortBatchProcessing;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -1270,6 +1271,7 @@ public class ZPermissionsPlugin extends JavaPlugin implements ZPermissionsCore, 
     public boolean handleException(CommandSender sender, Command command, String label, String[] args, Throwable t) {
         if (t instanceof ReadOnlyException) {
             sendMessage(sender, colorize("{RED}Server set to read-only mode."));
+            abortBatchProcessing();
             return true;
         }
         return false;

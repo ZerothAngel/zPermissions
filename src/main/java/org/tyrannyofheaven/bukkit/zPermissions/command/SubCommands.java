@@ -133,6 +133,7 @@ public class SubCommands {
                 .forCommand("suffix")
                 .forCommand("settrack")
                 .show();
+            abortBatchProcessing();
             return null;
         }
         
@@ -167,6 +168,7 @@ public class SubCommands {
                 .forCommand("prefix")
                 .forCommand("suffix")
                 .show();
+            abortBatchProcessing();
             return null;
         }
 
