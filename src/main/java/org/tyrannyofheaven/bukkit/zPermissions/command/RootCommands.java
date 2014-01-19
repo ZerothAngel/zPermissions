@@ -125,6 +125,7 @@ public class RootCommands {
                 .forCommand("export")
                 .forCommand("refresh")
                 .show();
+            abortBatchProcessing();
             return null;
         }
         return sc;

@@ -389,6 +389,7 @@ public abstract class CommonCommands {
                 .forCommand("unset")
                 .forCommand("show")
                 .show();
+            abortBatchProcessing();
             return null;
         }
         return metadataCommands;
