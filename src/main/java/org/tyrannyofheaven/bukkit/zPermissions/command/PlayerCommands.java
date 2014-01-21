@@ -171,7 +171,7 @@ public class PlayerCommands extends CommonCommands {
 
     @Command(value={"removegroup", "rmgroup", "remove", "rm"}, description="Remove this player from a group")
     @Require("zpermissions.player.manage")
-    public void removeGroup(CommandSender sender, @Session("entityName") String playerName, @Option(value="group", completer="group") String groupName, @Option(value="duration/timestamp", optional=true) String duration, String[] args) {
+    public void removeGroup(CommandSender sender, @Session("entityName") String playerName, @Option(value="group", completer="group") String groupName) {
         removeGroupMember(sender, groupName, playerName);
     }
 
