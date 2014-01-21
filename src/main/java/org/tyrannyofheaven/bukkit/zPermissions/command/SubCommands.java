@@ -60,6 +60,7 @@ import org.tyrannyofheaven.bukkit.zPermissions.model.PermissionEntity;
 import org.tyrannyofheaven.bukkit.zPermissions.storage.StorageStrategy;
 import org.tyrannyofheaven.bukkit.zPermissions.util.MetadataConstants;
 import org.tyrannyofheaven.bukkit.zPermissions.util.ModelDumper;
+import org.tyrannyofheaven.bukkit.zPermissions.util.SearchTask;
 import org.tyrannyofheaven.bukkit.zPermissions.util.Utils;
 
 /**
@@ -692,6 +693,74 @@ public class SubCommands {
         core.refreshPlayers();
         core.refreshExpirations();
         core.invalidateMetadataCache();
+    }
+
+    @Command(value="search", description="Search for players or groups that have a specific permission")
+    @Require("zpermissions.search")
+    public void search(CommandSender sender, @Option(value={"-p", "--players"}) boolean searchPlayers, @Option(value={"-g", "--groups"}) boolean searchGroups,
+            @Option(value={"-e", "--effective"}) boolean effective, @Option(value={"-w", "--world"}, valueName="world", completer="world") String worldName,
+            @Option(value={"-r", "--region", "--regions"}, valueName="regions") String regions, @Option("permission") String permission) {
+        if (!(sender instanceof ConsoleCommandSender)) {
+            sendMessage(sender, colorize("{GRAY}(Results only available on console.)"));
+        }
+        
+        if (!searchPlayers && !searchGroups) {
+            // Default to both
+            searchPlayers = true;
+            searchGroups = true;
+        }
+        
+        Set<String> regionNames = Collections.emptySet();
+        if (effective) {
+            // Figure out world
+            if (worldName == null) {
+                if (sender instanceof Player) {
+                    // Use issuer's world
+                    worldName = ((Player)sender).getWorld().getName();
+                    sendMessage(sender, colorize("{GRAY}(Using current world: %s. Use -w to specify a world.)"), worldName);
+                }
+                else {
+                    // Default to first world
+                    worldName = Bukkit.getWorlds().get(0).getName();
+                    sendMessage(sender, colorize("{GRAY}(Use -w to specify a world. Defaulting to \"%s\")"), worldName);
+                }
+            }
+            else {
+                // Just verify it exists
+                if (Bukkit.getWorld(worldName) == null) {
+                    sendMessage(sender, colorize("{RED}Invalid world."));
+                    return;
+                }
+            }
+            worldName = worldName.toLowerCase();
+            regionNames = parseRegions(regions);
+        }
+        
+        if (!ToHStringUtils.hasText(permission)) {
+            throw new ParseException("Permission cannot be empty");
+        }
+
+        permission = permission.trim();
+
+        List<String> players = Collections.emptyList();
+        if (searchPlayers) {
+            players = storageStrategy.getDao().getEntityNames(false);
+        }
+        
+        List<String> groups = Collections.emptyList();
+        if (searchGroups) {
+            groups = storageStrategy.getDao().getEntityNames(true);
+        }
+        
+        // Create and configure search task
+        SearchTask searchTask = new SearchTask(plugin, storageStrategy, resolver, permission, players, groups, effective, worldName, regionNames);
+        searchTask.setBatchSize(config.getSearchBatchSize());
+        searchTask.setDelay(config.getSearchDelay());
+
+        sendMessage(sender, colorize("{YELLOW}Starting search (#%d) for {GOLD}%s{YELLOW}..."), searchTask.getSearchId(), permission);
+
+        // Kick off search
+        Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, searchTask);
     }
 
     private static class PurgeCode {
