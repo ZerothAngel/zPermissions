@@ -34,6 +34,7 @@ permissions:
       zpermissions.inspect: true
       zpermissions.inspect.other: true
       zpermissions.diff: true
+      zpermissions.search: true
       zpermissions.mygroups: true
       zpermissions.mychat: true
       zpermissions.reload: true
@@ -94,6 +95,8 @@ permissions:
     description: Allows use of the /permissions inspect command on others
   zpermissions.diff:
     description: Allows use of the /permissions diff command
+  zpermissions.search:
+    description: Allows use of the /permissions search command
   zpermissions.mygroups:
     description: Allows use of the /permissions mygroups command
   zpermissions.mychat:

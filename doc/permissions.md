@@ -23,6 +23,7 @@
 *   zpermissions.inspect &mdash; `/permissions inspect` command
 *   zpermissions.inspect.other &mdash; `/permissions inspect` on other players
 *   zpermissions.diff &mdash; `/permissions diff` command
+*   zpermissions.search &mdash; `/permissions search` command
 *   zpermissions.mygroups &mdash; `/permissions mygroups` command
 *   zpermissions.reload &mdash; `/permissions reload` command
 *   zpermissions.refresh &mdash; `/permissions refresh` command

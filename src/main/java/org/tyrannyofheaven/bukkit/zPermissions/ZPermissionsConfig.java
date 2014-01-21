@@ -49,4 +49,8 @@ public interface ZPermissionsConfig {
 
     public boolean isInheritedMetadata();
 
+    public int getSearchBatchSize();
+    
+    public int getSearchDelay();
+
 }

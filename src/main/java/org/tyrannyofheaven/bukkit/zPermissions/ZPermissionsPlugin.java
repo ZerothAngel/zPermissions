@@ -194,6 +194,12 @@ public class ZPermissionsPlugin extends JavaPlugin implements ZPermissionsCore, 
     // Maximum delay after initialization failure (ms)
     private static final int MAX_INITIALIZATION_RETRY_DELAY = 8 * 60 * 1000;
 
+    // Search batch size
+    private static final int DEFAULT_SEARCH_BATCH_SIZE = 1;
+    
+    // Search delay in ticks
+    private static final int DEFAULT_SEARCH_DELAY = 5;
+
     // Version info (may include build number)
     private VersionInfo versionInfo;
 
@@ -300,6 +306,12 @@ public class ZPermissionsPlugin extends JavaPlugin implements ZPermissionsCore, 
 
     // Whether metadata should follow group inheritance rules
     private boolean inheritedMetadata;
+
+    // Search batch size
+    private int searchBatchSize;
+    
+    // Search delay
+    private int searchDelay;
 
     /**
      * Retrieve this plugin's retrying TransactionStrategy
@@ -1099,6 +1111,9 @@ public class ZPermissionsPlugin extends JavaPlugin implements ZPermissionsCore, 
         vaultGetGroupsUsesAssignedOnly = config.getBoolean("vault-get-groups-uses-assigned-only", DEFAULT_VAULT_GET_GROUPS_USES_ASSIGNED_ONLY);
         logVaultChanges = config.getBoolean("log-vault-changes", DEFAULT_LOG_VAULT_CHANGES);
         inheritedMetadata = config.getBoolean("inherited-metadata", DEFAULT_INHERITED_METADATA);
+        // FIXME More hidden options
+        searchBatchSize = config.getInt("search-batch-size", DEFAULT_SEARCH_BATCH_SIZE);
+        searchDelay = config.getInt("search-delay", DEFAULT_SEARCH_DELAY);
 
         ToHDatabaseUtils.populateNamingConvention(config, namingConvention);
 
@@ -1295,6 +1310,14 @@ public class ZPermissionsPlugin extends JavaPlugin implements ZPermissionsCore, 
         else {
             debug(this, message, args);
         }
+    }
+
+    public int getSearchBatchSize() {
+        return searchBatchSize;
+    }
+
+    public int getSearchDelay() {
+        return searchDelay;
     }
 
 }
