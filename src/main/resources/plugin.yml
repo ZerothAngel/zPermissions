@@ -9,17 +9,19 @@ load: STARTUP
 commands:
   permissions:
     description: Top-level command for zPermissions
-    aliases: [perm, perms]
+    aliases: [perm, perms, zpermissions, zperm, zperms]
   promote:
     description: Promote a player up a rank
-    aliases: rankup
+    aliases: [rankup, zpromote]
   demote:
     description: Demote a player down a rank
-    aliases: rankdown
+    aliases: [rankdown, zdemote]
   setrank:
     description: Set the rank of a player
+    aliases: zsetrank
   unsetrank:
     description: Remove a player from a track
+    aliases: zunsetrank
 
 permissions:
   zpermissions.*:
