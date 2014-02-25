@@ -49,6 +49,10 @@ public interface ZPermissionsConfig {
 
     public boolean isInheritedMetadata();
 
+    public String getVaultPlayerPrefixFormat();
+    
+    public String getVaultPlayerSuffixFormat();
+
     public int getSearchBatchSize();
     
     public int getSearchDelay();

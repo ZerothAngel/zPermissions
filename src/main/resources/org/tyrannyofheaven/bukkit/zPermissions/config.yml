@@ -1,4 +1,4 @@
-config-version: 17
+config-version: 18
 
 database-support: true
 
@@ -58,6 +58,10 @@ vault-metadata-includes-group: true
 vault-group-test-uses-assigned-only: false
 
 vault-get-groups-uses-assigned-only: false
+
+vault-player-prefix-format: ''
+
+vault-player-suffix-format: ''
 
 log-vault-changes: true
 

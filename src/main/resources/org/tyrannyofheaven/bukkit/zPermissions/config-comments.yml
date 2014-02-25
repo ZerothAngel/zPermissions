@@ -147,6 +147,21 @@ vault-get-groups-uses-assigned-only: |
   it will return assigned groups and their inherited ancestor groups.
   Only matters if native-vault-bridges is true.
 
+vault-player-prefix-format: |
+  Specify a totally customized player prefix. Use an empty string to disable.
+  The following tokens in the format string are recognized:
+  %p - The player's prefix/suffix
+  %g - The player's primary group's prefix/suffix
+  %a - The prefixes/suffixes of *all* the player's groups. Affected by
+  vault-get-groups-uses-assigned-only above.
+  %A - Same as %a, but the with the order reversed.
+  To merge player and primary group prefixes/suffixes, you might set
+  vault-player-prefix-format to '%g%p' and vault-player-suffix-format to
+  '%p%g'
+
+vault-player-suffix-format: |
+  Same as vault-player-prefix-format, but for the player's suffix.
+
 log-vault-changes: |
   If true, any permissions/membership/metadata changes made through Vault
   are logged at INFO level. Otherwise, they are logged at FINE (debug).
