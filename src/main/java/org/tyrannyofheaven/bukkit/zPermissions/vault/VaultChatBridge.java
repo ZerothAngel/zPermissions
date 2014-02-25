@@ -33,13 +33,16 @@ public class VaultChatBridge extends Chat {
 
     private final ZPermissionsConfig config;
 
-    public VaultChatBridge(Plugin plugin, ZPermissionsCore core, StorageStrategy storageStrategy, ZPermissionsService service, ZPermissionsConfig config) {
+    private final PlayerPrefixHandler prefixHandler;
+
+    public VaultChatBridge(Plugin plugin, ZPermissionsCore core, StorageStrategy storageStrategy, ZPermissionsService service, ZPermissionsConfig config, PlayerPrefixHandler prefixHandler) {
         super(Bukkit.getServicesManager().load(Permission.class));
         this.plugin = plugin;
         this.core = core;
         this.storageStrategy = storageStrategy;
         this.service = service;
         this.config = config;
+        this.prefixHandler = prefixHandler;
     }
 
     @Override
@@ -143,26 +146,12 @@ public class VaultChatBridge extends Chat {
 
     @Override
     public String getPlayerPrefix(String world, String player) {
-        String prefix = service.getPlayerMetadata(player, MetadataConstants.PREFIX_KEY, String.class);
-        if (prefix == null && config.isVaultPrefixIncludesGroup())
-            prefix = service.getGroupMetadata(getPrimaryGroup(world, player), MetadataConstants.PREFIX_KEY, String.class);
-        
-        if (prefix == null)
-            return "";
-        else
-            return prefix;
+        return prefixHandler.getPlayerPrefix(player);
     }
 
     @Override
     public String getPlayerSuffix(String world, String player) {
-        String suffix = service.getPlayerMetadata(player, MetadataConstants.SUFFIX_KEY, String.class);
-        if (suffix == null && config.isVaultPrefixIncludesGroup())
-            suffix = service.getGroupMetadata(getPrimaryGroup(world, player), MetadataConstants.SUFFIX_KEY, String.class);
-        
-        if (suffix == null)
-            return "";
-        else
-            return suffix;
+        return prefixHandler.getPlayerSuffix(player);
     }
 
     @Override
