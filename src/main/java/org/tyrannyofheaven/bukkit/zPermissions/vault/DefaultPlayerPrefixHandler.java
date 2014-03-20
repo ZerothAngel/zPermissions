@@ -94,6 +94,31 @@ public class DefaultPlayerPrefixHandler implements PlayerPrefixHandler {
             String value = service.getGroupMetadata(service.getPlayerPrimaryGroup(playerName), isPrefix ? MetadataConstants.PREFIX_KEY : MetadataConstants.SUFFIX_KEY, String.class);
             if (value == null) value = "";
             subMap.put("%g", value);
+        }        
+        if (format.contains("%f")) {
+            // All Groups
+            List<String> groups = getPlayerGroups(playerName);
+            Collections.reverse(groups); // groups is in application order. We actually want it in display order.
+            StringBuilder sb = new StringBuilder();
+            for (String group : groups) {
+                String value = service.getGroupMetadata(group, isPrefix ? MetadataConstants.PREFIX_KEY : MetadataConstants.SUFFIX_KEY, String.class);
+                if (value == null) value = "";
+                sb.append(value);
+                if (value != null) break;
+            }
+            subMap.put("%f", sb.toString());
+        }
+        if (format.contains("%l")) {
+            // All Groups Reversed
+            List<String> groups = getPlayerGroups(playerName);
+            StringBuilder sb = new StringBuilder();
+            for (String group : groups) {
+                String value = service.getGroupMetadata(group, isPrefix ? MetadataConstants.PREFIX_KEY : MetadataConstants.SUFFIX_KEY, String.class);
+                if (value == null) value = "";
+                sb.append(value);
+                if (value != null) break;
+            }
+            subMap.put("%l", sb.toString());
         }
         if (format.contains("%a")) {
             // All Groups

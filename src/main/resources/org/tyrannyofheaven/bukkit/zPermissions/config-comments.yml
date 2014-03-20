@@ -152,6 +152,9 @@ vault-player-prefix-format: |
   The following tokens in the format string are recognized:
   %p - The player's prefix/suffix
   %g - The player's primary group's prefix/suffix
+  %f - The prefixes/suffixes of the *first* highest weighted group where it is defined. (Groups without a defined prefix/suffix will be skipped) Affected by
+  vault-get-groups-uses-assigned-only above.
+  %l - Same as %f, but the with the order reversed.
   %a - The prefixes/suffixes of *all* the player's groups. Affected by
   vault-get-groups-uses-assigned-only above.
   %A - Same as %a, but the with the order reversed.
