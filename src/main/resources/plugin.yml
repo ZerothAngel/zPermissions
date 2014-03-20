@@ -160,3 +160,11 @@ permissions:
   zpermissions.notify.expiration:
     description: Receives temporary membership expiration notifications
     default: false
+  zpermissions.notify.self.*:
+    description: Receives all notifications for self
+    default: false
+    children:
+      zpermissions.notify.self.expiration: true
+  zpermissions.notify.self.expiration:
+    description: Receives temporary membership expiration notifications for self
+    default: false
