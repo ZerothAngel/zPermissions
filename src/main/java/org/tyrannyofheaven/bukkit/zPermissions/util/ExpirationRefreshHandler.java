@@ -105,6 +105,9 @@ public class ExpirationRefreshHandler implements Runnable {
         }
 
         debug(plugin, "Refreshing expired players: %s", toRefresh);
+        // NB Metadata cache for offline players not invalidated.
+        // This might become a problem. But nothing can be done unless we
+        // run a timer for each and every membership, online or offline.
         core.refreshPlayers(toRefresh);
 
         // Send notifications

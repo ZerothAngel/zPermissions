@@ -106,6 +106,7 @@ public class RefreshTask implements Runnable {
             String playerToRefresh = playersToRefresh.remove();
 
             // Refresh single player
+            core.invalidateMetadataCache(playerToRefresh, false);
             core.refreshPlayer(playerToRefresh, RefreshCause.GROUP_CHANGE); // NB Assumes all who call start() are doing so for group- or server-wide changes
         }
         

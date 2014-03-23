@@ -202,8 +202,8 @@ public class VaultPermissionBridge extends Permission implements Listener {
         catch (MissingGroupException e) {
             return false;
         }
-        core.refreshPlayer(player, RefreshCause.GROUP_CHANGE);
         core.invalidateMetadataCache(player, false);
+        core.refreshPlayer(player, RefreshCause.GROUP_CHANGE);
         core.logExternalChange("Added player %s to group %s via Vault",
                 player, group);
         return true;
@@ -291,8 +291,8 @@ public class VaultPermissionBridge extends Permission implements Listener {
         catch (MissingGroupException e) {
             return false;
         }
-        core.refreshPlayer(player, RefreshCause.GROUP_CHANGE);
         core.invalidateMetadataCache(player, false);
+        core.refreshPlayer(player, RefreshCause.GROUP_CHANGE);
         core.logExternalChange("Removed player %s from group %s via Vault",
                 player, group);
         return true;

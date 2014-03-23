@@ -33,12 +33,12 @@ public interface ZPermissionsCore {
 
     public void refreshPlayer(String playerName, RefreshCause cause);
 
-    public void refreshPlayers();
+    public void refreshPlayers(); // Also invalidates metadata cache of refreshed players
 
     // NB called from async thread
-    public void refreshPlayers(Collection<String> playerNames);
+    public void refreshPlayers(Collection<String> playerNames); // Also invalidates metadata cache of refreshed players
 
-    public boolean refreshAffectedPlayers(String groupName);
+    public boolean refreshAffectedPlayers(String groupName); // Also invalidates metadata cache of refreshed players
 
     // Refreshing the temporary group membership timer
 

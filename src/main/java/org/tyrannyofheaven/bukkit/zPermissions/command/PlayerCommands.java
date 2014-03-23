@@ -155,12 +155,11 @@ public class PlayerCommands extends CommonCommands {
 
         sendMessage(sender, colorize("{AQUA}%s{YELLOW}'s group set to {DARK_GREEN}%s"), playerName, groupName);
         Utils.checkPlayer(sender, playerName);
+        core.invalidateMetadataCache(playerName, false);
         core.refreshPlayer(playerName, RefreshCause.GROUP_CHANGE);
         
         if (expiration != null)
             core.refreshExpirations(playerName);
-        
-        core.invalidateMetadataCache(playerName, false);
     }
 
     @Command(value={"addgroup", "add"}, description="Add this player to a group")

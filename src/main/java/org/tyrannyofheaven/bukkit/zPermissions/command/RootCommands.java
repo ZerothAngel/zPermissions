@@ -254,9 +254,9 @@ public class RootCommands {
         
         if (check && (scope.isShouldEcho() || verbose))
             Utils.checkPlayer(sender, playerName);
+        core.invalidateMetadataCache(playerName, false);
         core.refreshPlayer(playerName, RefreshCause.GROUP_CHANGE);
         core.refreshExpirations(playerName);
-        core.invalidateMetadataCache(playerName, false);
     }
 
     private BroadcastScope determineScope(boolean quiet, boolean loud) {
@@ -392,9 +392,9 @@ public class RootCommands {
 
         if (check && (scope.isShouldEcho() || verbose))
             Utils.checkPlayer(sender, playerName);
+        core.invalidateMetadataCache(playerName, false);
         core.refreshPlayer(playerName, RefreshCause.GROUP_CHANGE);
         core.refreshExpirations(playerName);
-        core.invalidateMetadataCache(playerName, false);
     }
 
     @Command("setrank")

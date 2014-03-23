@@ -1193,6 +1193,7 @@ public class ZPermissionsPlugin extends JavaPlugin implements ZPermissionsCore, 
         refresh(true, new Runnable() {
             @Override
             public void run() {
+                invalidateMetadataCache();
                 refreshPlayers();
                 refreshExpirations();
             }
@@ -1226,6 +1227,7 @@ public class ZPermissionsPlugin extends JavaPlugin implements ZPermissionsCore, 
                         public void run() {
                             // This is executed after the storage refresh is done.
                             log(plugin, "Refresh done.");
+                            invalidateMetadataCache();
                             refreshPlayers();
                             refreshExpirations();
                         }

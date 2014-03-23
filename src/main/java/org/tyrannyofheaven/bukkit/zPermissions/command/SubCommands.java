@@ -296,6 +296,7 @@ public class SubCommands {
         core.refresh(!conditional, new Runnable() {
             @Override
             public void run() {
+                core.invalidateMetadataCache();
                 core.refreshPlayers();
                 core.refreshExpirations();
             }
@@ -643,9 +644,9 @@ public class SubCommands {
                 sendMessage(sender, colorize("{YELLOW}Full permissions purge successful."));
                 purgeCode = null;
                 
+                core.invalidateMetadataCache();
                 core.refreshPlayers();
                 core.refreshExpirations();
-                core.invalidateMetadataCache();
             }
         }
         else {
@@ -690,9 +691,9 @@ public class SubCommands {
 
         // Theoretically we haven't touched any visible memberships. However,
         // just in case something expired during cleanup...
+        core.invalidateMetadataCache();
         core.refreshPlayers();
         core.refreshExpirations();
-        core.invalidateMetadataCache();
     }
 
     @Command(value="search", description="Search for players or groups that have a specific permission")
