@@ -211,7 +211,7 @@ public class VaultPermissionBridge extends Permission implements Listener {
 
     @Override
     public boolean playerHas(String world, String player, String permission) {
-        Player p = Bukkit.getServer().getPlayer(player);
+        Player p = Bukkit.getPlayerExact(player);
         if (p == null) {
             Map<String, Boolean> perms = service.getPlayerPermissions(world, null, player);
             Boolean value = perms.get(permission.toLowerCase());
@@ -221,7 +221,7 @@ public class VaultPermissionBridge extends Permission implements Listener {
             // Use default at this point
             org.bukkit.permissions.Permission perm = Bukkit.getPluginManager().getPermission(permission);
             if (perm != null) {
-                OfflinePlayer op = Bukkit.getServer().getOfflinePlayer(player);
+                OfflinePlayer op = Bukkit.getOfflinePlayer(player);
                 return perm.getDefault().getValue(op != null ? op.isOp() : false);
             }
             // Have no clue
