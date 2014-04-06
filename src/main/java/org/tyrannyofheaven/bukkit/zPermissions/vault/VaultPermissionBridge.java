@@ -135,7 +135,7 @@ public class VaultPermissionBridge extends Permission implements Listener {
         boolean result = getTransactionStrategy().execute(new TransactionCallback<Boolean>() {
             @Override
             public Boolean doInTransaction() throws Exception {
-                return getDao().unsetPermission(group, false, null, permWorld, permission);
+                return getDao().unsetPermission(group, true, null, permWorld, permission);
             }
         });
         if (result) {
