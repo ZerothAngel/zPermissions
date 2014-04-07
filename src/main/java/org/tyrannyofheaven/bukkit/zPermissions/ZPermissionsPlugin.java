@@ -453,8 +453,8 @@ public class ZPermissionsPlugin extends JavaPlugin implements ZPermissionsCore, 
         initializeEverythingElse();
     }
 
-    private void unrecoverableError(String module, Exception e) {
-        error(this, "Failed to initialize (%s): ", module, e);
+    private void unrecoverableError(String module, Throwable t) {
+        error(this, "Failed to initialize (%s): ", module, t);
         if (kickOnError) {
             error(this, "ALL %sLOG-INS DISALLOWED", kickOpsOnError ? "" : "NON-OP ");
             Bukkit.getPluginManager().registerEvents(new ZPermissionsFallbackListener(kickOpsOnError), this);
@@ -557,8 +557,10 @@ public class ZPermissionsPlugin extends JavaPlugin implements ZPermissionsCore, 
             
             log(this, "%s enabled.", versionInfo.getVersionString());
         }
-        catch (Exception e) {
-            unrecoverableError("everything else", e);
+        catch (Throwable t) {
+            unrecoverableError("everything else", t);
+            if (t instanceof Error)
+                throw (Error)t;
         }
     }
 
