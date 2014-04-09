@@ -425,8 +425,10 @@ public class ZPermissionsPlugin extends JavaPlugin implements ZPermissionsCore, 
             // Upgrade/create config
             ToHFileUtils.upgradeConfig(this, config);
         }
-        catch (Exception e) {
-            unrecoverableError("config", e);
+        catch (Throwable t) {
+            unrecoverableError("config", t);
+            if (t instanceof Error)
+                throw (Error)t;
             return;
         }
 
