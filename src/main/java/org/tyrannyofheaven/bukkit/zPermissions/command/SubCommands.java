@@ -21,6 +21,7 @@ import static org.tyrannyofheaven.bukkit.util.ToHMessageUtils.colorize;
 import static org.tyrannyofheaven.bukkit.util.ToHMessageUtils.sendMessage;
 import static org.tyrannyofheaven.bukkit.util.command.reader.CommandReader.abortBatchProcessing;
 import static org.tyrannyofheaven.bukkit.util.permissions.PermissionUtils.requirePermission;
+import static org.tyrannyofheaven.bukkit.zPermissions.util.Utils.formatPlayerName;
 
 import java.io.File;
 import java.io.IOException;
@@ -34,6 +35,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
+import java.util.UUID;
 import java.util.logging.Level;
 
 import org.bukkit.Bukkit;
@@ -62,6 +64,8 @@ import org.tyrannyofheaven.bukkit.zPermissions.util.MetadataConstants;
 import org.tyrannyofheaven.bukkit.zPermissions.util.ModelDumper;
 import org.tyrannyofheaven.bukkit.zPermissions.util.SearchTask;
 import org.tyrannyofheaven.bukkit.zPermissions.util.Utils;
+import org.tyrannyofheaven.bukkit.zPermissions.uuid.CommandUuidResolver;
+import org.tyrannyofheaven.bukkit.zPermissions.uuid.CommandUuidResolverHandler;
 
 /**
  * Handler for sub-commands of /permissions
@@ -85,6 +89,8 @@ public class SubCommands {
     // Parent plugin
     private final Plugin plugin;
 
+    private final CommandUuidResolver uuidResolver;
+
     // The "/permissions player" handler
     private final PlayerCommands playerCommand;
 
@@ -95,16 +101,17 @@ public class SubCommands {
 
     private final Random random = new Random();
 
-    SubCommands(ZPermissionsCore core, StorageStrategy storageStrategy, PermissionsResolver resolver, ModelDumper modelDumper, ZPermissionsConfig config, Plugin plugin) {
+    SubCommands(ZPermissionsCore core, StorageStrategy storageStrategy, PermissionsResolver resolver, ModelDumper modelDumper, ZPermissionsConfig config, Plugin plugin, CommandUuidResolver uuidResolver) {
         this.core = core;
         this.storageStrategy = storageStrategy;
         this.resolver = resolver;
         this.modelDumper = modelDumper;
         this.config = config;
         this.plugin = plugin;
+        this.uuidResolver = uuidResolver;
 
-        playerCommand = new PlayerCommands(core, storageStrategy, resolver, config, plugin);
-        groupCommand = new GroupCommands(core, storageStrategy, resolver, config, plugin);
+        playerCommand = new PlayerCommands(core, storageStrategy, resolver, config, plugin, uuidResolver);
+        groupCommand = new GroupCommands(core, storageStrategy, resolver, config, plugin, uuidResolver);
     }
 
     @Command(value={"player", "pl", "p"}, description="Player-related commands")
@@ -127,7 +134,6 @@ public class SubCommands {
                 .forCommand("dump")
                 .forCommand("diff")
                 .forCommand("clone")
-                .forCommand("rename")
                 .forCommand("has")
                 .forCommand("metadata")
                 .forCommand("prefix")
@@ -180,7 +186,7 @@ public class SubCommands {
 
     @Command(value={"list", "ls"}, description="List players or groups in the database")
     @Require("zpermissions.list")
-    public void list(CommandSender sender, @Option(value="what", completer="constant:groups players") String what) {
+    public void list(CommandSender sender, @Option(value={"-U", "--uuid"}) boolean showUuid, @Option(value="what", completer="constant:groups players") String what) {
         boolean group;
         if ("groups".startsWith(what)) {
             group = true;
@@ -192,13 +198,17 @@ public class SubCommands {
             throw new ParseException("<what> should be 'groups' or 'players'");
         }
 
-        List<String> entityNames = storageStrategy.getDao().getEntityNames(group);
-        Collections.sort(entityNames, new Comparator<String>() {
+        List<PermissionEntity> entities = storageStrategy.getDao().getEntities(group);
+        Collections.sort(entities, new Comparator<PermissionEntity>() {
             @Override
-            public int compare(String a, String b) {
-                return a.compareToIgnoreCase(b);
+            public int compare(PermissionEntity a, PermissionEntity b) {
+                return a.getDisplayName().toLowerCase().compareTo(b.getDisplayName().toLowerCase());
             }
         });
+        List<String> entityNames = new ArrayList<String>(entities.size());
+        for (PermissionEntity entity : entities) {
+            entityNames.add(group ? entity.getDisplayName() : formatPlayerName(entity, showUuid));
+        }
 
         if (entityNames.isEmpty()) {
             sendMessage(sender, colorize("{YELLOW}No %s found."), group ? "groups" : "players");
@@ -378,7 +388,7 @@ public class SubCommands {
             return;
         }
         
-        List<Membership> memberships = storageStrategy.getDao().getGroups(sender.getName());
+        List<Membership> memberships = storageStrategy.getDao().getGroups(((Player)sender).getUniqueId());
         if (!verbose)
             memberships = Utils.filterExpired(memberships);
         Collections.reverse(memberships); // Order from highest to lowest
@@ -406,22 +416,22 @@ public class SubCommands {
             return;
         }
         if ((value != null && !value.isEmpty()) || rest.length > 0) {
-            setPlayerMetadataString(sender, metadataName, value, rest);
+            setPlayerMetadataString((Player)sender, metadataName, value, rest);
         }
         else if (clear) {
-            unsetPlayerMetadataString(sender, metadataName);
+            unsetPlayerMetadataString((Player)sender, metadataName);
         }
         else {
-            showPlayerMetadataString(sender, metadataName);
+            showPlayerMetadataString((Player)sender, metadataName);
         }
     }
 
     // Possible dupe with stuff in MetadataCommands. Refactor someday?
-    private void showPlayerMetadataString(final CommandSender sender, final String metadataName) {
+    private void showPlayerMetadataString(final Player sender, final String metadataName) {
         Object result = storageStrategy.getRetryingTransactionStrategy().execute(new TransactionCallback<Object>() {
             @Override
             public Object doInTransaction() throws Exception {
-                return storageStrategy.getDao().getMetadata(sender.getName(), false, metadataName);
+                return storageStrategy.getDao().getMetadata(sender.getName(), sender.getUniqueId(), false, metadataName);
             }
         }, true);
 
@@ -436,7 +446,7 @@ public class SubCommands {
     }
 
     // Possible dupe with stuff in MetadataCommands. Refactor someday?
-    private void setPlayerMetadataString(final CommandSender sender, final String metadataName, String value, String[] rest) {
+    private void setPlayerMetadataString(final Player player, final String metadataName, String value, String[] rest) {
         final StringBuilder stringValue = new StringBuilder(value);
         if (rest.length > 0) {
             stringValue.append(' ')
@@ -445,46 +455,64 @@ public class SubCommands {
         storageStrategy.getRetryingTransactionStrategy().execute(new TransactionCallbackWithoutResult() {
             @Override
             public void doInTransactionWithoutResult() throws Exception {
-                storageStrategy.getDao().setMetadata(sender.getName(), false, metadataName, stringValue.toString());
+                storageStrategy.getDao().setMetadata(player.getName(), player.getUniqueId(), false, metadataName, stringValue.toString());
             }
         });
 
-        sendMessage(sender, colorize("{YELLOW}Your {GOLD}%s{YELLOW} has been set to {GREEN}%s{YELLOW}"), metadataName, stringValue);
-        core.invalidateMetadataCache(sender.getName(), false);
+        sendMessage(player, colorize("{YELLOW}Your {GOLD}%s{YELLOW} has been set to {GREEN}%s{YELLOW}"), metadataName, stringValue);
+        core.invalidateMetadataCache(player.getName(), player.getUniqueId(), false);
     }
 
     // Possible dupe with stuff in MetadataCommands. Refactor someday?
-    private void unsetPlayerMetadataString(final CommandSender sender, final String metadataName) {
+    private void unsetPlayerMetadataString(final Player player, final String metadataName) {
         Boolean result = storageStrategy.getRetryingTransactionStrategy().execute(new TransactionCallback<Boolean>() {
             @Override
             public Boolean doInTransaction() throws Exception {
-                return storageStrategy.getDao().unsetMetadata(sender.getName(), false, metadataName);
+                return storageStrategy.getDao().unsetMetadata(player.getName(), player.getUniqueId(), false, metadataName);
             }
         });
         
         if (result) {
-            sendMessage(sender, colorize("{YELLOW}Your {GOLD}%s{YELLOW} has been unset"), metadataName);
-            core.invalidateMetadataCache(sender.getName(), false);
+            sendMessage(player, colorize("{YELLOW}Your {GOLD}%s{YELLOW} has been unset"), metadataName);
+            core.invalidateMetadataCache(player.getName(), player.getUniqueId(), false);
         }
         else {
-            sendMessage(sender, colorize("{YELLOW}You do not have a {GOLD}%s"), metadataName);
+            sendMessage(player, colorize("{YELLOW}You do not have a {GOLD}%s"), metadataName);
             abortBatchProcessing();
         }
     }
 
     @Command(value="diff", description="Compare effective permissions of a player")
-    public void diff(CommandSender sender, @Option(value={"-r", "--region", "--regions"}, valueName="regions") String regions, @Option(value={"-R", "--other-region", "--other-region"}, valueName="other-regions") String otherRegions,
-            @Option(value={"-f", "--filter"}, valueName="filter") String filter, @Option(value="qualified-player", completer="player") String player, @Option(value="other-qualified-player", completer="player", optional=true) String otherPlayer) {
+    public void diff(CommandSender sender, final @Option(value={"-r", "--region", "--regions"}, valueName="regions") String regions, final @Option(value={"-R", "--other-region", "--other-region"}, valueName="other-regions") String otherRegions,
+            final @Option(value={"-w", "--world"}, valueName="world") String world, final @Option(value={"-W", "--other-world"}, valueName="other-world") String otherWorld,
+            final @Option(value={"-f", "--filter"}, valueName="filter") String filter, final @Option(value="player", completer="player") String player, final @Option(value="other-player", completer="player", optional=true) String otherPlayer) {
+        final SubCommands realThis = this;
+        uuidResolver.resolveUsername(sender, player, false, new CommandUuidResolverHandler() {
+            @Override
+            public void process(CommandSender sender, final String name, final UUID uuid, boolean group) {
+                // Resolve other name (if present)
+                uuidResolver.resolveUsername(sender, otherPlayer, false, new CommandUuidResolverHandler() {
+                    @Override
+                    public void process(CommandSender sender, String otherPlayer, UUID otherUuid, boolean group) {
+                        realThis.diff(sender, regions, otherRegions, world, otherWorld, filter, name, uuid, otherPlayer, otherUuid);
+                    }
+                });
+            }
+        });
+    }
+
+    private void diff(CommandSender sender, String regions, String otherRegions,
+            String world, String otherWorld,
+            String filter, String player, final UUID uuid, String otherPlayer, final UUID otherUuid) {
         List<String> header = new ArrayList<String>();
 
         // Parse qualifiers for first player
-        final QualifiedPlayer qplayer = new QualifiedPlayer(player);
-        Player p = Bukkit.getPlayerExact(qplayer.getPlayerName());
+        Player p = Bukkit.getPlayer(uuid);
         final String worldName;
         final Set<String> regionNames;
         if (otherPlayer != null) {
-            Utils.validatePlayer(storageStrategy.getDao(), resolver.getDefaultGroup(), qplayer.getPlayerName(), header);
-            worldName = determineWorldName(sender, qplayer, header);
+            Utils.validatePlayer(storageStrategy.getDao(), resolver.getDefaultGroup(), uuid, player, header);
+            worldName = determineWorldName(sender, world, player, header);
             if (worldName == null) return;
             regionNames = parseRegions(regions);
         }
@@ -494,7 +522,7 @@ public class SubCommands {
                 sendMessage(sender, colorize("{RED}Player is not online."));
                 return;
             }
-            if (qplayer.getWorld() != null)
+            if (world != null)
                 header.add(colorize("{GRAY}(World qualifier ignored when comparing against Bukkit effective permissions)"));
             worldName = p.getWorld().getName().toLowerCase();
             if (!parseRegions(regions).isEmpty())
@@ -503,28 +531,25 @@ public class SubCommands {
         }
 
         // Parse qualifiers for second player
-        final QualifiedPlayer qother;
         final String otherWorldName;
         final Set<String> otherRegionNames;
         if (otherPlayer != null) {
-            qother = new QualifiedPlayer(otherPlayer);
-            Utils.validatePlayer(storageStrategy.getDao(), resolver.getDefaultGroup(), qother.getPlayerName(), header);
-            otherWorldName = determineWorldName(sender, qother, header);
+            Utils.validatePlayer(storageStrategy.getDao(), resolver.getDefaultGroup(), otherUuid, otherPlayer, header);
+            otherWorldName = determineWorldName(sender, otherWorld, otherPlayer, header);
             if (otherWorldName == null) return;
             otherRegionNames = parseRegions(otherRegions);
         }
         else {
-            qother = null;
             otherWorldName = null;
             otherRegionNames = Collections.emptySet();
         }
 
-        if (qother != null) {
+        if (otherPlayer != null) {
             // Diff one against the other
             Map<String, Boolean> rootPermissions = storageStrategy.getTransactionStrategy().execute(new TransactionCallback<Map<String, Boolean>>() {
                 @Override
                 public Map<String, Boolean> doInTransaction() throws Exception {
-                    return resolver.resolvePlayer(qplayer.getPlayerName().toLowerCase(), worldName, regionNames).getPermissions();
+                    return resolver.resolvePlayer(uuid, worldName, regionNames).getPermissions();
                 }
             }, true);
             Map<String, Boolean> permissions = new HashMap<String, Boolean>();
@@ -533,18 +558,18 @@ public class SubCommands {
             Map<String, Boolean> otherRootPermissions = storageStrategy.getTransactionStrategy().execute(new TransactionCallback<Map<String, Boolean>>() {
                 @Override
                 public Map<String, Boolean> doInTransaction() throws Exception {
-                    return resolver.resolvePlayer(qother.getPlayerName().toLowerCase(), otherWorldName, otherRegionNames).getPermissions();
+                    return resolver.resolvePlayer(otherUuid, otherWorldName, otherRegionNames).getPermissions();
                 }
             }, true);
             Map<String, Boolean> otherPermissions = new HashMap<String, Boolean>();
             Utils.calculateChildPermissions(otherPermissions, otherRootPermissions, false);
 
             Utils.displayPermissionsDiff(plugin, sender, permissions, otherPermissions, header,
-                    String.format(colorize("{AQUA}%s {YELLOW}on %s%s {WHITE}adds{YELLOW}:"), qother.getPlayerName(), otherWorldName,
+                    String.format(colorize("{AQUA}%s {YELLOW}on %s%s {WHITE}adds{YELLOW}:"), otherPlayer, otherWorldName,
                             (otherRegionNames.isEmpty() ? "" : "[" + ToHStringUtils.delimitedString(",", otherRegionNames) + "]")),
-                    String.format(colorize("{AQUA}%s {YELLOW}on %s%s {WHITE}removes{YELLOW}:"), qother.getPlayerName(), otherWorldName,
+                    String.format(colorize("{AQUA}%s {YELLOW}on %s%s {WHITE}removes{YELLOW}:"), otherPlayer, otherWorldName,
                             (otherRegionNames.isEmpty() ? "" : "[" + ToHStringUtils.delimitedString(",", otherRegionNames) + "]")),
-                    String.format(colorize("{AQUA}%s {YELLOW}on %s%s {WHITE}changes{YELLOW}:"), qother.getPlayerName(), otherWorldName,
+                    String.format(colorize("{AQUA}%s {YELLOW}on %s%s {WHITE}changes{YELLOW}:"), otherPlayer, otherWorldName,
                             (otherRegionNames.isEmpty() ? "" : "[" + ToHStringUtils.delimitedString(",", otherRegionNames) + "]")),
                     String.format(colorize("{YELLOW}Players on %s%s have identical effective permissions."), otherWorldName,
                             (otherRegionNames.isEmpty() ? "" : "[" + ToHStringUtils.delimitedString(",", otherRegionNames) + "]")), filter);
@@ -554,7 +579,7 @@ public class SubCommands {
             Map<String, Boolean> rootPermissions = storageStrategy.getTransactionStrategy().execute(new TransactionCallback<Map<String, Boolean>>() {
                 @Override
                 public Map<String, Boolean> doInTransaction() throws Exception {
-                    return resolver.resolvePlayer(qplayer.getPlayerName().toLowerCase(), worldName, regionNames).getPermissions();
+                    return resolver.resolvePlayer(uuid, worldName, regionNames).getPermissions();
                 }
             }, true);
             Map<String, Boolean> permissions = new HashMap<String, Boolean>();
@@ -574,8 +599,8 @@ public class SubCommands {
         }
     }
 
-    private String determineWorldName(CommandSender sender, QualifiedPlayer qplayer, List<String> header) {
-        if (qplayer.getWorld() == null) {
+    private String determineWorldName(CommandSender sender, String world, String player, List<String> header) {
+        if (world == null) {
             String worldName;
             if (sender instanceof Player) {
                 // Use sender's world
@@ -585,16 +610,16 @@ public class SubCommands {
                 // Default to first world
                 worldName = Bukkit.getWorlds().get(0).getName();
             }
-            header.add(String.format(colorize("{GRAY}(Assuming world \"%s\" for player \"%s\")"), worldName, qplayer.getPlayerName()));
+            header.add(String.format(colorize("{GRAY}(Assuming world \"%s\" for player \"%s\")"), worldName, player));
             return worldName.toLowerCase();
         }
         else {
             // Just verify that the given world exists
-            if (Bukkit.getWorld(qplayer.getWorld()) == null) {
-                sendMessage(sender, colorize("{RED}Invalid world for player \"%s\"."), qplayer.getPlayerName());
+            if (Bukkit.getWorld(world) == null) {
+                sendMessage(sender, colorize("{RED}Invalid world for player \"%s\"."), player);
                 return null;
             }
-            return qplayer.getWorld().toLowerCase();
+            return world.toLowerCase();
         }
     }
 
@@ -632,11 +657,11 @@ public class SubCommands {
                     public void doInTransactionWithoutResult() throws Exception {
                         // Purge players
                         for (PermissionEntity player : storageStrategy.getDao().getEntities(false)) {
-                            storageStrategy.getDao().deleteEntity(player.getDisplayName(), false);
+                            storageStrategy.getDao().deleteEntity(player.getDisplayName(), player.getUuid(), false);
                         }
                         // Purge groups
                         for (PermissionEntity group : storageStrategy.getDao().getEntities(true)) {
-                            storageStrategy.getDao().deleteEntity(group.getDisplayName(), true);
+                            storageStrategy.getDao().deleteEntity(group.getDisplayName(), null, true);
                         }
                     }
                 });
@@ -682,7 +707,7 @@ public class SubCommands {
                 
                 // This is going to be slow and inefficient since the DAO scans each member
                 for (Membership membership : toDelete) {
-                    storageStrategy.getDao().removeMember(membership.getGroup().getDisplayName(), membership.getMember());
+                    storageStrategy.getDao().removeMember(membership.getGroup().getDisplayName(), membership.getUuid());
                 }
             }
         });
@@ -698,7 +723,7 @@ public class SubCommands {
 
     @Command(value="search", description="Search for players or groups that have a specific permission")
     @Require("zpermissions.search")
-    public void search(CommandSender sender, @Option(value={"-p", "--players"}) boolean searchPlayers, @Option(value={"-g", "--groups"}) boolean searchGroups,
+    public void search(CommandSender sender, @Option(value={"-U", "--uuid"}) boolean showUuid, @Option(value={"-p", "--players"}) boolean searchPlayers, @Option(value={"-g", "--groups"}) boolean searchGroups,
             @Option(value={"-e", "--effective"}) boolean effective, @Option(value={"-w", "--world"}, valueName="world", completer="world") String worldName,
             @Option(value={"-r", "--region", "--regions"}, valueName="regions") String regions, @Option("permission") String permission) {
         if (!(sender instanceof ConsoleCommandSender)) {
@@ -743,9 +768,13 @@ public class SubCommands {
 
         permission = permission.trim();
 
-        List<String> players = Collections.emptyList();
+        List<UUID> players = Collections.emptyList();
         if (searchPlayers) {
-            players = storageStrategy.getDao().getEntityNames(false);
+            players = new ArrayList<UUID>();
+            List<PermissionEntity> playerEntities = storageStrategy.getDao().getEntities(false);
+            for (PermissionEntity entity : playerEntities) {
+                players.add(entity.getUuid());
+            }
         }
         
         List<String> groups = Collections.emptyList();
@@ -754,7 +783,7 @@ public class SubCommands {
         }
         
         // Create and configure search task
-        SearchTask searchTask = new SearchTask(plugin, storageStrategy, resolver, permission, players, groups, effective, worldName, regionNames);
+        SearchTask searchTask = new SearchTask(plugin, storageStrategy, resolver, permission, players, groups, effective, worldName, regionNames, showUuid);
         searchTask.setBatchSize(config.getSearchBatchSize());
         searchTask.setDelay(config.getSearchDelay());
 
@@ -788,34 +817,6 @@ public class SubCommands {
 
         public long getTimestamp() {
             return timestamp;
-        }
-
-    }
-
-    private static class QualifiedPlayer {
-        
-        private final String world;
-        
-        private final String playerName;
-        
-        private QualifiedPlayer(String qualifiedPlayer) {
-            String[] parts = qualifiedPlayer.split(":", 2);
-            if (parts.length > 1) {
-                world = parts[0];
-                playerName = parts[1];
-            }
-            else {
-                world = null;
-                playerName = parts[0];
-            }
-        }
-
-        public String getWorld() {
-            return world;
-        }
-
-        public String getPlayerName() {
-            return playerName;
         }
 
     }

@@ -17,6 +17,7 @@ package org.tyrannyofheaven.bukkit.zPermissions.dao;
 
 import java.util.Date;
 import java.util.List;
+import java.util.UUID;
 
 import org.tyrannyofheaven.bukkit.zPermissions.model.EntityMetadata;
 import org.tyrannyofheaven.bukkit.zPermissions.model.Entry;
@@ -25,7 +26,7 @@ import org.tyrannyofheaven.bukkit.zPermissions.model.PermissionEntity;
 
 /**
  * Data access object for zPermissions. This isn't actually a pure DAO as it
- * contains some business logic &mdash; {@link #setGroup(String, String, Date)} being the
+ * contains some business logic &mdash; {@link #setGroup(UUID, String, String, Date)} being the
  * biggest offender. Ah well... :)
  * 
  * <p>More like a DAO/service object, I guess!
@@ -37,26 +38,26 @@ import org.tyrannyofheaven.bukkit.zPermissions.model.PermissionEntity;
  */
 public interface PermissionDao {
 
-    public Boolean getPermission(String name, boolean group, String region, String world, String permission);
+    public Boolean getPermission(String name, UUID uuid, boolean group, String region, String world, String permission);
 
-    public void setPermission(String name, boolean group, String region, String world, String permission, boolean value);
+    public void setPermission(String name, UUID uuid, boolean group, String region, String world, String permission, boolean value);
 
-    public boolean unsetPermission(String name, boolean group, String region, String world, String permission);
+    public boolean unsetPermission(String name, UUID uuid, boolean group, String region, String world, String permission);
 
-    public void addMember(String groupName, String member, Date expiration);
+    public void addMember(String groupName, UUID memberUuid, String memberName, Date expiration);
     
-    public boolean removeMember(String groupName, String member);
+    public boolean removeMember(String groupName, UUID memberUuid);
 
     // NB: Resolver critical path
-    public List<Membership> getGroups(String member);
+    public List<Membership> getGroups(UUID memberUuid);
 
     public List<Membership> getMembers(String group);
 
-    public PermissionEntity getEntity(String name, boolean group);
+    public PermissionEntity getEntity(String name, UUID uuid, boolean group);
 
     public List<PermissionEntity> getEntities(boolean group);
 
-    public void setGroup(String playerName, String groupName, Date expiration);
+    public void setGroup(UUID playerUuid, String playerName, String groupName, Date expiration);
 
     // Technically deprecated
     public void setParent(String groupName, String parentName);
@@ -65,24 +66,26 @@ public interface PermissionDao {
 
     public void setPriority(String groupName, int priority);
 
-    public boolean deleteEntity(String name, boolean group);
+    public boolean deleteEntity(String name, UUID uuid, boolean group);
 
     // NB: Resolver critical path
     public List<String> getAncestry(String groupName);
 
     // NB: Resolver critical path
-    public List<Entry> getEntries(String name, boolean group);
+    public List<Entry> getEntries(String name, UUID uuid, boolean group);
 
     public boolean createGroup(String name);
     
     public List<String> getEntityNames(boolean group);
 
-    public Object getMetadata(String name, boolean group, String metadataName);
+    public Object getMetadata(String name, UUID uuid, boolean group, String metadataName);
 
-    public List<EntityMetadata> getAllMetadata(String name, boolean group);
+    public List<EntityMetadata> getAllMetadata(String name, UUID uuid, boolean group);
 
-    public void setMetadata(String name, boolean group, String metadataName, Object value);
+    public void setMetadata(String name, UUID uuid, boolean group, String metadataName, Object value);
 
-    public boolean unsetMetadata(String name, boolean group, String metadataName);
+    public boolean unsetMetadata(String name, UUID uuid, boolean group, String metadataName);
+
+    public void updateDisplayName(UUID uuid, String displayName);
 
 }

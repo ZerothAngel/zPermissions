@@ -26,6 +26,7 @@ import java.util.LinkedHashSet;
 import java.util.PriorityQueue;
 import java.util.Queue;
 import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
@@ -73,7 +74,7 @@ public class ExpirationRefreshHandler implements Runnable {
         membershipQueue.clear();
         Date now = new Date();
         for (Player player : Bukkit.getOnlinePlayers()) {
-            for (Membership membership : storageStrategy.getDao().getGroups(player.getName())) {
+            for (Membership membership : storageStrategy.getDao().getGroups(player.getUniqueId())) {
                 if (membership.getExpiration() != null && membership.getExpiration().after(now)) {
                     membershipQueue.add(membership);
                 }
@@ -88,7 +89,7 @@ public class ExpirationRefreshHandler implements Runnable {
 
     @Override
     public synchronized void run() {
-        Set<String> toRefresh = new LinkedHashSet<String>();
+        Set<UUID> toRefresh = new LinkedHashSet<UUID>();
         final Set<Membership> expired = new LinkedHashSet<Membership>();
 
         // Gather up memberships that have already expired
@@ -97,7 +98,7 @@ public class ExpirationRefreshHandler implements Runnable {
         while (next != null && !next.getExpiration().after(now)) {
             membershipQueue.remove();
 
-            toRefresh.add(next.getMember());
+            toRefresh.add(next.getUuid());
             expired.add(next);
 
             now = new Date();
@@ -116,13 +117,13 @@ public class ExpirationRefreshHandler implements Runnable {
                 @Override
                 public void run() {
                     for (Membership membership : expired) {
-                        Player player = Bukkit.getPlayerExact(membership.getMember());
+                        Player player = Bukkit.getPlayer(membership.getUuid());
                         if (player != null && player.hasPermission("zpermissions.notify.self.expiration")) {
                             sendMessage(player, colorize("{YELLOW}Your membership to {DARK_GREEN}%s{YELLOW} has expired."), membership.getGroup().getDisplayName());
                         }
                         broadcast(plugin, "zpermissions.notify.expiration",
                                 "Player %s is no longer a member of %s",
-                                membership.getMember(), membership.getGroup().getDisplayName());
+                                membership.getDisplayName(), membership.getGroup().getDisplayName());
                     }
                 }
             });

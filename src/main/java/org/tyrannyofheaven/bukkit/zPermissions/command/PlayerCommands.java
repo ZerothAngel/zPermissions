@@ -23,6 +23,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
+import java.util.UUID;
 
 import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
@@ -48,6 +49,8 @@ import org.tyrannyofheaven.bukkit.zPermissions.model.PermissionEntity;
 import org.tyrannyofheaven.bukkit.zPermissions.storage.StorageStrategy;
 import org.tyrannyofheaven.bukkit.zPermissions.util.MetadataConstants;
 import org.tyrannyofheaven.bukkit.zPermissions.util.Utils;
+import org.tyrannyofheaven.bukkit.zPermissions.uuid.CommandUuidResolver;
+import org.tyrannyofheaven.bukkit.zPermissions.uuid.CommandUuidResolverHandler;
 
 /**
  * Handler for player sub-commands. Expects the CommandSession to contain the
@@ -57,8 +60,8 @@ import org.tyrannyofheaven.bukkit.zPermissions.util.Utils;
  */
 public class PlayerCommands extends CommonCommands {
 
-    PlayerCommands(ZPermissionsCore core, StorageStrategy storageStrategy, PermissionsResolver resolver, ZPermissionsConfig config, Plugin plugin) {
-        super(core, storageStrategy, resolver, config, plugin, false);
+    PlayerCommands(ZPermissionsCore core, StorageStrategy storageStrategy, PermissionsResolver resolver, ZPermissionsConfig config, Plugin plugin, CommandUuidResolver uuidResolver) {
+        super(core, storageStrategy, resolver, config, plugin, uuidResolver, false);
     }
 
     // Common commands
@@ -122,29 +125,44 @@ public class PlayerCommands extends CommonCommands {
     @Command(value="groups", description="List groups this player is a member of")
     @Require("zpermissions.player.view")
     public void getGroups(CommandSender sender, @Session("entityName") String name) {
-        List<Membership> memberships = storageStrategy.getDao().getGroups(name);
+        uuidResolver.resolveUsername(sender, name, false, new CommandUuidResolverHandler() {
+            @Override
+            public void process(CommandSender sender, String name, UUID uuid, boolean group) {
+                getGroups(sender, uuid, name);
+            }
+        });
+    }
+
+    private void getGroups(CommandSender sender, UUID uuid, String name) {
+        List<Membership> memberships = storageStrategy.getDao().getGroups(uuid);
         Collections.reverse(memberships); // Order from highest to lowest
 
         String groups = Utils.displayGroups(resolver.getDefaultGroup(), memberships);
 
         sendMessage(sender, colorize("{AQUA}%s{YELLOW} is a member of: %s"), name, groups);
-        
-        if (memberships.isEmpty())
-            Utils.checkPlayer(sender, name);
     }
 
     @Command(value={"setgroup", "group"}, description="Set this player's singular group")
     @Require("zpermissions.player.manage")
-    public void setGroup(CommandSender sender, final @Session("entityName") String playerName, final @Option({"-a", "--add"}) boolean add, final @Option(value="group", completer="group") String groupName, @Option(value="duration/timestamp", optional=true) String duration, String[] args) {
+    public void setGroup(CommandSender sender, final @Session("entityName") String playerName, final @Option({"-a", "--add"}) boolean add, final @Option(value="group", completer="group") String groupName, final @Option(value="duration/timestamp", optional=true) String duration, final String[] args) {
+        uuidResolver.resolveUsername(sender, playerName, false, new CommandUuidResolverHandler() {
+            @Override
+            public void process(CommandSender sender, String name, UUID uuid, boolean group) {
+                setGroup(sender, uuid, name, add, groupName, duration, args);
+            }
+        });
+    }
+
+    private void setGroup(CommandSender sender, final UUID uuid, final String playerName, final boolean add, final String groupName, String duration, String[] args) {
         final Date expiration = Utils.parseDurationTimestamp(duration, args);
 
         try {
             storageStrategy.getRetryingTransactionStrategy().execute(new TransactionCallbackWithoutResult() {
                 @Override
                 public void doInTransactionWithoutResult() throws Exception {
-                    Date newExpiration = handleExtendExpiration(groupName, playerName, add, expiration);
+                    Date newExpiration = handleExtendExpiration(groupName, uuid, playerName, add, expiration);
 
-                    storageStrategy.getDao().setGroup(playerName, groupName, newExpiration);
+                    storageStrategy.getDao().setGroup(uuid, playerName, groupName, newExpiration);
                 }
             });
         }
@@ -154,12 +172,11 @@ public class PlayerCommands extends CommonCommands {
         }
 
         sendMessage(sender, colorize("{AQUA}%s{YELLOW}'s group set to {DARK_GREEN}%s"), playerName, groupName);
-        Utils.checkPlayer(sender, playerName);
-        core.invalidateMetadataCache(playerName, false);
-        core.refreshPlayer(playerName, RefreshCause.GROUP_CHANGE);
+        core.invalidateMetadataCache(playerName, uuid, false);
+        core.refreshPlayer(null, RefreshCause.GROUP_CHANGE);
         
         if (expiration != null)
-            core.refreshExpirations(playerName);
+            core.refreshExpirations(uuid);
     }
 
     @Command(value={"addgroup", "add"}, description="Add this player to a group")
@@ -176,12 +193,20 @@ public class PlayerCommands extends CommonCommands {
 
     @Command(value={"show", "sh"}, description="Show information about a player")
     @Require("zpermissions.player.view")
-    public void show(CommandSender sender, @Session("entityName") String playerName, @Option(value={"-f", "--filter"}, valueName="filter") String filter) {
-        PermissionEntity entity = storageStrategy.getDao().getEntity(playerName, false);
+    public void show(CommandSender sender, @Session("entityName") String playerName, final @Option(value={"-f", "--filter"}, valueName="filter") String filter) {
+        uuidResolver.resolveUsername(sender, playerName, false, new CommandUuidResolverHandler() {
+            @Override
+            public void process(CommandSender sender, String name, UUID uuid, boolean group) {
+                show(sender, uuid, name, filter);
+            }
+        });
+    }
+
+    private void show(CommandSender sender, UUID uuid, String playerName, String filter) {
+        PermissionEntity entity = storageStrategy.getDao().getEntity(playerName, uuid, false);
 
         if (entity == null || entity.getPermissions().isEmpty()) {
             sendMessage(sender, colorize("{RED}Player has no declared permissions."));
-            Utils.checkPlayer(sender, playerName);
             return;
         }
 
@@ -256,12 +281,6 @@ public class PlayerCommands extends CommonCommands {
     @Require("zpermissions.player.manage")
     public void clone(CommandSender sender, @Session("entityName") String playerName, @Option("new-player") String destination) {
         super.clone(sender, playerName, destination, false);
-    }
-
-    @Command(value={"rename", "ren", "mv"}, description="Rename this player")
-    @Require("zpermissions.player.manage")
-    public void rename(CommandSender sender, @Session("entityName") String playerName, @Option("new-player") String destination) {
-        super.clone(sender, playerName, destination, true);
     }
 
 }

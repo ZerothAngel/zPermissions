@@ -16,11 +16,13 @@
 package org.tyrannyofheaven.bukkit.zPermissions.util;
 
 import static org.tyrannyofheaven.bukkit.util.ToHLoggingUtils.log;
+import static org.tyrannyofheaven.bukkit.zPermissions.util.Utils.formatPlayerName;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.bukkit.Bukkit;
@@ -45,7 +47,7 @@ public class SearchTask implements Runnable {
 
     private final String permission;
 
-    private final List<String> players;
+    private final List<UUID> players;
     
     private final List<String> groups;
     
@@ -55,11 +57,13 @@ public class SearchTask implements Runnable {
     
     private final Set<String> regions;
 
+    private final boolean showUuid;
+
     private int batchSize = 1;
     
     private int delay = 5;
 
-    public SearchTask(Plugin plugin, StorageStrategy storageStrategy, PermissionsResolver resolver, String permission, List<String> players, List<String> groups, boolean effective, String world, Set<String> regions) {
+    public SearchTask(Plugin plugin, StorageStrategy storageStrategy, PermissionsResolver resolver, String permission, List<UUID> players, List<String> groups, boolean effective, String world, Set<String> regions, boolean showUuid) {
         this.searchId = searchIdGenerator.incrementAndGet();
         this.plugin = plugin;
         this.storageStrategy = storageStrategy;
@@ -70,6 +74,7 @@ public class SearchTask implements Runnable {
         this.effective = effective;
         this.world = world;
         this.regions = regions;
+        this.showUuid = showUuid;
     }
 
     public int getSearchId() {
@@ -97,12 +102,12 @@ public class SearchTask implements Runnable {
         int size = 0;
         
         while (size < getBatchSize() && !players.isEmpty()) {
-            String playerName = players.remove(0);
+            UUID uuid = players.remove(0);
             
-            PermissionEntity entity = storageStrategy.getDao().getEntity(playerName, false);
+            PermissionEntity entity = storageStrategy.getDao().getEntity("ignored", uuid, false);
             if (entity != null && !entity.getPermissions().isEmpty()) {
                 if (checkPermissions(entity) || (effective && checkEffectivePermissions(entity))) {
-                    log(plugin, "Search result (#%d): player %s", getSearchId(), entity.getDisplayName());
+                    log(plugin, "Search result (#%d): player %s", getSearchId(), formatPlayerName(entity, showUuid));
                 }
             }
             
@@ -112,7 +117,7 @@ public class SearchTask implements Runnable {
         while (size < getBatchSize() && !groups.isEmpty()) {
             String groupName = groups.remove(0);
             
-            PermissionEntity entity = storageStrategy.getDao().getEntity(groupName, true);
+            PermissionEntity entity = storageStrategy.getDao().getEntity(groupName, null, true);
             if (entity != null && !entity.getPermissions().isEmpty()) {
                 if (checkPermissions(entity) || (effective && checkEffectivePermissions(entity))) {
                     log(plugin, "Search result (#%d): group %s", getSearchId(), entity.getDisplayName());
@@ -146,7 +151,7 @@ public class SearchTask implements Runnable {
                     return resolver.resolveGroup(entity.getDisplayName(), world, regions);
                 }
                 else {
-                    return resolver.resolvePlayer(entity.getDisplayName(), world, regions).getPermissions();
+                    return resolver.resolvePlayer(entity.getUuid(), world, regions).getPermissions();
                 }
             }
         }, true);

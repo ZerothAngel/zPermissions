@@ -16,6 +16,7 @@
 package org.tyrannyofheaven.bukkit.zPermissions.model;
 
 import java.util.Date;
+import java.util.UUID;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -24,7 +25,10 @@ import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 import javax.persistence.Temporal;
 import javax.persistence.TemporalType;
+import javax.persistence.Transient;
 import javax.persistence.UniqueConstraint;
+
+import org.tyrannyofheaven.bukkit.zPermissions.uuid.UuidUtils;
 
 /**
  * Represents group membership.
@@ -39,6 +43,8 @@ public class Membership {
     private Long id;
 
     private String member;
+
+    private String displayName;
 
     private PermissionEntity group;
 
@@ -61,6 +67,14 @@ public class Membership {
         this.member = member;
     }
 
+    public String getDisplayName() {
+        return displayName;
+    }
+
+    public void setDisplayName(String displayName) {
+        this.displayName = displayName;
+    }
+
     @Column(name="group_id")
     @ManyToOne(optional=false)
     public PermissionEntity getGroup() {
@@ -78,6 +92,11 @@ public class Membership {
 
     public void setExpiration(Date expiration) {
         this.expiration = expiration;
+    }
+
+    @Transient
+    public UUID getUuid() {
+        return UuidUtils.uncanonicalizeUuid(getMember());
     }
 
     @Override
@@ -99,7 +118,7 @@ public class Membership {
 
     @Override
     public String toString() {
-        return String.format("Membership[%s -> %s]", getGroup().getName(), getMember());
+        return String.format("Membership[%s -> %s/%s]", getGroup().getName(), getMember(), getDisplayName());
     }
 
 }

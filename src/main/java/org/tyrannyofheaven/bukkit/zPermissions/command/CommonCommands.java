@@ -28,6 +28,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
@@ -52,6 +53,8 @@ import org.tyrannyofheaven.bukkit.zPermissions.model.PermissionEntity;
 import org.tyrannyofheaven.bukkit.zPermissions.storage.StorageStrategy;
 import org.tyrannyofheaven.bukkit.zPermissions.util.MetadataConstants;
 import org.tyrannyofheaven.bukkit.zPermissions.util.Utils;
+import org.tyrannyofheaven.bukkit.zPermissions.uuid.CommandUuidResolver;
+import org.tyrannyofheaven.bukkit.zPermissions.uuid.CommandUuidResolverHandler;
 
 /**
  * Handler for common commands between "/permissions group" and
@@ -72,6 +75,8 @@ public abstract class CommonCommands {
     // Parent plugin
     protected final Plugin plugin;
 
+    protected final CommandUuidResolver uuidResolver;
+
     // true if this is handling groups
     private final boolean group;
 
@@ -81,22 +86,32 @@ public abstract class CommonCommands {
      * Instantiate this handler.
      * @param group true if this is handling groups
      */
-    protected CommonCommands(ZPermissionsCore core, StorageStrategy storageStrategy, PermissionsResolver resolver, ZPermissionsConfig config, Plugin plugin, boolean group) {
+    protected CommonCommands(ZPermissionsCore core, StorageStrategy storageStrategy, PermissionsResolver resolver, ZPermissionsConfig config, Plugin plugin, CommandUuidResolver uuidResolver, boolean group) {
         this.core = core;
         this.storageStrategy = storageStrategy;
         this.resolver = resolver;
         this.config = config;
         this.plugin = plugin;
+        this.uuidResolver = uuidResolver;
         this.group = group;
         
-        metadataCommands = new MetadataCommands(core, storageStrategy, group);
+        metadataCommands = new MetadataCommands(core, storageStrategy, uuidResolver, group);
     }
 
     protected final MetadataCommands getMetadataCommands() {
         return metadataCommands;
     }
 
-    protected final void _get(CommandSender sender, final String name, String permission) {
+    protected final void _get(CommandSender sender, final String name, final String permission) {
+        uuidResolver.resolveUsername(sender, name, group, new CommandUuidResolverHandler() {
+            @Override
+            public void process(CommandSender sender, String name, UUID uuid, boolean group) {
+                _get0(sender, name, uuid, permission);
+            }
+        });
+    }
+
+    private void _get0(CommandSender sender, final String name, final UUID uuid, String permission) {
         // Get world/permission
         final QualifiedPermission wp = new QualifiedPermission(permission);
 
@@ -107,14 +122,12 @@ public abstract class CommonCommands {
         Boolean result = storageStrategy.getRetryingTransactionStrategy().execute(new TransactionCallback<Boolean>() {
             @Override
             public Boolean doInTransaction() throws Exception {
-                return storageStrategy.getDao().getPermission(name, group, wp.getRegion(), wp.getWorld(), wp.getPermission());
+                return storageStrategy.getDao().getPermission(name, uuid, group, wp.getRegion(), wp.getWorld(), wp.getPermission());
             }
         }, true);
         
         if (result == null) {
             sendMessage(sender, colorize("%s%s{YELLOW} does not set {GOLD}%s"), group ? ChatColor.DARK_GREEN : ChatColor.AQUA, name, permission);
-            if (!group)
-                Utils.checkPlayer(sender, name);
             abortBatchProcessing();
         }
         else {
@@ -122,7 +135,16 @@ public abstract class CommonCommands {
         }
     }
 
-    protected final void _set(CommandSender sender, final String name, String permission, final Boolean value) {
+    protected final void _set(CommandSender sender, final String name, final String permission, final Boolean value) {
+        uuidResolver.resolveUsername(sender, name, group, new CommandUuidResolverHandler() {
+            @Override
+            public void process(CommandSender sender, String name, UUID uuid, boolean group) {
+                _set0(sender, name, uuid, permission, value);
+            }
+        });
+    }
+
+    private void _set0(CommandSender sender, final String name, final UUID uuid, String permission, final Boolean value) {
         // Get world/permission
         final QualifiedPermission wp = new QualifiedPermission(permission);
     
@@ -134,7 +156,7 @@ public abstract class CommonCommands {
             storageStrategy.getRetryingTransactionStrategy().execute(new TransactionCallbackWithoutResult() {
                 @Override
                 public void doInTransactionWithoutResult() throws Exception {
-                    storageStrategy.getDao().setPermission(name, group, wp.getRegion(), wp.getWorld(), wp.getPermission(), value == null ? Boolean.TRUE : value);
+                    storageStrategy.getDao().setPermission(name, uuid, group, wp.getRegion(), wp.getWorld(), wp.getPermission(), value == null ? Boolean.TRUE : value);
                 }
             });
         }
@@ -145,15 +167,23 @@ public abstract class CommonCommands {
     
         sendMessage(sender, colorize("{GOLD}%s{YELLOW} set to {GREEN}%s{YELLOW} for %s%s"), permission, value == null ? Boolean.TRUE : value, group ? ChatColor.DARK_GREEN : ChatColor.AQUA, name);
         if (!group) {
-            Utils.checkPlayer(sender, name);
-            core.refreshPlayer(name, RefreshCause.COMMAND);
+            core.refreshPlayer(null, RefreshCause.COMMAND);
         }
         else {
             core.refreshAffectedPlayers(name);
         }
     }
 
-    protected final void _unset(CommandSender sender, final String name, String permission) {
+    protected final void _unset(CommandSender sender, final String name, final String permission) {
+        uuidResolver.resolveUsername(sender, name, group, new CommandUuidResolverHandler() {
+            @Override
+            public void process(CommandSender sender, String name, UUID uuid, boolean group) {
+                _unset0(sender, name, uuid, permission);
+            }
+        });
+    }
+
+    private void _unset0(CommandSender sender, final String name, final UUID uuid, String permission) {
         // Get world/permission
         final QualifiedPermission wp = new QualifiedPermission(permission);
     
@@ -164,7 +194,7 @@ public abstract class CommonCommands {
         Boolean result = storageStrategy.getRetryingTransactionStrategy().execute(new TransactionCallback<Boolean>() {
             @Override
             public Boolean doInTransaction() throws Exception {
-                return storageStrategy.getDao().unsetPermission(name, group, wp.getRegion(), wp.getWorld(), wp.getPermission());
+                return storageStrategy.getDao().unsetPermission(name, uuid, group, wp.getRegion(), wp.getWorld(), wp.getPermission());
             }
         });
 
@@ -173,12 +203,10 @@ public abstract class CommonCommands {
             if (group)
                 core.refreshAffectedPlayers(name);
             else
-                core.refreshPlayer(name, RefreshCause.COMMAND);
+                core.refreshPlayer(null, RefreshCause.COMMAND);
         }
         else {
             sendMessage(sender, colorize("%s%s{RED} does not set {GOLD}%s"), group ? ChatColor.DARK_GREEN : ChatColor.AQUA, name, permission);
-            if (!group)
-                Utils.checkPlayer(sender, name);
             abortBatchProcessing();
         }
     }
@@ -200,10 +228,19 @@ public abstract class CommonCommands {
     }
 
     protected final void _delete(CommandSender sender, final String name) {
+        uuidResolver.resolveUsername(sender, name, group, new CommandUuidResolverHandler() {
+            @Override
+            public void process(CommandSender sender, String name, UUID uuid, boolean group) {
+                _delete0(sender, name, uuid);
+            }
+        });
+    }
+
+    private void _delete0(CommandSender sender, final String name, final UUID uuid) {
         boolean result = storageStrategy.getRetryingTransactionStrategy().execute(new TransactionCallback<Boolean>() {
             @Override
             public Boolean doInTransaction() throws Exception {
-                return storageStrategy.getDao().deleteEntity(name, group);
+                return storageStrategy.getDao().deleteEntity(name, uuid, group);
             }
         });
         
@@ -212,11 +249,11 @@ public abstract class CommonCommands {
                     (group ? "Group" : "Player"),
                     (group ? ChatColor.DARK_GREEN : ChatColor.AQUA),
                     name);
-            core.invalidateMetadataCache(name, group);
+            core.invalidateMetadataCache(name, uuid, group);
             if (group)
                 core.refreshAffectedPlayers(name);
             else
-                core.refreshPlayer(name, RefreshCause.COMMAND);
+                core.refreshPlayer(null, RefreshCause.COMMAND);
             core.refreshExpirations();
         }
         else {
@@ -225,13 +262,22 @@ public abstract class CommonCommands {
         }
     }
 
-    protected final void _dump(CommandSender sender, final String name, String worldName, String filter, String[] regionNames) {
+    protected final void _dump(CommandSender sender, final String name, final String worldName, final String filter, final String[] regionNames) {
+        uuidResolver.resolveUsername(sender, name, group, new CommandUuidResolverHandler() {
+            @Override
+            public void process(CommandSender sender, String name, UUID uuid, boolean group) {
+                _dump0(sender, name, uuid, worldName, filter, regionNames);
+            }
+        });
+    }
+
+    private void _dump0(CommandSender sender, final String name, final UUID uuid, String worldName, String filter, String[] regionNames) {
         List<String> header = new ArrayList<String>();
         worldName = getEffectiveWorld(sender, worldName, header);
         if (worldName == null) return;
 
         if (!group)
-            Utils.validatePlayer(storageStrategy.getDao(), resolver.getDefaultGroup(), name, header);
+            Utils.validatePlayer(storageStrategy.getDao(), resolver.getDefaultGroup(), uuid, name, header);
 
         // Ensure regions are lowercased
         final Set<String> regions = new LinkedHashSet<String>();
@@ -247,12 +293,12 @@ public abstract class CommonCommands {
                 @Override
                 public Map<String, Boolean> doInTransaction() throws Exception {
                     if (group) {
-                        if (storageStrategy.getDao().getEntity(name, true) == null)
+                        if (storageStrategy.getDao().getEntity(name, null, true) == null)
                             throw new MissingGroupException(name); // Don't really want to handle it in the transaction...
                         return resolver.resolveGroup(name.toLowerCase(), lworldName, regions);
                     }
                     else {
-                        return resolver.resolvePlayer(name.toLowerCase(), lworldName, regions).getPermissions();
+                        return resolver.resolvePlayer(uuid, lworldName, regions).getPermissions();
                     }
                 }
             }, true);
@@ -296,14 +342,30 @@ public abstract class CommonCommands {
         return worldName;
     }
 
-    protected final void _diff(CommandSender sender, final String name, String worldName, String filter, final String otherName, String[] regionNames) {
+    protected final void _diff(CommandSender sender, final String name, final String worldName, final String filter, final String otherName, final String[] regionNames) {
+        final CommonCommands realThis = this;
+        uuidResolver.resolveUsername(sender, name, group, new CommandUuidResolverHandler() {
+            @Override
+            public void process(CommandSender sender, final String name, final UUID uuid, boolean group) {
+                // Resolve both names...
+                uuidResolver.resolveUsername(sender, otherName, group, new CommandUuidResolverHandler() {
+                    @Override
+                    public void process(CommandSender sender, String otherName, UUID otherUuid, boolean group) {
+                        realThis._diff(sender, name, uuid, worldName, filter, otherName, otherUuid, regionNames);
+                    }
+                });
+            }
+        });
+    }
+
+    private void _diff(CommandSender sender, final String name, final UUID uuid, String worldName, String filter, final String otherName, final UUID otherUuid, String[] regionNames) {
         List<String> header = new ArrayList<String>();
         worldName = getEffectiveWorld(sender, worldName, header);
         if (worldName == null) return;
 
         if (!group) {
-            Utils.validatePlayer(storageStrategy.getDao(), resolver.getDefaultGroup(), name, header);
-            Utils.validatePlayer(storageStrategy.getDao(), resolver.getDefaultGroup(), otherName, header);
+            Utils.validatePlayer(storageStrategy.getDao(), resolver.getDefaultGroup(), uuid, name, header);
+            Utils.validatePlayer(storageStrategy.getDao(), resolver.getDefaultGroup(), otherUuid, otherName, header);
         }
 
         // Ensure regions are lowercased
@@ -320,12 +382,12 @@ public abstract class CommonCommands {
                 @Override
                 public Map<String, Boolean> doInTransaction() throws Exception {
                     if (group) {
-                        if (storageStrategy.getDao().getEntity(name, true) == null)
+                        if (storageStrategy.getDao().getEntity(name, null, true) == null)
                             throw new MissingGroupException(name); // Don't really want to handle it in the transaction...
                         return resolver.resolveGroup(name.toLowerCase(), lworldName, regions);
                     }
                     else {
-                        return resolver.resolvePlayer(name.toLowerCase(), lworldName, regions).getPermissions();
+                        return resolver.resolvePlayer(uuid, lworldName, regions).getPermissions();
                     }
                 }
             }, true);
@@ -346,12 +408,12 @@ public abstract class CommonCommands {
                 @Override
                 public Map<String, Boolean> doInTransaction() throws Exception {
                     if (group) {
-                        if (storageStrategy.getDao().getEntity(otherName, true) == null)
+                        if (storageStrategy.getDao().getEntity(otherName, null, true) == null)
                             throw new MissingGroupException(otherName); // Don't really want to handle it in the transaction...
                         return resolver.resolveGroup(otherName.toLowerCase(), lworldName, regions);
                     }
                     else {
-                        return resolver.resolvePlayer(otherName.toLowerCase(), lworldName, regions).getPermissions();
+                        return resolver.resolvePlayer(otherUuid, lworldName, regions).getPermissions();
                     }
                 }
             }, true);
@@ -396,13 +458,33 @@ public abstract class CommonCommands {
     }
 
     protected final void clone(final CommandSender sender, final String name, final String destination, final boolean rename) {
+        // Don't allow rename of players
+        if (!group && rename)
+            throw new IllegalArgumentException();
+
+        final CommonCommands realThis = this;
+        uuidResolver.resolveUsername(sender, name, group, new CommandUuidResolverHandler() {
+            @Override
+            public void process(CommandSender sender, final String sourceName, final UUID sourceUuid, boolean group) {
+                // Resolve twice (yeah, pretty insane...)
+                uuidResolver.resolveUsername(sender, destination, group, new CommandUuidResolverHandler() {
+                    @Override
+                    public void process(CommandSender sender, String destination, UUID destinationUuid, boolean group) {
+                        realThis.clone(sender, sourceName, sourceUuid, destination, destinationUuid, rename);
+                    }
+                });
+            }
+        });
+    }
+
+    private void clone(final CommandSender sender, final String name, final UUID sourceUuid, final String destination, final UUID destinationUuid, final boolean rename) {
         storageStrategy.getRetryingTransactionStrategy().execute(new TransactionCallbackWithoutResult() {
             @Override
             public void doInTransactionWithoutResult() throws Exception {
-                PermissionEntity entity = storageStrategy.getDao().getEntity(name, group);
+                PermissionEntity entity = storageStrategy.getDao().getEntity(name, sourceUuid, group);
                 List<Membership> memberships = Collections.emptyList();
                 if (!group) {
-                    memberships = storageStrategy.getDao().getGroups(name);
+                    memberships = storageStrategy.getDao().getGroups(sourceUuid);
                 }
                 if (entity == null && memberships.isEmpty()) {
                     // Nothing to copy
@@ -413,7 +495,7 @@ public abstract class CommonCommands {
                     abortBatchProcessing();
                     return;
                 }
-                if (storageStrategy.getDao().getEntity(destination, group) != null) {
+                if (storageStrategy.getDao().getEntity(destination, destinationUuid, group) != null) {
                     sendMessage(sender, colorize("{RED}%s %s%s{RED} already exists. Purge it if you really want to overwrite."),
                             (group ? "Group" : "Player"),
                             (group ? ChatColor.DARK_GREEN : ChatColor.AQUA),
@@ -429,14 +511,14 @@ public abstract class CommonCommands {
                 if (entity != null) {
                     // Clone permissions
                     for (Entry entry : entity.getPermissions()) {
-                        storageStrategy.getDao().setPermission(destination, group,
+                        storageStrategy.getDao().setPermission(destination, destinationUuid,
+                                group,
                                 (entry.getRegion() != null ? entry.getRegion().getName() : null),
-                                (entry.getWorld() != null ? entry.getWorld().getName() : null),
-                                entry.getPermission(), entry.isValue());
+                                (entry.getWorld() != null ? entry.getWorld().getName() : null), entry.getPermission(), entry.isValue());
                     }
                     // Clone metadata
                     for (EntityMetadata metadata : entity.getMetadata()) {
-                        storageStrategy.getDao().setMetadata(destination, group, metadata.getName(), metadata.getValue());
+                        storageStrategy.getDao().setMetadata(destination, destinationUuid, group, metadata.getName(), metadata.getValue());
                     }
                 }
                 if (group) {
@@ -450,7 +532,7 @@ public abstract class CommonCommands {
                 else {
                     // Player-specific stuff
                     for (Membership membership : memberships) {
-                        storageStrategy.getDao().addMember(membership.getGroup().getDisplayName(), destination, membership.getExpiration());
+                        storageStrategy.getDao().addMember(membership.getGroup().getDisplayName(), destinationUuid, destination, membership.getExpiration());
                     }
                 }
 
@@ -470,14 +552,14 @@ public abstract class CommonCommands {
                         
                         // Add players to destination
                         for (Membership membership : entity.getMemberships()) {
-                            storageStrategy.getDao().addMember(destination, membership.getMember(), membership.getExpiration());
+                            storageStrategy.getDao().addMember(destination, membership.getUuid(), membership.getDisplayName(), membership.getExpiration());
                         }
                     }
                     
                     // NB Nothing more to do for players
                     
                     // Delete original
-                    storageStrategy.getDao().deleteEntity(name, group);
+                    storageStrategy.getDao().deleteEntity(name, sourceUuid, group);
                 }
 
                 broadcastAdmin(plugin, "%s %s %s %s to %s", sender.getName(),
@@ -532,7 +614,16 @@ public abstract class CommonCommands {
         abortBatchProcessing();
     }
 
-    protected final void addGroupMember(CommandSender sender, final String groupName, final String playerName, String duration, String[] args, final boolean add) {
+    protected final void addGroupMember(CommandSender sender, final String groupName, final String playerName, final String duration, final String[] args, final boolean add) {
+        uuidResolver.resolveUsername(sender, playerName, false, new CommandUuidResolverHandler() {
+            @Override
+            public void process(CommandSender sender, String name, UUID uuid, boolean group) {
+                addGroupMember(sender, groupName, uuid, name, duration, args, add);
+            }
+        });
+    }
+
+    private void addGroupMember(CommandSender sender, final String groupName, final UUID playerUuid, final String playerName, String duration, String[] args, final boolean add) {
         final Date expiration = Utils.parseDurationTimestamp(duration, args);
     
         // Add player to group.
@@ -540,9 +631,9 @@ public abstract class CommonCommands {
             storageStrategy.getRetryingTransactionStrategy().execute(new TransactionCallbackWithoutResult() {
                 @Override
                 public void doInTransactionWithoutResult() throws Exception {
-                    Date newExpiration = handleExtendExpiration(groupName, playerName, add, expiration);
+                    Date newExpiration = handleExtendExpiration(groupName, playerUuid, playerName, add, expiration);
 
-                    storageStrategy.getDao().addMember(groupName, playerName, newExpiration);
+                    storageStrategy.getDao().addMember(groupName, playerUuid, playerName, newExpiration);
                 }
             });
         }
@@ -552,43 +643,50 @@ public abstract class CommonCommands {
         }
     
         sendMessage(sender, colorize("{AQUA}%s{YELLOW} added to {DARK_GREEN}%s"), playerName, groupName);
-        Utils.checkPlayer(sender, playerName);
-        core.invalidateMetadataCache(playerName, false);
-        core.refreshPlayer(playerName, RefreshCause.GROUP_CHANGE);
+        core.invalidateMetadataCache(playerName, playerUuid, false);
+        core.refreshPlayer(playerUuid, RefreshCause.GROUP_CHANGE);
         
         if (expiration != null)
-            core.refreshExpirations(playerName);
+            core.refreshExpirations(playerUuid);
     }
 
     protected final void removeGroupMember(CommandSender sender, final String groupName, final String playerName) {
+        uuidResolver.resolveUsername(sender, playerName, false, new CommandUuidResolverHandler() {
+            @Override
+            public void process(CommandSender sender, String name, UUID uuid, boolean group) {
+                removeGroupMember(sender, groupName, uuid, name);
+            }
+        });
+    }
+
+    private void removeGroupMember(CommandSender sender, final String groupName, final UUID playerUuid, final String playerName) {
         // Remove player from group
         Boolean result = storageStrategy.getRetryingTransactionStrategy().execute(new TransactionCallback<Boolean>() {
             @Override
             public Boolean doInTransaction() throws Exception {
-                return storageStrategy.getDao().removeMember(groupName, playerName);
+                return storageStrategy.getDao().removeMember(groupName, playerUuid);
             }
         });
     
         if (result) {
             sendMessage(sender, colorize("{AQUA}%s{YELLOW} removed from {DARK_GREEN}%s"), playerName, groupName);
-            core.invalidateMetadataCache(playerName, false);
-            core.refreshPlayer(playerName, RefreshCause.GROUP_CHANGE);
-            core.refreshExpirations(playerName);
+            core.invalidateMetadataCache(playerName, playerUuid, false);
+            core.refreshPlayer(playerUuid, RefreshCause.GROUP_CHANGE);
+            core.refreshExpirations(playerUuid);
         }
         else {
             sendMessage(sender, colorize("{DARK_GREEN}%s{RED} does not exist or {AQUA}%s{RED} is not a member"), groupName, playerName);
-            Utils.checkPlayer(sender, playerName);
             abortBatchProcessing();
         }
     }
 
-    protected Date handleExtendExpiration(final String groupName, final String playerName, final boolean add, final Date expiration) {
+    protected final Date handleExtendExpiration(final String groupName, UUID playerUuid, final String playerName, final boolean add, final Date expiration) {
         Date newExpiration = expiration;
         if (add) {
             if (expiration != null) {
                 Date now = new Date();
 
-                List<Membership> memberships = storageStrategy.getDao().getGroups(playerName);
+                List<Membership> memberships = storageStrategy.getDao().getGroups(playerUuid);
 
                 // Determine a previous duration, if any
                 long previousDuration = 0L;

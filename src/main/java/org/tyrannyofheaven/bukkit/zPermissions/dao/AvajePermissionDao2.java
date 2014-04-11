@@ -21,6 +21,7 @@ import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.Executor;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -77,33 +78,33 @@ public class AvajePermissionDao2 extends BaseMemoryPermissionDao {
     }
 
     @Override
-    synchronized public Boolean getPermission(String name, boolean group, String region, String world, String permission) {
-        return super.getPermission(name, group, region, world, permission);
+    synchronized public Boolean getPermission(String name, UUID uuid, boolean group, String region, String world, String permission) {
+        return super.getPermission(name, uuid, group, region, world, permission);
     }
 
     @Override
-    synchronized public void setPermission(String name, boolean group, String region, String world, String permission, boolean value) {
-        super.setPermission(name, group, region, world, permission, value);
+    synchronized public void setPermission(String name, UUID uuid, boolean group, String region, String world, String permission, boolean value) {
+        super.setPermission(name, uuid, group, region, world, permission, value);
     }
 
     @Override
-    synchronized public boolean unsetPermission(String name, boolean group, String region, String world, String permission) {
-        return super.unsetPermission(name, group, region, world, permission);
+    synchronized public boolean unsetPermission(String name, UUID uuid, boolean group, String region, String world, String permission) {
+        return super.unsetPermission(name, uuid, group, region, world, permission);
     }
 
     @Override
-    synchronized public void addMember(String groupName, String member, Date expiration) {
-        super.addMember(groupName, member, expiration);
+    synchronized public void addMember(String groupName, UUID memberUuid, String memberName, Date expiration) {
+        super.addMember(groupName, memberUuid, memberName, expiration);
     }
 
     @Override
-    synchronized public boolean removeMember(String groupName, String member) {
-        return super.removeMember(groupName, member);
+    synchronized public boolean removeMember(String groupName, UUID memberUuid) {
+        return super.removeMember(groupName, memberUuid);
     }
 
     @Override
-    synchronized public List<Membership> getGroups(String member) {
-        return super.getGroups(member);
+    synchronized public List<Membership> getGroups(UUID memberUuid) {
+        return super.getGroups(memberUuid);
     }
 
     @Override
@@ -112,8 +113,8 @@ public class AvajePermissionDao2 extends BaseMemoryPermissionDao {
     }
 
     @Override
-    synchronized public PermissionEntity getEntity(String name, boolean group) {
-        return super.getEntity(name, group);
+    synchronized public PermissionEntity getEntity(String name, UUID uuid, boolean group) {
+        return super.getEntity(name, uuid, group);
     }
 
     @Override
@@ -122,8 +123,8 @@ public class AvajePermissionDao2 extends BaseMemoryPermissionDao {
     }
 
     @Override
-    synchronized public void setGroup(String playerName, String groupName, Date expiration) {
-        super.setGroup(playerName, groupName, expiration);
+    synchronized public void setGroup(UUID playerUuid, String playerName, String groupName, Date expiration) {
+        super.setGroup(playerUuid, playerName, groupName, expiration);
     }
 
     @Override
@@ -137,8 +138,8 @@ public class AvajePermissionDao2 extends BaseMemoryPermissionDao {
     }
 
     @Override
-    synchronized public boolean deleteEntity(String name, boolean group) {
-        return super.deleteEntity(name, group);
+    synchronized public boolean deleteEntity(String name, UUID uuid, boolean group) {
+        return super.deleteEntity(name, uuid, group);
     }
 
     @Override
@@ -147,8 +148,8 @@ public class AvajePermissionDao2 extends BaseMemoryPermissionDao {
     }
 
     @Override
-    synchronized public List<Entry> getEntries(String name, boolean group) {
-        return super.getEntries(name, group);
+    synchronized public List<Entry> getEntries(String name, UUID uuid, boolean group) {
+        return super.getEntries(name, uuid, group);
     }
 
     @Override
@@ -162,28 +163,33 @@ public class AvajePermissionDao2 extends BaseMemoryPermissionDao {
     }
 
     @Override
-    synchronized public Object getMetadata(String name, boolean group, String metadataName) {
-        return super.getMetadata(name, group, metadataName);
+    synchronized public Object getMetadata(String name, UUID uuid, boolean group, String metadataName) {
+        return super.getMetadata(name, uuid, group, metadataName);
     }
 
     @Override
-    synchronized public List<EntityMetadata> getAllMetadata(String name, boolean group) {
-        return super.getAllMetadata(name, group);
+    synchronized public List<EntityMetadata> getAllMetadata(String name, UUID uuid, boolean group) {
+        return super.getAllMetadata(name, uuid, group);
     }
 
     @Override
-    synchronized public void setMetadata(String name, boolean group, String metadataName, Object value) {
-        super.setMetadata(name, group, metadataName, value);
+    synchronized public void setMetadata(String name, UUID uuid, boolean group, String metadataName, Object value) {
+        super.setMetadata(name, uuid, group, metadataName, value);
     }
 
     @Override
-    synchronized public boolean unsetMetadata(String name, boolean group, String metadataName) {
-        return super.unsetMetadata(name, group, metadataName);
+    synchronized public boolean unsetMetadata(String name, UUID uuid, boolean group, String metadataName) {
+        return super.unsetMetadata(name, uuid, group, metadataName);
     }
 
     @Override
     synchronized public void setParents(String groupName, List<String> parentNames) {
         super.setParents(groupName, parentNames);
+    }
+
+    @Override
+    synchronized public void updateDisplayName(UUID uuid, String displayName) {
+        super.updateDisplayName(uuid, displayName);
     }
 
     @Override
@@ -226,7 +232,8 @@ public class AvajePermissionDao2 extends BaseMemoryPermissionDao {
 
     @Override
     protected void createEntity(PermissionEntity entity) {
-        final String name = entity.getDisplayName();
+        final String name = entity.getName();
+        final String displayName = entity.getDisplayName();
         final boolean group = entity.isGroup();
 
         executor.execute(new Runnable() {
@@ -241,7 +248,7 @@ public class AvajePermissionDao2 extends BaseMemoryPermissionDao {
                     dbEntity = new PermissionEntity();
                     dbEntity.setName(lname);
                     dbEntity.setGroup(group);
-                    dbEntity.setDisplayName(name);
+                    dbEntity.setDisplayName(displayName);
                     // NB assumes name/group/displayName are only attributes that need saving
                     getEbeanServer().save(dbEntity);
                 }
@@ -251,7 +258,7 @@ public class AvajePermissionDao2 extends BaseMemoryPermissionDao {
 
     @Override
     protected void createOrUpdateEntry(Entry entry) {
-        final String name = entry.getEntity().getDisplayName();
+        final String name = entry.getEntity().getName();
         final boolean group = entry.getEntity().isGroup();
         final String regionName = entry.getRegion() == null ? null : entry.getRegion().getName();
         final String worldName = entry.getWorld() == null ? null : entry.getWorld().getName();
@@ -312,7 +319,7 @@ public class AvajePermissionDao2 extends BaseMemoryPermissionDao {
 
     @Override
     protected void deleteEntry(Entry entry) {
-        final String name = entry.getEntity().getDisplayName();
+        final String name = entry.getEntity().getName();
         final boolean group = entry.getEntity().isGroup();
         final String regionName = entry.getRegion() == null ? null : entry.getRegion().getName();
         final String worldName = entry.getWorld() == null ? null : entry.getWorld().getName();
@@ -373,6 +380,7 @@ public class AvajePermissionDao2 extends BaseMemoryPermissionDao {
     protected void createOrUpdateMembership(Membership membership) {
         final String name = membership.getGroup().getDisplayName();
         final String member = membership.getMember().toLowerCase();
+        final String displayName = membership.getDisplayName();
         final Date expiration = membership.getExpiration();
 
         getExecutor().execute(new Runnable() {
@@ -395,6 +403,7 @@ public class AvajePermissionDao2 extends BaseMemoryPermissionDao {
                     dbMembership = new Membership();
                     dbMembership.setGroup(group);
                     dbMembership.setMember(member);
+                    dbMembership.setDisplayName(displayName);
                 }
                 dbMembership.setExpiration(expiration);
                 getEbeanServer().save(dbMembership);
@@ -404,7 +413,7 @@ public class AvajePermissionDao2 extends BaseMemoryPermissionDao {
 
     @Override
     protected void deleteEntity(PermissionEntity entity) {
-        final String name = entity.getDisplayName();
+        final String name = entity.getName();
         final boolean group = entity.isGroup();
 
         getExecutor().execute(new Runnable() {
@@ -675,7 +684,7 @@ public class AvajePermissionDao2 extends BaseMemoryPermissionDao {
 
     @Override
     protected void createOrUpdateMetadata(EntityMetadata metadata) {
-        final String name = metadata.getEntity().getDisplayName();
+        final String name = metadata.getEntity().getName();
         final boolean group = metadata.getEntity().isGroup();
         final String metadataName = metadata.getName().toLowerCase();
         final Object value = metadata.getValue();
@@ -710,7 +719,7 @@ public class AvajePermissionDao2 extends BaseMemoryPermissionDao {
 
     @Override
     protected void deleteMetadata(EntityMetadata metadata) {
-        final String name = metadata.getEntity().getDisplayName();
+        final String name = metadata.getEntity().getName();
         final boolean group = metadata.getEntity().isGroup();
         final String metadataName = metadata.getName();
         
@@ -741,6 +750,62 @@ public class AvajePermissionDao2 extends BaseMemoryPermissionDao {
         });
     }
 
+    @Override
+    protected void updateDisplayName(PermissionEntity entity) {
+        final String name = entity.getName();
+        final String displayName = entity.getDisplayName();
+
+        getExecutor().execute(new Runnable() {
+            @Override
+            public void run() {
+                PermissionEntity dbEntity = getEbeanServer().find(PermissionEntity.class).where()
+                        .eq("name", name.toLowerCase())
+                        .eq("group", false)
+                        .findUnique();
+                if (dbEntity == null) {
+                    dbEntity = inconsistentEntity(name, false);
+                }
+
+                dbEntity.setDisplayName(displayName);
+                getEbeanServer().save(dbEntity);
+            }
+        });
+    }
+
+    @Override
+    protected void updateDisplayName(Membership membership) {
+        final String name = membership.getGroup().getDisplayName();
+        final String member = membership.getMember();
+        final String displayName = membership.getDisplayName();
+
+        getExecutor().execute(new Runnable() {
+            @Override
+            public void run() {
+                // Locate dependent object
+                PermissionEntity group = getEbeanServer().find(PermissionEntity.class).where()
+                        .eq("name", name.toLowerCase())
+                        .eq("group", true)
+                        .findUnique();
+                if (group == null) {
+                    databaseInconsistency();
+                    return;
+                }
+
+                Membership dbMembership = getEbeanServer().find(Membership.class).where()
+                        .eq("group", group)
+                        .eq("member", member.toLowerCase())
+                        .findUnique();
+                if (dbMembership == null) {
+                    databaseInconsistency();
+                    return;
+                }
+                
+                dbMembership.setDisplayName(displayName);
+                getEbeanServer().save(dbMembership);
+            }
+        });
+    }
+
     public void load() {
         // Current rationale: On any given server, the number of groups will have
         // an upper bound. However, the number of players will not. Granted, most
@@ -761,14 +826,14 @@ public class AvajePermissionDao2 extends BaseMemoryPermissionDao {
 
         // Create full copies to force lazy-loads
         for (PermissionEntity player : players) {
-            PermissionEntity newPlayer = getEntity(memoryState, player.getDisplayName(), false);
+            PermissionEntity newPlayer = getEntity(memoryState, player.getDisplayName(), player.getUuid(), false);
             loadPermissions(memoryState, player.getPermissions(), newPlayer);
             loadMetadata(getEbeanServer().find(EntityMetadata.class).where()
                     .eq("entity", player)
                     .findList(), newPlayer);
         }
         for (PermissionEntity group : groups) {
-            PermissionEntity newGroup = getEntity(memoryState, group.getDisplayName(), true);
+            PermissionEntity newGroup = getEntity(memoryState, group.getDisplayName(), null, true);
             loadPermissions(memoryState, getEbeanServer().find(Entry.class).where()
                     .eq("entity", group)
                     .findList(), newGroup);
@@ -778,7 +843,7 @@ public class AvajePermissionDao2 extends BaseMemoryPermissionDao {
             newGroup.setPriority(group.getPriority());
             if (group.getParent() != null) {
                 // Backwards compatibility
-                PermissionEntity parentEntity = getEntity(memoryState, group.getParent().getDisplayName(), true);
+                PermissionEntity parentEntity = getEntity(memoryState, group.getParent().getDisplayName(), null, true);
 
                 Inheritance newInheritance = new Inheritance();
                 newInheritance.setChild(newGroup);
@@ -795,7 +860,7 @@ public class AvajePermissionDao2 extends BaseMemoryPermissionDao {
                         .join("parent", "displayName")
                         .findList();
                 for (Inheritance inheritance : inheritances) {
-                    PermissionEntity parentEntity = getEntity(memoryState, inheritance.getParent().getDisplayName(), true);
+                    PermissionEntity parentEntity = getEntity(memoryState, inheritance.getParent().getDisplayName(), null, true);
 
                     Inheritance newInheritance = new Inheritance();
                     newInheritance.setChild(newGroup);
@@ -813,6 +878,7 @@ public class AvajePermissionDao2 extends BaseMemoryPermissionDao {
             for (Membership membership : memberships) {
                 Membership newMembership = new Membership();
                 newMembership.setMember(membership.getMember().toLowerCase());
+                newMembership.setDisplayName(membership.getDisplayName());
                 newMembership.setGroup(newGroup);
                 newMembership.setExpiration(membership.getExpiration());
                 newGroup.getMemberships().add(newMembership);

@@ -18,6 +18,7 @@ package org.tyrannyofheaven.bukkit.zPermissions;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 
 /**
  * Programmatic interface of read-only operations for things that are not easily
@@ -32,8 +33,38 @@ public interface ZPermissionsService {
      * @return set of players known by zPermissions, not including those who are
      *   only group members
      */
+    @Deprecated
     public Set<String> getAllPlayers();
 
+    /**
+     * Retrieve UUIDs of all players with permissions defined.
+     * 
+     * @return set of players known by zPermissions, not including those who are
+     *   only group members
+     */
+    public Set<UUID> getAllPlayersUUID();
+
+    /**
+     * Resolve a player's permissions for the given world and region set. The
+     * returned map is ultimately what zPermissions uses to create the player's
+     * Bukkit attachment.
+     * 
+     * <p>Note that Bukkit does some additional magic behind the scenes, specifically
+     * regarding default permission values (which are determined by the
+     * e.g. plugin.yml of the plugin that owns the permission).
+     * 
+     * <p>In other words, just looking at the returned effective permissions will
+     * <strong>not</strong> replicate the behavior of hasPermissions()! You
+     * must take defaults into account. I leave that to the caller...
+     * 
+     * @param worldName the name of the target world. May be <code>null</code>.
+     * @param regionNames set of region names. May be <code>null</code>.
+     * @param uuid the player's UUID
+     * @return effective permissions for this player
+     */
+    @Deprecated
+    public Map<String, Boolean> getPlayerPermissions(String worldName, Set<String> regionNames, String playerName);
+    
     /**
      * Resolve a player's permissions for the given world and region set. The
      * returned map is ultimately what zPermissions uses to create the player's
@@ -52,8 +83,8 @@ public interface ZPermissionsService {
      * @param playerName the player's name
      * @return effective permissions for this player
      */
-    public Map<String, Boolean> getPlayerPermissions(String worldName, Set<String> regionNames, String playerName);
-    
+    public Map<String, Boolean> getPlayerPermissions(String worldName, Set<String> regionNames, UUID uuid);
+
     /**
      * Retrieve groups which a player is explicitly assigned. The groups are
      * returned in priority order, with the highest priority first. (This can
@@ -63,7 +94,19 @@ public interface ZPermissionsService {
      * @param playerName the player's name
      * @return the names of groups which the player is assigned to
      */
+    @Deprecated
     public List<String> getPlayerAssignedGroups(String playerName);
+
+    /**
+     * Retrieve groups which a player is explicitly assigned. The groups are
+     * returned in priority order, with the highest priority first. (This can
+     * possibly be considered the player's "primary" group.) If the player has
+     * no explicitly assigned groups, the default group is returned.
+     * 
+     * @param uuid the player's UUID
+     * @return the names of groups which the player is assigned to
+     */
+    public List<String> getPlayerAssignedGroups(UUID uuid);
 
     /**
      * Retrieve groups which a player is a member of. This includes all
@@ -72,7 +115,17 @@ public interface ZPermissionsService {
      * @param playerName the player's name
      * @return the names of groups which the player is a member of
      */
+    @Deprecated
     public Set<String> getPlayerGroups(String playerName);
+
+    /**
+     * Retrieve groups which a player is a member of. This includes all
+     * assigned groups as well as their ancestor groups.
+     * 
+     * @param uuid the player's UUID
+     * @return the names of groups which the player is a member of
+     */
+    public Set<String> getPlayerGroups(UUID uuid);
 
     /**
      * Retrieve names of all groups.
@@ -107,6 +160,14 @@ public interface ZPermissionsService {
     public Set<String> getGroupMembers(String groupName);
 
     /**
+     * Retrieve the UUIDs of the players that are members of the given group.
+     * 
+     * @param groupName the group's name
+     * @return the group's members
+     */
+    public Set<UUID> getGroupMembersUUID(String groupName);
+
+    /**
      * Retrieve the named metadata value from a player.
      * 
      * @param playerName the player's name
@@ -116,8 +177,21 @@ public interface ZPermissionsService {
      * @return the metadata value or null if not found
      * @throws IllegalStateException if the actual metadata type does not match the given type
      */
+    @Deprecated
     public <T> T getPlayerMetadata(String playerName, String metadataName, Class<T> type);
     
+    /**
+     * Retrieve the named metadata value from a player.
+     * 
+     * @param uuid the player's UUID
+     * @param metadataName the name of the metadata value
+     * @param type the metadata type (String, Integer, Long, Float, Double, Boolean, Object).
+     *     Integers and Floats may be truncated due to the source value having more precision.
+     * @return the metadata value or null if not found
+     * @throws IllegalStateException if the actual metadata type does not match the given type
+     */
+    public <T> T getPlayerMetadata(UUID uuid, String metadataName, Class<T> type);
+
     /**
      * Retrieve the named metadata value from a group.
      * 
@@ -155,6 +229,19 @@ public interface ZPermissionsService {
      * @param playerName the name of the player
      * @return the name of the player's primary group
      */
+    @Deprecated
     public String getPlayerPrimaryGroup(String playerName);
+
+    /**
+     * zPermissions does not have any concept of "primary group." The closest
+     * thing to this would be the highest-weight assigned group. However, for
+     * flexibility, there are other ways of determining the primary group, usually
+     * involving metadata of some kind. This method is an attempt to internalize
+     * all that logic within zPermissions (it previously existed solely in Vault).
+     * 
+     * @param uuid the UUID of the player
+     * @return the name of the player's primary group
+     */
+    public String getPlayerPrimaryGroup(UUID uuid);
 
 }

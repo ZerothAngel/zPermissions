@@ -2,12 +2,14 @@ package org.tyrannyofheaven.bukkit.zPermissions.vault;
 
 import static org.tyrannyofheaven.bukkit.util.ToHStringUtils.hasText;
 
+import java.util.UUID;
 import java.util.logging.Level;
 
 import net.milkbowl.vault.chat.Chat;
 import net.milkbowl.vault.permission.Permission;
 
 import org.bukkit.Bukkit;
+import org.bukkit.OfflinePlayer;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.ServicePriority;
 import org.tyrannyofheaven.bukkit.util.transaction.TransactionCallbackWithoutResult;
@@ -146,12 +148,20 @@ public class VaultChatBridge extends Chat {
 
     @Override
     public String getPlayerPrefix(String world, String player) {
-        return prefixHandler.getPlayerPrefix(player);
+        OfflinePlayer offlinePlayer = Bukkit.getOfflinePlayer(player);
+        if (offlinePlayer == null) return "";
+        UUID uuid = offlinePlayer.getUniqueId();
+
+        return prefixHandler.getPlayerPrefix(uuid);
     }
 
     @Override
     public String getPlayerSuffix(String world, String player) {
-        return prefixHandler.getPlayerSuffix(player);
+        OfflinePlayer offlinePlayer = Bukkit.getOfflinePlayer(player);
+        if (offlinePlayer == null) return "";
+        UUID uuid = offlinePlayer.getUniqueId();
+
+        return prefixHandler.getPlayerSuffix(uuid);
     }
 
     @Override
@@ -229,17 +239,25 @@ public class VaultChatBridge extends Chat {
             return;
         }
 
+        final UUID uuid;
+        if (!group) {
+            OfflinePlayer offlinePlayer = Bukkit.getOfflinePlayer(name);
+            if (offlinePlayer == null) return;
+            uuid = offlinePlayer.getUniqueId();
+        }
+        else uuid = null;
+
         try {
             storageStrategy.getRetryingTransactionStrategy().execute(new TransactionCallbackWithoutResult() {
                 @Override
                 public void doInTransactionWithoutResult() throws Exception {
                     if (value != null)
-                        storageStrategy.getDao().setMetadata(name, group, metadataName, value);
+                        storageStrategy.getDao().setMetadata(name, uuid, group, metadataName, value);
                     else
-                        storageStrategy.getDao().unsetMetadata(name, group, metadataName);
+                        storageStrategy.getDao().unsetMetadata(name, uuid, group, metadataName);
                 }
             });
-            core.invalidateMetadataCache(name, group);
+            core.invalidateMetadataCache(name, uuid, group);
             core.logExternalChange("Metadata '%s' for %s %s set via Vault", metadataName,
                     group ? "group" : "player", name);
         }

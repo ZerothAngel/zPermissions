@@ -25,6 +25,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 import java.util.logging.Logger;
 
 import org.tyrannyofheaven.bukkit.util.ToHLoggingUtils;
@@ -32,6 +33,7 @@ import org.tyrannyofheaven.bukkit.zPermissions.dao.PermissionDao;
 import org.tyrannyofheaven.bukkit.zPermissions.model.EntityMetadata;
 import org.tyrannyofheaven.bukkit.zPermissions.model.Entry;
 import org.tyrannyofheaven.bukkit.zPermissions.util.Utils;
+import org.tyrannyofheaven.bukkit.zPermissions.uuid.UuidUtils;
 
 /**
  * Responsible for resolving a player's effective permissions.
@@ -179,16 +181,17 @@ public class PermissionsResolver {
      * Resolve a player's permissions. Any permissions declared on the player
      * should override group permissions.
      * NB: world and regions should all be in lowercase!
-     * 
-     * @param playerName the player's name
+     * @param uuid TODO
      * @param world the desination world name in lowercase or null
      * @param regions the name of the regions containing the destination, all
      *   in lowercase
+     * @param playerName the player's name
      * @return effective permissions for this player
      */
-    public ResolverResult resolvePlayer(String playerName, String world, Set<String> regions) {
+    public ResolverResult resolvePlayer(UUID uuid, String world, Set<String> regions) {
+        String playerName = UuidUtils.canonicalizeUuid(uuid);
         // Get this player's groups
-        List<String> groups = Utils.toGroupNames(Utils.filterExpired(getDao().getGroups(playerName)));
+        List<String> groups = Utils.toGroupNames(Utils.filterExpired(getDao().getGroups(uuid)));
         if (groups.isEmpty()) {
             // If no groups, use the default group
             groups.add(getDefaultGroup());
@@ -209,7 +212,7 @@ public class PermissionsResolver {
         Map<String, Boolean> permissions;
         if (isInterleavedPlayerPermissions()) {
             // Player-specific permissions overrides group permissions (at same level)
-            entries.addAll(getDao().getEntries(playerName, false));
+            entries.addAll(getDao().getEntries(playerName, uuid, false));
 
             permissions = applyPermissions(entries, regions, world);
         }
@@ -217,7 +220,7 @@ public class PermissionsResolver {
             // Apply all player-specific permissions at the end
             permissions = applyPermissions(entries, regions, world);
             
-            permissions.putAll(applyPermissions(getDao().getEntries(playerName, false), regions, world));
+            permissions.putAll(applyPermissions(getDao().getEntries(playerName, uuid, false), regions, world));
         }
 
         return new ResolverResult(permissions, new LinkedHashSet<String>(resolveOrder));
@@ -292,7 +295,7 @@ public class PermissionsResolver {
                 entries.add(groupPerm);
             }
 
-            entries.addAll(getDao().getEntries(group, true));
+            entries.addAll(getDao().getEntries(group, null, true));
         }
     }
 
@@ -382,9 +385,10 @@ public class PermissionsResolver {
         }
     }
 
-    public MetadataResult resolvePlayerMetadata(String playerName) {
+    public MetadataResult resolvePlayerMetadata(UUID uuid) {
+        String playerName = UuidUtils.canonicalizeUuid(uuid);
         // Get this player's groups
-        List<String> groups = Utils.toGroupNames(Utils.filterExpired(getDao().getGroups(playerName)));
+        List<String> groups = Utils.toGroupNames(Utils.filterExpired(getDao().getGroups(uuid)));
         if (groups.isEmpty()) {
             // If no groups, use the default group
             groups.add(getDefaultGroup());
@@ -398,12 +402,12 @@ public class PermissionsResolver {
         
         List<EntityMetadata> metadata = new ArrayList<EntityMetadata>();
         for (String group : resolveOrder) {
-            metadata.addAll(getDao().getAllMetadata(group, true));
+            metadata.addAll(getDao().getAllMetadata(group, null, true));
         }
         
         // NB There's only one level, so interleavedPlayerPermissions doesn't matter
         // Always resolve player last
-        metadata.addAll(getDao().getAllMetadata(playerName, false));
+        metadata.addAll(getDao().getAllMetadata(playerName, uuid, false));
         
         return new MetadataResult(applyMetadata(metadata), new LinkedHashSet<String>(resolveOrder));
     }
@@ -414,7 +418,7 @@ public class PermissionsResolver {
 
         List<EntityMetadata> metadata = new ArrayList<EntityMetadata>();
         for (String group : resolveOrder) {
-            metadata.addAll(getDao().getAllMetadata(group, true));
+            metadata.addAll(getDao().getAllMetadata(group, null, true));
         }
         
         return new MetadataResult(applyMetadata(metadata), new LinkedHashSet<String>(resolveOrder));

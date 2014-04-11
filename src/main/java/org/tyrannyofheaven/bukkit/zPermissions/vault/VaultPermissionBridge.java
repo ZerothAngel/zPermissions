@@ -6,6 +6,7 @@ import static org.tyrannyofheaven.bukkit.util.ToHStringUtils.hasText;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 import java.util.logging.Level;
 
 import net.milkbowl.vault.permission.Permission;
@@ -93,7 +94,7 @@ public class VaultPermissionBridge extends Permission implements Listener {
             getTransactionStrategy().execute(new TransactionCallbackWithoutResult() {
                 @Override
                 public void doInTransactionWithoutResult() throws Exception {
-                    getDao().setPermission(group, true, null, permWorld, permission, true);
+                    getDao().setPermission(group, null, true, null, permWorld, permission, true);
                 }
             });
             core.refreshAffectedPlayers(group);
@@ -135,7 +136,7 @@ public class VaultPermissionBridge extends Permission implements Listener {
         boolean result = getTransactionStrategy().execute(new TransactionCallback<Boolean>() {
             @Override
             public Boolean doInTransaction() throws Exception {
-                return getDao().unsetPermission(group, true, null, permWorld, permission);
+                return getDao().unsetPermission(group, null, true, null, permWorld, permission);
             }
         });
         if (result) {
@@ -170,14 +171,18 @@ public class VaultPermissionBridge extends Permission implements Listener {
             return false;
         }
 
+        OfflinePlayer offlinePlayer = Bukkit.getOfflinePlayer(player);
+        if (offlinePlayer == null) return false;
+        final UUID uuid = offlinePlayer.getUniqueId();
+
         final String permWorld = world;
         getTransactionStrategy().execute(new TransactionCallbackWithoutResult() {
             @Override
             public void doInTransactionWithoutResult() throws Exception {
-                getDao().setPermission(player, false, null, permWorld, permission, true);
+                getDao().setPermission(player, uuid, false, null, permWorld, permission, true);
             }
         });
-        core.refreshPlayer(player, RefreshCause.COMMAND);
+        core.refreshPlayer(null, RefreshCause.COMMAND);
         core.logExternalChange("Added permission '%s' to player %s via Vault",
                 new QualifiedPermission(null, world, permission), player);
         return true;
@@ -190,20 +195,24 @@ public class VaultPermissionBridge extends Permission implements Listener {
             return false;
         }
 
+        OfflinePlayer offlinePlayer = Bukkit.getOfflinePlayer(player);
+        if (offlinePlayer == null) return false;
+        final UUID uuid = offlinePlayer.getUniqueId();
+
         // NB world ignored
         try {
             getTransactionStrategy().execute(new TransactionCallbackWithoutResult() {
                 @Override
                 public void doInTransactionWithoutResult() throws Exception {
-                    getDao().addMember(group, player, null);
+                    getDao().addMember(group, uuid, player, null);
                 }
             });
         }
         catch (MissingGroupException e) {
             return false;
         }
-        core.invalidateMetadataCache(player, false);
-        core.refreshPlayer(player, RefreshCause.GROUP_CHANGE);
+        core.invalidateMetadataCache(player, uuid, false);
+        core.refreshPlayer(null, RefreshCause.GROUP_CHANGE);
         core.logExternalChange("Added player %s to group %s via Vault",
                 player, group);
         return true;
@@ -257,15 +266,19 @@ public class VaultPermissionBridge extends Permission implements Listener {
             return false;
         }
 
+        OfflinePlayer offlinePlayer = Bukkit.getOfflinePlayer(player);
+        if (offlinePlayer == null) return false;
+        final UUID uuid = offlinePlayer.getUniqueId();
+
         final String permWorld = world;
         boolean result = getTransactionStrategy().execute(new TransactionCallback<Boolean>() {
             @Override
             public Boolean doInTransaction() throws Exception {
-                return getDao().unsetPermission(player, false, null, permWorld, permission);
+                return getDao().unsetPermission(player, uuid, false, null, permWorld, permission);
             }
         });
         if (result) {
-            core.refreshPlayer(player, RefreshCause.COMMAND);
+            core.refreshPlayer(null, RefreshCause.COMMAND);
             core.logExternalChange("Removed permission '%s' from player %s via Vault",
                     new QualifiedPermission(null, world, permission), player);
         }
@@ -279,20 +292,24 @@ public class VaultPermissionBridge extends Permission implements Listener {
             return false;
         }
 
+        OfflinePlayer offlinePlayer = Bukkit.getOfflinePlayer(player);
+        if (offlinePlayer == null) return false;
+        final UUID uuid = offlinePlayer.getUniqueId();
+
         // NB world ignored
         try {
             getTransactionStrategy().execute(new TransactionCallback<Boolean>() {
                 @Override
                 public Boolean doInTransaction() throws Exception {
-                    return getDao().removeMember(group, player);
+                    return getDao().removeMember(group, uuid);
                 }
             });
         }
         catch (MissingGroupException e) {
             return false;
         }
-        core.invalidateMetadataCache(player, false);
-        core.refreshPlayer(player, RefreshCause.GROUP_CHANGE);
+        core.invalidateMetadataCache(player, uuid, false);
+        core.refreshPlayer(null, RefreshCause.GROUP_CHANGE);
         core.logExternalChange("Removed player %s from group %s via Vault",
                 player, group);
         return true;

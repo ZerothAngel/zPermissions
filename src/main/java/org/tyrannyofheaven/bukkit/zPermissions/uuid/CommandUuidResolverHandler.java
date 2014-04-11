@@ -13,14 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.tyrannyofheaven.bukkit.zPermissions.vault;
+package org.tyrannyofheaven.bukkit.zPermissions.uuid;
 
 import java.util.UUID;
 
-public interface PlayerPrefixHandler {
+import org.bukkit.command.CommandSender;
 
-    public String getPlayerPrefix(UUID uuid);
+public interface CommandUuidResolverHandler {
 
-    public String getPlayerSuffix(UUID uuid);
+    public void process(CommandSender sender, String name, UUID uuid, boolean group);
 
 }

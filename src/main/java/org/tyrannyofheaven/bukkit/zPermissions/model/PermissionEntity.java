@@ -23,6 +23,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
@@ -33,6 +34,9 @@ import javax.persistence.OneToMany;
 import javax.persistence.Table;
 import javax.persistence.Transient;
 import javax.persistence.UniqueConstraint;
+
+import org.tyrannyofheaven.bukkit.util.ToHUtils;
+import org.tyrannyofheaven.bukkit.zPermissions.uuid.UuidUtils;
 
 /**
  * The permission entity &mdash; something that can have a set of permission
@@ -201,6 +205,12 @@ public class PermissionEntity {
         }
     }
 
+    @Transient
+    public UUID getUuid() {
+        ToHUtils.assertFalse(isGroup(), "Only valid for players");
+        return UuidUtils.uncanonicalizeUuid(getName());
+    }
+
     @Override
     public boolean equals(Object obj) {
         if (obj == this) return true;
@@ -220,7 +230,7 @@ public class PermissionEntity {
 
     @Override
     public String toString() {
-        return String.format("Entity[%s,%s]", getName(), isGroup());
+        return String.format("Entity[%s,%s,%s]", getName(), getDisplayName(), isGroup());
     }
 
 }
