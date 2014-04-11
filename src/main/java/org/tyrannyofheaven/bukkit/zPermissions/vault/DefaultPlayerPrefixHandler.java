@@ -20,6 +20,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 import org.tyrannyofheaven.bukkit.zPermissions.ZPermissionsConfig;
 import org.tyrannyofheaven.bukkit.zPermissions.ZPermissionsService;
@@ -40,16 +41,16 @@ public class DefaultPlayerPrefixHandler implements PlayerPrefixHandler {
      * @see org.tyrannyofheaven.bukkit.zPermissions.vault.PlayerPrefixHandler#getPlayerPrefix(java.lang.String)
      */
     @Override
-    public String getPlayerPrefix(String playerName) {
+    public String getPlayerPrefix(UUID uuid) {
         String prefix;
         
         if (config.getVaultPlayerPrefixFormat().isEmpty()) {
-            prefix = service.getPlayerMetadata(playerName, MetadataConstants.PREFIX_KEY, String.class);
+            prefix = service.getPlayerMetadata(uuid, MetadataConstants.PREFIX_KEY, String.class);
             if (prefix == null && config.isVaultPrefixIncludesGroup())
-                prefix = service.getGroupMetadata(service.getPlayerPrimaryGroup(playerName), MetadataConstants.PREFIX_KEY, String.class);
+                prefix = service.getGroupMetadata(service.getPlayerPrimaryGroup(uuid), MetadataConstants.PREFIX_KEY, String.class);
         }
         else {
-            prefix = getFormattedPrefixSuffix(playerName, config.getVaultPlayerPrefixFormat(), true);
+            prefix = getFormattedPrefixSuffix(uuid, config.getVaultPlayerPrefixFormat(), true);
         }
         
         if (prefix == null)
@@ -62,16 +63,16 @@ public class DefaultPlayerPrefixHandler implements PlayerPrefixHandler {
      * @see org.tyrannyofheaven.bukkit.zPermissions.vault.PlayerPrefixHandler#getPlayerSuffix(java.lang.String)
      */
     @Override
-    public String getPlayerSuffix(String playerName) {
+    public String getPlayerSuffix(UUID uuid) {
         String suffix;
         
         if (config.getVaultPlayerSuffixFormat().isEmpty()) {
-            suffix = service.getPlayerMetadata(playerName, MetadataConstants.SUFFIX_KEY, String.class);
+            suffix = service.getPlayerMetadata(uuid, MetadataConstants.SUFFIX_KEY, String.class);
             if (suffix == null && config.isVaultPrefixIncludesGroup())
-                suffix = service.getGroupMetadata(service.getPlayerPrimaryGroup(playerName), MetadataConstants.SUFFIX_KEY, String.class);
+                suffix = service.getGroupMetadata(service.getPlayerPrimaryGroup(uuid), MetadataConstants.SUFFIX_KEY, String.class);
         }
         else {
-            suffix = getFormattedPrefixSuffix(playerName, config.getVaultPlayerSuffixFormat(), false);
+            suffix = getFormattedPrefixSuffix(uuid, config.getVaultPlayerSuffixFormat(), false);
         }
         
         if (suffix == null)
@@ -80,24 +81,24 @@ public class DefaultPlayerPrefixHandler implements PlayerPrefixHandler {
             return suffix;
     }
 
-    private String getFormattedPrefixSuffix(String playerName, String format, boolean isPrefix) {
+    private String getFormattedPrefixSuffix(UUID uuid, String format, boolean isPrefix) {
         Map<String, String> subMap = new HashMap<String, String>();
         // Scan format, only calculate tokens that exist in it
         if (format.contains("%p")) {
             // Player
-            String value = service.getPlayerMetadata(playerName, isPrefix ? MetadataConstants.PREFIX_KEY : MetadataConstants.SUFFIX_KEY, String.class);
+            String value = service.getPlayerMetadata(uuid, isPrefix ? MetadataConstants.PREFIX_KEY : MetadataConstants.SUFFIX_KEY, String.class);
             if (value == null) value = "";
             subMap.put("%p", value);
         }
         if (format.contains("%g")) {
             // Primary Group
-            String value = service.getGroupMetadata(service.getPlayerPrimaryGroup(playerName), isPrefix ? MetadataConstants.PREFIX_KEY : MetadataConstants.SUFFIX_KEY, String.class);
+            String value = service.getGroupMetadata(service.getPlayerPrimaryGroup(uuid), isPrefix ? MetadataConstants.PREFIX_KEY : MetadataConstants.SUFFIX_KEY, String.class);
             if (value == null) value = "";
             subMap.put("%g", value);
         }
         if (format.contains("%a")) {
             // All Groups
-            List<String> groups = getPlayerGroups(playerName);
+            List<String> groups = getPlayerGroups(uuid);
             Collections.reverse(groups); // groups is in application order. We actually want it in display order.
             StringBuilder sb = new StringBuilder();
             for (String group : groups) {
@@ -109,7 +110,7 @@ public class DefaultPlayerPrefixHandler implements PlayerPrefixHandler {
         }
         if (format.contains("%A")) {
             // All Groups Reversed
-            List<String> groups = getPlayerGroups(playerName);
+            List<String> groups = getPlayerGroups(uuid);
             StringBuilder sb = new StringBuilder();
             for (String group : groups) {
                 String value = service.getGroupMetadata(group, isPrefix ? MetadataConstants.PREFIX_KEY : MetadataConstants.SUFFIX_KEY, String.class);
@@ -127,11 +128,11 @@ public class DefaultPlayerPrefixHandler implements PlayerPrefixHandler {
         return result;
     }
 
-    private List<String> getPlayerGroups(String playerName) {
+    private List<String> getPlayerGroups(UUID uuid) {
         if (config.isVaultGetGroupsUsesAssignedOnly())
-            return service.getPlayerAssignedGroups(playerName);
+            return service.getPlayerAssignedGroups(uuid);
         else
-            return new ArrayList<String>(service.getPlayerGroups(playerName));
+            return new ArrayList<String>(service.getPlayerGroups(uuid));
     }
 
 }

@@ -20,6 +20,7 @@ import static org.tyrannyofheaven.bukkit.util.ToHMessageUtils.colorize;
 import static org.tyrannyofheaven.bukkit.util.ToHMessageUtils.sendMessage;
 import static org.tyrannyofheaven.bukkit.util.ToHStringUtils.delimitedString;
 import static org.tyrannyofheaven.bukkit.util.command.reader.CommandReader.abortBatchProcessing;
+import static org.tyrannyofheaven.bukkit.zPermissions.util.Utils.formatPlayerName;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -49,6 +50,7 @@ import org.tyrannyofheaven.bukkit.zPermissions.model.Membership;
 import org.tyrannyofheaven.bukkit.zPermissions.model.PermissionEntity;
 import org.tyrannyofheaven.bukkit.zPermissions.storage.StorageStrategy;
 import org.tyrannyofheaven.bukkit.zPermissions.util.Utils;
+import org.tyrannyofheaven.bukkit.zPermissions.uuid.CommandUuidResolver;
 
 /**
  * Handler for group commands. Expects the group name to be in the CommandSession
@@ -58,8 +60,8 @@ import org.tyrannyofheaven.bukkit.zPermissions.util.Utils;
  */
 public class GroupCommands extends CommonCommands {
 
-    GroupCommands(ZPermissionsCore core, StorageStrategy storageStrategy, PermissionsResolver resolver, ZPermissionsConfig config, Plugin plugin) {
-        super(core, storageStrategy, resolver, config, plugin, true);
+    GroupCommands(ZPermissionsCore core, StorageStrategy storageStrategy, PermissionsResolver resolver, ZPermissionsConfig config, Plugin plugin, CommandUuidResolver uuidResolver) {
+        super(core, storageStrategy, resolver, config, plugin, uuidResolver, true);
     }
 
     // Common commands
@@ -97,7 +99,7 @@ public class GroupCommands extends CommonCommands {
                         List<Membership> memberships = storageStrategy.getDao().getMembers(name);
 
                         for (Membership membership : memberships) {
-                            storageStrategy.getDao().removeMember(name, membership.getMember());
+                            storageStrategy.getDao().removeMember(name, membership.getUuid());
                         }
 
                         return !memberships.isEmpty();
@@ -111,7 +113,7 @@ public class GroupCommands extends CommonCommands {
             
             if (result) {
                 sendMessage(sender, colorize("{YELLOW}Group {DARK_GREEN}%s{YELLOW} purged of members."), name);
-                core.invalidateMetadataCache(name, true);
+                core.invalidateMetadataCache(name, null, true);
                 if (core.refreshAffectedPlayers(name))
                     core.refreshExpirations();
             }
@@ -189,7 +191,7 @@ public class GroupCommands extends CommonCommands {
     @Command(value={"show", "sh"}, description="Show information about a group")
     @Require("zpermissions.group.view")
     public void show(CommandSender sender, @Session("entityName") String groupName, @Option(value={"-f", "--filter"}, valueName="filter") String filter) {
-        PermissionEntity entity = storageStrategy.getDao().getEntity(groupName, true);
+        PermissionEntity entity = storageStrategy.getDao().getEntity(groupName, null, true);
 
         if (entity != null) {
             List<String> lines = new ArrayList<String>();
@@ -262,7 +264,7 @@ public class GroupCommands extends CommonCommands {
             sendMessage(sender, colorize("{DARK_GREEN}%s{YELLOW}'s parent is now {DARK_GREEN}%s"), groupName, parentNames.get(0));
         else
             sendMessage(sender, colorize("{DARK_GREEN}%s{YELLOW}'s parents are now {DARK_GREEN}%s"), groupName, delimitedString(ChatColor.YELLOW + ", " + ChatColor.DARK_GREEN, parentNames));
-        core.invalidateMetadataCache(groupName, true);
+        core.invalidateMetadataCache(groupName, null, true);
         core.refreshAffectedPlayers(groupName);
     }
 
@@ -284,13 +286,13 @@ public class GroupCommands extends CommonCommands {
         }
 
         sendMessage(sender, colorize("{DARK_GREEN}%s{YELLOW}'s weight is now {GREEN}%d"), groupName, priority);
-        core.invalidateMetadataCache(groupName, true);
+        core.invalidateMetadataCache(groupName, null, true);
         core.refreshAffectedPlayers(groupName);
     }
 
     @Command(value="members", description="List members of a group")
     @Require("zpermissions.group.view")
-    public void members(CommandSender sender, @Session("entityName") String groupName) {
+    public void members(CommandSender sender, @Option(value={"-U", "--uuid"}) boolean showUuid, @Session("entityName") String groupName) {
         List<Membership> memberships = storageStrategy.getDao().getMembers(groupName);
         
         // NB: Can't tell if group doesn't exist or if it has no members.
@@ -307,7 +309,7 @@ public class GroupCommands extends CommonCommands {
                 else
                     sb.append(ChatColor.GRAY);
 
-                sb.append(membership.getMember());
+                sb.append(formatPlayerName(membership, showUuid));
 
                 if (membership.getExpiration() != null) {
                     sb.append('[');

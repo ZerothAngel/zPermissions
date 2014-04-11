@@ -16,7 +16,7 @@
 package org.tyrannyofheaven.bukkit.zPermissions.util;
 
 import static org.tyrannyofheaven.bukkit.util.ToHMessageUtils.colorize;
-import static org.tyrannyofheaven.bukkit.util.ToHMessageUtils.sendMessage;
+import static org.tyrannyofheaven.bukkit.util.ToHUtils.assertFalse;
 
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -32,6 +32,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -50,6 +51,7 @@ import org.tyrannyofheaven.bukkit.zPermissions.model.EntityMetadata;
 import org.tyrannyofheaven.bukkit.zPermissions.model.Entry;
 import org.tyrannyofheaven.bukkit.zPermissions.model.Membership;
 import org.tyrannyofheaven.bukkit.zPermissions.model.PermissionEntity;
+import org.tyrannyofheaven.bukkit.zPermissions.uuid.UuidUtils;
 
 /**
  * Collection of static utils, constants, etc.
@@ -58,10 +60,10 @@ import org.tyrannyofheaven.bukkit.zPermissions.model.PermissionEntity;
  */
 public class Utils {
 
-    public final static Comparator<PermissionEntity> PERMISSION_ENTITY_ALPHA_COMPARATOR = new Comparator<PermissionEntity>() {
+    private final static Comparator<PermissionEntity> PERMISSION_ENTITY_ALPHA_COMPARATOR = new Comparator<PermissionEntity>() {
         @Override
         public int compare(PermissionEntity a, PermissionEntity b) {
-            return a.getDisplayName().compareTo(b.getDisplayName());
+            return a.getName().compareTo(b.getName()); // In the case of players, sort by UUID
         }
     };
 
@@ -109,7 +111,7 @@ public class Utils {
     private static final Comparator<Membership> MEMBERSHIP_COMPARATOR = new Comparator<Membership>() {
         @Override
         public int compare(Membership a, Membership b) {
-            return a.getMember().compareToIgnoreCase(b.getMember());
+            return a.getMember().compareToIgnoreCase(b.getMember()); // NB By UUID
         }
     };
 
@@ -272,10 +274,10 @@ public class Utils {
         return sb.toString();
     }
 
-    public static List<String> toMembers(Collection<Membership> memberships) {
+    public static List<String> toMembers(Collection<Membership> memberships, boolean showUuid) {
         List<String> result = new ArrayList<String>(memberships.size());
         for (Membership membership : memberships) {
-            result.add(membership.getMember());
+            result.add(formatPlayerName(membership, showUuid));
         }
         return result;
     }
@@ -382,18 +384,6 @@ public class Utils {
     }
 
     /**
-     * Give a little warning if the player isn't online.
-     * 
-     * @param sender the CommandSender to send warning to
-     * @param playerName the player name
-     */
-    public static void checkPlayer(CommandSender sender, String playerName) {
-        if (Bukkit.getPlayerExact(playerName) == null) {
-            sendMessage(sender, colorize("{GRAY}(Player not online, make sure the name is correct)"));
-        }
-    }
-
-    /**
      * Display a diff between two sets of permissions.
      * 
      * @param plugin the plugin
@@ -484,12 +474,21 @@ public class Utils {
         }
     }
 
-    public static void validatePlayer(PermissionDao dao, String defaultGroup, String playerName, List<String> header) {
-        if (dao.getGroups(playerName).isEmpty() &&
-                dao.getEntity(playerName, false) == null) {
+    public static void validatePlayer(PermissionDao dao, String defaultGroup, UUID uuid, String playerName, List<String> header) {
+        if (dao.getGroups(uuid).isEmpty() &&
+                dao.getEntity(playerName, uuid, false) == null) {
             // Doesn't exist in the system
             header.add(String.format(colorize("{GRAY}(Player \"%s\" not in system. Assuming member of group \"%s\")"), playerName, defaultGroup));
         }
+    }
+
+    public static String formatPlayerName(PermissionEntity player, boolean showUuid) {
+        assertFalse(player.isGroup());
+        return UuidUtils.formatPlayerName(player.getUuid(), player.getDisplayName(), showUuid);
+    }
+
+    public static String formatPlayerName(Membership membership, boolean showUuid) {
+        return UuidUtils.formatPlayerName(membership.getUuid(), membership.getDisplayName(), showUuid);
     }
 
     public static class PermissionInfo {

@@ -17,6 +17,7 @@ package org.tyrannyofheaven.bukkit.zPermissions;
 
 import java.util.Collection;
 import java.util.Set;
+import java.util.UUID;
 
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
@@ -31,12 +32,12 @@ public interface ZPermissionsCore {
 
     // Refreshing the attachments of a set of players
 
-    public void refreshPlayer(String playerName, RefreshCause cause);
+    public void refreshPlayer(UUID uuid, RefreshCause cause);
 
     public void refreshPlayers(); // Also invalidates metadata cache of refreshed players
 
     // NB called from async thread
-    public void refreshPlayers(Collection<String> playerNames); // Also invalidates metadata cache of refreshed players
+    public void refreshPlayers(Collection<UUID> playerUuids); // Also invalidates metadata cache of refreshed players
 
     public boolean refreshAffectedPlayers(String groupName); // Also invalidates metadata cache of refreshed players
 
@@ -44,7 +45,7 @@ public interface ZPermissionsCore {
 
     public void refreshExpirations();
 
-    public void refreshExpirations(String playerName);
+    public void refreshExpirations(UUID uuid);
 
     // Config + storage reload
 
@@ -66,9 +67,11 @@ public interface ZPermissionsCore {
 
     public void logExternalChange(String message, Object...args);
 
+    public void updateDisplayName(UUID uuid, String displayName);
+
     // Metadata cache management
     
-    public void invalidateMetadataCache(String name, boolean group);
+    public void invalidateMetadataCache(String name, UUID uuid, boolean group);
 
     public void invalidateMetadataCache();
 

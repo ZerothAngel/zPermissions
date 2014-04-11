@@ -25,6 +25,7 @@ import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.Queue;
 import java.util.Set;
+import java.util.UUID;
 
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.Plugin;
@@ -32,7 +33,7 @@ import org.tyrannyofheaven.bukkit.zPermissions.RefreshCause;
 import org.tyrannyofheaven.bukkit.zPermissions.ZPermissionsCore;
 
 /**
- * Periodically calls {@link ZPermissionsCore#refreshPlayer(String, RefreshCause)} on the
+ * Periodically calls {@link ZPermissionsCore#refreshPlayer(UUID, RefreshCause)} on the
  * given queue of players.
  * 
  * @author asaddi
@@ -45,7 +46,7 @@ public class RefreshTask implements Runnable {
 
     private int delay;
 
-    private final Queue<String> playersToRefresh = new LinkedList<String>(); // synchronized on this
+    private final Queue<UUID> playersToRefresh = new LinkedList<UUID>(); // synchronized on this
 
     private int taskId = -1; // synchronized on this
 
@@ -60,18 +61,15 @@ public class RefreshTask implements Runnable {
         this.delay = delay;
     }
 
-    public synchronized void start(Collection<String> playerNames) {
-        if (playerNames == null || playerNames.isEmpty())
+    public synchronized void start(Collection<UUID> playerUuids) {
+        if (playerUuids == null || playerUuids.isEmpty())
             return; // Nothing to do
 
         // Build a set to maintain uniqueness
-        Set<String> nextPlayersToRefresh = new LinkedHashSet<String>(playersToRefresh);
-        
+        Set<UUID> nextPlayersToRefresh = new LinkedHashSet<UUID>(playersToRefresh);
+
         // Remember who to refresh
-        for (String playerName : playerNames) {
-            // Canonicalize
-            nextPlayersToRefresh.add(playerName.toLowerCase());
-        }
+        nextPlayersToRefresh.addAll(playerUuids);
 
         // Replace queue with set
         playersToRefresh.clear();
@@ -103,10 +101,10 @@ public class RefreshTask implements Runnable {
         taskId = -1;
 
         if (!playersToRefresh.isEmpty()) {
-            String playerToRefresh = playersToRefresh.remove();
+            UUID playerToRefresh = playersToRefresh.remove();
 
             // Refresh single player
-            core.invalidateMetadataCache(playerToRefresh, false);
+            core.invalidateMetadataCache("ignored", playerToRefresh, false);
             core.refreshPlayer(playerToRefresh, RefreshCause.GROUP_CHANGE); // NB Assumes all who call start() are doing so for group- or server-wide changes
         }
         

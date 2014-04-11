@@ -21,6 +21,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
+import org.bukkit.event.player.AsyncPlayerPreLoginEvent;
 import org.bukkit.event.player.PlayerChangedWorldEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerLoginEvent;
@@ -44,6 +45,14 @@ public class ZPermissionsPlayerListener implements Listener {
     public ZPermissionsPlayerListener(ZPermissionsCore core, Plugin plugin) {
         this.core = core;
         this.plugin = plugin;
+    }
+
+    @EventHandler(priority=EventPriority.MONITOR)
+    public void onAsyncPlayerPreLogin(AsyncPlayerPreLoginEvent event) {
+        if (event.getLoginResult() == AsyncPlayerPreLoginEvent.Result.ALLOWED) {
+            // Update display name
+            core.updateDisplayName(event.getUniqueId(), event.getName());
+        }
     }
 
     // Do this early for the benefit of anything listening on the same event

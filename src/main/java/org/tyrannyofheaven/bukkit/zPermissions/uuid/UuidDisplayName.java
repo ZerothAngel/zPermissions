@@ -13,14 +13,30 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.tyrannyofheaven.bukkit.zPermissions.vault;
+package org.tyrannyofheaven.bukkit.zPermissions.uuid;
 
 import java.util.UUID;
 
-public interface PlayerPrefixHandler {
+public class UuidDisplayName {
+    
+    private final UUID uuid;
+    
+    private final String displayName;
 
-    public String getPlayerPrefix(UUID uuid);
+    public UuidDisplayName(UUID uuid, String displayName) {
+        if (uuid == null)
+            throw new IllegalArgumentException("uuid cannot be null");
+        
+        this.uuid = uuid;
+        this.displayName = displayName;
+    }
 
-    public String getPlayerSuffix(UUID uuid);
+    public UUID getUuid() {
+        return uuid;
+    }
 
+    public String getDisplayName() {
+        return displayName;
+    }
+    
 }

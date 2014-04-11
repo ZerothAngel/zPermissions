@@ -15,6 +15,8 @@
  */
 package org.tyrannyofheaven.bukkit.zPermissions.dao;
 
+import static org.tyrannyofheaven.bukkit.zPermissions.uuid.UuidUtils.canonicalizeUuid;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -29,6 +31,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 
 import org.tyrannyofheaven.bukkit.zPermissions.model.EntityMetadata;
 import org.tyrannyofheaven.bukkit.zPermissions.model.Entry;
@@ -58,7 +61,7 @@ public abstract class BaseMemoryPermissionDao implements PermissionDao {
     private static final Comparator<Membership> MEMBERSHIP_MEMBER_COMPARATOR = new Comparator<Membership>() {
         @Override
         public int compare(Membership a, Membership b) {
-            return a.getMember().compareTo(b.getMember());
+            return a.getDisplayName().toLowerCase().compareTo(b.getDisplayName().toLowerCase());
         }
     };
 
@@ -144,8 +147,8 @@ public abstract class BaseMemoryPermissionDao implements PermissionDao {
         return getWorlds().get(world.toLowerCase());
     }
 
-    protected PermissionEntity getEntity(String name, boolean group, boolean create) {
-        String lname = name.toLowerCase();
+    protected PermissionEntity getEntity(String name0, UUID uuid, boolean group, boolean create) {
+        String lname = checkNameUuid(name0, uuid, group).toLowerCase();
         PermissionEntity entity;
         if (group)
             entity = getGroups().get(lname);
@@ -155,7 +158,7 @@ public abstract class BaseMemoryPermissionDao implements PermissionDao {
             entity = new PermissionEntity();
             entity.setName(lname);
             entity.setGroup(group);
-            entity.setDisplayName(name);
+            entity.setDisplayName(name0);
             if (group)
                 getGroups().put(lname, entity);
             else
@@ -168,15 +171,15 @@ public abstract class BaseMemoryPermissionDao implements PermissionDao {
     protected abstract void createEntity(PermissionEntity entity);
 
     private PermissionEntity getGroup(String name) {
-        PermissionEntity group = getEntity(name, true, false);
+        PermissionEntity group = getEntity(name, null, true, false);
         if (group == null)
             throw new MissingGroupException(name);
         return group;
     }
 
     @Override
-    public Boolean getPermission(String name, boolean group, String region, String world, String permission) {
-        PermissionEntity entity = getEntity(name, group, false);
+    public Boolean getPermission(String name, UUID uuid, boolean group, String region, String world, String permission) {
+        PermissionEntity entity = getEntity(name, uuid, group, false);
         if (entity == null)
             return null;
     
@@ -207,13 +210,13 @@ public abstract class BaseMemoryPermissionDao implements PermissionDao {
     }
 
     @Override
-    public void setPermission(String name, boolean group, String region, String world, String permission, boolean value) {
+    public void setPermission(String name, UUID uuid, boolean group, String region, String world, String permission, boolean value) {
         PermissionEntity owner;
         if (group) {
             owner = getGroup(name);
         }
         else {
-            owner = getEntity(name, group, true);
+            owner = getEntity(name, uuid, group, true);
         }
     
         PermissionRegion permissionRegion = getRegion(region, true);
@@ -249,8 +252,8 @@ public abstract class BaseMemoryPermissionDao implements PermissionDao {
     protected abstract void createOrUpdateEntry(Entry entry);
 
     @Override
-    public boolean unsetPermission(String name, boolean group, String region, String world, String permission) {
-        PermissionEntity entity = getEntity(name, group, false);
+    public boolean unsetPermission(String name, UUID uuid, boolean group, String region, String world, String permission) {
+        PermissionEntity entity = getEntity(name, uuid, group, false);
         if (entity == null)
             return false;
     
@@ -289,8 +292,8 @@ public abstract class BaseMemoryPermissionDao implements PermissionDao {
     protected abstract void deleteEntry(Entry entry);
 
     @Override
-    public void addMember(String groupName, String member, Date expiration) {
-        member = member.toLowerCase();
+    public void addMember(String groupName, UUID memberUuid, String memberName0, Date expiration) {
+        String memberName = canonicalizeUuid(memberUuid);
         if (expiration != null)
             expiration = new Date(expiration.getTime());
 
@@ -298,13 +301,14 @@ public abstract class BaseMemoryPermissionDao implements PermissionDao {
     
         Membership found = null;
         for (Membership membership : group.getMemberships()) {
-            if (membership.getMember().equals(member))
+            if (membership.getMember().equals(memberName))
                 found = membership;
         }
     
         if (found == null) {
             found = new Membership();
-            found.setMember(member);
+            found.setMember(memberName);
+            found.setDisplayName(memberName0);
             found.setGroup(group);
 
             group.getMemberships().add(found);
@@ -318,13 +322,13 @@ public abstract class BaseMemoryPermissionDao implements PermissionDao {
     protected abstract void createOrUpdateMembership(Membership membership);
 
     @Override
-    public boolean removeMember(String groupName, String member) {
-        member = member.toLowerCase();
+    public boolean removeMember(String groupName, UUID memberUuid) {
+        String memberName = canonicalizeUuid(memberUuid);
         PermissionEntity group = getGroup(groupName);
         
         for (Iterator<Membership> i = group.getMemberships().iterator(); i.hasNext();) {
             Membership membership = i.next();
-            if (membership.getMember().equals(member)) {
+            if (membership.getMember().equals(memberName)) {
                 i.remove();
                 deleteMembership(membership);
                 forgetMembership(membership);
@@ -335,9 +339,10 @@ public abstract class BaseMemoryPermissionDao implements PermissionDao {
     }
 
     @Override
-    public List<Membership> getGroups(String member) {
+    public List<Membership> getGroups(UUID memberUuid) {
+        String memberName = canonicalizeUuid(memberUuid);
         List<Membership> result = new ArrayList<Membership>();
-        Set<Membership> memberships = getReverseMembershipMap().get(member.toLowerCase());
+        Set<Membership> memberships = getReverseMembershipMap().get(memberName);
         if (memberships != null) {
             result.addAll(memberships);
             Collections.sort(result, MEMBERSHIP_GROUP_PRIORITY_COMPARATOR);
@@ -347,7 +352,7 @@ public abstract class BaseMemoryPermissionDao implements PermissionDao {
 
     @Override
     public List<Membership> getMembers(String group) {
-        PermissionEntity groupEntity = getEntity(group, true, false);
+        PermissionEntity groupEntity = getEntity(group, null, true, false);
         if (groupEntity == null)
             return new ArrayList<Membership>(); // compat with AvajePermissionDao
     
@@ -357,11 +362,11 @@ public abstract class BaseMemoryPermissionDao implements PermissionDao {
     }
 
     @Override
-    public PermissionEntity getEntity(String name, boolean group) {
+    public PermissionEntity getEntity(String name, UUID uuid, boolean group) {
         if (group)
             return getGroups().get(name.toLowerCase());
         else
-            return getPlayers().get(name.toLowerCase());
+            return getPlayers().get(canonicalizeUuid(uuid));
     }
 
     @Override
@@ -373,8 +378,8 @@ public abstract class BaseMemoryPermissionDao implements PermissionDao {
     }
 
     @Override
-    public void setGroup(String playerName, String groupName, Date expiration) {
-        playerName = playerName.toLowerCase();
+    public void setGroup(UUID playerUuid, String playerName0, String groupName, Date expiration) {
+        String playerName = canonicalizeUuid(playerUuid);
         if (expiration != null)
             expiration = new Date(expiration.getTime());
         PermissionEntity group = getGroup(groupName);
@@ -396,6 +401,7 @@ public abstract class BaseMemoryPermissionDao implements PermissionDao {
         if (found == null) {
             found = new Membership();
             found.setMember(playerName);
+            found.setDisplayName(playerName0);
             found.setGroup(group);
 
             group.getMemberships().add(found);
@@ -550,8 +556,8 @@ public abstract class BaseMemoryPermissionDao implements PermissionDao {
     protected abstract void deleteWorlds(Collection<PermissionWorld> worlds);
 
     @Override
-    public boolean deleteEntity(String name, boolean group) {
-        PermissionEntity entity = getEntity(name, group, false);
+    public boolean deleteEntity(String name, UUID uuid, boolean group) {
+        PermissionEntity entity = getEntity(name, uuid, group, false);
         
         if (group) {
             // Deleting a group
@@ -577,7 +583,7 @@ public abstract class BaseMemoryPermissionDao implements PermissionDao {
         }
         else {
             // Deleting a player
-            name = name.toLowerCase();
+            name = canonicalizeUuid(uuid);
     
             boolean found = false;
     
@@ -613,7 +619,7 @@ public abstract class BaseMemoryPermissionDao implements PermissionDao {
 
     @Override
     public List<String> getAncestry(String groupName) {
-        PermissionEntity group = getEntity(groupName, true, false);
+        PermissionEntity group = getEntity(groupName, null, true, false);
         if (group == null) // NB only time this will be null is if the default group doesn't exist
             return new ArrayList<String>();
     
@@ -636,8 +642,8 @@ public abstract class BaseMemoryPermissionDao implements PermissionDao {
     }
 
     @Override
-    public List<Entry> getEntries(String name, boolean group) {
-        PermissionEntity entity = getEntity(name, group, false);
+    public List<Entry> getEntries(String name, UUID uuid, boolean group) {
+        PermissionEntity entity = getEntity(name, uuid, group, false);
         if (entity == null) // NB special consideration for non-existent default group
             return Collections.emptyList();
     
@@ -646,9 +652,9 @@ public abstract class BaseMemoryPermissionDao implements PermissionDao {
 
     @Override
     public boolean createGroup(String name) {
-        PermissionEntity group = getEntity(name, true, false); // so we know it was created
+        PermissionEntity group = getEntity(name, null, true, false); // so we know it was created
         if (group == null) {
-            group = getEntity(name, true, true);
+            group = getEntity(name, null, true, true);
             return true;
         }
         else
@@ -670,8 +676,8 @@ public abstract class BaseMemoryPermissionDao implements PermissionDao {
     }
 
     @Override
-    public Object getMetadata(String name, boolean group, String metadataName) {
-        PermissionEntity entity = getEntity(name, group, false);
+    public Object getMetadata(String name, UUID uuid, boolean group, String metadataName) {
+        PermissionEntity entity = getEntity(name, uuid, group, false);
         if (entity == null)
             return null;
 
@@ -683,8 +689,8 @@ public abstract class BaseMemoryPermissionDao implements PermissionDao {
     }
 
     @Override
-    public List<EntityMetadata> getAllMetadata(String name, boolean group) {
-        PermissionEntity entity = getEntity(name, group, false);
+    public List<EntityMetadata> getAllMetadata(String name, UUID uuid, boolean group) {
+        PermissionEntity entity = getEntity(name, uuid, group, false);
         if (entity == null)
             return Collections.emptyList();
         
@@ -692,13 +698,13 @@ public abstract class BaseMemoryPermissionDao implements PermissionDao {
     }
 
     @Override
-    public void setMetadata(String name, boolean group, String metadataName, Object value) {
+    public void setMetadata(String name, UUID uuid, boolean group, String metadataName, Object value) {
         PermissionEntity owner;
         if (group) {
             owner = getGroup(name);
         }
         else {
-            owner = getEntity(name, group, true);
+            owner = getEntity(name, uuid, group, true);
         }
 
         metadataName = metadataName.toLowerCase();
@@ -721,8 +727,8 @@ public abstract class BaseMemoryPermissionDao implements PermissionDao {
     protected abstract void createOrUpdateMetadata(EntityMetadata metadata);
 
     @Override
-    public boolean unsetMetadata(String name, boolean group, String metadataName) {
-        PermissionEntity entity = getEntity(name, group, false);
+    public boolean unsetMetadata(String name, UUID uuid, boolean group, String metadataName) {
+        PermissionEntity entity = getEntity(name, uuid, group, false);
         if (entity == null)
             return false;
 
@@ -741,6 +747,27 @@ public abstract class BaseMemoryPermissionDao implements PermissionDao {
     }
 
     protected abstract void deleteMetadata(EntityMetadata metadata);
+
+    @Override
+    public void updateDisplayName(UUID uuid, String displayName) {
+        PermissionEntity entity = getEntity("ignored", uuid, false, false);
+        if (entity != null && !entity.getDisplayName().equals(displayName)) {
+            entity.setDisplayName(displayName);
+            updateDisplayName(entity);
+        }
+        
+        Set<Membership> memberships = getReverseMembershipMap().get(canonicalizeUuid(uuid));
+        for (Membership membership : memberships) {
+            if (!membership.getDisplayName().equals(displayName)) {
+                membership.setDisplayName(displayName);
+                updateDisplayName(membership);
+            }
+        }
+    }
+
+    protected abstract void updateDisplayName(PermissionEntity entity);
+
+    protected abstract void updateDisplayName(Membership membership);
 
     protected void rememberMembership(Membership membership) {
         Set<Membership> memberships = getReverseMembershipMap().get(membership.getMember());
@@ -769,8 +796,8 @@ public abstract class BaseMemoryPermissionDao implements PermissionDao {
         }
     }
 
-    protected static PermissionEntity getEntity(MemoryState memoryState, String name, boolean group) {
-        String lname = name.toLowerCase();
+    protected static PermissionEntity getEntity(MemoryState memoryState, String name0, UUID uuid, boolean group) {
+        String lname = checkNameUuid(name0, uuid, group).toLowerCase();
         PermissionEntity entity;
         if (group)
             entity = memoryState.getGroups().get(lname);
@@ -780,7 +807,7 @@ public abstract class BaseMemoryPermissionDao implements PermissionDao {
             entity = new PermissionEntity();
             entity.setName(lname);
             entity.setGroup(group);
-            entity.setDisplayName(name);
+            entity.setDisplayName(name0);
             if (group)
                 memoryState.getGroups().put(lname, entity);
             else
@@ -818,6 +845,18 @@ public abstract class BaseMemoryPermissionDao implements PermissionDao {
             memoryState.getReverseMembershipMap().put(membership.getMember(), memberships);
         }
         memberships.add(membership);
+    }
+
+    private static String checkNameUuid(String name, UUID uuid, boolean group) {
+        if (group) {
+            return name;
+        }
+        else if (uuid == null) {
+            throw new IllegalArgumentException("uuid cannot be null");
+        }
+        else {
+            return canonicalizeUuid(uuid);
+        }
     }
 
     protected static class MemoryState {

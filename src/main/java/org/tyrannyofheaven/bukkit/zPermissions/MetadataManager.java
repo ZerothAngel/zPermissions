@@ -22,6 +22,7 @@ import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
@@ -46,11 +47,11 @@ public class MetadataManager {
 
     // Simple brain-dead caches instead of Guava Caches because manual management
     // in Guava <11 is hard without a CacheLoader.
-    private final Map<String, CacheEntry> playerCache = new LinkedHashMap<String, CacheEntry>() {
+    private final Map<UUID, CacheEntry> playerCache = new LinkedHashMap<UUID, CacheEntry>() {
         private static final long serialVersionUID = -3392138700819296598L;
 
         @Override
-        protected boolean removeEldestEntry(Entry<String, CacheEntry> eldest) {
+        protected boolean removeEldestEntry(Entry<UUID, CacheEntry> eldest) {
             return size() > PLAYER_CACHE_SIZE;
         }
     };
@@ -83,21 +84,24 @@ public class MetadataManager {
         return transactionStrategy;
     }
 
-    public Object getMetadata(String name, final boolean group, String metadataName) {
+    public Object getMetadata(String name, final UUID uuid, final boolean group, String metadataName) {
+        if (!group && uuid == null)
+            throw new IllegalArgumentException("uuid cannot be null");
+
         final String lname = name.toLowerCase();
 
         Map<String, Object> metadata;
 
         cacheLock.readLock().lock();
         try {
-            metadata = getCachedMetadata(lname, group);
+            metadata = getCachedMetadata(lname, uuid, group);
 
             if (metadata == null) {
                 cacheLock.readLock().unlock(); // Can't upgrade
                 cacheLock.writeLock().lock();
                 try {
                     // Re-test
-                    metadata = getCachedMetadata(lname, group);
+                    metadata = getCachedMetadata(lname, uuid, group);
 
                     if (metadata == null) {
                         // Not in cache, look it up
@@ -107,7 +111,7 @@ public class MetadataManager {
                                 if (group)
                                     return getResolver().resolveGroupMetadata(lname);
                                 else
-                                    return getResolver().resolvePlayerMetadata(lname);
+                                    return getResolver().resolvePlayerMetadata(uuid);
                             }
                         });
                         CacheEntry pe = new CacheEntry(metadataResult.getMetadata(), metadataResult.getGroups());
@@ -118,7 +122,7 @@ public class MetadataManager {
                         }
                         else {
                             // Stuff in cache
-                            playerCache.put(lname, pe);
+                            playerCache.put(uuid, pe);
                         }
                         metadata = metadataResult.getMetadata();
                     }
@@ -136,19 +140,22 @@ public class MetadataManager {
         }
     }
 
-    protected Map<String, Object> getCachedMetadata(final String lname, boolean group) {
+    private Map<String, Object> getCachedMetadata(final String lname, UUID uuid, boolean group) {
         // Check cache first
         CacheEntry pe;
         if (group) {
             pe = groupCache.get(lname);
         }
         else {
-            pe = playerCache.get(lname);
+            pe = playerCache.get(uuid);
         }
         return pe != null ? pe.getMetadata() : null;
     }
 
-    public void invalidateMetadata(String name, boolean group) {
+    public void invalidateMetadata(String name, UUID uuid, boolean group) {
+        if (!group && uuid == null)
+            throw new IllegalArgumentException("uuid cannot be null");
+
         name = name.toLowerCase();
 
         cacheLock.writeLock().lock();
@@ -156,8 +163,8 @@ public class MetadataManager {
             if (group) {
                 groupCache.remove(name);
                 // Also invalidate related players
-                for (Iterator<Map.Entry<String, CacheEntry>> i = playerCache.entrySet().iterator(); i.hasNext();) {
-                    Map.Entry<String, CacheEntry> me = i.next();
+                for (Iterator<Map.Entry<UUID, CacheEntry>> i = playerCache.entrySet().iterator(); i.hasNext();) {
+                    Map.Entry<UUID, CacheEntry> me = i.next();
                     if (me.getValue().getGroups().contains(name)) {
                         i.remove();
                     }
@@ -171,7 +178,7 @@ public class MetadataManager {
                 }
             }
             else {
-                playerCache.remove(name);
+                playerCache.remove(uuid);
             }
         }
         finally {
