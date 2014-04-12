@@ -21,12 +21,12 @@ import static org.tyrannyofheaven.bukkit.util.ToHStringUtils.hasText;
 import static org.tyrannyofheaven.bukkit.util.command.reader.CommandReader.isBatchProcessing;
 import static org.tyrannyofheaven.bukkit.zPermissions.uuid.UuidUtils.parseUuidDisplayName;
 
+import java.util.UUID;
 import java.util.concurrent.Executor;
 
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.command.CommandSender;
-import org.bukkit.command.ConsoleCommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
 
@@ -58,17 +58,22 @@ public class CommandUuidResolver {
             // See if it's UUID or UUID/DisplayName
             UuidDisplayName udn = parseUuidDisplayName(name);
             if (udn != null) {
-//                OfflinePlayer player = Bukkit.getOfflinePlayer(udn.getUuid());
-                Player player = Bukkit.getPlayer(udn.getUuid()); // TODO Use the above for 1.7.6+
-                // Default display name if they aren't online (either what was passed in or the UUID in string form)
-                String displayName = hasText(udn.getDisplayName()) ? udn.getDisplayName() : udn.getUuid().toString();
-                handler.process(sender, player != null ? player.getName() : displayName, udn.getUuid(), group);
+                String displayName;
+                OfflinePlayer player = Bukkit.getOfflinePlayer(udn.getUuid());
+                if (player != null && player.getName() != null) {
+                    // Use last known name
+                    displayName = player.getName();
+                }
+                else {
+                    // Default display name (either what was passed in or the UUID in string form)
+                    displayName = hasText(udn.getDisplayName()) ? udn.getDisplayName() : udn.getUuid().toString();
+                }
+                handler.process(sender, displayName, udn.getUuid(), group);
             }
             else {
                 // Is the named player online?
-//                Player player = Bukkit.getPlayerExact(name);
-                OfflinePlayer player = Bukkit.getOfflinePlayer(name); // TODO This makes sense for 1.7.6, but maybe not for 1.8+
-                if (player != null && player.getUniqueId() != null) {
+                Player player = Bukkit.getPlayerExact(name);
+                if (player != null) {
                     // Simply run inline, no explicit lookup necessary
                     handler.process(sender, player.getName(), player.getUniqueId(), group);
                 }
@@ -86,6 +91,8 @@ public class CommandUuidResolver {
                     // Resolve async
                     sendMessage(sender, colorize("{GRAY}(Resolving UUID...)"));
                     Runnable task = new UsernameResolverHandlerRunnable(plugin, uuidResolver, sender, name, group, handler);
+                    // NB Bukkit#getOfflinePlayer(String) provides almost the same service
+                    // However, it's not known whether it is fully thread-safe.
                     executor.execute(task);
                 }
             }
@@ -98,9 +105,9 @@ public class CommandUuidResolver {
         
         private final UuidResolver uuidResolver;
 
-        private final boolean console;
+        private final CommandSender sender;
 
-        private final String senderName;
+        private final UUID senderUuid;
 
         private final String name;
 
@@ -111,11 +118,15 @@ public class CommandUuidResolver {
         private UsernameResolverHandlerRunnable(Plugin plugin, UuidResolver uuidResolver, CommandSender sender, String name, boolean group, CommandUuidResolverHandler handler) {
             this.plugin = plugin;
             this.uuidResolver = uuidResolver;
-            this.console = sender instanceof ConsoleCommandSender; // Just to avoid any weirdness with any players named "CONSOLE"
-            this.senderName = sender != null ? sender.getName() : null;
+            this.sender = sender instanceof Player ? null : sender;
+            this.senderUuid = sender instanceof Player ? ((Player)sender).getUniqueId() : null;
             this.name = name;
             this.group = group;
             this.handler = handler;
+        }
+
+        private CommandSender getSender() {
+            return sender;
         }
 
         @Override
@@ -128,13 +139,7 @@ public class CommandUuidResolver {
                 @Override
                 public void run() {
                     // Re-lookup sender
-                    CommandSender sender;
-                    if (console) {
-                        sender = Bukkit.getConsoleSender();
-                    }
-                    else {
-                        sender = Bukkit.getPlayerExact(senderName);
-                    }
+                    CommandSender sender = getSender() != null ? getSender() : Bukkit.getPlayer(senderUuid);
 
                     // Only execute if sender is still around
                     if (sender != null) {
