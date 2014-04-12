@@ -757,10 +757,12 @@ public abstract class BaseMemoryPermissionDao implements PermissionDao {
         }
         
         Set<Membership> memberships = getReverseMembershipMap().get(canonicalizeUuid(uuid));
-        for (Membership membership : memberships) {
-            if (!membership.getDisplayName().equals(displayName)) {
-                membership.setDisplayName(displayName);
-                updateDisplayName(membership);
+        if (memberships != null) {
+            for (Membership membership : memberships) {
+                if (!membership.getDisplayName().equals(displayName)) {
+                    membership.setDisplayName(displayName);
+                    updateDisplayName(membership);
+                }
             }
         }
     }
