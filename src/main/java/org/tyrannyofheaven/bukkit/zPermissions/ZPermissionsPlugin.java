@@ -38,6 +38,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 
 import org.bukkit.Bukkit;
@@ -460,7 +461,7 @@ public class ZPermissionsPlugin extends JavaPlugin implements ZPermissionsCore, 
         }
 
         // Instantiate UUID resolver service
-        uuidResolver = new MojangUuidResolver(); // TODO
+        uuidResolver = new MojangUuidResolver(100, 5L, TimeUnit.MINUTES); // TODO make configurable
 
         // Attempt to initialize storage, retrying indefinitely (with exponential backoff)
         int initializationRetryDelay = STARTING_INITIALIZATION_RETRY_DELAY;
