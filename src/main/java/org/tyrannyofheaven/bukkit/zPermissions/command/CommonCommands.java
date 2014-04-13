@@ -167,7 +167,7 @@ public abstract class CommonCommands {
     
         sendMessage(sender, colorize("{GOLD}%s{YELLOW} set to {GREEN}%s{YELLOW} for %s%s"), permission, value == null ? Boolean.TRUE : value, group ? ChatColor.DARK_GREEN : ChatColor.AQUA, name);
         if (!group) {
-            core.refreshPlayer(null, RefreshCause.COMMAND);
+            core.refreshPlayer(uuid, RefreshCause.COMMAND);
         }
         else {
             core.refreshAffectedPlayers(name);
@@ -203,7 +203,7 @@ public abstract class CommonCommands {
             if (group)
                 core.refreshAffectedPlayers(name);
             else
-                core.refreshPlayer(null, RefreshCause.COMMAND);
+                core.refreshPlayer(uuid, RefreshCause.COMMAND);
         }
         else {
             sendMessage(sender, colorize("%s%s{RED} does not set {GOLD}%s"), group ? ChatColor.DARK_GREEN : ChatColor.AQUA, name, permission);
@@ -253,7 +253,7 @@ public abstract class CommonCommands {
             if (group)
                 core.refreshAffectedPlayers(name);
             else
-                core.refreshPlayer(null, RefreshCause.COMMAND);
+                core.refreshPlayer(uuid, RefreshCause.COMMAND);
             core.refreshExpirations();
         }
         else {
