@@ -38,6 +38,8 @@ import org.tyrannyofheaven.bukkit.util.command.Option;
 import org.tyrannyofheaven.bukkit.util.command.Require;
 import org.tyrannyofheaven.bukkit.util.command.Session;
 import org.tyrannyofheaven.bukkit.util.transaction.TransactionCallbackWithoutResult;
+import org.tyrannyofheaven.bukkit.util.uuid.CommandUuidResolver;
+import org.tyrannyofheaven.bukkit.util.uuid.CommandUuidResolverHandler;
 import org.tyrannyofheaven.bukkit.zPermissions.PermissionsResolver;
 import org.tyrannyofheaven.bukkit.zPermissions.RefreshCause;
 import org.tyrannyofheaven.bukkit.zPermissions.ZPermissionsConfig;
@@ -49,8 +51,6 @@ import org.tyrannyofheaven.bukkit.zPermissions.model.PermissionEntity;
 import org.tyrannyofheaven.bukkit.zPermissions.storage.StorageStrategy;
 import org.tyrannyofheaven.bukkit.zPermissions.util.MetadataConstants;
 import org.tyrannyofheaven.bukkit.zPermissions.util.Utils;
-import org.tyrannyofheaven.bukkit.zPermissions.uuid.CommandUuidResolver;
-import org.tyrannyofheaven.bukkit.zPermissions.uuid.CommandUuidResolverHandler;
 
 /**
  * Handler for player sub-commands. Expects the CommandSession to contain the

@@ -30,14 +30,14 @@ import org.tyrannyofheaven.bukkit.util.command.Require;
 import org.tyrannyofheaven.bukkit.util.command.Session;
 import org.tyrannyofheaven.bukkit.util.transaction.TransactionCallback;
 import org.tyrannyofheaven.bukkit.util.transaction.TransactionCallbackWithoutResult;
+import org.tyrannyofheaven.bukkit.util.uuid.CommandUuidResolver;
+import org.tyrannyofheaven.bukkit.util.uuid.CommandUuidResolverHandler;
 import org.tyrannyofheaven.bukkit.zPermissions.ZPermissionsCore;
 import org.tyrannyofheaven.bukkit.zPermissions.dao.MissingGroupException;
 import org.tyrannyofheaven.bukkit.zPermissions.model.EntityMetadata;
 import org.tyrannyofheaven.bukkit.zPermissions.model.PermissionEntity;
 import org.tyrannyofheaven.bukkit.zPermissions.storage.StorageStrategy;
 import org.tyrannyofheaven.bukkit.zPermissions.util.Utils;
-import org.tyrannyofheaven.bukkit.zPermissions.uuid.CommandUuidResolver;
-import org.tyrannyofheaven.bukkit.zPermissions.uuid.CommandUuidResolverHandler;
 
 // TODO Break class up into player and group versions for better control over permissions
 public class MetadataCommands {

@@ -36,7 +36,7 @@ import javax.persistence.Transient;
 import javax.persistence.UniqueConstraint;
 
 import org.tyrannyofheaven.bukkit.util.ToHUtils;
-import org.tyrannyofheaven.bukkit.zPermissions.uuid.UuidUtils;
+import org.tyrannyofheaven.bukkit.util.uuid.UuidUtils;
 
 /**
  * The permission entity &mdash; something that can have a set of permission

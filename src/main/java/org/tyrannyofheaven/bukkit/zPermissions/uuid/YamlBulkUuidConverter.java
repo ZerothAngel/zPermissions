@@ -18,7 +18,7 @@ package org.tyrannyofheaven.bukkit.zPermissions.uuid;
 import static org.tyrannyofheaven.bukkit.util.ToHLoggingUtils.log;
 import static org.tyrannyofheaven.bukkit.util.ToHLoggingUtils.warn;
 import static org.tyrannyofheaven.bukkit.util.ToHStringUtils.hasText;
-import static org.tyrannyofheaven.bukkit.zPermissions.uuid.UuidUtils.canonicalizeUuid;
+import static org.tyrannyofheaven.bukkit.util.uuid.UuidUtils.canonicalizeUuid;
 
 import java.io.File;
 import java.io.FileReader;
@@ -35,6 +35,8 @@ import java.util.Map;
 import java.util.Set;
 
 import org.bukkit.plugin.Plugin;
+import org.tyrannyofheaven.bukkit.util.uuid.UuidDisplayName;
+import org.tyrannyofheaven.bukkit.util.uuid.UuidResolver;
 import org.yaml.snakeyaml.DumperOptions;
 import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.constructor.SafeConstructor;

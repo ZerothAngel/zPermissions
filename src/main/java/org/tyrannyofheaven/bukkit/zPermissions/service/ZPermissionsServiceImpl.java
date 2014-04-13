@@ -17,7 +17,7 @@ package org.tyrannyofheaven.bukkit.zPermissions.service;
 
 import static org.tyrannyofheaven.bukkit.util.ToHLoggingUtils.warn;
 import static org.tyrannyofheaven.bukkit.util.ToHStringUtils.hasText;
-import static org.tyrannyofheaven.bukkit.zPermissions.uuid.UuidUtils.canonicalizeUuid;
+import static org.tyrannyofheaven.bukkit.util.uuid.UuidUtils.canonicalizeUuid;
 
 import java.util.ArrayList;
 import java.util.Collections;

@@ -4,7 +4,6 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
-import static org.tyrannyofheaven.bukkit.zPermissions.uuid.UuidUtils.uncanonicalizeUuid;
 
 import java.util.Date;
 import java.util.LinkedHashSet;
