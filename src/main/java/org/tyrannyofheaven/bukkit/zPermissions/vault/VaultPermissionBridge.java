@@ -182,7 +182,7 @@ public class VaultPermissionBridge extends Permission implements Listener {
                 getDao().setPermission(player, uuid, false, null, permWorld, permission, true);
             }
         });
-        core.refreshPlayer(null, RefreshCause.COMMAND);
+        core.refreshPlayer(uuid, RefreshCause.COMMAND);
         core.logExternalChange("Added permission '%s' to player %s via Vault",
                 new QualifiedPermission(null, world, permission), player);
         return true;
@@ -212,7 +212,7 @@ public class VaultPermissionBridge extends Permission implements Listener {
             return false;
         }
         core.invalidateMetadataCache(player, uuid, false);
-        core.refreshPlayer(null, RefreshCause.GROUP_CHANGE);
+        core.refreshPlayer(uuid, RefreshCause.GROUP_CHANGE);
         core.logExternalChange("Added player %s to group %s via Vault",
                 player, group);
         return true;
@@ -278,7 +278,7 @@ public class VaultPermissionBridge extends Permission implements Listener {
             }
         });
         if (result) {
-            core.refreshPlayer(null, RefreshCause.COMMAND);
+            core.refreshPlayer(uuid, RefreshCause.COMMAND);
             core.logExternalChange("Removed permission '%s' from player %s via Vault",
                     new QualifiedPermission(null, world, permission), player);
         }
@@ -309,7 +309,7 @@ public class VaultPermissionBridge extends Permission implements Listener {
             return false;
         }
         core.invalidateMetadataCache(player, uuid, false);
-        core.refreshPlayer(null, RefreshCause.GROUP_CHANGE);
+        core.refreshPlayer(uuid, RefreshCause.GROUP_CHANGE);
         core.logExternalChange("Removed player %s from group %s via Vault",
                 player, group);
         return true;

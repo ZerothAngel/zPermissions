@@ -173,7 +173,7 @@ public class PlayerCommands extends CommonCommands {
 
         sendMessage(sender, colorize("{AQUA}%s{YELLOW}'s group set to {DARK_GREEN}%s"), playerName, groupName);
         core.invalidateMetadataCache(playerName, uuid, false);
-        core.refreshPlayer(null, RefreshCause.GROUP_CHANGE);
+        core.refreshPlayer(uuid, RefreshCause.GROUP_CHANGE);
         
         if (expiration != null)
             core.refreshExpirations(uuid);
