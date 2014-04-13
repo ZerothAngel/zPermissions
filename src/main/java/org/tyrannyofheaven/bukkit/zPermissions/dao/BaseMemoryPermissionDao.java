@@ -15,7 +15,7 @@
  */
 package org.tyrannyofheaven.bukkit.zPermissions.dao;
 
-import static org.tyrannyofheaven.bukkit.zPermissions.uuid.UuidUtils.canonicalizeUuid;
+import static org.tyrannyofheaven.bukkit.util.uuid.UuidUtils.canonicalizeUuid;
 
 import java.util.ArrayList;
 import java.util.Collection;

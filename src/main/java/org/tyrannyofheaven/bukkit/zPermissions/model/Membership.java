@@ -28,7 +28,7 @@ import javax.persistence.TemporalType;
 import javax.persistence.Transient;
 import javax.persistence.UniqueConstraint;
 
-import org.tyrannyofheaven.bukkit.zPermissions.uuid.UuidUtils;
+import org.tyrannyofheaven.bukkit.util.uuid.UuidUtils;
 
 /**
  * Represents group membership.
