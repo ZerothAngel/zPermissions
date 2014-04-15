@@ -566,7 +566,7 @@ public class ZPermissionsPlugin extends JavaPlugin implements ZPermissionsCore, 
 
             // Install our listeners
             expirationRefreshHandler = new ExpirationRefreshHandler(getZPermissionsCore(), storageStrategy, this);
-            Bukkit.getPluginManager().registerEvents(new ZPermissionsPlayerListener(getZPermissionsCore(), this), this);
+            Bukkit.getPluginManager().registerEvents(new ZPermissionsPlayerListener(getZPermissionsCore(), this, uuidResolver), this);
             if (regionSupport) {
                 Bukkit.getPluginManager().registerEvents(new ZPermissionsRegionPlayerListener(getZPermissionsCore()), this);
                 log(this, "%s region support: %s", regionStrategy.getName(), regionStrategy.isEnabled() ? "Enabled" : "Waiting");
