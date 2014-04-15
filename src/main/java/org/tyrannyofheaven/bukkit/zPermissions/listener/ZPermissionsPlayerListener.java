@@ -27,6 +27,7 @@ import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerLoginEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.plugin.Plugin;
+import org.tyrannyofheaven.bukkit.util.uuid.UuidResolver;
 import org.tyrannyofheaven.bukkit.zPermissions.RefreshCause;
 import org.tyrannyofheaven.bukkit.zPermissions.ZPermissionsCore;
 
@@ -42,9 +43,12 @@ public class ZPermissionsPlayerListener implements Listener {
     
     private final Plugin plugin;
 
-    public ZPermissionsPlayerListener(ZPermissionsCore core, Plugin plugin) {
+    private final UuidResolver uuidResolver;
+
+    public ZPermissionsPlayerListener(ZPermissionsCore core, Plugin plugin, UuidResolver uuidResolver) {
         this.core = core;
         this.plugin = plugin;
+        this.uuidResolver = uuidResolver;
     }
 
     @EventHandler(priority=EventPriority.MONITOR)
@@ -52,6 +56,8 @@ public class ZPermissionsPlayerListener implements Listener {
         if (event.getLoginResult() == AsyncPlayerPreLoginEvent.Result.ALLOWED) {
             // Update display name
             core.updateDisplayName(event.getUniqueId(), event.getName());
+            // Also pre-load cache of UuidResolver
+            uuidResolver.preload(event.getName(), event.getUniqueId());
         }
     }
 
