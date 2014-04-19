@@ -212,6 +212,15 @@ public class ZPermissionsPlugin extends JavaPlugin implements ZPermissionsCore, 
     // Search delay in ticks
     private static final int DEFAULT_SEARCH_DELAY = 5;
 
+    // Whether or not to attempt UUID migration
+    private static final boolean DEFAULT_UUID_MIGRATE = true;
+
+    // Size of UUID resolver cache
+    private static final int DEFAULT_UUID_CACHE_SIZE = 100;
+
+    // TTL of UUID resolver cache
+    private static final long DEFAULT_UUID_CACHE_TTL = 5L;
+    
     // Version info (may include build number)
     private VersionInfo versionInfo;
 
@@ -331,8 +340,17 @@ public class ZPermissionsPlugin extends JavaPlugin implements ZPermissionsCore, 
     // Search delay
     private int searchDelay;
 
+    // Size of UUID resolver cache
+    private int uuidResolverCacheSize;
+
+    // TTL of UUID resolver cache
+    private long uuidResolverCacheTtl;
+    
     // UUID resolver service
     private UuidResolver uuidResolver;
+
+    // Whether or not to attempt UUID migration
+    private boolean uuidMigrate;
 
     // Async Executor for CommandUuidResolver
     private ExecutorService commandUuidResolverExecutor;
@@ -461,7 +479,7 @@ public class ZPermissionsPlugin extends JavaPlugin implements ZPermissionsCore, 
         }
 
         // Instantiate UUID resolver service
-        uuidResolver = new MojangUuidResolver(100, 5L, TimeUnit.MINUTES); // TODO make configurable
+        uuidResolver = new MojangUuidResolver(uuidResolverCacheSize, uuidResolverCacheTtl, TimeUnit.MINUTES);
 
         // Attempt to initialize storage, retrying indefinitely (with exponential backoff)
         int initializationRetryDelay = STARTING_INITIALIZATION_RETRY_DELAY;
@@ -511,9 +529,11 @@ public class ZPermissionsPlugin extends JavaPlugin implements ZPermissionsCore, 
                 }
                 else {
                     ToHDatabaseUtils.upgradeDatabase(this, namingConvention, getClassLoader(), "sql");
-   
-                    // Perform migration
-                    new AvajeBulkUuidConverter(this, uuidResolver).migrate();
+
+                    if (uuidMigrate) {
+                        // Perform migration
+                        new AvajeBulkUuidConverter(this, uuidResolver).migrate();
+                    }
 
                     log(this, "Using database storage strategy.");
                     storageStrategy = new AvajeStorageStrategy(this, txnMaxRetries, databaseReadOnly);
@@ -525,8 +545,10 @@ public class ZPermissionsPlugin extends JavaPlugin implements ZPermissionsCore, 
                 log(this, "Using file-based storage strategy.");
                 File dataFile = new File(getDataFolder(), FILE_STORAGE_FILENAME);
                 
-                // Perform migration
-                new YamlBulkUuidConverter(this, uuidResolver, dataFile).migrate();
+                if (uuidMigrate) {
+                    // Perform migration
+                    new YamlBulkUuidConverter(this, uuidResolver, dataFile).migrate();
+                }
 
                 storageStrategy = new MemoryStorageStrategy(this, dataFile);
             }
@@ -1173,6 +1195,10 @@ public class ZPermissionsPlugin extends JavaPlugin implements ZPermissionsCore, 
         // FIXME More hidden options
         searchBatchSize = config.getInt("search-batch-size", DEFAULT_SEARCH_BATCH_SIZE);
         searchDelay = config.getInt("search-delay", DEFAULT_SEARCH_DELAY);
+        // FIXME UUID options, all hidden for now
+        uuidResolverCacheSize = config.getInt("uuid-cache-size", DEFAULT_UUID_CACHE_SIZE);
+        uuidResolverCacheTtl = config.getLong("uuid-cache-ttl", DEFAULT_UUID_CACHE_TTL);
+        uuidMigrate = config.getBoolean("uuid-migrate", DEFAULT_UUID_MIGRATE);
 
         ToHDatabaseUtils.populateNamingConvention(config, namingConvention);
 
