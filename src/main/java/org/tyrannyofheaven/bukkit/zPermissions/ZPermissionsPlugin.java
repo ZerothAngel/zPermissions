@@ -183,7 +183,7 @@ public class ZPermissionsPlugin extends JavaPlugin implements ZPermissionsCore, 
     private static final boolean DEFAULT_VAULT_GET_GROUPS_USES_ASSIGNED_ONLY = false;
 
     // Default logging for Vault changes
-    private static final boolean DEFAULT_LOG_VAULT_CHANGES = true;
+    private static final boolean DEFAULT_LOG_VAULT_CHANGES = false;
 
     // Filename of file-based storage
     private static final String FILE_STORAGE_FILENAME = "data.yml";
