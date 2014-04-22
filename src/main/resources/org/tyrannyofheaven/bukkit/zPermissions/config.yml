@@ -63,6 +63,6 @@ vault-player-prefix-format: ''
 
 vault-player-suffix-format: ''
 
-log-vault-changes: true
+log-vault-changes: false
 
 debug: false
