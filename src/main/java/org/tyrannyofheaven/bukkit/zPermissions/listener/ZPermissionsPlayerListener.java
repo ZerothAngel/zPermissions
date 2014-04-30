@@ -56,8 +56,6 @@ public class ZPermissionsPlayerListener implements Listener {
         if (event.getLoginResult() == AsyncPlayerPreLoginEvent.Result.ALLOWED) {
             // Update display name
             core.updateDisplayName(event.getUniqueId(), event.getName());
-            // Also pre-load cache of UuidResolver
-            uuidResolver.preload(event.getName(), event.getUniqueId());
         }
     }
 
@@ -105,6 +103,8 @@ public class ZPermissionsPlayerListener implements Listener {
                 core.refreshExpirations();
             }
         });
+        // Pre-load cache of UuidResolver
+        uuidResolver.preload(event.getPlayer().getName(), event.getPlayer().getUniqueId());
     }
 
     @EventHandler(priority=EventPriority.LOWEST)
