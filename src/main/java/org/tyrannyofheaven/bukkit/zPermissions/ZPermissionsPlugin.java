@@ -1419,6 +1419,8 @@ public class ZPermissionsPlugin extends JavaPlugin implements ZPermissionsCore, 
 
     @Override
     public void updateDisplayName(final UUID uuid, final String displayName) {
+        if (databaseReadOnly) return; // Do nothing if in read-only mode
+
         // Run synchronous since I'm not so sure about thread safety of AvajeStorageStrategy's
         // pre-commit hook...
         Bukkit.getScheduler().scheduleSyncDelayedTask(this, new Runnable() {
