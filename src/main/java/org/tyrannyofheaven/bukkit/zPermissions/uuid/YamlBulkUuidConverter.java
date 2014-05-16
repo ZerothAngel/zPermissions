@@ -241,7 +241,8 @@ public class YamlBulkUuidConverter implements BulkUuidConverter {
             List<Map<String, Object>> tempMembers = (List<Map<String, Object>>)group.get("tempmembers");
             if (tempMembers == null) // backwards compat
                 tempMembers = Collections.emptyList();
-            for (Map<String, Object> tempMember : tempMembers) {
+            for (Iterator<Map<String, Object>> i = tempMembers.iterator(); i.hasNext();) {
+                Map<String, Object> tempMember = i.next();
                 String name = (String)tempMember.get("member");
                 if (!hasText(name))
                     throw new IllegalStateException("member must have a value");
@@ -253,6 +254,7 @@ public class YamlBulkUuidConverter implements BulkUuidConverter {
                         tempMember.remove("member");
                     }
                     else {
+                        i.remove();
                         warn(plugin, "Unable to migrate '%s' (member of '%s') -- failed to lookup UUID", name, group.get("name"));
                     }
                 }
