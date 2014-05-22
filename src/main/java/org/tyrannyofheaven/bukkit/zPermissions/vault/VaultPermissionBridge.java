@@ -317,26 +317,26 @@ public class VaultPermissionBridge extends Permission implements Listener {
 
     // Following transient methods overridden for sole purpose of logging
 
-    @Override
-    public boolean playerAddTransient(Player player, String permission) {
-        boolean result = super.playerAddTransient(player, permission);
-        // Always true, but eh
-        if (result) {
-            core.logExternalChange("Added transient permission '%s' to player %s via Vault",
-                    permission, player.getName());
-        }
-        return result;
-    }
-
-    @Override
-    public boolean playerRemoveTransient(Player player, String permission) {
-        boolean result = super.playerRemoveTransient(player, permission);
-        if (result) {
-            core.logExternalChange("Removed transient permission '%s' from player %s via Vault",
-                    permission, player.getName());
-        }
-        return result;
-    }
+//    @Override
+//    public boolean playerAddTransient(Player player, String permission) {
+//        boolean result = super.playerAddTransient(player, permission);
+//        // Always true, but eh
+//        if (result) {
+//            core.logExternalChange("Added transient permission '%s' to player %s via Vault",
+//                    permission, player.getName());
+//        }
+//        return result;
+//    }
+//
+//    @Override
+//    public boolean playerRemoveTransient(Player player, String permission) {
+//        boolean result = super.playerRemoveTransient(player, permission);
+//        if (result) {
+//            core.logExternalChange("Removed transient permission '%s' from player %s via Vault",
+//                    permission, player.getName());
+//        }
+//        return result;
+//    }
 
     public void register() {
         Bukkit.getServicesManager().register(Permission.class, this, plugin, ServicePriority.Highest);
