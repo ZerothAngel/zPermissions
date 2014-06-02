@@ -797,7 +797,7 @@ public class ZPermissionsPlugin extends JavaPlugin implements ZPermissionsCore, 
 
         PlayerState playerState = getPlayerState(player);
 
-        boolean hasPermissionAttachment = player.hasPermission(permName);
+        boolean hasPermissionAttachment = player.isPermissionSet(permName) && player.hasPermission(permName);
 
         // Check if the player is missing any state or changed worlds/regions
         if (!force) {
