@@ -614,16 +614,16 @@ public abstract class CommonCommands {
         abortBatchProcessing();
     }
 
-    protected final void addGroupMember(CommandSender sender, final String groupName, final String playerName, final String duration, final String[] args, final boolean add) {
+    protected final void addGroupMember(CommandSender sender, final String groupName, final String playerName, final String duration, final String[] args, final boolean add, final boolean addNoReset) {
         uuidResolver.resolveUsername(sender, playerName, false, new CommandUuidResolverHandler() {
             @Override
             public void process(CommandSender sender, String name, UUID uuid, boolean group) {
-                addGroupMember(sender, groupName, uuid, name, duration, args, add);
+                addGroupMember(sender, groupName, uuid, name, duration, args, add, addNoReset);
             }
         });
     }
 
-    private void addGroupMember(CommandSender sender, final String groupName, final UUID playerUuid, final String playerName, String duration, String[] args, final boolean add) {
+    private void addGroupMember(CommandSender sender, final String groupName, final UUID playerUuid, final String playerName, String duration, String[] args, final boolean add, final boolean addNoReset) {
         final Date expiration = Utils.parseDurationTimestamp(duration, args);
     
         // Add player to group.
@@ -631,7 +631,7 @@ public abstract class CommonCommands {
             storageStrategy.getRetryingTransactionStrategy().execute(new TransactionCallbackWithoutResult() {
                 @Override
                 public void doInTransactionWithoutResult() throws Exception {
-                    Date newExpiration = handleExtendExpiration(groupName, playerUuid, playerName, add, expiration);
+                    Date newExpiration = handleExtendExpiration(groupName, playerUuid, playerName, add, addNoReset, expiration);
 
                     storageStrategy.getDao().addMember(groupName, playerUuid, playerName, newExpiration);
                 }
@@ -680,9 +680,9 @@ public abstract class CommonCommands {
         }
     }
 
-    protected final Date handleExtendExpiration(final String groupName, UUID playerUuid, final String playerName, final boolean add, final Date expiration) {
+    protected final Date handleExtendExpiration(final String groupName, UUID playerUuid, final String playerName, final boolean add, boolean addNoReset, final Date expiration) {
         Date newExpiration = expiration;
-        if (add) {
+        if (add || addNoReset) {
             if (expiration != null) {
                 Date now = new Date();
 
@@ -698,6 +698,7 @@ public abstract class CommonCommands {
                             if (previousDuration < 0L)
                                 previousDuration = 0L;
                         }
+                        else if (addNoReset) return null; // Exists and is permanent, don't touch expiration if requested
                         break;
                     }
                 }
