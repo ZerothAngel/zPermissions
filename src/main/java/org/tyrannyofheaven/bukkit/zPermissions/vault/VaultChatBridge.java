@@ -35,16 +35,13 @@ public class VaultChatBridge extends Chat {
 
     private final ZPermissionsConfig config;
 
-    private final PlayerPrefixHandler prefixHandler;
-
-    public VaultChatBridge(Plugin plugin, ZPermissionsCore core, StorageStrategy storageStrategy, ZPermissionsService service, ZPermissionsConfig config, PlayerPrefixHandler prefixHandler) {
+    public VaultChatBridge(Plugin plugin, ZPermissionsCore core, StorageStrategy storageStrategy, ZPermissionsService service, ZPermissionsConfig config) {
         super(Bukkit.getServicesManager().load(Permission.class));
         this.plugin = plugin;
         this.core = core;
         this.storageStrategy = storageStrategy;
         this.service = service;
         this.config = config;
-        this.prefixHandler = prefixHandler;
     }
 
     @Override
@@ -152,7 +149,7 @@ public class VaultChatBridge extends Chat {
         if (offlinePlayer == null) return "";
         UUID uuid = offlinePlayer.getUniqueId();
 
-        return prefixHandler.getPlayerPrefix(uuid);
+        return service.getPlayerPrefix(uuid);
     }
 
     @Override
@@ -161,7 +158,7 @@ public class VaultChatBridge extends Chat {
         if (offlinePlayer == null) return "";
         UUID uuid = offlinePlayer.getUniqueId();
 
-        return prefixHandler.getPlayerSuffix(uuid);
+        return service.getPlayerSuffix(uuid);
     }
 
     @Override

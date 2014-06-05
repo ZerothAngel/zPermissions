@@ -57,4 +57,6 @@ public interface ZPermissionsConfig {
     
     public int getSearchDelay();
 
+    public boolean isServiceMetadataPrefixHack();
+
 }

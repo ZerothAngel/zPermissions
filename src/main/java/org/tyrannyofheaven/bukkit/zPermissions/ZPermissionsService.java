@@ -244,4 +244,20 @@ public interface ZPermissionsService {
      */
     public String getPlayerPrimaryGroup(UUID uuid);
 
+    /**
+     * Retrieve a player's chat prefix.
+     * 
+     * @param uuid the player's UUID
+     * @return the player's prefix or empty string if none
+     */
+    public String getPlayerPrefix(UUID uuid);
+
+    /**
+     * Retrieve a player's suffix.
+     * 
+     * @param uuid the player's UUID
+     * @return the player's suffix or empty string if none
+     */
+    public String getPlayerSuffix(UUID uuid);
+
 }
