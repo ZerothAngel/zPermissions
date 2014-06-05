@@ -144,23 +144,23 @@ public class PlayerCommands extends CommonCommands {
 
     @Command(value={"setgroup", "group"}, description="Set this player's singular group")
     @Require("zpermissions.player.manage")
-    public void setGroup(CommandSender sender, final @Session("entityName") String playerName, final @Option({"-a", "--add"}) boolean add, final @Option(value="group", completer="group") String groupName, final @Option(value="duration/timestamp", optional=true) String duration, final String[] args) {
+    public void setGroup(CommandSender sender, final @Session("entityName") String playerName, final @Option({"-a", "--add"}) boolean add, final @Option({"-A", "--add-no-reset"}) boolean addNoReset, final @Option(value="group", completer="group") String groupName, final @Option(value="duration/timestamp", optional=true) String duration, final String[] args) {
         uuidResolver.resolveUsername(sender, playerName, false, new CommandUuidResolverHandler() {
             @Override
             public void process(CommandSender sender, String name, UUID uuid, boolean group) {
-                setGroup(sender, uuid, name, add, groupName, duration, args);
+                setGroup(sender, uuid, name, add, addNoReset, groupName, duration, args);
             }
         });
     }
 
-    private void setGroup(CommandSender sender, final UUID uuid, final String playerName, final boolean add, final String groupName, String duration, String[] args) {
+    private void setGroup(CommandSender sender, final UUID uuid, final String playerName, final boolean add, final boolean addNoReset, final String groupName, String duration, String[] args) {
         final Date expiration = Utils.parseDurationTimestamp(duration, args);
 
         try {
             storageStrategy.getRetryingTransactionStrategy().execute(new TransactionCallbackWithoutResult() {
                 @Override
                 public void doInTransactionWithoutResult() throws Exception {
-                    Date newExpiration = handleExtendExpiration(groupName, uuid, playerName, add, expiration);
+                    Date newExpiration = handleExtendExpiration(groupName, uuid, playerName, add, addNoReset, expiration);
 
                     storageStrategy.getDao().setGroup(uuid, playerName, groupName, newExpiration);
                 }
@@ -181,8 +181,8 @@ public class PlayerCommands extends CommonCommands {
 
     @Command(value={"addgroup", "add"}, description="Add this player to a group")
     @Require("zpermissions.player.manage")
-    public void addGroup(CommandSender sender, @Session("entityName") String playerName, @Option({"-a", "--add"}) boolean add, @Option(value="group", completer="group") String groupName, @Option(value="duration/timestamp", optional=true) String duration, String[] args) {
-        addGroupMember(sender, groupName, playerName, duration, args, add);
+    public void addGroup(CommandSender sender, @Session("entityName") String playerName, @Option({"-a", "--add"}) boolean add, final @Option({"-A", "--add-no-reset"}) boolean addNoReset, @Option(value="group", completer="group") String groupName, @Option(value="duration/timestamp", optional=true) String duration, String[] args) {
+        addGroupMember(sender, groupName, playerName, duration, args, add, addNoReset);
     }
 
     @Command(value={"removegroup", "rmgroup", "remove", "rm"}, description="Remove this player from a group")
