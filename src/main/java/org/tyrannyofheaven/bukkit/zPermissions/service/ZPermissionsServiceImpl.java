@@ -65,6 +65,10 @@ public class ZPermissionsServiceImpl implements ZPermissionsService {
 
     private final ZPermissionsConfig config;
 
+    private final PlayerPrefixHandler playerPrefixHandler;
+
+    private final ThreadLocal<Boolean> playerPrefixHandlerLoopAvoidance = new ThreadLocal<Boolean>();
+
     static {
         Set<Class<?>> types = new HashSet<Class<?>>();
         types.add(Object.class);
@@ -77,7 +81,7 @@ public class ZPermissionsServiceImpl implements ZPermissionsService {
         validMetadataTypes = Collections.unmodifiableSet(types);
     }
 
-    public ZPermissionsServiceImpl(Plugin plugin, PermissionsResolver resolver, PermissionDao dao, MetadataManager metadataManager, TransactionStrategy transactionStrategy, ZPermissionsConfig config) {
+    public ZPermissionsServiceImpl(Plugin plugin, PermissionsResolver resolver, PermissionDao dao, MetadataManager metadataManager, TransactionStrategy transactionStrategy, ZPermissionsConfig config, PlayerPrefixHandler playerPrefixHandler) {
         if (plugin == null)
             throw new IllegalArgumentException("plugin cannot be null");
         if (resolver == null)
@@ -90,12 +94,15 @@ public class ZPermissionsServiceImpl implements ZPermissionsService {
             throw new IllegalArgumentException("transactionStrategy cannot be null");
         if (config == null)
             throw new IllegalArgumentException("config cannot be null");
+        if (playerPrefixHandler == null)
+            throw new IllegalArgumentException("playerPrefixHandler cannot be null");
         this.plugin = plugin;
         this.resolver = resolver;
         this.dao = dao;
         this.metadataManager = metadataManager;
         this.transactionStrategy = transactionStrategy;
         this.config = config;
+        this.playerPrefixHandler = playerPrefixHandler;
     }
 
     private PermissionsResolver getResolver() {
@@ -349,13 +356,33 @@ public class ZPermissionsServiceImpl implements ZPermissionsService {
         if (player == null) return null;
         UUID uuid = player.getUniqueId();
 
-        return getEntityMetadata(playerName, uuid, false, metadataName, type);
+        return getPlayerMetadata(uuid, metadataName, type);
     }
 
     @Override
     public <T> T getPlayerMetadata(UUID uuid, String metadataName, Class<T> type) {
         if (uuid == null)
             throw new IllegalArgumentException("uuid cannot be null");
+
+        // Handle prefix/suffix ourselves
+        if (config.isServiceMetadataPrefixHack() && type == String.class) {
+            boolean isPrefix = MetadataConstants.PREFIX_KEY.equals(metadataName);
+            if (isPrefix || MetadataConstants.SUFFIX_KEY.equals(metadataName)) {
+                // Forward to #getPlayerPrefix() or #getPlayerSuffix()
+                // ...only if we haven't already done so in this thread
+                if (playerPrefixHandlerLoopAvoidance.get() == null) {
+                    playerPrefixHandlerLoopAvoidance.set(isPrefix);
+                    try {
+                        String value = isPrefix ? getPlayerPrefix(uuid) : getPlayerSuffix(uuid);
+                        return type.cast(value);
+                    }
+                    finally {
+                        playerPrefixHandlerLoopAvoidance.set(null);
+                    }
+                }
+                // Otherwise just fall through (avoids infinite recursion since PlayerPrefixHandler may call us)
+            }
+        }
 
         return getEntityMetadata("ignored", uuid, false, metadataName, type);
     }
@@ -477,6 +504,16 @@ public class ZPermissionsServiceImpl implements ZPermissionsService {
             // Shouldn't get here, but just in case
             return resolver.getDefaultGroup();
         }
+    }
+
+    @Override
+    public String getPlayerPrefix(UUID uuid) {
+        return playerPrefixHandler.getPlayerPrefix(this, uuid);
+    }
+
+    @Override
+    public String getPlayerSuffix(UUID uuid) {
+        return playerPrefixHandler.getPlayerSuffix(this, uuid);
     }
 
 }

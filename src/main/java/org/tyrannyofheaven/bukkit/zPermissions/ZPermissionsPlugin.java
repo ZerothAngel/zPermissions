@@ -92,6 +92,8 @@ import org.tyrannyofheaven.bukkit.zPermissions.region.FactionsRegionStrategy;
 import org.tyrannyofheaven.bukkit.zPermissions.region.RegionStrategy;
 import org.tyrannyofheaven.bukkit.zPermissions.region.ResidenceRegionStrategy;
 import org.tyrannyofheaven.bukkit.zPermissions.region.WorldGuardRegionStrategy;
+import org.tyrannyofheaven.bukkit.zPermissions.service.DefaultPlayerPrefixHandler;
+import org.tyrannyofheaven.bukkit.zPermissions.service.PlayerPrefixHandler;
 import org.tyrannyofheaven.bukkit.zPermissions.service.ZPermissionsServiceImpl;
 import org.tyrannyofheaven.bukkit.zPermissions.storage.AvajeStorageStrategy;
 import org.tyrannyofheaven.bukkit.zPermissions.storage.MemoryStorageStrategy;
@@ -101,8 +103,6 @@ import org.tyrannyofheaven.bukkit.zPermissions.util.ModelDumper;
 import org.tyrannyofheaven.bukkit.zPermissions.util.RefreshTask;
 import org.tyrannyofheaven.bukkit.zPermissions.uuid.AvajeBulkUuidConverter;
 import org.tyrannyofheaven.bukkit.zPermissions.uuid.YamlBulkUuidConverter;
-import org.tyrannyofheaven.bukkit.zPermissions.vault.DefaultPlayerPrefixHandler;
-import org.tyrannyofheaven.bukkit.zPermissions.vault.PlayerPrefixHandler;
 import org.tyrannyofheaven.bukkit.zPermissions.vault.VaultChatBridge;
 import org.tyrannyofheaven.bukkit.zPermissions.vault.VaultPermissionBridge;
 
@@ -220,7 +220,10 @@ public class ZPermissionsPlugin extends JavaPlugin implements ZPermissionsCore, 
 
     // TTL of UUID resolver cache
     private static final long DEFAULT_UUID_CACHE_TTL = 5L;
-    
+
+    // Whether ZPermissionService#getPlayerMetadata() should be aware of prefix/suffix
+    private static final boolean DEFAULT_SERVICE_METADATA_PREFIX_HACK = false;
+
     // Version info (may include build number)
     private VersionInfo versionInfo;
 
@@ -354,6 +357,9 @@ public class ZPermissionsPlugin extends JavaPlugin implements ZPermissionsCore, 
 
     // Async Executor for CommandUuidResolver
     private ExecutorService commandUuidResolverExecutor;
+
+    // Whether ZPermissionService#getPlayerMetadata() should be aware of prefix/suffix
+    private boolean serviceMetadataPrefixHack;
 
     /**
      * Retrieve this plugin's retrying TransactionStrategy
@@ -598,15 +604,15 @@ public class ZPermissionsPlugin extends JavaPlugin implements ZPermissionsCore, 
             metadataManager = new MetadataManager(getResolver(), getRetryingTransactionStrategy());
 
             // Set up service API
-            ZPermissionsService service = new ZPermissionsServiceImpl(this, getResolver(), getDao(), metadataManager, getRetryingTransactionStrategy(), getZPermissionsConfig());
+            PlayerPrefixHandler prefixHandler = new DefaultPlayerPrefixHandler(getZPermissionsConfig());
+            ZPermissionsService service = new ZPermissionsServiceImpl(this, getResolver(), getDao(), metadataManager, getRetryingTransactionStrategy(), getZPermissionsConfig(), prefixHandler);
             getServer().getServicesManager().register(ZPermissionsService.class, service, this, ServicePriority.Normal);
 
             if (nativeVaultBridges && Bukkit.getPluginManager().getPlugin("Vault") != null) {
                 // Set up Vault bridges
                 new VaultPermissionBridge(this, storageStrategy, getZPermissionsCore(), service, getZPermissionsConfig()).register();
                 log(this, "Installed native Vault Permissions bridge");
-                PlayerPrefixHandler prefixHandler = new DefaultPlayerPrefixHandler(service, getZPermissionsConfig());
-                new VaultChatBridge(this, getZPermissionsCore(), storageStrategy, service, getZPermissionsConfig(), prefixHandler).register();
+                new VaultChatBridge(this, getZPermissionsCore(), storageStrategy, service, getZPermissionsConfig()).register();
                 log(this, "Installed native Vault Chat bridge");
             }
 
@@ -1192,6 +1198,7 @@ public class ZPermissionsPlugin extends JavaPlugin implements ZPermissionsCore, 
         vaultPlayerSuffixFormat = config.getString("vault-player-suffix-format", "");
         logVaultChanges = config.getBoolean("log-vault-changes", DEFAULT_LOG_VAULT_CHANGES);
         inheritedMetadata = config.getBoolean("inherited-metadata", DEFAULT_INHERITED_METADATA);
+        serviceMetadataPrefixHack = config.getBoolean("service-metadata-prefix-hack", DEFAULT_SERVICE_METADATA_PREFIX_HACK);
         // FIXME More hidden options
         searchBatchSize = config.getInt("search-batch-size", DEFAULT_SEARCH_BATCH_SIZE);
         searchDelay = config.getInt("search-delay", DEFAULT_SEARCH_DELAY);
@@ -1434,6 +1441,11 @@ public class ZPermissionsPlugin extends JavaPlugin implements ZPermissionsCore, 
                 });
             }
         });
+    }
+
+    @Override
+    public boolean isServiceMetadataPrefixHack() {
+        return serviceMetadataPrefixHack;
     }
 
 }
