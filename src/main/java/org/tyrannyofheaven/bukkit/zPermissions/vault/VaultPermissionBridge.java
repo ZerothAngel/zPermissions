@@ -1,6 +1,5 @@
 package org.tyrannyofheaven.bukkit.zPermissions.vault;
 
-import static org.tyrannyofheaven.bukkit.util.ToHLoggingUtils.debug;
 import static org.tyrannyofheaven.bukkit.util.ToHStringUtils.hasText;
 
 import java.util.Collection;
@@ -10,20 +9,17 @@ import java.util.UUID;
 import java.util.logging.Level;
 
 import net.milkbowl.vault.permission.Permission;
-import net.milkbowl.vault.permission.plugins.Permission_zPermissions;
 
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
-import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
-import org.bukkit.event.server.ServiceRegisterEvent;
 import org.bukkit.plugin.Plugin;
-import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.ServicePriority;
 import org.tyrannyofheaven.bukkit.util.transaction.TransactionCallback;
 import org.tyrannyofheaven.bukkit.util.transaction.TransactionCallbackWithoutResult;
 import org.tyrannyofheaven.bukkit.util.transaction.TransactionStrategy;
+import org.tyrannyofheaven.bukkit.zPermissions.PermissionsResolver;
 import org.tyrannyofheaven.bukkit.zPermissions.QualifiedPermission;
 import org.tyrannyofheaven.bukkit.zPermissions.RefreshCause;
 import org.tyrannyofheaven.bukkit.zPermissions.ZPermissionsConfig;
@@ -35,8 +31,8 @@ import org.tyrannyofheaven.bukkit.zPermissions.storage.StorageStrategy;
 
 import com.google.common.base.Joiner;
 
-// Current as of Permission.java 73a0c8f5ab6d15033296c3833ea727bec453192c
-public class VaultPermissionBridge extends Permission implements Listener {
+// Current as of Permission.java f01cc6b89106bdb850a4e3d0be1425541b665712
+public class VaultPermissionBridge extends PermissionCompatibility implements Listener {
 
     private final StorageStrategy storageStrategy;
 
@@ -46,7 +42,8 @@ public class VaultPermissionBridge extends Permission implements Listener {
 
     private final ZPermissionsConfig config;
 
-    public VaultPermissionBridge(Plugin plugin, StorageStrategy storageStrategy, ZPermissionsCore core, ZPermissionsService service, ZPermissionsConfig config) {
+    public VaultPermissionBridge(Plugin plugin, PermissionsResolver resolver, StorageStrategy storageStrategy, ZPermissionsCore core, ZPermissionsService service, ZPermissionsConfig config) {
+        super(resolver);
         this.plugin = plugin;
         this.storageStrategy = storageStrategy;
         this.core = core;
@@ -66,18 +63,18 @@ public class VaultPermissionBridge extends Permission implements Listener {
     }
 
     @Override
-    public String[] getPlayerGroups(String world, String player) {
+    public String[] getPlayerGroups(String world, OfflinePlayer player) {
         Collection<String> result;
         if (config.isVaultGetGroupsUsesAssignedOnly())
-            result = service.getPlayerAssignedGroups(player);
+            result = service.getPlayerAssignedGroups(player.getUniqueId());
         else
-            result = service.getPlayerGroups(player);
+            result = service.getPlayerGroups(player.getUniqueId());
         return result.toArray(new String[result.size()]);
     }
 
     @Override
-    public String getPrimaryGroup(String world, String player) {
-        return service.getPlayerPrimaryGroup(player);
+    public String getPrimaryGroup(String world, OfflinePlayer player) {
+        return service.getPlayerPrimaryGroup(player.getUniqueId());
     }
 
     @Override
@@ -163,66 +160,63 @@ public class VaultPermissionBridge extends Permission implements Listener {
     }
 
     @Override
-    public boolean playerAdd(String world, final String player, final String permission) {
+    public boolean playerAdd(String world, final OfflinePlayer player, final String permission) {
         if (!hasText(world))
             world = null;
-        if (!hasText(player) || !hasText(permission)) {
+        if (player == null || !hasText(permission)) {
             complainInvalidArguments();
             return false;
         }
 
-        OfflinePlayer offlinePlayer = Bukkit.getOfflinePlayer(player);
-        if (offlinePlayer == null) return false;
-        final UUID uuid = offlinePlayer.getUniqueId();
+        final UUID uuid = player.getUniqueId();
+        final String playerName = player.getName();
 
         final String permWorld = world;
         getTransactionStrategy().execute(new TransactionCallbackWithoutResult() {
             @Override
             public void doInTransactionWithoutResult() throws Exception {
-                getDao().setPermission(player, uuid, false, null, permWorld, permission, true);
+                getDao().setPermission(playerName, uuid, false, null, permWorld, permission, true);
             }
         });
         core.refreshPlayer(uuid, RefreshCause.COMMAND);
         core.logExternalChange("Added permission '%s' to player %s via Vault",
-                new QualifiedPermission(null, world, permission), player);
+                new QualifiedPermission(null, world, permission), playerName);
         return true;
     }
 
     @Override
-    public boolean playerAddGroup(String world, final String player, final String group) {
-        if (!hasText(player) || !hasText(group)) {
+    public boolean playerAddGroup(String world, final OfflinePlayer player, final String group) {
+        if (player == null || !hasText(group)) {
             complainInvalidArguments();
             return false;
         }
 
-        OfflinePlayer offlinePlayer = Bukkit.getOfflinePlayer(player);
-        if (offlinePlayer == null) return false;
-        final UUID uuid = offlinePlayer.getUniqueId();
+        final UUID uuid = player.getUniqueId();
+        final String playerName = player.getName();
 
         // NB world ignored
         try {
             getTransactionStrategy().execute(new TransactionCallbackWithoutResult() {
                 @Override
                 public void doInTransactionWithoutResult() throws Exception {
-                    getDao().addMember(group, uuid, player, null);
+                    getDao().addMember(group, uuid, playerName, null);
                 }
             });
         }
         catch (MissingGroupException e) {
             return false;
         }
-        core.invalidateMetadataCache(player, uuid, false);
+        core.invalidateMetadataCache(playerName, uuid, false);
         core.refreshPlayer(uuid, RefreshCause.GROUP_CHANGE);
         core.logExternalChange("Added player %s to group %s via Vault",
-                player, group);
+                playerName, group);
         return true;
     }
 
     @Override
-    public boolean playerHas(String world, String player, String permission) {
-        Player p = Bukkit.getPlayerExact(player);
-        if (p == null) {
-            Map<String, Boolean> perms = service.getPlayerPermissions(world, null, player);
+    public boolean playerHas(String world, OfflinePlayer player, String permission) {
+        if (!player.isOnline()) {
+            Map<String, Boolean> perms = service.getPlayerPermissions(world, null, player.getUniqueId());
             Boolean value = perms.get(permission.toLowerCase());
             if (value != null) {
                 return value;
@@ -230,24 +224,23 @@ public class VaultPermissionBridge extends Permission implements Listener {
             // Use default at this point
             org.bukkit.permissions.Permission perm = Bukkit.getPluginManager().getPermission(permission);
             if (perm != null) {
-                OfflinePlayer op = Bukkit.getOfflinePlayer(player);
-                return perm.getDefault().getValue(op != null ? op.isOp() : false);
+                return perm.getDefault().getValue(player.isOp());
             }
             // Have no clue
             return false;
         }
         else {
-            return playerHas(p, permission);
+            return playerHas((Player)player, permission);
         }
     }
 
     @Override
-    public boolean playerInGroup(String world, String player, String group) {
+    public boolean playerInGroup(String world, OfflinePlayer player, String group) {
         Collection<String> groups;
         if (config.isVaultGroupTestUsesAssignedOnly())
-            groups = service.getPlayerAssignedGroups(player);
+            groups = service.getPlayerAssignedGroups(player.getUniqueId());
         else
-            groups = service.getPlayerGroups(player);
+            groups = service.getPlayerGroups(player.getUniqueId());
         // Groups are case-insensitive...
         for (String g : groups) {
             if (g.equalsIgnoreCase(group)) {
@@ -258,43 +251,41 @@ public class VaultPermissionBridge extends Permission implements Listener {
     }
 
     @Override
-    public boolean playerRemove(String world, final String player, final String permission) {
+    public boolean playerRemove(String world, final OfflinePlayer player, final String permission) {
         if (!hasText(world))
             world = null;
-        if (!hasText(player) || !hasText(permission)) {
+        if (player == null || !hasText(permission)) {
             complainInvalidArguments();
             return false;
         }
 
-        OfflinePlayer offlinePlayer = Bukkit.getOfflinePlayer(player);
-        if (offlinePlayer == null) return false;
-        final UUID uuid = offlinePlayer.getUniqueId();
+        final UUID uuid = player.getUniqueId();
+        final String playerName = player.getName();
 
         final String permWorld = world;
         boolean result = getTransactionStrategy().execute(new TransactionCallback<Boolean>() {
             @Override
             public Boolean doInTransaction() throws Exception {
-                return getDao().unsetPermission(player, uuid, false, null, permWorld, permission);
+                return getDao().unsetPermission(playerName, uuid, false, null, permWorld, permission);
             }
         });
         if (result) {
             core.refreshPlayer(uuid, RefreshCause.COMMAND);
             core.logExternalChange("Removed permission '%s' from player %s via Vault",
-                    new QualifiedPermission(null, world, permission), player);
+                    new QualifiedPermission(null, world, permission), playerName);
         }
         return result;
     }
 
     @Override
-    public boolean playerRemoveGroup(String world, final String player, final String group) {
-        if (!hasText(player) || !hasText(group)) {
+    public boolean playerRemoveGroup(String world, final OfflinePlayer player, final String group) {
+        if (player == null || !hasText(group)) {
             complainInvalidArguments();
             return false;
         }
 
-        OfflinePlayer offlinePlayer = Bukkit.getOfflinePlayer(player);
-        if (offlinePlayer == null) return false;
-        final UUID uuid = offlinePlayer.getUniqueId();
+        final UUID uuid = player.getUniqueId();
+        final String playerName = player.getName();
 
         // NB world ignored
         try {
@@ -308,50 +299,15 @@ public class VaultPermissionBridge extends Permission implements Listener {
         catch (MissingGroupException e) {
             return false;
         }
-        core.invalidateMetadataCache(player, uuid, false);
+        core.invalidateMetadataCache(playerName, uuid, false);
         core.refreshPlayer(uuid, RefreshCause.GROUP_CHANGE);
         core.logExternalChange("Removed player %s from group %s via Vault",
-                player, group);
+                playerName, group);
         return true;
     }
 
-    // Following transient methods overridden for sole purpose of logging
-
-//    @Override
-//    public boolean playerAddTransient(Player player, String permission) {
-//        boolean result = super.playerAddTransient(player, permission);
-//        // Always true, but eh
-//        if (result) {
-//            core.logExternalChange("Added transient permission '%s' to player %s via Vault",
-//                    permission, player.getName());
-//        }
-//        return result;
-//    }
-//
-//    @Override
-//    public boolean playerRemoveTransient(Player player, String permission) {
-//        boolean result = super.playerRemoveTransient(player, permission);
-//        if (result) {
-//            core.logExternalChange("Removed transient permission '%s' from player %s via Vault",
-//                    permission, player.getName());
-//        }
-//        return result;
-//    }
-
     public void register() {
         Bukkit.getServicesManager().register(Permission.class, this, plugin, ServicePriority.Highest);
-        // To be removed once/if Vault 1.2.26 is released
-        // In case Vault started before (though not really necessary if Bukkit's provider insert is stable)
-        for (RegisteredServiceProvider<?> provider : Bukkit.getServicesManager().getRegistrations(Permission.class)) {
-            removeIfDefaultVaultHandler(provider);
-        }
-        Bukkit.getPluginManager().registerEvents(this, plugin);
-    }
-
-    // To be removed once/if Vault 1.2.26 is released
-    @EventHandler
-    public void vault_1_2_25_workaround(ServiceRegisterEvent event) {
-        removeIfDefaultVaultHandler(event.getProvider());
     }
 
     private PermissionDao getDao() {
@@ -360,19 +316,6 @@ public class VaultPermissionBridge extends Permission implements Listener {
 
     private TransactionStrategy getTransactionStrategy() {
         return storageStrategy.getRetryingTransactionStrategy();
-    }
-
-    // To be removed once/if Vault 1.2.26 is released
-    private void removeIfDefaultVaultHandler(RegisteredServiceProvider<?> provider) {
-        // This is necessary because I set the original handler in Vault to ServicePriority.Highest,
-        // meaning I can't override it from zPermissions. This was fixed in post-1.2.25 Vault.
-        if (Permission.class.equals(provider.getService()) &&
-                "Vault".equals(provider.getPlugin().getName()) &&
-                Permission_zPermissions.class.isAssignableFrom(provider.getProvider().getClass()) &&
-                provider.getPriority() == ServicePriority.Highest) {
-            debug(plugin, "There can be only one! Removing Vault's Permission handler for zPermissions");
-            Bukkit.getServicesManager().unregister(Permission.class, provider.getProvider());
-        }
     }
 
     private void complainInvalidArguments() {

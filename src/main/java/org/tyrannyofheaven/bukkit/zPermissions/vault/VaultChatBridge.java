@@ -22,8 +22,8 @@ import org.tyrannyofheaven.bukkit.zPermissions.util.MetadataConstants;
 
 import com.google.common.base.Joiner;
 
-// Current as of Chat.java 4305efde9212d556fafaa4dc78836f575a80ec91
-public class VaultChatBridge extends Chat {
+// Current as of Chat.java f01cc6b89106bdb850a4e3d0be1425541b665712
+public class VaultChatBridge extends ChatCompatibility {
 
     private final Plugin plugin;
 
@@ -96,8 +96,8 @@ public class VaultChatBridge extends Chat {
     }
 
     @Override
-    public boolean getPlayerInfoBoolean(String world, String player, String node, boolean defaultValue) {
-        Boolean result = service.getPlayerMetadata(player, node, Boolean.class);
+    public boolean getPlayerInfoBoolean(String world, OfflinePlayer player, String node, boolean defaultValue) {
+        Boolean result = service.getPlayerMetadata(player.getUniqueId(), node, Boolean.class);
         if (result == null && config.isVaultMetadataIncludesGroup())
             result = service.getGroupMetadata(getPrimaryGroup(world, player), node, Boolean.class);
 
@@ -108,8 +108,8 @@ public class VaultChatBridge extends Chat {
     }
 
     @Override
-    public double getPlayerInfoDouble(String world, String player, String node, double defaultValue) {
-        Double result = service.getPlayerMetadata(player, node, Double.class);
+    public double getPlayerInfoDouble(String world, OfflinePlayer player, String node, double defaultValue) {
+        Double result = service.getPlayerMetadata(player.getUniqueId(), node, Double.class);
         if (result == null && config.isVaultMetadataIncludesGroup())
             result = service.getGroupMetadata(getPrimaryGroup(world, player), node, Double.class);
 
@@ -120,8 +120,8 @@ public class VaultChatBridge extends Chat {
     }
 
     @Override
-    public int getPlayerInfoInteger(String world, String player, String node, int defaultValue) {
-        Integer result = service.getPlayerMetadata(player, node, Integer.class);
+    public int getPlayerInfoInteger(String world, OfflinePlayer player, String node, int defaultValue) {
+        Integer result = service.getPlayerMetadata(player.getUniqueId(), node, Integer.class);
         if (result == null && config.isVaultMetadataIncludesGroup())
             result = service.getGroupMetadata(getPrimaryGroup(world, player), node, Integer.class);
 
@@ -132,8 +132,8 @@ public class VaultChatBridge extends Chat {
     }
 
     @Override
-    public String getPlayerInfoString(String world, String player, String node, String defaultValue) {
-        String result = service.getPlayerMetadata(player, node, String.class);
+    public String getPlayerInfoString(String world, OfflinePlayer player, String node, String defaultValue) {
+        String result = service.getPlayerMetadata(player.getUniqueId(), node, String.class);
         if (result == null && config.isVaultMetadataIncludesGroup())
             result = service.getGroupMetadata(getPrimaryGroup(world, player), node, String.class);
 
@@ -144,21 +144,13 @@ public class VaultChatBridge extends Chat {
     }
 
     @Override
-    public String getPlayerPrefix(String world, String player) {
-        OfflinePlayer offlinePlayer = Bukkit.getOfflinePlayer(player);
-        if (offlinePlayer == null) return "";
-        UUID uuid = offlinePlayer.getUniqueId();
-
-        return service.getPlayerPrefix(uuid);
+    public String getPlayerPrefix(String world, OfflinePlayer player) {
+        return service.getPlayerPrefix(player.getUniqueId());
     }
 
     @Override
-    public String getPlayerSuffix(String world, String player) {
-        OfflinePlayer offlinePlayer = Bukkit.getOfflinePlayer(player);
-        if (offlinePlayer == null) return "";
-        UUID uuid = offlinePlayer.getUniqueId();
-
-        return service.getPlayerSuffix(uuid);
+    public String getPlayerSuffix(String world, OfflinePlayer player) {
+        return service.getPlayerSuffix(player.getUniqueId());
     }
 
     @Override
@@ -172,22 +164,22 @@ public class VaultChatBridge extends Chat {
 
     @Override
     public void setGroupInfoBoolean(String world, String group, String node, boolean value) {
-        set(group, true, node, value);
+        set(group, null, true, node, value);
     }
 
     @Override
     public void setGroupInfoDouble(String world, String group, String node, double value) {
-        set(group, true, node, value);
+        set(group, null, true, node, value);
     }
 
     @Override
     public void setGroupInfoInteger(String world, String group, String node, int value) {
-        set(group, true, node, value);
+        set(group, null, true, node, value);
     }
 
     @Override
     public void setGroupInfoString(String world, String group, String node, String value) {
-        set(group, true, node, value);
+        set(group, null, true, node, value);
     }
 
     @Override
@@ -201,46 +193,44 @@ public class VaultChatBridge extends Chat {
     }
 
     @Override
-    public void setPlayerInfoBoolean(String world, String player, String node, boolean value) {
-        set(player, false, node, value);
+    public void setPlayerInfoBoolean(String world, OfflinePlayer player, String node, boolean value) {
+        set(player.getName(), player, false, node, value);
     }
 
     @Override
-    public void setPlayerInfoDouble(String world, String player, String node, double value) {
-        set(player, false, node, value);
+    public void setPlayerInfoDouble(String world, OfflinePlayer player, String node, double value) {
+        set(player.getName(), player, false, node, value);
     }
 
     @Override
-    public void setPlayerInfoInteger(String world, String player, String node, int value) {
-        set(player, false, node, value);
+    public void setPlayerInfoInteger(String world, OfflinePlayer player, String node, int value) {
+        set(player.getName(), player, false, node, value);
     }
 
     @Override
-    public void setPlayerInfoString(String world, String player, String node, String value) {
-        set(player, false, node, value);
+    public void setPlayerInfoString(String world, OfflinePlayer player, String node, String value) {
+        set(player.getName(), player, false, node, value);
     }
 
     @Override
-    public void setPlayerPrefix(String world, String player, String prefix) {
+    public void setPlayerPrefix(String world, OfflinePlayer player, String prefix) {
         setPlayerInfoString(world, player, MetadataConstants.PREFIX_KEY, prefix);
     }
 
     @Override
-    public void setPlayerSuffix(String world, String player, String suffix) {
+    public void setPlayerSuffix(String world, OfflinePlayer player, String suffix) {
         setPlayerInfoString(world, player, MetadataConstants.SUFFIX_KEY, suffix);
     }
 
-    private void set(final String name, final boolean group, final String metadataName, final Object value) {
-        if (!hasText(name) || !hasText(metadataName)) {
+    private void set(final String name, OfflinePlayer player, final boolean group, final String metadataName, final Object value) {
+        if (!hasText(name) || (!group && player == null) || !hasText(metadataName)) {
             complainInvalidArguments();
             return;
         }
 
         final UUID uuid;
         if (!group) {
-            OfflinePlayer offlinePlayer = Bukkit.getOfflinePlayer(name);
-            if (offlinePlayer == null) return;
-            uuid = offlinePlayer.getUniqueId();
+            uuid = player.getUniqueId();
         }
         else uuid = null;
 
