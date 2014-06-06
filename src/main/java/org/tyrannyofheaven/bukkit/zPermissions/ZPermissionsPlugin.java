@@ -586,6 +586,7 @@ public class ZPermissionsPlugin extends JavaPlugin implements ZPermissionsCore, 
                 .registerTypeCompleter("dump-dir", new DirTypeCompleter(getZPermissionsConfig()))
                 .setQuoteAware(true)
                 .setExceptionHandler(this)
+                .setVerbosePermissionErrorPermission("zpermissions.error.detail")
                 .registerCommands();
 
             // Detect a region manager

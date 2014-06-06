@@ -168,3 +168,6 @@ permissions:
   zpermissions.notify.self.expiration:
     description: Receives temporary membership expiration notifications for self
     default: false
+  zpermissions.error.detail:
+    description: Receives full details about missing permissions
+    default: true
