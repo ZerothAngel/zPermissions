@@ -41,7 +41,7 @@
     <dependency>
       <groupId>com.sk89q</groupId>
       <artifactId>worldguard</artifactId>
-      <version>5.7.3</version>
+      <version>5.9</version>
       <exclusions>
         <exclusion>
           <artifactId>iconomy</artifactId>
@@ -64,7 +64,7 @@
     <dependency>
       <groupId>com.sk89q</groupId>
       <artifactId>worldedit</artifactId>
-      <version>5.5.5</version>
+      <version>5.6.2</version>
       <exclusions>
         <exclusion>
           <artifactId>js</artifactId>
