@@ -341,7 +341,7 @@ public abstract class BaseMemoryPermissionDao implements PermissionDao {
     @Override
     public List<Membership> getGroups(UUID memberUuid) {
         String memberName = canonicalizeUuid(memberUuid);
-        List<Membership> result = new ArrayList<Membership>();
+        List<Membership> result = new ArrayList<>();
         Set<Membership> memberships = getReverseMembershipMap().get(memberName);
         if (memberships != null) {
             result.addAll(memberships);
@@ -354,9 +354,9 @@ public abstract class BaseMemoryPermissionDao implements PermissionDao {
     public List<Membership> getMembers(String group) {
         PermissionEntity groupEntity = getEntity(group, null, true, false);
         if (groupEntity == null)
-            return new ArrayList<Membership>(); // compat with AvajePermissionDao
+            return new ArrayList<>(); // compat with AvajePermissionDao
     
-        List<Membership> result = new ArrayList<Membership>(groupEntity.getMemberships());
+        List<Membership> result = new ArrayList<>(groupEntity.getMemberships());
         Collections.sort(result, MEMBERSHIP_MEMBER_COMPARATOR);
         return result;
     }
@@ -372,9 +372,9 @@ public abstract class BaseMemoryPermissionDao implements PermissionDao {
     @Override
     public List<PermissionEntity> getEntities(boolean group) {
         if (group)
-            return new ArrayList<PermissionEntity>(getGroups().values());
+            return new ArrayList<>(getGroups().values());
         else
-            return new ArrayList<PermissionEntity>(getPlayers().values());
+            return new ArrayList<>(getPlayers().values());
     }
 
     @Override
@@ -426,7 +426,7 @@ public abstract class BaseMemoryPermissionDao implements PermissionDao {
     public void setParents(String groupName, List<String> parentNames) {
         PermissionEntity group = getGroup(groupName);
         
-        Set<Inheritance> dest = new LinkedHashSet<Inheritance>(parentNames.size());
+        Set<Inheritance> dest = new LinkedHashSet<>(parentNames.size());
         int order = 0;
         for (String parentName : parentNames) {
             PermissionEntity parent = getGroup(parentName);
@@ -442,7 +442,7 @@ public abstract class BaseMemoryPermissionDao implements PermissionDao {
             order += 100;
 
             // Check for a cycle
-            Deque<PermissionEntity> toCheck = new LinkedList<PermissionEntity>();
+            Deque<PermissionEntity> toCheck = new LinkedList<>();
             toCheck.add(parent);
             while (!toCheck.isEmpty()) {
                 PermissionEntity check = toCheck.removeFirst();
@@ -462,15 +462,15 @@ public abstract class BaseMemoryPermissionDao implements PermissionDao {
         setEntityParent(group, null);
 
         // Figure out what to add
-        Set<Inheritance> toAdd = new HashSet<Inheritance>(dest);
+        Set<Inheritance> toAdd = new HashSet<>(dest);
         toAdd.removeAll(group.getInheritancesAsChild());
 
         // Figure out what to delete
-        Set<Inheritance> toDelete = new HashSet<Inheritance>(group.getInheritancesAsChild());
+        Set<Inheritance> toDelete = new HashSet<>(group.getInheritancesAsChild());
         toDelete.removeAll(dest);
 
         // And what to update
-        Set<Inheritance> toUpdate = new HashSet<Inheritance>(dest);
+        Set<Inheritance> toUpdate = new HashSet<>(dest);
         toUpdate.retainAll(group.getInheritancesAsChild());
 
         // Add entries
@@ -512,10 +512,10 @@ public abstract class BaseMemoryPermissionDao implements PermissionDao {
 
     private void cleanWorldsAndRegions() {
         // Easier to just see what is used
-        Set<PermissionRegion> usedRegions = new HashSet<PermissionRegion>();
-        Set<PermissionWorld> usedWorlds = new HashSet<PermissionWorld>();
+        Set<PermissionRegion> usedRegions = new HashSet<>();
+        Set<PermissionWorld> usedWorlds = new HashSet<>();
         
-        List<PermissionEntity> entities = new ArrayList<PermissionEntity>();
+        List<PermissionEntity> entities = new ArrayList<>();
         entities.addAll(getGroups().values());
         entities.addAll(getPlayers().values());
         
@@ -529,9 +529,9 @@ public abstract class BaseMemoryPermissionDao implements PermissionDao {
         }
         
         // Determine what needs to be deleted
-        Set<PermissionRegion> regionsToDelete = new HashSet<PermissionRegion>(getRegions().values());
+        Set<PermissionRegion> regionsToDelete = new HashSet<>(getRegions().values());
         regionsToDelete.removeAll(usedRegions);
-        Set<PermissionWorld> worldsToDelete = new HashSet<PermissionWorld>(getWorlds().values());
+        Set<PermissionWorld> worldsToDelete = new HashSet<>(getWorlds().values());
         worldsToDelete.removeAll(usedWorlds);
         
         // Re-build lists
@@ -621,12 +621,12 @@ public abstract class BaseMemoryPermissionDao implements PermissionDao {
     public List<String> getAncestry(String groupName) {
         PermissionEntity group = getEntity(groupName, null, true, false);
         if (group == null) // NB only time this will be null is if the default group doesn't exist
-            return new ArrayList<String>();
+            return new ArrayList<>();
     
         // Build list of group ancestors
-        Set<String> ancestry = new LinkedHashSet<String>();
+        Set<String> ancestry = new LinkedHashSet<>();
         ancestry.add(group.getDisplayName());
-        Deque<PermissionEntity> toAdd = new LinkedList<PermissionEntity>(group.getParents());
+        Deque<PermissionEntity> toAdd = new LinkedList<>(group.getParents());
         while (!toAdd.isEmpty()) {
             group = toAdd.removeFirst();
             ancestry.add(group.getDisplayName());
@@ -635,7 +635,7 @@ public abstract class BaseMemoryPermissionDao implements PermissionDao {
         }
         
         // Reverse list (will be applying farthest ancestors first)
-        List<String> ancestryList = new ArrayList<String>(ancestry);
+        List<String> ancestryList = new ArrayList<>(ancestry);
         Collections.reverse(ancestryList);
     
         return ancestryList;
@@ -647,7 +647,7 @@ public abstract class BaseMemoryPermissionDao implements PermissionDao {
         if (entity == null) // NB special consideration for non-existent default group
             return Collections.emptyList();
     
-        return new ArrayList<Entry>(entity.getPermissions());
+        return new ArrayList<>(entity.getPermissions());
     }
 
     @Override
@@ -668,7 +668,7 @@ public abstract class BaseMemoryPermissionDao implements PermissionDao {
             entities = getGroups().values();
         else
             entities = getPlayers().values();
-        List<String> result = new ArrayList<String>(entities.size());
+        List<String> result = new ArrayList<>(entities.size());
         for (PermissionEntity entity : entities) {
             result.add(entity.getDisplayName());
         }
@@ -694,7 +694,7 @@ public abstract class BaseMemoryPermissionDao implements PermissionDao {
         if (entity == null)
             return Collections.emptyList();
         
-        return new ArrayList<EntityMetadata>(entity.getMetadata());
+        return new ArrayList<>(entity.getMetadata());
     }
 
     @Override
@@ -774,7 +774,7 @@ public abstract class BaseMemoryPermissionDao implements PermissionDao {
     protected void rememberMembership(Membership membership) {
         Set<Membership> memberships = getReverseMembershipMap().get(membership.getMember());
         if (memberships == null) {
-            memberships = new HashSet<Membership>();
+            memberships = new HashSet<>();
             getReverseMembershipMap().put(membership.getMember(), memberships);
         }
         memberships.add(membership);
@@ -843,7 +843,7 @@ public abstract class BaseMemoryPermissionDao implements PermissionDao {
     protected static void rememberMembership(MemoryState memoryState, Membership membership) {
         Set<Membership> memberships = memoryState.getReverseMembershipMap().get(membership.getMember());
         if (memberships == null) {
-            memberships = new HashSet<Membership>();
+            memberships = new HashSet<>();
             memoryState.getReverseMembershipMap().put(membership.getMember(), memberships);
         }
         memberships.add(membership);
@@ -863,15 +863,15 @@ public abstract class BaseMemoryPermissionDao implements PermissionDao {
 
     protected static class MemoryState {
         
-        private final Map<String, PermissionRegion> regions = new HashMap<String, PermissionRegion>();
+        private final Map<String, PermissionRegion> regions = new HashMap<>();
 
-        private final Map<String, PermissionWorld> worlds = new HashMap<String, PermissionWorld>();
+        private final Map<String, PermissionWorld> worlds = new HashMap<>();
 
-        private final Map<String, PermissionEntity> players = new HashMap<String, PermissionEntity>();
+        private final Map<String, PermissionEntity> players = new HashMap<>();
 
-        private final Map<String, PermissionEntity> groups = new HashMap<String, PermissionEntity>();
+        private final Map<String, PermissionEntity> groups = new HashMap<>();
 
-        private final Map<String, Set<Membership>> reverseMembershipMap = new HashMap<String, Set<Membership>>();
+        private final Map<String, Set<Membership>> reverseMembershipMap = new HashMap<>();
 
         public Map<String, PermissionRegion> getRegions() {
             return regions;

@@ -268,9 +268,9 @@ public class MemoryPermissionDao extends BaseMemoryPermissionDao {
     // Dump state of entire system to (YAML-friendly) map
     private Map<String, Object> dump() {
         // Players first
-        List<Map<String, Object>> players = new ArrayList<Map<String, Object>>();
+        List<Map<String, Object>> players = new ArrayList<>();
         for (PermissionEntity player : Utils.sortPlayers(getPlayers().values())) {
-            Map<String, Object> playerMap = new LinkedHashMap<String, Object>();
+            Map<String, Object> playerMap = new LinkedHashMap<>();
             playerMap.put("uuid", player.getName());
             playerMap.put("name", player.getDisplayName());
             playerMap.put("permissions", dumpPermissions(player));
@@ -279,25 +279,25 @@ public class MemoryPermissionDao extends BaseMemoryPermissionDao {
         }
 
         // Groups next
-        List<Map<String, Object>> groups = new ArrayList<Map<String, Object>>();
+        List<Map<String, Object>> groups = new ArrayList<>();
         for (PermissionEntity group : Utils.sortGroups(getGroups().values())) {
-            Map<String, Object> groupMap = new LinkedHashMap<String, Object>();
+            Map<String, Object> groupMap = new LinkedHashMap<>();
             groupMap.put("name", group.getDisplayName());
             groupMap.put("permissions", dumpPermissions(group));
             groupMap.put("metadata", dumpMetadata(group));
             groupMap.put("priority", group.getPriority());
             List<PermissionEntity> parents = group.getParents();
             if (!parents.isEmpty()) {
-                List<String> parentNames = new ArrayList<String>(parents.size());
+                List<String> parentNames = new ArrayList<>(parents.size());
                 for (PermissionEntity parent : parents)
                     parentNames.add(parent.getDisplayName());
                 groupMap.put("parents", parentNames);
             }
             // Permanent members
-            List<Map<String, Object>> members = new ArrayList<Map<String, Object>>();
-            List<Map<String, Object>> tempMembers = new ArrayList<Map<String, Object>>();
+            List<Map<String, Object>> members = new ArrayList<>();
+            List<Map<String, Object>> tempMembers = new ArrayList<>();
             for (Membership membership : Utils.sortMemberships(group.getMemberships())) {
-                Map<String, Object> tempMemberMap = new LinkedHashMap<String, Object>();
+                Map<String, Object> tempMemberMap = new LinkedHashMap<>();
                 tempMemberMap.put("uuid", membership.getMember());
                 tempMemberMap.put("name", membership.getDisplayName());
                 if (membership.getExpiration() == null) {
@@ -317,7 +317,7 @@ public class MemoryPermissionDao extends BaseMemoryPermissionDao {
             groups.add(groupMap);
         }
 
-        Map<String, Object> result = new LinkedHashMap<String, Object>();
+        Map<String, Object> result = new LinkedHashMap<>();
         result.put("players", players);
         result.put("groups", groups);
         return result;
@@ -415,7 +415,7 @@ public class MemoryPermissionDao extends BaseMemoryPermissionDao {
 
     // Create a map that describes permissions for a PermissionEntity
     private Map<String, Boolean> dumpPermissions(PermissionEntity entity) {
-        Map<String, Boolean> result = new LinkedHashMap<String, Boolean>();
+        Map<String, Boolean> result = new LinkedHashMap<>();
         for (Entry e : Utils.sortPermissions(entity.getPermissions())) {
             QualifiedPermission wp = new QualifiedPermission(e.getRegion() == null ? null : e.getRegion().getName(),
                     e.getWorld() == null ? null : e.getWorld().getName(), e.getPermission());
@@ -441,7 +441,7 @@ public class MemoryPermissionDao extends BaseMemoryPermissionDao {
     }
 
     private Map<String, Object> dumpMetadata(PermissionEntity entity) {
-        Map<String, Object> result = new LinkedHashMap<String, Object>();
+        Map<String, Object> result = new LinkedHashMap<>();
         for (EntityMetadata em : Utils.sortMetadata(entity.getMetadata())) {
             result.put(em.getName(), em.getValue());
         }

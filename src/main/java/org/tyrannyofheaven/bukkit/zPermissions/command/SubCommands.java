@@ -205,7 +205,7 @@ public class SubCommands {
                 return a.getDisplayName().toLowerCase().compareTo(b.getDisplayName().toLowerCase());
             }
         });
-        List<String> entityNames = new ArrayList<String>(entities.size());
+        List<String> entityNames = new ArrayList<>(entities.size());
         for (PermissionEntity entity : entities) {
             entityNames.add(group ? entity.getDisplayName() : formatPlayerName(entity, showUuid));
         }
@@ -283,7 +283,7 @@ public class SubCommands {
         }
 
         // Build map of effective permissions
-        List<Utils.PermissionInfo> permissions = new ArrayList<Utils.PermissionInfo>();
+        List<Utils.PermissionInfo> permissions = new ArrayList<>();
         for (PermissionAttachmentInfo pai : player.getEffectivePermissions()) {
             permissions.add(new Utils.PermissionInfo(pai.getPermission(), pai.getValue(), pai.getAttachment() != null ? pai.getAttachment().getPlugin().getName() : "default"));
         }
@@ -504,7 +504,7 @@ public class SubCommands {
     private void diff(CommandSender sender, String regions, String otherRegions,
             String world, String otherWorld,
             String filter, String player, final UUID uuid, String otherPlayer, final UUID otherUuid) {
-        List<String> header = new ArrayList<String>();
+        List<String> header = new ArrayList<>();
 
         // Parse qualifiers for first player
         Player p = Bukkit.getPlayer(uuid);
@@ -552,7 +552,7 @@ public class SubCommands {
                     return resolver.resolvePlayer(uuid, worldName, regionNames).getPermissions();
                 }
             }, true);
-            Map<String, Boolean> permissions = new HashMap<String, Boolean>();
+            Map<String, Boolean> permissions = new HashMap<>();
             Utils.calculateChildPermissions(permissions, rootPermissions, false);
             
             Map<String, Boolean> otherRootPermissions = storageStrategy.getTransactionStrategy().execute(new TransactionCallback<Map<String, Boolean>>() {
@@ -561,7 +561,7 @@ public class SubCommands {
                     return resolver.resolvePlayer(otherUuid, otherWorldName, otherRegionNames).getPermissions();
                 }
             }, true);
-            Map<String, Boolean> otherPermissions = new HashMap<String, Boolean>();
+            Map<String, Boolean> otherPermissions = new HashMap<>();
             Utils.calculateChildPermissions(otherPermissions, otherRootPermissions, false);
 
             Utils.displayPermissionsDiff(plugin, sender, permissions, otherPermissions, header,
@@ -582,11 +582,11 @@ public class SubCommands {
                     return resolver.resolvePlayer(uuid, worldName, regionNames).getPermissions();
                 }
             }, true);
-            Map<String, Boolean> permissions = new HashMap<String, Boolean>();
+            Map<String, Boolean> permissions = new HashMap<>();
             Utils.calculateChildPermissions(permissions, rootPermissions, false);
 
             // Get Bukkit effective permissions
-            Map<String, Boolean> otherPermissions = new HashMap<String, Boolean>();
+            Map<String, Boolean> otherPermissions = new HashMap<>();
             for (PermissionAttachmentInfo pai : p.getEffectivePermissions()) {
                 otherPermissions.put(pai.getPermission().toLowerCase(), pai.getValue());
             }
@@ -626,7 +626,7 @@ public class SubCommands {
     private Set<String> parseRegions(String regions) {
         if (regions == null)
             return Collections.emptySet();
-        Set<String> result = new LinkedHashSet<String>();
+        Set<String> result = new LinkedHashSet<>();
         for (String region : regions.split("\\s*,\\s*")) {
             result.add(region.toLowerCase());
         }
@@ -692,7 +692,7 @@ public class SubCommands {
         storageStrategy.getRetryingTransactionStrategy().execute(new TransactionCallbackWithoutResult() {
             @Override
             public void doInTransactionWithoutResult() throws Exception {
-                List<Membership> toDelete = new ArrayList<Membership>();
+                List<Membership> toDelete = new ArrayList<>();
                 Date now = new Date();
                 // For each group...
                 for (PermissionEntity group : storageStrategy.getDao().getEntities(true)) {
@@ -770,7 +770,7 @@ public class SubCommands {
 
         List<UUID> players = Collections.emptyList();
         if (searchPlayers) {
-            players = new ArrayList<UUID>();
+            players = new ArrayList<>();
             List<PermissionEntity> playerEntities = storageStrategy.getDao().getEntities(false);
             for (PermissionEntity entity : playerEntities) {
                 players.add(entity.getUuid());

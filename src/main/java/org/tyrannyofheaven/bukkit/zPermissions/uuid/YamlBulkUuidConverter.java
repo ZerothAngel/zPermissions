@@ -77,7 +77,7 @@ public class YamlBulkUuidConverter implements BulkUuidConverter {
         }
         
         // Gather usernames
-        Set<String> usernames = new HashSet<String>();
+        Set<String> usernames = new HashSet<>();
         int players = preparePlayers(data, usernames);
         log(plugin, "%d player%s to migrate", players, players == 1 ? "" : "s");
         List<Map<String, Object>> groups = prepareGroups(data, usernames);
@@ -154,7 +154,7 @@ public class YamlBulkUuidConverter implements BulkUuidConverter {
     }
 
     private List<Map<String, Object>> prepareGroups(Map<String, Object> data, Set<String> usernames) {
-        List<Map<String, Object>> result = new ArrayList<Map<String, Object>>();
+        List<Map<String, Object>> result = new ArrayList<>();
 
         for (Map<String, Object> group : (List<Map<String, Object>>)data.get("groups")) {
             boolean migrate = false;
@@ -221,11 +221,11 @@ public class YamlBulkUuidConverter implements BulkUuidConverter {
     private void migrateGroups(List<Map<String, Object>> groups, Map<String, UuidDisplayName> resolved) {
         for (Map<String, Object> group : groups) {
             List<String> memberNames = (List<String>)group.get("members"); // Guaranteed to be non-empty list of strings due to prepareGroups
-            List<Map<String, Object>> memberMaps = new ArrayList<Map<String, Object>>();
+            List<Map<String, Object>> memberMaps = new ArrayList<>();
             for (String username : memberNames) {
                 UuidDisplayName udn = resolved.get(username.toLowerCase());
                 if (udn != null) {
-                    Map<String, Object> memberMap = new LinkedHashMap<String, Object>();
+                    Map<String, Object> memberMap = new LinkedHashMap<>();
                     memberMap.put("uuid", canonicalizeUuid(udn.getUuid()));
                     memberMap.put("name", udn.getDisplayName());
                     memberMaps.add(memberMap);

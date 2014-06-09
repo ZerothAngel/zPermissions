@@ -39,7 +39,7 @@ public class DirTypeCompleter implements TypeCompleter {
         if (clazz == String.class) {
             File[] files = config.getDumpDirectory().listFiles();
             if (files != null) {
-                List<String> result = new ArrayList<String>();
+                List<String> result = new ArrayList<>();
                 for (File file : files) {
                     if (file.isFile() && !file.getName().startsWith(".") && StringUtil.startsWithIgnoreCase(file.getName(), partial))
                         result.add(file.getName());

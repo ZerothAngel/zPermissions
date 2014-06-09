@@ -272,7 +272,7 @@ public abstract class CommonCommands {
     }
 
     private void _dump0(CommandSender sender, final String name, final UUID uuid, String worldName, String filter, String[] regionNames) {
-        List<String> header = new ArrayList<String>();
+        List<String> header = new ArrayList<>();
         worldName = getEffectiveWorld(sender, worldName, header);
         if (worldName == null) return;
 
@@ -280,7 +280,7 @@ public abstract class CommonCommands {
             Utils.validatePlayer(storageStrategy.getDao(), resolver.getDefaultGroup(), uuid, name, header);
 
         // Ensure regions are lowercased
-        final Set<String> regions = new LinkedHashSet<String>();
+        final Set<String> regions = new LinkedHashSet<>();
         for (String region : regionNames) {
             regions.add(region.toLowerCase());
         }
@@ -309,7 +309,7 @@ public abstract class CommonCommands {
         }
 
         // Recursively determine all child permissions
-        Map<String, Boolean> permissions = new HashMap<String, Boolean>();
+        Map<String, Boolean> permissions = new HashMap<>();
         Utils.calculateChildPermissions(permissions, rootPermissions, false);
         
         Utils.displayPermissions(plugin, sender, header, permissions, filter);
@@ -359,7 +359,7 @@ public abstract class CommonCommands {
     }
 
     private void _diff(CommandSender sender, final String name, final UUID uuid, String worldName, String filter, final String otherName, final UUID otherUuid, String[] regionNames) {
-        List<String> header = new ArrayList<String>();
+        List<String> header = new ArrayList<>();
         worldName = getEffectiveWorld(sender, worldName, header);
         if (worldName == null) return;
 
@@ -369,7 +369,7 @@ public abstract class CommonCommands {
         }
 
         // Ensure regions are lowercased
-        final Set<String> regions = new LinkedHashSet<String>();
+        final Set<String> regions = new LinkedHashSet<>();
         for (String region : regionNames) {
             regions.add(region.toLowerCase());
         }
@@ -398,7 +398,7 @@ public abstract class CommonCommands {
         }
 
         // Recursively determine all child permissions
-        Map<String, Boolean> permissions = new HashMap<String, Boolean>();
+        Map<String, Boolean> permissions = new HashMap<>();
         Utils.calculateChildPermissions(permissions, rootPermissions, false);
 
         // Grab permissions of other entity
@@ -423,7 +423,7 @@ public abstract class CommonCommands {
             return;
         }
 
-        Map<String, Boolean> otherPermissions = new HashMap<String, Boolean>();
+        Map<String, Boolean> otherPermissions = new HashMap<>();
         Utils.calculateChildPermissions(otherPermissions, otherRootPermissions, false);
         
         Utils.displayPermissionsDiff(plugin, sender, permissions, otherPermissions, header,
@@ -524,7 +524,7 @@ public abstract class CommonCommands {
                 if (group) {
                     // Group-specific stuff
                     storageStrategy.getDao().setPriority(destination, entity.getPriority());
-                    List<String> parentNames = new ArrayList<String>();
+                    List<String> parentNames = new ArrayList<>();
                     for (PermissionEntity parent : entity.getParents())
                         parentNames.add(parent.getDisplayName());
                     storageStrategy.getDao().setParents(destination, parentNames);
@@ -540,7 +540,7 @@ public abstract class CommonCommands {
                     if (group) {
                         // Move child groups to destination
                         for (PermissionEntity child : entity.getChildrenNew()) {
-                            List<String> newParents = new ArrayList<String>();
+                            List<String> newParents = new ArrayList<>();
                             for (PermissionEntity parent : child.getParents()) {
                                 if (parent.equals(entity))
                                     newParents.add(destination);

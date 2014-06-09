@@ -194,12 +194,12 @@ public class GroupCommands extends CommonCommands {
         PermissionEntity entity = storageStrategy.getDao().getEntity(groupName, null, true);
 
         if (entity != null) {
-            List<String> lines = new ArrayList<String>();
+            List<String> lines = new ArrayList<>();
             lines.add(String.format(colorize("{YELLOW}Declared permissions for {DARK_GREEN}%s{YELLOW}:"), entity.getDisplayName()));
             lines.add(String.format(colorize("{YELLOW}Weight: {GREEN}%s"), entity.getPriority()));
             List<PermissionEntity> parents = entity.getParents();
             if (!parents.isEmpty()) {
-                List<String> parentNames = new ArrayList<String>(parents.size());
+                List<String> parentNames = new ArrayList<>(parents.size());
                 for (PermissionEntity parent : parents)
                     parentNames.add(parent.getDisplayName());
                 lines.add(String.format(colorize("{YELLOW}Parent%s: {DARK_GREEN}%s"),

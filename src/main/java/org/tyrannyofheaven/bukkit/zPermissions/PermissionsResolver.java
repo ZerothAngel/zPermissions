@@ -46,9 +46,9 @@ public class PermissionsResolver {
 
     private final PermissionDao dao;
 
-    private final Set<String> groupPermissionFormats = new HashSet<String>();
+    private final Set<String> groupPermissionFormats = new HashSet<>();
 
-    private final Set<String> assignedGroupPermissionFormats = new HashSet<String>();
+    private final Set<String> assignedGroupPermissionFormats = new HashSet<>();
 
     private String defaultGroup;
 
@@ -58,7 +58,7 @@ public class PermissionsResolver {
 
     private boolean includeDefaultInAssigned = true;
 
-    private final Map<String, String> worldAliases = new HashMap<String, String>();
+    private final Map<String, String> worldAliases = new HashMap<>();
 
     // For plugin use
     PermissionsResolver(ZPermissionsPlugin plugin) {
@@ -200,13 +200,13 @@ public class PermissionsResolver {
         // Resolve each group in turn (highest priority resolved last)
         debug("Groups for %s: %s", playerName, groups);
 
-        List<String> resolveOrder = new ArrayList<String>();
+        List<String> resolveOrder = new ArrayList<>();
         for (String group : groups) {
             calculateResolutionOrder(resolveOrder, group);
         }
         debug("Resolution order for %s: %s", playerName, resolveOrder);
 
-        List<Entry> entries = new ArrayList<Entry>();
+        List<Entry> entries = new ArrayList<>();
         resolveGroupHelper(entries, groups, resolveOrder);
         
         Map<String, Boolean> permissions;
@@ -223,7 +223,7 @@ public class PermissionsResolver {
             permissions.putAll(applyPermissions(getDao().getEntries(playerName, uuid, false), regions, world));
         }
 
-        return new ResolverResult(permissions, new LinkedHashSet<String>(resolveOrder));
+        return new ResolverResult(permissions, new LinkedHashSet<>(resolveOrder));
     }
 
     /**
@@ -238,10 +238,10 @@ public class PermissionsResolver {
      * @return effective permissions for this group
      */
     public Map<String, Boolean> resolveGroup(String groupName, String world, Set<String> regions) {
-        List<String> resolveOrder = new ArrayList<String>();
+        List<String> resolveOrder = new ArrayList<>();
         calculateResolutionOrder(resolveOrder, groupName);
 
-        List<Entry> entries = new ArrayList<Entry>();
+        List<Entry> entries = new ArrayList<>();
         resolveGroupHelper(entries, Collections.singletonList(groupName), resolveOrder);
 
         return applyPermissions(entries, regions, world);
@@ -272,7 +272,7 @@ public class PermissionsResolver {
 
     // Add ancillary permissions and permissions from each resolved group
     private void resolveGroupHelper(List<Entry> entries, List<String> assignedGroups, List<String> resolveOrder) {
-        Set<String> assigned = new HashSet<String>(assignedGroups); // for contains()
+        Set<String> assigned = new HashSet<>(assignedGroups); // for contains()
 
         for (String group : resolveOrder) {
             if (assigned.contains(group)) {
@@ -305,10 +305,10 @@ public class PermissionsResolver {
     private Map<String, Boolean> applyPermissions(List<Entry> entries, Set<String> regions, String world) {
         String worldAlias = world != null ? worldAliases.get(world) : null;
 
-        Map<String, Boolean> permissions = new LinkedHashMap<String, Boolean>();
+        Map<String, Boolean> permissions = new LinkedHashMap<>();
 
-        Map<String, Map<String, Boolean>> regionPermissions = new HashMap<String, Map<String, Boolean>>();
-        List<Entry> worldPermissions = new ArrayList<Entry>();
+        Map<String, Map<String, Boolean>> regionPermissions = new HashMap<>();
+        List<Entry> worldPermissions = new ArrayList<>();
 
         // Apply non-region-specific, non-world-specific permissions first
         for (Entry e : entries) {
@@ -327,9 +327,9 @@ public class PermissionsResolver {
         }
 
         // Then override with world-specific permissions
-        Map<String, Boolean> specificWorldPermissions = new LinkedHashMap<String, Boolean>();
-        Map<String, Map<String, Boolean>> regionWorldAliasPermissions = new HashMap<String, Map<String, Boolean>>();
-        Map<String, Map<String, Boolean>> regionWorldPermissions = new HashMap<String, Map<String, Boolean>>();
+        Map<String, Boolean> specificWorldPermissions = new LinkedHashMap<>();
+        Map<String, Map<String, Boolean>> regionWorldAliasPermissions = new HashMap<>();
+        Map<String, Map<String, Boolean>> regionWorldPermissions = new HashMap<>();
         for (Entry e : worldPermissions) {
             if (e.getRegion() == null) {
                 // Non region-specific
@@ -368,7 +368,7 @@ public class PermissionsResolver {
         String region = e.getRegion().getName();
         Map<String, Boolean> regionPerms = regionPermissions.get(region);
         if (regionPerms == null) {
-            regionPerms = new LinkedHashMap<String, Boolean>();
+            regionPerms = new LinkedHashMap<>();
             regionPermissions.put(region, regionPerms);
         }
         regionPerms.put(e.getPermission(), e.isValue());
@@ -395,12 +395,12 @@ public class PermissionsResolver {
         }
  
         // Resolve each group in turn (highest priority resolved last)
-        List<String> resolveOrder = new ArrayList<String>();
+        List<String> resolveOrder = new ArrayList<>();
         for (String group : groups) {
             calculateResolutionOrder(resolveOrder, group);
         }
         
-        List<EntityMetadata> metadata = new ArrayList<EntityMetadata>();
+        List<EntityMetadata> metadata = new ArrayList<>();
         for (String group : resolveOrder) {
             metadata.addAll(getDao().getAllMetadata(group, null, true));
         }
@@ -409,23 +409,23 @@ public class PermissionsResolver {
         // Always resolve player last
         metadata.addAll(getDao().getAllMetadata(playerName, uuid, false));
         
-        return new MetadataResult(applyMetadata(metadata), new LinkedHashSet<String>(resolveOrder));
+        return new MetadataResult(applyMetadata(metadata), new LinkedHashSet<>(resolveOrder));
     }
 
     public MetadataResult resolveGroupMetadata(String groupName) {
-        List<String> resolveOrder = new ArrayList<String>();
+        List<String> resolveOrder = new ArrayList<>();
         calculateResolutionOrder(resolveOrder, groupName);
 
-        List<EntityMetadata> metadata = new ArrayList<EntityMetadata>();
+        List<EntityMetadata> metadata = new ArrayList<>();
         for (String group : resolveOrder) {
             metadata.addAll(getDao().getAllMetadata(group, null, true));
         }
         
-        return new MetadataResult(applyMetadata(metadata), new LinkedHashSet<String>(resolveOrder));
+        return new MetadataResult(applyMetadata(metadata), new LinkedHashSet<>(resolveOrder));
     }
 
     private Map<String, Object> applyMetadata(List<EntityMetadata> metadata) {
-        Map<String, Object> result = new LinkedHashMap<String, Object>();
+        Map<String, Object> result = new LinkedHashMap<>();
 
         // Since there are no world-specific or region-specific metadata,
         // simply apply them in order. Last one wins.

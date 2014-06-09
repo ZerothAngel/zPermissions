@@ -176,7 +176,7 @@ public class RootCommands {
         storageStrategy.getTransactionStrategy().execute(new TransactionCallback<Boolean>() {
             @Override
             public Boolean doInTransaction() throws Exception {
-                Set<String> playerGroupNames = new HashSet<String>();
+                Set<String> playerGroupNames = new HashSet<>();
                 playerGroupNames.addAll(Utils.toGroupNames(Utils.filterExpired(storageStrategy.getDao().getGroups(uuid))));
                 if (playerGroupNames.isEmpty())
                     playerGroupNames.add(resolver.getDefaultGroup());
@@ -331,7 +331,7 @@ public class RootCommands {
         storageStrategy.getTransactionStrategy().execute(new TransactionCallback<Boolean>() {
             @Override
             public Boolean doInTransaction() throws Exception {
-                Set<String> playerGroupNames = new HashSet<String>();
+                Set<String> playerGroupNames = new HashSet<>();
                 playerGroupNames.addAll(Utils.toGroupNames(Utils.filterExpired(storageStrategy.getDao().getGroups(uuid))));
                 if (playerGroupNames.isEmpty())
                     playerGroupNames.add(resolver.getDefaultGroup());
@@ -432,7 +432,7 @@ public class RootCommands {
     // Returns names of tracks this permissible has access to
     private Set<String> getAvailableTracks(CommandSender sender, String command) {
         final String prefix = "zpermissions." + command + ".";
-        Set<String> result = new HashSet<String>();
+        Set<String> result = new HashSet<>();
         for (String track : config.getTracks()) {
             boolean found = false;
             for (String perm : new String[] { prefix + track, prefix + "*", "zpermissions.rank." + track, "zpermissions.rank.*" }) {
@@ -490,7 +490,7 @@ public class RootCommands {
     }
 
     private Set<String> getCommonGroups(Collection<String> currentGroups, Collection<String> trackGroups) {
-        Set<String> result = new LinkedHashSet<String>(currentGroups.size());
+        Set<String> result = new LinkedHashSet<>(currentGroups.size());
         // Lowercase all group names
         for (String group : currentGroups) {
             result.add(group.toLowerCase());

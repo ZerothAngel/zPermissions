@@ -155,7 +155,7 @@ public class SearchTask implements Runnable {
                 }
             }
         }, true);
-        Map<String, Boolean> permissions = new HashMap<String, Boolean>();
+        Map<String, Boolean> permissions = new HashMap<>();
         Utils.calculateChildPermissions(permissions, rootPermissions, false);
         for (String k : permissions.keySet()) {
             if (k.contains(permission))

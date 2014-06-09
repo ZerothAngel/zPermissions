@@ -35,7 +35,7 @@ public class TrackTypeCompleter implements TypeCompleter {
     @Override
     public List<String> complete(Class<?> clazz, String arg, CommandSender sender, String partial) {
         if (clazz == String.class) {
-            List<String> result = new ArrayList<String>();
+            List<String> result = new ArrayList<>();
             StringUtil.copyPartialMatches(partial, config.getTracks(), result);
             // NB not sorted, left in definition order
             return result;

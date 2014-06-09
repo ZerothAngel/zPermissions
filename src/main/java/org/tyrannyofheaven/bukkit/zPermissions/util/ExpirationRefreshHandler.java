@@ -58,7 +58,7 @@ public class ExpirationRefreshHandler implements Runnable {
 
     private final ScheduledExecutorService executorService;
 
-    private final Queue<Membership> membershipQueue = new PriorityQueue<Membership>(11, MEMBERSHIP_EXPIRATION_COMPARATOR); // synchronized on this
+    private final Queue<Membership> membershipQueue = new PriorityQueue<>(11, MEMBERSHIP_EXPIRATION_COMPARATOR); // synchronized on this
 
     private ScheduledFuture<?> scheduledFuture; // synchronized on this
 
@@ -89,8 +89,8 @@ public class ExpirationRefreshHandler implements Runnable {
 
     @Override
     public synchronized void run() {
-        Set<UUID> toRefresh = new LinkedHashSet<UUID>();
-        final Set<Membership> expired = new LinkedHashSet<Membership>();
+        Set<UUID> toRefresh = new LinkedHashSet<>();
+        final Set<Membership> expired = new LinkedHashSet<>();
 
         // Gather up memberships that have already expired
         Date now = new Date();

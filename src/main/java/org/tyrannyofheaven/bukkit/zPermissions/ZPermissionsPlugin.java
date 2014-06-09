@@ -258,10 +258,10 @@ public class ZPermissionsPlugin extends JavaPlugin implements ZPermissionsCore, 
     private boolean regionSupportEnable;
 
     // Track definitions
-    private final Map<String, List<String>> tracks = new LinkedHashMap<String, List<String>>();
+    private final Map<String, List<String>> tracks = new LinkedHashMap<>();
 
     // Names of tracks (in original case)
-    private final Set<String> trackNames = new LinkedHashSet<String>();
+    private final Set<String> trackNames = new LinkedHashSet<>();
 
     // Whether or not to use the database (Avaje) storage strategy
     private boolean databaseSupport;
@@ -644,7 +644,7 @@ public class ZPermissionsPlugin extends JavaPlugin implements ZPermissionsCore, 
         if (!regionSupportEnable)
             return; // Don't bother with the rest
 
-        Map<String, RegionStrategy> strategies = new LinkedHashMap<String, RegionStrategy>();
+        Map<String, RegionStrategy> strategies = new LinkedHashMap<>();
         RegionStrategy regionStrategy;
 
         // WorldGuard
@@ -686,7 +686,7 @@ public class ZPermissionsPlugin extends JavaPlugin implements ZPermissionsCore, 
      */
     @Override
     public List<Class<?>> getDatabaseClasses() {
-        List<Class<?>> result = new ArrayList<Class<?>>();
+        List<Class<?>> result = new ArrayList<>();
         result.add(ToHSchemaVersion.class);
         result.add(PermissionEntity.class);
         result.add(Inheritance.class);
@@ -906,7 +906,7 @@ public class ZPermissionsPlugin extends JavaPlugin implements ZPermissionsCore, 
     @Override
     public void refreshPlayers() {
         debug(this, "Refreshing all online players");
-        Set<UUID> toRefresh = new HashSet<UUID>();
+        Set<UUID> toRefresh = new HashSet<>();
         for (Player player : Bukkit.getOnlinePlayers()) {
             toRefresh.add(player.getUniqueId());
         }
@@ -950,7 +950,7 @@ public class ZPermissionsPlugin extends JavaPlugin implements ZPermissionsCore, 
     @Override
     public boolean refreshAffectedPlayers(String groupName) {
         groupName = groupName.toLowerCase();
-        Set<UUID> toRefresh = new HashSet<UUID>();
+        Set<UUID> toRefresh = new HashSet<>();
         for (Player player : Bukkit.getOnlinePlayers()) {
             PlayerState playerState = getPlayerState(player);
             if (playerState == null || playerState.getGroups().contains(groupName)) {
@@ -996,7 +996,7 @@ public class ZPermissionsPlugin extends JavaPlugin implements ZPermissionsCore, 
      */
     @Override
     public List<String> getTracks() {
-        return new ArrayList<String>(trackNames);
+        return new ArrayList<>(trackNames);
     }
 
     /**
@@ -1094,7 +1094,7 @@ public class ZPermissionsPlugin extends JavaPlugin implements ZPermissionsCore, 
                     getResolver().setGroupPermissionFormats(Collections.singleton((String)strOrList));
             }
             else if (strOrList instanceof List<?>) {
-                Set<String> groupPerms = new HashSet<String>();
+                Set<String> groupPerms = new HashSet<>();
                 for (Object obj : (List<?>)strOrList) {
                     if (obj instanceof String) {
                         groupPerms.add((String)obj);
@@ -1116,7 +1116,7 @@ public class ZPermissionsPlugin extends JavaPlugin implements ZPermissionsCore, 
                     getResolver().setAssignedGroupPermissionFormats(Collections.singleton((String)strOrList));
             }
             else if (strOrList instanceof List<?>) {
-                Set<String> groupPerms = new HashSet<String>();
+                Set<String> groupPerms = new HashSet<>();
                 for (Object obj : (List<?>)strOrList) {
                     if (obj instanceof String) {
                         groupPerms.add((String)obj);
@@ -1164,7 +1164,7 @@ public class ZPermissionsPlugin extends JavaPlugin implements ZPermissionsCore, 
                     continue;
                 }
 
-                List<String> members = new ArrayList<String>();
+                List<String> members = new ArrayList<>();
                 for (Object o : list) {
                     members.add(o.toString().toLowerCase());
                 }
@@ -1174,7 +1174,7 @@ public class ZPermissionsPlugin extends JavaPlugin implements ZPermissionsCore, 
         }
         // Set up default track if none are defined
         if (tracks.isEmpty()) {
-            List<String> members = new ArrayList<String>();
+            List<String> members = new ArrayList<>();
             members.add("default");
             members.add("somegroup");
             members.add("someothergroup");
@@ -1211,7 +1211,7 @@ public class ZPermissionsPlugin extends JavaPlugin implements ZPermissionsCore, 
         ToHDatabaseUtils.populateNamingConvention(config, namingConvention);
 
         // Region managers
-        regionManagers = new ArrayList<String>();
+        regionManagers = new ArrayList<>();
         strOrList = config.get("region-managers");
         if (strOrList != null) {
             if (strOrList instanceof String) {
@@ -1346,7 +1346,7 @@ public class ZPermissionsPlugin extends JavaPlugin implements ZPermissionsCore, 
 
         public void setRegions(Set<String> regions) {
             // NB should already be lower-cased
-            this.regions = Collections.unmodifiableSet(new HashSet<String>(regions));
+            this.regions = Collections.unmodifiableSet(new HashSet<>(regions));
         }
 
         public Set<String> getRegions() {
@@ -1368,7 +1368,7 @@ public class ZPermissionsPlugin extends JavaPlugin implements ZPermissionsCore, 
         }
 
         public void setGroups(Set<String> groups) {
-            this.groups = new HashSet<String>(groups.size());
+            this.groups = new HashSet<>(groups.size());
             for (String group : groups) {
                 this.groups.add(group.toLowerCase());
             }

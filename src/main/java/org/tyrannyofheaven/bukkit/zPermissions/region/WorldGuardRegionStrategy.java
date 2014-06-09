@@ -93,11 +93,11 @@ public class WorldGuardRegionStrategy implements RegionStrategy, Listener {
             if (rm != null) {
                 ApplicableRegionSet ars = rm.getApplicableRegions(location);
                 // Note, sorted from high to low priority, i.e. reverse application order
-                List<ProtectedRegion> sorted = new ArrayList<ProtectedRegion>();
+                List<ProtectedRegion> sorted = new ArrayList<>();
                 Iterables.addAll(sorted, ars);
                 Collections.reverse(sorted); // Now it is in application order
 
-                Set<String> result = new LinkedHashSet<String>(); // Preserve ordering for resolver
+                Set<String> result = new LinkedHashSet<>(); // Preserve ordering for resolver
                 for (ProtectedRegion pr : sorted) {
                     // Ignore global region
                     if (!"__global__".equals(pr.getId())) // NB: Hardcoded and not available as constant in WorldGuard
