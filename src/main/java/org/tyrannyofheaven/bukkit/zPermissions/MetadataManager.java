@@ -207,7 +207,7 @@ public class MetadataManager {
             this.metadata = Collections.unmodifiableMap(metadata);
 
             // Lowercase groups
-            Set<String> groupsCopy = new LinkedHashSet<String>(groups.size());
+            Set<String> groupsCopy = new LinkedHashSet<>(groups.size());
             for (String group : groups) {
                 groupsCopy.add(group.toLowerCase());
             }

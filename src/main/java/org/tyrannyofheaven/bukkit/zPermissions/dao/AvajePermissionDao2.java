@@ -620,7 +620,7 @@ public class AvajePermissionDao2 extends BaseMemoryPermissionDao {
 
     @Override
     protected void deleteRegions(Collection<PermissionRegion> regions) {
-        final Set<String> regionNames = new HashSet<String>(regions.size());
+        final Set<String> regionNames = new HashSet<>(regions.size());
         for (PermissionRegion region : regions) {
             regionNames.add(region.getName());
         }
@@ -630,7 +630,7 @@ public class AvajePermissionDao2 extends BaseMemoryPermissionDao {
             public void run() {
                 boolean inconsistent = false;
 
-                List<PermissionRegion> dbRegions = new ArrayList<PermissionRegion>(regionNames.size());
+                List<PermissionRegion> dbRegions = new ArrayList<>(regionNames.size());
                 for (String regionName : regionNames) {
                     PermissionRegion dbRegion = getEbeanServer().find(PermissionRegion.class).where()
                             .eq("name", regionName.toLowerCase())
@@ -652,7 +652,7 @@ public class AvajePermissionDao2 extends BaseMemoryPermissionDao {
 
     @Override
     protected void deleteWorlds(Collection<PermissionWorld> worlds) {
-        final Set<String> worldNames = new HashSet<String>(worlds.size());
+        final Set<String> worldNames = new HashSet<>(worlds.size());
         for (PermissionWorld world : worlds) {
             worldNames.add(world.getName());
         }
@@ -662,7 +662,7 @@ public class AvajePermissionDao2 extends BaseMemoryPermissionDao {
             public void run() {
                 boolean inconsistent = false;
 
-                List<PermissionWorld> dbWorlds = new ArrayList<PermissionWorld>(worldNames.size());
+                List<PermissionWorld> dbWorlds = new ArrayList<>(worldNames.size());
                 for (String worldName : worldNames) {
                     PermissionWorld dbWorld = getEbeanServer().find(PermissionWorld.class).where()
                             .eq("name", worldName.toLowerCase())

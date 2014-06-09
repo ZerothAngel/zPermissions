@@ -79,7 +79,7 @@ public class DefaultPlayerPrefixHandler implements PlayerPrefixHandler {
     }
 
     private String getFormattedPrefixSuffix(ZPermissionsService service, UUID uuid, String format, boolean isPrefix) {
-        Map<String, String> subMap = new HashMap<String, String>();
+        Map<String, String> subMap = new HashMap<>();
         // Scan format, only calculate tokens that exist in it
         if (format.contains("%p")) {
             // Player
@@ -129,7 +129,7 @@ public class DefaultPlayerPrefixHandler implements PlayerPrefixHandler {
         if (config.isVaultGetGroupsUsesAssignedOnly())
             return service.getPlayerAssignedGroups(uuid);
         else
-            return new ArrayList<String>(service.getPlayerGroups(uuid));
+            return new ArrayList<>(service.getPlayerGroups(uuid));
     }
 
 }

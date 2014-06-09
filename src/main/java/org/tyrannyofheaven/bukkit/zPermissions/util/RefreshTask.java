@@ -46,7 +46,7 @@ public class RefreshTask implements Runnable {
 
     private int delay;
 
-    private final Queue<UUID> playersToRefresh = new LinkedList<UUID>(); // synchronized on this
+    private final Queue<UUID> playersToRefresh = new LinkedList<>(); // synchronized on this
 
     private int taskId = -1; // synchronized on this
 
@@ -66,7 +66,7 @@ public class RefreshTask implements Runnable {
             return; // Nothing to do
 
         // Build a set to maintain uniqueness
-        Set<UUID> nextPlayersToRefresh = new LinkedHashSet<UUID>(playersToRefresh);
+        Set<UUID> nextPlayersToRefresh = new LinkedHashSet<>(playersToRefresh);
 
         // Remember who to refresh
         nextPlayersToRefresh.addAll(playerUuids);

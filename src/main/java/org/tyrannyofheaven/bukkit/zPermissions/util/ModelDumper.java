@@ -83,7 +83,7 @@ public class ModelDumper {
                                 entity.getPriority()));
                         List<PermissionEntity> parents = entity.getParents();
                         if (!parents.isEmpty()) {
-                            List<String> parentNames = new ArrayList<String>(parents.size());
+                            List<String> parentNames = new ArrayList<>(parents.size());
                             for (PermissionEntity parent : parents)
                                 parentNames.add(quoteArgForCommand(parent.getDisplayName()));
                             out.println(String.format("permissions group %s setparents %s",

@@ -63,7 +63,7 @@ public class AvajeBulkUuidConverter implements BulkUuidConverter {
         getEbeanServer().beginTransaction();
         try {
             // Gather everything
-            Set<String> usernames = new HashSet<String>();
+            Set<String> usernames = new HashSet<>();
             List<PermissionEntity> entities = prepareEntities(usernames);
             log(plugin, "%d entit%s to migrate", entities.size(), entities.size() == 1 ? "y" : "ies");
             List<Membership> memberships = migrateMemberships(usernames);
@@ -103,7 +103,7 @@ public class AvajeBulkUuidConverter implements BulkUuidConverter {
     }
 
     private List<PermissionEntity> prepareEntities(Set<String> usernames) {
-        List<PermissionEntity> toConvert = new ArrayList<PermissionEntity>();
+        List<PermissionEntity> toConvert = new ArrayList<>();
         for (PermissionEntity entity : getEbeanServer().createQuery(PermissionEntity.class).where().eq("group", false).findList()) {
             // Does it need converting?
             // The big clue is when name == displayName
@@ -121,7 +121,7 @@ public class AvajeBulkUuidConverter implements BulkUuidConverter {
     }
 
     private List<Membership> migrateMemberships(Set<String> usernames) {
-        List<Membership> toConvert = new ArrayList<Membership>();
+        List<Membership> toConvert = new ArrayList<>();
         for (Membership membership : getEbeanServer().createQuery(Membership.class).findList()) {
             // Does it need converting?
             // Same criteria as for entities
@@ -137,8 +137,8 @@ public class AvajeBulkUuidConverter implements BulkUuidConverter {
     }
 
     private List<PermissionEntity> migrateEntities(Collection<PermissionEntity> entities, Map<String, UuidDisplayName> resolved) {
-        List<PermissionEntity> toSave = new ArrayList<PermissionEntity>();
-        List<PermissionEntity> toDelete = new ArrayList<PermissionEntity>();
+        List<PermissionEntity> toSave = new ArrayList<>();
+        List<PermissionEntity> toDelete = new ArrayList<>();
         for (PermissionEntity entity : entities) {
             UuidDisplayName udn = resolved.get(entity.getDisplayName().toLowerCase());
             if (udn != null) {
@@ -156,8 +156,8 @@ public class AvajeBulkUuidConverter implements BulkUuidConverter {
     }
 
     private List<Membership> migrateMemberships(Collection<Membership> memberships, Map<String, UuidDisplayName> resolved) {
-        List<Membership> toSave = new ArrayList<Membership>();
-        List<Membership> toDelete = new ArrayList<Membership>();
+        List<Membership> toSave = new ArrayList<>();
+        List<Membership> toDelete = new ArrayList<>();
         for (Membership membership : memberships) {
             UuidDisplayName udn = resolved.get(membership.getDisplayName().toLowerCase());
             if (udn != null) {

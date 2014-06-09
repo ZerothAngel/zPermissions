@@ -67,10 +67,10 @@ public class ZPermissionsServiceImpl implements ZPermissionsService {
 
     private final PlayerPrefixHandler playerPrefixHandler;
 
-    private final ThreadLocal<Boolean> playerPrefixHandlerLoopAvoidance = new ThreadLocal<Boolean>();
+    private final ThreadLocal<Boolean> playerPrefixHandlerLoopAvoidance = new ThreadLocal<>();
 
     static {
-        Set<Class<?>> types = new HashSet<Class<?>>();
+        Set<Class<?>> types = new HashSet<>();
         types.add(Object.class);
         types.add(String.class);
         types.add(Integer.class);
@@ -130,7 +130,7 @@ public class ZPermissionsServiceImpl implements ZPermissionsService {
      */
     @Override
     public Set<String> getAllGroups() {
-        Set<String> groups = new HashSet<String>();
+        Set<String> groups = new HashSet<>();
         
         for (String groupName : getDao().getEntityNames(true)) {
             groups.add(groupName);
@@ -194,7 +194,7 @@ public class ZPermissionsServiceImpl implements ZPermissionsService {
         if (uuid == null)
             throw new IllegalArgumentException("uuid cannot be null");
 
-        final Set<String> result = new LinkedHashSet<String>();
+        final Set<String> result = new LinkedHashSet<>();
 
         getTransactionStrategy().execute(new TransactionCallbackWithoutResult() {
             @Override
@@ -232,7 +232,7 @@ public class ZPermissionsServiceImpl implements ZPermissionsService {
             throw new IllegalArgumentException("groupName must have a value");
 
         // Ensure all region names are lowercased
-        final Set<String> regions = new LinkedHashSet<String>();
+        final Set<String> regions = new LinkedHashSet<>();
         for (String regionName : regionNames) {
             regions.add(regionName.toLowerCase());
         }
@@ -273,7 +273,7 @@ public class ZPermissionsServiceImpl implements ZPermissionsService {
             regionNames = Collections.emptySet();
 
         // Ensure all region names are lowercased
-        final Set<String> regions = new LinkedHashSet<String>();
+        final Set<String> regions = new LinkedHashSet<>();
         for (String regionName : regionNames) {
             regions.add(regionName.toLowerCase());
         }
@@ -294,7 +294,7 @@ public class ZPermissionsServiceImpl implements ZPermissionsService {
     @Deprecated
     @Override
     public Set<String> getAllPlayers() {
-        Set<String> players = new HashSet<String>();
+        Set<String> players = new HashSet<>();
         
         for (String playerName : getDao().getEntityNames(false)) {
             players.add(playerName);
@@ -305,7 +305,7 @@ public class ZPermissionsServiceImpl implements ZPermissionsService {
 
     @Override
     public Set<UUID> getAllPlayersUUID() {
-        Set<UUID> players = new HashSet<UUID>();
+        Set<UUID> players = new HashSet<>();
         
         for (PermissionEntity player : getDao().getEntities(false)) {
             players.add(player.getUuid());
@@ -324,7 +324,7 @@ public class ZPermissionsServiceImpl implements ZPermissionsService {
             throw new IllegalArgumentException("groupName must have a value");
         // DAO returns them in alphabetical order. This interface doesn't care
         // about ordering.
-        return new HashSet<String>(Utils.toMembers(Utils.filterExpired(getDao().getMembers(groupName)), false));
+        return new HashSet<>(Utils.toMembers(Utils.filterExpired(getDao().getMembers(groupName)), false));
     }
 
     @Override
@@ -334,7 +334,7 @@ public class ZPermissionsServiceImpl implements ZPermissionsService {
         // DAO returns them in alphabetical order. This interface doesn't care
         // about ordering.
         
-        Set<UUID> members = new HashSet<UUID>();
+        Set<UUID> members = new HashSet<>();
 
         for (Membership membership : Utils.filterExpired(getDao().getMembers(groupName))) {
             members.add(membership.getUuid());
@@ -441,7 +441,7 @@ public class ZPermissionsServiceImpl implements ZPermissionsService {
      */
     @Override
     public Set<String> getAllTracks() {
-        return new HashSet<String>(getZPermissionsConfig().getTracks());
+        return new HashSet<>(getZPermissionsConfig().getTracks());
     }
 
     /* (non-Javadoc)
@@ -456,7 +456,7 @@ public class ZPermissionsServiceImpl implements ZPermissionsService {
         if (result == null || result.isEmpty())
             throw new IllegalStateException("Track has not been defined");
         // NB make a copy
-        return new ArrayList<String>(result);
+        return new ArrayList<>(result);
     }
 
     /* (non-Javadoc)
@@ -485,7 +485,7 @@ public class ZPermissionsServiceImpl implements ZPermissionsService {
                 List<String> groups = getTrackGroups(track);
                 Collections.reverse(groups); // groups is now high rank to low
 
-                Set<String> trackGroups = new LinkedHashSet<String>(groups);
+                Set<String> trackGroups = new LinkedHashSet<>(groups);
                 trackGroups.retainAll(getPlayerAssignedGroups(uuid)); // intersection with all assigned groups
 
                 if (!trackGroups.isEmpty())

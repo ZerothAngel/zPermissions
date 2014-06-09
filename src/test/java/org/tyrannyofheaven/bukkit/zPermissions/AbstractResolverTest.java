@@ -115,7 +115,7 @@ public abstract class AbstractResolverTest {
         Map<String, Boolean> permissions;
         begin();
         try {
-            Set<String> regionSet = new LinkedHashSet<String>();
+            Set<String> regionSet = new LinkedHashSet<>();
             for (String region : regions) {
                 regionSet.add(region.toLowerCase());
             }

@@ -210,7 +210,7 @@ public class PlayerCommands extends CommonCommands {
             return;
         }
 
-        List<String> lines = new ArrayList<String>();
+        List<String> lines = new ArrayList<>();
         lines.add(String.format(colorize("{YELLOW}Declared permissions for {AQUA}%s{YELLOW}:"), entity.getDisplayName()));
         if (filter != null) {
             filter = filter.toLowerCase().trim();
