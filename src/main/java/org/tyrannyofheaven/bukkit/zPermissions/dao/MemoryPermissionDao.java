@@ -212,7 +212,9 @@ public class MemoryPermissionDao extends BaseMemoryPermissionDao {
         Yaml yaml = new Yaml(new SafeConstructor(), new Representer(), options);
         Writer out = new FileWriter(newFile);
         try {
-            out.write("# DO NOT EDIT -- file is written to periodically!\n");
+            out.write("# DO NOT EDIT -- file is written to periodically!\n" +
+                    "# Seriously, do not edit. Today it is YAML, tomorrow it may not be.\n" +
+                    "# If you edit this file and you have problems, you are on your own!\n");
             yaml.dump(dump, out);
         }
         finally {
