@@ -216,10 +216,10 @@ public class ZPermissionsPlugin extends JavaPlugin implements ZPermissionsCore, 
     private static final boolean DEFAULT_UUID_MIGRATE = true;
 
     // Size of UUID resolver cache
-    private static final int DEFAULT_UUID_CACHE_SIZE = 100;
+    private static final int DEFAULT_UUID_CACHE_SIZE = 1000;
 
     // TTL of UUID resolver cache
-    private static final long DEFAULT_UUID_CACHE_TTL = 5L;
+    private static final long DEFAULT_UUID_CACHE_TTL = 120L;
 
     // Whether ZPermissionService#getPlayerMetadata() should be aware of prefix/suffix
     private static final boolean DEFAULT_SERVICE_METADATA_PREFIX_HACK = false;
