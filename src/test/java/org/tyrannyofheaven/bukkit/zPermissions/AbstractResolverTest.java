@@ -15,6 +15,7 @@ import java.util.UUID;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.tyrannyofheaven.bukkit.zPermissions.dao.InMemoryPermissionService;
 import org.tyrannyofheaven.bukkit.zPermissions.dao.PermissionService;
 import org.tyrannyofheaven.bukkit.zPermissions.model.PermissionEntity;
 import org.tyrannyofheaven.bukkit.zPermissions.util.Utils;
@@ -39,7 +40,7 @@ public abstract class AbstractResolverTest {
 
     private static final String TEST_REGION2 = "MyRegion2";
 
-    protected PermissionService permissionService;
+    protected InMemoryPermissionService permissionService;
 
     protected PermissionsResolver resolver;
 

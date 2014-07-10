@@ -18,7 +18,8 @@ package org.tyrannyofheaven.bukkit.zPermissions;
 
 import java.util.Collections;
 
-import org.tyrannyofheaven.bukkit.zPermissions.dao.AvajePermissionService;
+import org.tyrannyofheaven.bukkit.zPermissions.dao.AvajePermissionDao;
+import org.tyrannyofheaven.bukkit.zPermissions.dao.InMemoryPermissionService;
 import org.tyrannyofheaven.bukkit.zPermissions.model.EntityMetadata;
 import org.tyrannyofheaven.bukkit.zPermissions.model.Entry;
 import org.tyrannyofheaven.bukkit.zPermissions.model.Inheritance;
@@ -68,7 +69,8 @@ public class NewAvajeResolverTest extends AbstractResolverTest {
             }
         }
 
-        permissionService = new AvajePermissionService(ebeanServer, null);
+        permissionService = new InMemoryPermissionService();
+        permissionService.setPermissionDao(new AvajePermissionDao(permissionService, ebeanServer, null));
         resolver = new PermissionsResolver(permissionService);
         resolver.setDefaultGroup(TEST_GROUP1);
         resolver.setGroupPermissionFormats(Collections.singleton("group.%s"));
