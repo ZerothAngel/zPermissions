@@ -33,18 +33,18 @@ import org.tyrannyofheaven.bukkit.util.transaction.RetryingAvajeTransactionStrat
 import org.tyrannyofheaven.bukkit.util.transaction.TransactionCallback;
 import org.tyrannyofheaven.bukkit.util.transaction.TransactionStrategy;
 import org.tyrannyofheaven.bukkit.zPermissions.ReadOnlyException;
-import org.tyrannyofheaven.bukkit.zPermissions.dao.AvajePermissionDao2;
-import org.tyrannyofheaven.bukkit.zPermissions.dao.PermissionDao;
+import org.tyrannyofheaven.bukkit.zPermissions.dao.AvajePermissionService;
+import org.tyrannyofheaven.bukkit.zPermissions.dao.PermissionService;
 import org.tyrannyofheaven.bukkit.zPermissions.model.DataVersion;
 
 /**
- * StorageStrategy for AvajePermissionDao2.
+ * StorageStrategy for AvajePermissionService.
  * 
  * @author zerothangel
  */
 public class AvajeStorageStrategy implements StorageStrategy, PreBeginHook, PreCommitHook {
 
-    private final PermissionDao dao;
+    private final PermissionService permissionService;
 
     private final AsyncTransactionStrategy transactionStrategy;
 
@@ -63,7 +63,7 @@ public class AvajeStorageStrategy implements StorageStrategy, PreBeginHook, PreC
         executorService = Executors.newSingleThreadExecutor();
 
         transactionStrategy = new AsyncTransactionStrategy(new RetryingAvajeTransactionStrategy(plugin.getDatabase(), maxRetries, null, this), executorService, this);
-        dao = new AvajePermissionDao2(plugin.getDatabase(), transactionStrategy.getExecutor());
+        permissionService = new AvajePermissionService(plugin.getDatabase(), transactionStrategy.getExecutor());
         retryingTransactionStrategy = new RetryingAvajeTransactionStrategy(plugin.getDatabase(), maxRetries); // NB no need for pre-commit hook since it's read-only
         this.plugin = plugin;
         this.readOnlyMode = readOnlyMode;
@@ -114,7 +114,7 @@ public class AvajeStorageStrategy implements StorageStrategy, PreBeginHook, PreC
                 DataVersion currentVersion = getCurrentDataVersion();
 
                 if (force || lastLoadedVersion.get() != currentVersion.getVersion()) {
-                    ((AvajePermissionDao2)dao).load();
+                    ((AvajePermissionService)permissionService).load();
                     lastLoadedVersion.set(currentVersion.getVersion());
                     return true;
                 }
@@ -125,8 +125,8 @@ public class AvajeStorageStrategy implements StorageStrategy, PreBeginHook, PreC
     }
 
     @Override
-    public PermissionDao getDao() {
-        return dao;
+    public PermissionService getPermissionService() {
+        return permissionService;
     }
 
     @Override

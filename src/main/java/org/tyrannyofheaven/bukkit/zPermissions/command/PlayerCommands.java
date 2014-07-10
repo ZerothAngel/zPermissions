@@ -134,7 +134,7 @@ public class PlayerCommands extends CommonCommands {
     }
 
     private void getGroups(CommandSender sender, UUID uuid, String name) {
-        List<Membership> memberships = storageStrategy.getDao().getGroups(uuid);
+        List<Membership> memberships = storageStrategy.getPermissionService().getGroups(uuid);
         Collections.reverse(memberships); // Order from highest to lowest
 
         String groups = Utils.displayGroups(resolver.getDefaultGroup(), memberships);
@@ -162,7 +162,7 @@ public class PlayerCommands extends CommonCommands {
                 public void doInTransactionWithoutResult() throws Exception {
                     Date newExpiration = handleExtendExpiration(groupName, uuid, playerName, add, addNoReset, expiration);
 
-                    storageStrategy.getDao().setGroup(uuid, playerName, groupName, newExpiration);
+                    storageStrategy.getPermissionService().setGroup(uuid, playerName, groupName, newExpiration);
                 }
             });
         }
@@ -203,7 +203,7 @@ public class PlayerCommands extends CommonCommands {
     }
 
     private void show(CommandSender sender, UUID uuid, String playerName, String filter) {
-        PermissionEntity entity = storageStrategy.getDao().getEntity(playerName, uuid, false);
+        PermissionEntity entity = storageStrategy.getPermissionService().getEntity(playerName, uuid, false);
 
         if (entity == null || entity.getPermissions().isEmpty()) {
             sendMessage(sender, colorize("{RED}Player has no declared permissions."));

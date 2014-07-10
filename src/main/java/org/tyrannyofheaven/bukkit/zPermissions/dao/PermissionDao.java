@@ -1,5 +1,5 @@
 /*
- * Copyright 2011 ZerothAngel <zerothangel@tyrannyofheaven.org>
+ * Copyright 2014 ZerothAngel <zerothangel@tyrannyofheaven.org>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,77 +15,58 @@
  */
 package org.tyrannyofheaven.bukkit.zPermissions.dao;
 
-import java.util.Date;
-import java.util.List;
-import java.util.UUID;
+import java.util.Collection;
 
 import org.tyrannyofheaven.bukkit.zPermissions.model.EntityMetadata;
 import org.tyrannyofheaven.bukkit.zPermissions.model.Entry;
+import org.tyrannyofheaven.bukkit.zPermissions.model.Inheritance;
 import org.tyrannyofheaven.bukkit.zPermissions.model.Membership;
 import org.tyrannyofheaven.bukkit.zPermissions.model.PermissionEntity;
+import org.tyrannyofheaven.bukkit.zPermissions.model.PermissionRegion;
+import org.tyrannyofheaven.bukkit.zPermissions.model.PermissionWorld;
 
 /**
- * Data access object for zPermissions. This isn't actually a pure DAO as it
- * contains some business logic &mdash; {@link #setGroup(UUID, String, String, Date)} being the
- * biggest offender. Ah well... :)
- * 
- * <p>More like a DAO/service object, I guess!
- * 
- * <p>Methods should be self-explanatory. I'm not gonna write javadocs for each and
- * every one! (yet) :P
+ * Data-access interface for zPermissions. Mainly concerned with CUD operations
+ * (that is, CRUD without the R).
  * 
  * @author zerothangel
  */
 public interface PermissionDao {
 
-    public Boolean getPermission(String name, UUID uuid, boolean group, String region, String world, String permission);
+    public void createRegion(PermissionRegion region);
 
-    public void setPermission(String name, UUID uuid, boolean group, String region, String world, String permission, boolean value);
+    public void createWorld(PermissionWorld world);
 
-    public boolean unsetPermission(String name, UUID uuid, boolean group, String region, String world, String permission);
+    public void createEntity(PermissionEntity entity);
 
-    public void addMember(String groupName, UUID memberUuid, String memberName, Date expiration);
-    
-    public boolean removeMember(String groupName, UUID memberUuid);
+    public void createOrUpdateEntry(Entry entry);
 
-    // NB: Resolver critical path
-    public List<Membership> getGroups(UUID memberUuid);
+    public void deleteEntry(Entry entry);
 
-    public List<Membership> getMembers(String group);
+    public void createOrUpdateMembership(Membership membership);
 
-    public PermissionEntity getEntity(String name, UUID uuid, boolean group);
+    public void setEntityParent(PermissionEntity entity, PermissionEntity parent);
 
-    public List<PermissionEntity> getEntities(boolean group);
+    public void createOrUpdateInheritance(Inheritance inheritance);
 
-    public void setGroup(UUID playerUuid, String playerName, String groupName, Date expiration);
+    public void deleteInheritance(Inheritance inheritance);
 
-    // Technically deprecated
-    public void setParent(String groupName, String parentName);
+    public void setEntityPriority(PermissionEntity entity, int priority);
 
-    public void setParents(String groupName, List<String> parentNames);
+    public void deleteRegions(Collection<PermissionRegion> regions);
 
-    public void setPriority(String groupName, int priority);
+    public void deleteWorlds(Collection<PermissionWorld> worlds);
 
-    public boolean deleteEntity(String name, UUID uuid, boolean group);
+    public void deleteEntity(PermissionEntity entity);
 
-    // NB: Resolver critical path
-    public List<String> getAncestry(String groupName);
+    public void deleteMembership(Membership membership);
 
-    // NB: Resolver critical path
-    public List<Entry> getEntries(String name, UUID uuid, boolean group);
+    public void createOrUpdateMetadata(EntityMetadata metadata);
 
-    public boolean createGroup(String name);
-    
-    public List<String> getEntityNames(boolean group);
+    public void deleteMetadata(EntityMetadata metadata);
 
-    public Object getMetadata(String name, UUID uuid, boolean group, String metadataName);
+    public void updateDisplayName(PermissionEntity entity);
 
-    public List<EntityMetadata> getAllMetadata(String name, UUID uuid, boolean group);
-
-    public void setMetadata(String name, UUID uuid, boolean group, String metadataName, Object value);
-
-    public boolean unsetMetadata(String name, UUID uuid, boolean group, String metadataName);
-
-    public void updateDisplayName(UUID uuid, String displayName);
+    public void updateDisplayName(Membership membership);
 
 }

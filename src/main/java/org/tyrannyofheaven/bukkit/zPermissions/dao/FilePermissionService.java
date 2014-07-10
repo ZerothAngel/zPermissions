@@ -24,7 +24,6 @@ import java.io.IOException;
 import java.io.Reader;
 import java.io.Writer;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.LinkedHashMap;
@@ -40,8 +39,6 @@ import org.tyrannyofheaven.bukkit.zPermissions.model.Entry;
 import org.tyrannyofheaven.bukkit.zPermissions.model.Inheritance;
 import org.tyrannyofheaven.bukkit.zPermissions.model.Membership;
 import org.tyrannyofheaven.bukkit.zPermissions.model.PermissionEntity;
-import org.tyrannyofheaven.bukkit.zPermissions.model.PermissionRegion;
-import org.tyrannyofheaven.bukkit.zPermissions.model.PermissionWorld;
 import org.tyrannyofheaven.bukkit.zPermissions.util.Utils;
 import org.yaml.snakeyaml.DumperOptions;
 import org.yaml.snakeyaml.Yaml;
@@ -49,145 +46,26 @@ import org.yaml.snakeyaml.constructor.SafeConstructor;
 import org.yaml.snakeyaml.representer.Representer;
 
 /**
- * Flat-file based PermissionDao implementation.
+ * Flat-file based PermissionService implementation.
  * 
  * @author zerothangel
  */
-public class MemoryPermissionDao extends BaseMemoryPermissionDao {
+public class FilePermissionService extends NonBlockingPermissionService {
 
     private Logger logger = Logger.getLogger(getClass().getName());
 
-    private boolean dirty;
+    private final FilePermissionDao permissionDao = new FilePermissionDao();
 
-    public synchronized boolean isDirty() {
-        return dirty;
+    public FilePermissionService() {
+        setPermissionDao(permissionDao);
     }
 
-    public void setDirty() {
-        setDirty(true);
+    public boolean isDirty() {
+        return permissionDao.isDirty();
     }
-
-    public synchronized void setDirty(boolean dirty) {
-        this.dirty = dirty;
-    }
-
-    public synchronized void clearDirty() {
-        this.dirty = false;
-    }
-
-    @Override
-    public synchronized Boolean getPermission(String name, UUID uuid, boolean group, String region, String world, String permission) {
-        return super.getPermission(name, uuid, group, region, world, permission);
-    }
-
-    @Override
-    public synchronized void setPermission(String name, UUID uuid, boolean group, String region, String world, String permission, boolean value) {
-        super.setPermission(name, uuid, group, region, world, permission, value);
-    }
-
-    @Override
-    public synchronized boolean unsetPermission(String name, UUID uuid, boolean group, String region, String world, String permission) {
-        return super.unsetPermission(name, uuid, group, region, world, permission);
-    }
-
-    @Override
-    public synchronized void addMember(String groupName, UUID memberUuid, String memberName, Date expiration) {
-        super.addMember(groupName, memberUuid, memberName, expiration);
-    }
-
-    @Override
-    public synchronized boolean removeMember(String groupName, UUID memberUuid) {
-        return super.removeMember(groupName, memberUuid);
-    }
-
-    @Override
-    public synchronized List<Membership> getGroups(UUID memberUuid) {
-        return super.getGroups(memberUuid);
-    }
-
-    @Override
-    public synchronized List<Membership> getMembers(String group) {
-        return super.getMembers(group);
-    }
-
-    @Override
-    public synchronized PermissionEntity getEntity(String name, UUID uuid, boolean group) {
-        return super.getEntity(name, uuid, group);
-    }
-
-    @Override
-    public synchronized List<PermissionEntity> getEntities(boolean group) {
-        return super.getEntities(group);
-    }
-
-    @Override
-    public synchronized void setGroup(UUID playerUuid, String playerName, String groupName, Date expiration) {
-        super.setGroup(playerUuid, playerName, groupName, expiration);
-    }
-
-    @Override
-    public synchronized void setParent(String groupName, String parentName) {
-        super.setParent(groupName, parentName);
-    }
-
-    @Override
-    public synchronized void setPriority(String groupName, int priority) {
-        super.setPriority(groupName, priority);
-    }
-
-    @Override
-    public synchronized boolean deleteEntity(String name, UUID uuid, boolean group) {
-        return super.deleteEntity(name, uuid, group);
-    }
-
-    @Override
-    public synchronized List<String> getAncestry(String groupName) {
-        return super.getAncestry(groupName);
-    }
-
-    @Override
-    public synchronized List<Entry> getEntries(String name, UUID uuid, boolean group) {
-        return super.getEntries(name, uuid, group);
-    }
-
-    @Override
-    public synchronized boolean createGroup(String name) {
-        return super.createGroup(name);
-    }
-
-    @Override
-    public synchronized List<String> getEntityNames(boolean group) {
-        return super.getEntityNames(group);
-    }
-
-    @Override
-    public synchronized Object getMetadata(String name, UUID uuid, boolean group, String metadataName) {
-        return super.getMetadata(name, uuid, group, metadataName);
-    }
-
-    @Override
-    public synchronized List<EntityMetadata> getAllMetadata(String name, UUID uuid, boolean group) {
-        return super.getAllMetadata(name, uuid, group);
-    }
-
-    @Override
-    public synchronized void setMetadata(String name, UUID uuid, boolean group, String metadataName, Object value) {
-        super.setMetadata(name, uuid, group, metadataName, value);
-    }
-
-    @Override
-    public synchronized boolean unsetMetadata(String name, UUID uuid, boolean group, String metadataName) {
-        return super.unsetMetadata(name, uuid, group, metadataName);
-    }
-
-    @Override
-    public synchronized void setParents(String groupName, List<String> parentNames) {
-        super.setParents(groupName, parentNames);
-    }
-
-    @Override
-    public synchronized void updateDisplayName(UUID uuid, String displayName) {
-        super.updateDisplayName(uuid, displayName);
+    
+    private void clearDirty() {
+        permissionDao.clearDirty();
     }
 
     /**
@@ -410,9 +288,7 @@ public class MemoryPermissionDao extends BaseMemoryPermissionDao {
             }
         }
         
-        synchronized (this) {
-            setMemoryState(memoryState);
-        }
+        setMemoryState(memoryState);
     }
 
     // Create a map that describes permissions for a PermissionEntity
@@ -465,96 +341,6 @@ public class MemoryPermissionDao extends BaseMemoryPermissionDao {
         }
         
         entity.updateMetadataMap();
-    }
-
-    @Override
-    protected void createRegion(PermissionRegion region) {
-        setDirty();
-    }
-
-    @Override
-    protected void createWorld(PermissionWorld world) {
-        setDirty();
-    }
-
-    @Override
-    protected void createEntity(PermissionEntity entity) {
-        setDirty();
-    }
-
-    @Override
-    protected void createOrUpdateEntry(Entry entry) {
-        setDirty();
-    }
-
-    @Override
-    protected void deleteEntry(Entry entry) {
-        setDirty();
-    }
-
-    @Override
-    protected void createOrUpdateMembership(Membership membership) {
-        setDirty();
-    }
-
-    @Override
-    protected void deleteEntity(PermissionEntity entity) {
-        setDirty();
-    }
-
-    @Override
-    protected void deleteMembership(Membership membership) {
-        setDirty();
-    }
-
-    @Override
-    protected void setEntityParent(PermissionEntity entity, PermissionEntity parent) {
-        setDirty();
-    }
-
-    @Override
-    protected void setEntityPriority(PermissionEntity entity, int priority) {
-        setDirty();
-    }
-
-    @Override
-    protected void deleteRegions(Collection<PermissionRegion> regions) {
-        setDirty();
-    }
-
-    @Override
-    protected void deleteWorlds(Collection<PermissionWorld> worlds) {
-        setDirty();
-    }
-
-    @Override
-    protected void createOrUpdateMetadata(EntityMetadata metadata) {
-        setDirty();
-    }
-
-    @Override
-    protected void deleteMetadata(EntityMetadata metadata) {
-        setDirty();
-    }
-
-    @Override
-    protected void createOrUpdateInheritance(Inheritance inheritance) {
-        setDirty();
-    }
-
-    @Override
-    protected void deleteInheritance(Inheritance inheritance) {
-        setDirty();
-    }
-
-    @Override
-    protected void updateDisplayName(PermissionEntity entity) {
-        setDirty();
-    }
-
-    @Override
-    protected void updateDisplayName(Membership membership) {
-        setDirty();
     }
 
 }

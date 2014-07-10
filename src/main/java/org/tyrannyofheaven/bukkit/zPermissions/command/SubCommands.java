@@ -198,7 +198,7 @@ public class SubCommands {
             throw new ParseException("<what> should be 'groups' or 'players'");
         }
 
-        List<PermissionEntity> entities = storageStrategy.getDao().getEntities(group);
+        List<PermissionEntity> entities = storageStrategy.getPermissionService().getEntities(group);
         Collections.sort(entities, new Comparator<PermissionEntity>() {
             @Override
             public int compare(PermissionEntity a, PermissionEntity b) {
@@ -334,8 +334,8 @@ public class SubCommands {
                 @Override
                 public Boolean doInTransaction() throws Exception {
                     // Check in a single transaction
-                    List<PermissionEntity> players = storageStrategy.getDao().getEntities(false);
-                    List<PermissionEntity> groups = storageStrategy.getDao().getEntities(true);
+                    List<PermissionEntity> players = storageStrategy.getPermissionService().getEntities(false);
+                    List<PermissionEntity> groups = storageStrategy.getPermissionService().getEntities(true);
                     if (!players.isEmpty() || !groups.isEmpty()) {
                         sendMessage(sender, colorize("{RED}Database is not empty!"));
                         return false;
@@ -388,7 +388,7 @@ public class SubCommands {
             return;
         }
         
-        List<Membership> memberships = storageStrategy.getDao().getGroups(((Player)sender).getUniqueId());
+        List<Membership> memberships = storageStrategy.getPermissionService().getGroups(((Player)sender).getUniqueId());
         if (!verbose)
             memberships = Utils.filterExpired(memberships);
         Collections.reverse(memberships); // Order from highest to lowest
@@ -431,7 +431,7 @@ public class SubCommands {
         Object result = storageStrategy.getRetryingTransactionStrategy().execute(new TransactionCallback<Object>() {
             @Override
             public Object doInTransaction() throws Exception {
-                return storageStrategy.getDao().getMetadata(sender.getName(), sender.getUniqueId(), false, metadataName);
+                return storageStrategy.getPermissionService().getMetadata(sender.getName(), sender.getUniqueId(), false, metadataName);
             }
         }, true);
 
@@ -455,7 +455,7 @@ public class SubCommands {
         storageStrategy.getRetryingTransactionStrategy().execute(new TransactionCallbackWithoutResult() {
             @Override
             public void doInTransactionWithoutResult() throws Exception {
-                storageStrategy.getDao().setMetadata(player.getName(), player.getUniqueId(), false, metadataName, stringValue.toString());
+                storageStrategy.getPermissionService().setMetadata(player.getName(), player.getUniqueId(), false, metadataName, stringValue.toString());
             }
         });
 
@@ -468,7 +468,7 @@ public class SubCommands {
         Boolean result = storageStrategy.getRetryingTransactionStrategy().execute(new TransactionCallback<Boolean>() {
             @Override
             public Boolean doInTransaction() throws Exception {
-                return storageStrategy.getDao().unsetMetadata(player.getName(), player.getUniqueId(), false, metadataName);
+                return storageStrategy.getPermissionService().unsetMetadata(player.getName(), player.getUniqueId(), false, metadataName);
             }
         });
         
@@ -511,7 +511,7 @@ public class SubCommands {
         final String worldName;
         final Set<String> regionNames;
         if (otherPlayer != null) {
-            Utils.validatePlayer(storageStrategy.getDao(), resolver.getDefaultGroup(), uuid, player, header);
+            Utils.validatePlayer(storageStrategy.getPermissionService(), resolver.getDefaultGroup(), uuid, player, header);
             worldName = determineWorldName(sender, world, player, header);
             if (worldName == null) return;
             regionNames = parseRegions(regions);
@@ -534,7 +534,7 @@ public class SubCommands {
         final String otherWorldName;
         final Set<String> otherRegionNames;
         if (otherPlayer != null) {
-            Utils.validatePlayer(storageStrategy.getDao(), resolver.getDefaultGroup(), otherUuid, otherPlayer, header);
+            Utils.validatePlayer(storageStrategy.getPermissionService(), resolver.getDefaultGroup(), otherUuid, otherPlayer, header);
             otherWorldName = determineWorldName(sender, otherWorld, otherPlayer, header);
             if (otherWorldName == null) return;
             otherRegionNames = parseRegions(otherRegions);
@@ -656,12 +656,12 @@ public class SubCommands {
                     @Override
                     public void doInTransactionWithoutResult() throws Exception {
                         // Purge players
-                        for (PermissionEntity player : storageStrategy.getDao().getEntities(false)) {
-                            storageStrategy.getDao().deleteEntity(player.getDisplayName(), player.getUuid(), false);
+                        for (PermissionEntity player : storageStrategy.getPermissionService().getEntities(false)) {
+                            storageStrategy.getPermissionService().deleteEntity(player.getDisplayName(), player.getUuid(), false);
                         }
                         // Purge groups
-                        for (PermissionEntity group : storageStrategy.getDao().getEntities(true)) {
-                            storageStrategy.getDao().deleteEntity(group.getDisplayName(), null, true);
+                        for (PermissionEntity group : storageStrategy.getPermissionService().getEntities(true)) {
+                            storageStrategy.getPermissionService().deleteEntity(group.getDisplayName(), null, true);
                         }
                     }
                 });
@@ -695,7 +695,7 @@ public class SubCommands {
                 List<Membership> toDelete = new ArrayList<>();
                 Date now = new Date();
                 // For each group...
-                for (PermissionEntity group : storageStrategy.getDao().getEntities(true)) {
+                for (PermissionEntity group : storageStrategy.getPermissionService().getEntities(true)) {
                     // Check each membership
                     for (Membership membership : group.getMemberships()) {
                         if (membership.getExpiration() != null && !membership.getExpiration().after(now)) {
@@ -705,9 +705,9 @@ public class SubCommands {
                     }
                 }
                 
-                // This is going to be slow and inefficient since the DAO scans each member
+                // This is going to be slow and inefficient since PermissionService scans each member
                 for (Membership membership : toDelete) {
-                    storageStrategy.getDao().removeMember(membership.getGroup().getDisplayName(), membership.getUuid());
+                    storageStrategy.getPermissionService().removeMember(membership.getGroup().getDisplayName(), membership.getUuid());
                 }
             }
         });
@@ -771,7 +771,7 @@ public class SubCommands {
         List<UUID> players = Collections.emptyList();
         if (searchPlayers) {
             players = new ArrayList<>();
-            List<PermissionEntity> playerEntities = storageStrategy.getDao().getEntities(false);
+            List<PermissionEntity> playerEntities = storageStrategy.getPermissionService().getEntities(false);
             for (PermissionEntity entity : playerEntities) {
                 players.add(entity.getUuid());
             }
@@ -779,7 +779,7 @@ public class SubCommands {
         
         List<String> groups = Collections.emptyList();
         if (searchGroups) {
-            groups = storageStrategy.getDao().getEntityNames(true);
+            groups = storageStrategy.getPermissionService().getEntityNames(true);
         }
         
         // Create and configure search task

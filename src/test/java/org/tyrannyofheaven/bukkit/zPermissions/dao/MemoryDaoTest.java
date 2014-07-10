@@ -21,7 +21,7 @@ import org.tyrannyofheaven.bukkit.zPermissions.model.PermissionWorld;
 public class MemoryDaoTest extends AbstractDaoTest {
 
     public MemoryDaoTest() {
-        setDao(new MemoryPermissionDao());
+        setPermissionService(new FilePermissionService());
     }
 
     @Override
@@ -38,12 +38,12 @@ public class MemoryDaoTest extends AbstractDaoTest {
 
     @Override
     protected PermissionWorld getWorld(String name) {
-        return ((MemoryPermissionDao)getDao()).getWorld(name);
+        return ((FilePermissionService)getPermissionService()).getWorld(name);
     }
 
     @Override
     protected PermissionRegion getRegion(String name) {
-        return ((MemoryPermissionDao)getDao()).getRegion(name);
+        return ((FilePermissionService)getPermissionService()).getRegion(name);
     }
 
 }

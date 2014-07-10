@@ -16,7 +16,7 @@
 package org.tyrannyofheaven.bukkit.zPermissions.storage;
 
 import org.tyrannyofheaven.bukkit.util.transaction.TransactionStrategy;
-import org.tyrannyofheaven.bukkit.zPermissions.dao.PermissionDao;
+import org.tyrannyofheaven.bukkit.zPermissions.dao.PermissionService;
 
 /**
  * Encompasses initialization/shutdown and all other aspects of permissions
@@ -51,12 +51,12 @@ public interface StorageStrategy {
     public void refresh(boolean force, Runnable finishTask);
 
     /**
-     * Retrieve an instance of {@link PermissionDao} that is associated with
+     * Retrieve an instance of {@link PermissionService} that is associated with
      * this storage strategy.
      * 
-     * @return the PermissionDao instance
+     * @return the PermissionService instance
      */
-    public PermissionDao getDao();
+    public PermissionService getPermissionService();
     
     /**
      * Retrieve an instance of {@link TransactionStrategy} that is associated
@@ -72,7 +72,7 @@ public interface StorageStrategy {
      * Retrieve an instance of {@link TransactionStrategy} that is associated
      * with this storage strategy. This version should support retries if it
      * makes sense (e.g. SQL transactions with rollback). Typical used with
-     * simple operations (single DAO method call).
+     * simple operations (single PermissionService method call).
      * 
      * @return a TransactionStrategy
      */

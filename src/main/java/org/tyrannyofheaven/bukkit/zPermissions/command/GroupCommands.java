@@ -44,7 +44,7 @@ import org.tyrannyofheaven.bukkit.util.uuid.CommandUuidResolver;
 import org.tyrannyofheaven.bukkit.zPermissions.PermissionsResolver;
 import org.tyrannyofheaven.bukkit.zPermissions.ZPermissionsConfig;
 import org.tyrannyofheaven.bukkit.zPermissions.ZPermissionsCore;
-import org.tyrannyofheaven.bukkit.zPermissions.dao.DaoException;
+import org.tyrannyofheaven.bukkit.zPermissions.dao.PermissionServiceException;
 import org.tyrannyofheaven.bukkit.zPermissions.dao.MissingGroupException;
 import org.tyrannyofheaven.bukkit.zPermissions.model.Entry;
 import org.tyrannyofheaven.bukkit.zPermissions.model.Membership;
@@ -96,10 +96,10 @@ public class GroupCommands extends CommonCommands {
                 result = storageStrategy.getRetryingTransactionStrategy().execute(new TransactionCallback<Boolean>() {
                     @Override
                     public Boolean doInTransaction() throws Exception {
-                        List<Membership> memberships = storageStrategy.getDao().getMembers(name);
+                        List<Membership> memberships = storageStrategy.getPermissionService().getMembers(name);
 
                         for (Membership membership : memberships) {
-                            storageStrategy.getDao().removeMember(name, membership.getUuid());
+                            storageStrategy.getPermissionService().removeMember(name, membership.getUuid());
                         }
 
                         return !memberships.isEmpty();
@@ -162,7 +162,7 @@ public class GroupCommands extends CommonCommands {
         boolean result = storageStrategy.getRetryingTransactionStrategy().execute(new TransactionCallback<Boolean>() {
             @Override
             public Boolean doInTransaction() throws Exception {
-                return storageStrategy.getDao().createGroup(groupName);
+                return storageStrategy.getPermissionService().createGroup(groupName);
             }
         });
         
@@ -191,7 +191,7 @@ public class GroupCommands extends CommonCommands {
     @Command(value={"show", "sh"}, description="Show information about a group")
     @Require("zpermissions.group.view")
     public void show(CommandSender sender, @Session("entityName") String groupName, @Option(value={"-f", "--filter"}, valueName="filter") String filter) {
-        PermissionEntity entity = storageStrategy.getDao().getEntity(groupName, null, true);
+        PermissionEntity entity = storageStrategy.getPermissionService().getEntity(groupName, null, true);
 
         if (entity != null) {
             List<String> lines = new ArrayList<>();
@@ -243,7 +243,7 @@ public class GroupCommands extends CommonCommands {
             storageStrategy.getRetryingTransactionStrategy().execute(new TransactionCallbackWithoutResult() {
                 @Override
                 public void doInTransactionWithoutResult() throws Exception {
-                    storageStrategy.getDao().setParents(groupName, parentNames);
+                    storageStrategy.getPermissionService().setParents(groupName, parentNames);
                 }
             });
         }
@@ -251,7 +251,7 @@ public class GroupCommands extends CommonCommands {
             handleMissingGroup(sender, e);
             return;
         }
-        catch (DaoException e) {
+        catch (PermissionServiceException e) {
             // Most likely due to inheritance cycle
             sendMessage(sender, colorize("{RED}%s"), e.getMessage());
             abortBatchProcessing();
@@ -276,7 +276,7 @@ public class GroupCommands extends CommonCommands {
             storageStrategy.getRetryingTransactionStrategy().execute(new TransactionCallbackWithoutResult() {
                 @Override
                 public void doInTransactionWithoutResult() throws Exception {
-                    storageStrategy.getDao().setPriority(groupName, priority);
+                    storageStrategy.getPermissionService().setPriority(groupName, priority);
                 }
             });
         }
@@ -293,7 +293,7 @@ public class GroupCommands extends CommonCommands {
     @Command(value="members", description="List members of a group")
     @Require("zpermissions.group.view")
     public void members(CommandSender sender, @Option(value={"-U", "--uuid"}) boolean showUuid, @Session("entityName") String groupName) {
-        List<Membership> memberships = storageStrategy.getDao().getMembers(groupName);
+        List<Membership> memberships = storageStrategy.getPermissionService().getMembers(groupName);
         
         // NB: Can't tell if group doesn't exist or if it has no members.
         if (memberships.isEmpty()) {

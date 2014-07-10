@@ -47,7 +47,7 @@ import org.tyrannyofheaven.bukkit.util.ToHMessageUtils;
 import org.tyrannyofheaven.bukkit.util.ToHStringUtils;
 import org.tyrannyofheaven.bukkit.util.command.ParseException;
 import org.tyrannyofheaven.bukkit.util.uuid.UuidUtils;
-import org.tyrannyofheaven.bukkit.zPermissions.dao.PermissionDao;
+import org.tyrannyofheaven.bukkit.zPermissions.dao.PermissionService;
 import org.tyrannyofheaven.bukkit.zPermissions.model.EntityMetadata;
 import org.tyrannyofheaven.bukkit.zPermissions.model.Entry;
 import org.tyrannyofheaven.bukkit.zPermissions.model.Membership;
@@ -474,9 +474,9 @@ public class Utils {
         }
     }
 
-    public static void validatePlayer(PermissionDao dao, String defaultGroup, UUID uuid, String playerName, List<String> header) {
-        if (dao.getGroups(uuid).isEmpty() &&
-                dao.getEntity(playerName, uuid, false) == null) {
+    public static void validatePlayer(PermissionService permissionService, String defaultGroup, UUID uuid, String playerName, List<String> header) {
+        if (permissionService.getGroups(uuid).isEmpty() &&
+                permissionService.getEntity(playerName, uuid, false) == null) {
             // Doesn't exist in the system
             header.add(String.format(colorize("{GRAY}(Player \"%s\" not in system. Assuming member of group \"%s\")"), playerName, defaultGroup));
         }
