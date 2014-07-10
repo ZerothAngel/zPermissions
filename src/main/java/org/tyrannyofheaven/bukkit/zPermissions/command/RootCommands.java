@@ -177,7 +177,7 @@ public class RootCommands {
             @Override
             public Boolean doInTransaction() throws Exception {
                 Set<String> playerGroupNames = new HashSet<>();
-                playerGroupNames.addAll(Utils.toGroupNames(Utils.filterExpired(storageStrategy.getDao().getGroups(uuid))));
+                playerGroupNames.addAll(Utils.toGroupNames(Utils.filterExpired(storageStrategy.getPermissionService().getGroups(uuid))));
                 if (playerGroupNames.isEmpty())
                     playerGroupNames.add(resolver.getDefaultGroup());
         
@@ -196,7 +196,7 @@ public class RootCommands {
                     if (rankUp) {
                         String group = track.get(0);
                         try {
-                            storageStrategy.getDao().addMember(group, uuid, playerName, null);
+                            storageStrategy.getPermissionService().addMember(group, uuid, playerName, null);
                         }
                         catch (MissingGroupException e) {
                             sendMessage(sender, colorize("{RED}Group {DARK_GREEN}%s{RED} does not exist."), e.getGroupName());
@@ -224,7 +224,7 @@ public class RootCommands {
         
                     // If now ranked below first rank, remove altogether
                     if (rankIndex < 0) {
-                        storageStrategy.getDao().removeMember(oldGroup, uuid);
+                        storageStrategy.getPermissionService().removeMember(oldGroup, uuid);
                         announce(rankUp ? "promote" : "demote", scope, "%s removed %s from %s", sender.getName(), playerName, oldGroup);
                         if (scope.isShouldEcho() || verbose)
                             sendMessage(sender, colorize("{YELLOW}Removing {AQUA}%s{YELLOW} from {DARK_GREEN}%s"), playerName, oldGroup);
@@ -238,7 +238,7 @@ public class RootCommands {
         
                         // Change groups
                         try {
-                            storageStrategy.getDao().addMember(newGroup, uuid, playerName, null);
+                            storageStrategy.getPermissionService().addMember(newGroup, uuid, playerName, null);
                         }
                         catch (MissingGroupException e) {
                             sendMessage(sender, colorize("{RED}Group {DARK_GREEN}%s{RED} does not exist."), e.getGroupName());
@@ -246,7 +246,7 @@ public class RootCommands {
                             return false;
                         }
                         if (!oldGroup.equalsIgnoreCase(newGroup))
-                            storageStrategy.getDao().removeMember(oldGroup, uuid);
+                            storageStrategy.getPermissionService().removeMember(oldGroup, uuid);
         
                         announce(rankUp ? "promote" : "demote", scope, "%s %s %s from %s to %s", sender.getName(),
                                 (rankUp ? "promoted" : "demoted"),
@@ -332,7 +332,7 @@ public class RootCommands {
             @Override
             public Boolean doInTransaction() throws Exception {
                 Set<String> playerGroupNames = new HashSet<>();
-                playerGroupNames.addAll(Utils.toGroupNames(Utils.filterExpired(storageStrategy.getDao().getGroups(uuid))));
+                playerGroupNames.addAll(Utils.toGroupNames(Utils.filterExpired(storageStrategy.getPermissionService().getGroups(uuid))));
                 if (playerGroupNames.isEmpty())
                     playerGroupNames.add(resolver.getDefaultGroup());
         
@@ -350,7 +350,7 @@ public class RootCommands {
                     if (rankName != null) {
                         // Not in any groups, just add to new group.
                         try {
-                            storageStrategy.getDao().addMember(rankName, uuid, playerName, null);
+                            storageStrategy.getPermissionService().addMember(rankName, uuid, playerName, null);
                         }
                         catch (MissingGroupException e) {
                             sendMessage(sender, colorize("{RED}Group {DARK_GREEN}%s{RED} does not exist."), e.getGroupName());
@@ -375,7 +375,7 @@ public class RootCommands {
                     if (rankName != null) {
                         // Add to new group
                         try {
-                            storageStrategy.getDao().addMember(rankName, uuid, playerName, null);
+                            storageStrategy.getPermissionService().addMember(rankName, uuid, playerName, null);
                         }
                         catch (MissingGroupException e) {
                             sendMessage(sender, colorize("{RED}Group {DARK_GREEN}%s{RED} does not exist."), e.getGroupName());
@@ -385,7 +385,7 @@ public class RootCommands {
 
                         // Remove from old group
                         if (!oldGroup.equalsIgnoreCase(rankName))
-                            storageStrategy.getDao().removeMember(oldGroup, uuid);
+                            storageStrategy.getPermissionService().removeMember(oldGroup, uuid);
 
                         announce("setrank", scope, "%s changed rank of %s from %s to %s", sender.getName(),
                                 playerName,
@@ -400,7 +400,7 @@ public class RootCommands {
                     }
                     else {
                         // Remove from old group
-                        storageStrategy.getDao().removeMember(oldGroup, uuid);
+                        storageStrategy.getPermissionService().removeMember(oldGroup, uuid);
 
                         announce("unsetrank", scope, "%s removed %s from %s", sender.getName(), playerName, oldGroup);
                         if (scope.isShouldEcho() || verbose)

@@ -2,13 +2,13 @@ package org.tyrannyofheaven.bukkit.zPermissions;
 
 import java.util.Collections;
 
-import org.tyrannyofheaven.bukkit.zPermissions.dao.MemoryPermissionDao;
+import org.tyrannyofheaven.bukkit.zPermissions.dao.FilePermissionService;
 
 public class MemoryResolverTest extends AbstractResolverTest {
 
     public MemoryResolverTest() {
-        dao = new MemoryPermissionDao();
-        resolver = new PermissionsResolver(dao);
+        permissionService = new FilePermissionService();
+        resolver = new PermissionsResolver(permissionService);
         resolver.setDefaultGroup(TEST_GROUP1);
         resolver.setGroupPermissionFormats(Collections.singleton("group.%s"));
         resolver.setAssignedGroupPermissionFormats(Collections.singleton("assignedgroup.%s"));

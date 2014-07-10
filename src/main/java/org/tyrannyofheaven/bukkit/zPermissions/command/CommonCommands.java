@@ -118,11 +118,11 @@ public abstract class CommonCommands {
         // Don't allow messing with the dynamic permission
         if (checkDynamicPermission(sender, wp.getPermission())) return;
 
-        // Read entry from DAO, if any
+        // Read entry from PermissionService, if any
         Boolean result = storageStrategy.getRetryingTransactionStrategy().execute(new TransactionCallback<Boolean>() {
             @Override
             public Boolean doInTransaction() throws Exception {
-                return storageStrategy.getDao().getPermission(name, uuid, group, wp.getRegion(), wp.getWorld(), wp.getPermission());
+                return storageStrategy.getPermissionService().getPermission(name, uuid, group, wp.getRegion(), wp.getWorld(), wp.getPermission());
             }
         }, true);
         
@@ -156,7 +156,7 @@ public abstract class CommonCommands {
             storageStrategy.getRetryingTransactionStrategy().execute(new TransactionCallbackWithoutResult() {
                 @Override
                 public void doInTransactionWithoutResult() throws Exception {
-                    storageStrategy.getDao().setPermission(name, uuid, group, wp.getRegion(), wp.getWorld(), wp.getPermission(), value == null ? Boolean.TRUE : value);
+                    storageStrategy.getPermissionService().setPermission(name, uuid, group, wp.getRegion(), wp.getWorld(), wp.getPermission(), value == null ? Boolean.TRUE : value);
                 }
             });
         }
@@ -194,7 +194,7 @@ public abstract class CommonCommands {
         Boolean result = storageStrategy.getRetryingTransactionStrategy().execute(new TransactionCallback<Boolean>() {
             @Override
             public Boolean doInTransaction() throws Exception {
-                return storageStrategy.getDao().unsetPermission(name, uuid, group, wp.getRegion(), wp.getWorld(), wp.getPermission());
+                return storageStrategy.getPermissionService().unsetPermission(name, uuid, group, wp.getRegion(), wp.getWorld(), wp.getPermission());
             }
         });
 
@@ -240,7 +240,7 @@ public abstract class CommonCommands {
         boolean result = storageStrategy.getRetryingTransactionStrategy().execute(new TransactionCallback<Boolean>() {
             @Override
             public Boolean doInTransaction() throws Exception {
-                return storageStrategy.getDao().deleteEntity(name, uuid, group);
+                return storageStrategy.getPermissionService().deleteEntity(name, uuid, group);
             }
         });
         
@@ -277,7 +277,7 @@ public abstract class CommonCommands {
         if (worldName == null) return;
 
         if (!group)
-            Utils.validatePlayer(storageStrategy.getDao(), resolver.getDefaultGroup(), uuid, name, header);
+            Utils.validatePlayer(storageStrategy.getPermissionService(), resolver.getDefaultGroup(), uuid, name, header);
 
         // Ensure regions are lowercased
         final Set<String> regions = new LinkedHashSet<>();
@@ -293,7 +293,7 @@ public abstract class CommonCommands {
                 @Override
                 public Map<String, Boolean> doInTransaction() throws Exception {
                     if (group) {
-                        if (storageStrategy.getDao().getEntity(name, null, true) == null)
+                        if (storageStrategy.getPermissionService().getEntity(name, null, true) == null)
                             throw new MissingGroupException(name); // Don't really want to handle it in the transaction...
                         return resolver.resolveGroup(name.toLowerCase(), lworldName, regions);
                     }
@@ -364,8 +364,8 @@ public abstract class CommonCommands {
         if (worldName == null) return;
 
         if (!group) {
-            Utils.validatePlayer(storageStrategy.getDao(), resolver.getDefaultGroup(), uuid, name, header);
-            Utils.validatePlayer(storageStrategy.getDao(), resolver.getDefaultGroup(), otherUuid, otherName, header);
+            Utils.validatePlayer(storageStrategy.getPermissionService(), resolver.getDefaultGroup(), uuid, name, header);
+            Utils.validatePlayer(storageStrategy.getPermissionService(), resolver.getDefaultGroup(), otherUuid, otherName, header);
         }
 
         // Ensure regions are lowercased
@@ -382,7 +382,7 @@ public abstract class CommonCommands {
                 @Override
                 public Map<String, Boolean> doInTransaction() throws Exception {
                     if (group) {
-                        if (storageStrategy.getDao().getEntity(name, null, true) == null)
+                        if (storageStrategy.getPermissionService().getEntity(name, null, true) == null)
                             throw new MissingGroupException(name); // Don't really want to handle it in the transaction...
                         return resolver.resolveGroup(name.toLowerCase(), lworldName, regions);
                     }
@@ -408,7 +408,7 @@ public abstract class CommonCommands {
                 @Override
                 public Map<String, Boolean> doInTransaction() throws Exception {
                     if (group) {
-                        if (storageStrategy.getDao().getEntity(otherName, null, true) == null)
+                        if (storageStrategy.getPermissionService().getEntity(otherName, null, true) == null)
                             throw new MissingGroupException(otherName); // Don't really want to handle it in the transaction...
                         return resolver.resolveGroup(otherName.toLowerCase(), lworldName, regions);
                     }
@@ -481,10 +481,10 @@ public abstract class CommonCommands {
         storageStrategy.getRetryingTransactionStrategy().execute(new TransactionCallbackWithoutResult() {
             @Override
             public void doInTransactionWithoutResult() throws Exception {
-                PermissionEntity entity = storageStrategy.getDao().getEntity(name, sourceUuid, group);
+                PermissionEntity entity = storageStrategy.getPermissionService().getEntity(name, sourceUuid, group);
                 List<Membership> memberships = Collections.emptyList();
                 if (!group) {
-                    memberships = storageStrategy.getDao().getGroups(sourceUuid);
+                    memberships = storageStrategy.getPermissionService().getGroups(sourceUuid);
                 }
                 if (entity == null && memberships.isEmpty()) {
                     // Nothing to copy
@@ -495,7 +495,7 @@ public abstract class CommonCommands {
                     abortBatchProcessing();
                     return;
                 }
-                if (storageStrategy.getDao().getEntity(destination, destinationUuid, group) != null) {
+                if (storageStrategy.getPermissionService().getEntity(destination, destinationUuid, group) != null) {
                     sendMessage(sender, colorize("{RED}%s %s%s{RED} already exists. Purge it if you really want to overwrite."),
                             (group ? "Group" : "Player"),
                             (group ? ChatColor.DARK_GREEN : ChatColor.AQUA),
@@ -506,33 +506,33 @@ public abstract class CommonCommands {
                 
                 // Create if group
                 if (group) {
-                    storageStrategy.getDao().createGroup(destination);
+                    storageStrategy.getPermissionService().createGroup(destination);
                 }
                 if (entity != null) {
                     // Clone permissions
                     for (Entry entry : entity.getPermissions()) {
-                        storageStrategy.getDao().setPermission(destination, destinationUuid,
+                        storageStrategy.getPermissionService().setPermission(destination, destinationUuid,
                                 group,
                                 (entry.getRegion() != null ? entry.getRegion().getName() : null),
                                 (entry.getWorld() != null ? entry.getWorld().getName() : null), entry.getPermission(), entry.isValue());
                     }
                     // Clone metadata
                     for (EntityMetadata metadata : entity.getMetadata()) {
-                        storageStrategy.getDao().setMetadata(destination, destinationUuid, group, metadata.getName(), metadata.getValue());
+                        storageStrategy.getPermissionService().setMetadata(destination, destinationUuid, group, metadata.getName(), metadata.getValue());
                     }
                 }
                 if (group) {
                     // Group-specific stuff
-                    storageStrategy.getDao().setPriority(destination, entity.getPriority());
+                    storageStrategy.getPermissionService().setPriority(destination, entity.getPriority());
                     List<String> parentNames = new ArrayList<>();
                     for (PermissionEntity parent : entity.getParents())
                         parentNames.add(parent.getDisplayName());
-                    storageStrategy.getDao().setParents(destination, parentNames);
+                    storageStrategy.getPermissionService().setParents(destination, parentNames);
                 }
                 else {
                     // Player-specific stuff
                     for (Membership membership : memberships) {
-                        storageStrategy.getDao().addMember(membership.getGroup().getDisplayName(), destinationUuid, destination, membership.getExpiration());
+                        storageStrategy.getPermissionService().addMember(membership.getGroup().getDisplayName(), destinationUuid, destination, membership.getExpiration());
                     }
                 }
 
@@ -547,19 +547,19 @@ public abstract class CommonCommands {
                                 else
                                     newParents.add(parent.getDisplayName());
                             }
-                            storageStrategy.getDao().setParents(child.getDisplayName(), newParents);
+                            storageStrategy.getPermissionService().setParents(child.getDisplayName(), newParents);
                         }
                         
                         // Add players to destination
                         for (Membership membership : entity.getMemberships()) {
-                            storageStrategy.getDao().addMember(destination, membership.getUuid(), membership.getDisplayName(), membership.getExpiration());
+                            storageStrategy.getPermissionService().addMember(destination, membership.getUuid(), membership.getDisplayName(), membership.getExpiration());
                         }
                     }
                     
                     // NB Nothing more to do for players
                     
                     // Delete original
-                    storageStrategy.getDao().deleteEntity(name, sourceUuid, group);
+                    storageStrategy.getPermissionService().deleteEntity(name, sourceUuid, group);
                 }
 
                 broadcastAdmin(plugin, "%s %s %s %s to %s", sender.getName(),
@@ -633,7 +633,7 @@ public abstract class CommonCommands {
                 public void doInTransactionWithoutResult() throws Exception {
                     Date newExpiration = handleExtendExpiration(groupName, playerUuid, playerName, add, addNoReset, expiration);
 
-                    storageStrategy.getDao().addMember(groupName, playerUuid, playerName, newExpiration);
+                    storageStrategy.getPermissionService().addMember(groupName, playerUuid, playerName, newExpiration);
                 }
             });
         }
@@ -664,7 +664,7 @@ public abstract class CommonCommands {
         Boolean result = storageStrategy.getRetryingTransactionStrategy().execute(new TransactionCallback<Boolean>() {
             @Override
             public Boolean doInTransaction() throws Exception {
-                return storageStrategy.getDao().removeMember(groupName, playerUuid);
+                return storageStrategy.getPermissionService().removeMember(groupName, playerUuid);
             }
         });
     
@@ -686,7 +686,7 @@ public abstract class CommonCommands {
             if (expiration != null) {
                 Date now = new Date();
 
-                List<Membership> memberships = storageStrategy.getDao().getGroups(playerUuid);
+                List<Membership> memberships = storageStrategy.getPermissionService().getGroups(playerUuid);
 
                 // Determine a previous duration, if any
                 long previousDuration = 0L;

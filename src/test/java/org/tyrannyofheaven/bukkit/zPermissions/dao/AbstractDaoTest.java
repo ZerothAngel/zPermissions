@@ -50,14 +50,14 @@ public abstract class AbstractDaoTest {
 
     private static final Double TEST_REAL_VALUE = 3.1415926535;
     
-    private PermissionDao dao;
+    private PermissionService permissionService;
 
-    protected PermissionDao getDao() {
-        return dao;
+    protected PermissionService getPermissionService() {
+        return permissionService;
     }
 
-    protected void setDao(PermissionDao dao) {
-        this.dao = dao;
+    protected void setPermissionService(PermissionService permissionService) {
+        this.permissionService = permissionService;
     }
 
     protected abstract void begin();
@@ -75,13 +75,13 @@ public abstract class AbstractDaoTest {
         begin();
         try {
             // Null get
-            assertNull(getDao().getPermission(TEST_PLAYER, TEST_PLAYER_UUID, false, null, null, TEST_PERMISSION));
+            assertNull(getPermissionService().getPermission(TEST_PLAYER, TEST_PLAYER_UUID, false, null, null, TEST_PERMISSION));
     
             // Missing unset
-            assertFalse(getDao().unsetPermission(TEST_PLAYER, TEST_PLAYER_UUID, false, null, null, TEST_PERMISSION));
+            assertFalse(getPermissionService().unsetPermission(TEST_PLAYER, TEST_PLAYER_UUID, false, null, null, TEST_PERMISSION));
     
             // Set something
-            getDao().setPermission(TEST_PLAYER, TEST_PLAYER_UUID, false, null, null, TEST_PERMISSION, true);
+            getPermissionService().setPermission(TEST_PLAYER, TEST_PLAYER_UUID, false, null, null, TEST_PERMISSION, true);
             commit();
         }
         finally {
@@ -91,10 +91,10 @@ public abstract class AbstractDaoTest {
         begin();
         try {
             // Verify it's there
-            assertEquals(Boolean.TRUE, getDao().getPermission(TEST_PLAYER, TEST_PLAYER_UUID, false, null, null, TEST_PERMISSION));
+            assertEquals(Boolean.TRUE, getPermissionService().getPermission(TEST_PLAYER, TEST_PLAYER_UUID, false, null, null, TEST_PERMISSION));
     
             // Set to something else
-            getDao().setPermission(TEST_PLAYER, TEST_PLAYER_UUID, false, null, null, TEST_PERMISSION, false);
+            getPermissionService().setPermission(TEST_PLAYER, TEST_PLAYER_UUID, false, null, null, TEST_PERMISSION, false);
             commit();
         }
         finally {
@@ -104,10 +104,10 @@ public abstract class AbstractDaoTest {
         begin();
         try {
             // Verify it changed
-            assertEquals(Boolean.FALSE, getDao().getPermission(TEST_PLAYER, TEST_PLAYER_UUID, false, null, null, TEST_PERMISSION));
+            assertEquals(Boolean.FALSE, getPermissionService().getPermission(TEST_PLAYER, TEST_PLAYER_UUID, false, null, null, TEST_PERMISSION));
     
             // Unset
-            assertTrue(getDao().unsetPermission(TEST_PLAYER, TEST_PLAYER_UUID, false, null, null, TEST_PERMISSION));
+            assertTrue(getPermissionService().unsetPermission(TEST_PLAYER, TEST_PLAYER_UUID, false, null, null, TEST_PERMISSION));
             commit();
         }
         finally {
@@ -117,10 +117,10 @@ public abstract class AbstractDaoTest {
         begin();
         try {
             // Verify it's gone
-            assertNull(getDao().getPermission(TEST_PLAYER, TEST_PLAYER_UUID, false, null, null, TEST_PERMISSION));
+            assertNull(getPermissionService().getPermission(TEST_PLAYER, TEST_PLAYER_UUID, false, null, null, TEST_PERMISSION));
             
             // Clean up
-            assertTrue(getDao().deleteEntity(TEST_PLAYER, TEST_PLAYER_UUID, false));
+            assertTrue(getPermissionService().deleteEntity(TEST_PLAYER, TEST_PLAYER_UUID, false));
             commit();
         }
         finally {
@@ -135,10 +135,10 @@ public abstract class AbstractDaoTest {
         begin();
         try {
             // Confirm missing world-specific permission
-            assertNull(getDao().getPermission(TEST_PLAYER, TEST_PLAYER_UUID, false, null, TEST_WORLD, TEST_PERMISSION));
+            assertNull(getPermissionService().getPermission(TEST_PLAYER, TEST_PLAYER_UUID, false, null, TEST_WORLD, TEST_PERMISSION));
             
             // Set it
-            getDao().setPermission(TEST_PLAYER, TEST_PLAYER_UUID, false, null, TEST_WORLD, TEST_PERMISSION, true);
+            getPermissionService().setPermission(TEST_PLAYER, TEST_PLAYER_UUID, false, null, TEST_WORLD, TEST_PERMISSION, true);
             commit();
         }
         finally {
@@ -148,13 +148,13 @@ public abstract class AbstractDaoTest {
         begin();
         try {
             // Verify it's there
-            assertEquals(Boolean.TRUE, getDao().getPermission(TEST_PLAYER, TEST_PLAYER_UUID, false, null, TEST_WORLD, TEST_PERMISSION));
+            assertEquals(Boolean.TRUE, getPermissionService().getPermission(TEST_PLAYER, TEST_PLAYER_UUID, false, null, TEST_WORLD, TEST_PERMISSION));
             
             // Peek into world table, make sure it's there
             assertNotNull(getWorld(TEST_WORLD));
             
             // Unset
-            assertTrue(getDao().unsetPermission(TEST_PLAYER, TEST_PLAYER_UUID, false, null, TEST_WORLD, TEST_PERMISSION));
+            assertTrue(getPermissionService().unsetPermission(TEST_PLAYER, TEST_PLAYER_UUID, false, null, TEST_WORLD, TEST_PERMISSION));
             commit();
         }
         finally {
@@ -164,13 +164,13 @@ public abstract class AbstractDaoTest {
         begin();
         try {
             // Make sure it's gone
-            assertNull(getDao().getPermission(TEST_PLAYER, TEST_PLAYER_UUID, false, null, TEST_WORLD, TEST_PERMISSION));
+            assertNull(getPermissionService().getPermission(TEST_PLAYER, TEST_PLAYER_UUID, false, null, TEST_WORLD, TEST_PERMISSION));
             
             // Should be gone from world table too
             assertNull(getWorld(TEST_WORLD));
 
             // Clean up
-            assertTrue(getDao().deleteEntity(TEST_PLAYER, TEST_PLAYER_UUID, false));
+            assertTrue(getPermissionService().deleteEntity(TEST_PLAYER, TEST_PLAYER_UUID, false));
             commit();
         }
         finally {
@@ -186,10 +186,10 @@ public abstract class AbstractDaoTest {
         begin();
         try {
             // Confirm missing world-specific permission
-            assertNull(getDao().getPermission(TEST_PLAYER, TEST_PLAYER_UUID, false, TEST_REGION, null, TEST_PERMISSION));
+            assertNull(getPermissionService().getPermission(TEST_PLAYER, TEST_PLAYER_UUID, false, TEST_REGION, null, TEST_PERMISSION));
             
             // Set it
-            getDao().setPermission(TEST_PLAYER, TEST_PLAYER_UUID, false, TEST_REGION, null, TEST_PERMISSION, true);
+            getPermissionService().setPermission(TEST_PLAYER, TEST_PLAYER_UUID, false, TEST_REGION, null, TEST_PERMISSION, true);
             commit();
         }
         finally {
@@ -199,13 +199,13 @@ public abstract class AbstractDaoTest {
         begin();
         try {
             // Verify it's there
-            assertEquals(Boolean.TRUE, getDao().getPermission(TEST_PLAYER, TEST_PLAYER_UUID, false, TEST_REGION, null, TEST_PERMISSION));
+            assertEquals(Boolean.TRUE, getPermissionService().getPermission(TEST_PLAYER, TEST_PLAYER_UUID, false, TEST_REGION, null, TEST_PERMISSION));
             
             // Peek into region table, make sure it's there
             assertNotNull(getRegion(TEST_REGION));
             
             // Unset
-            assertTrue(getDao().unsetPermission(TEST_PLAYER, TEST_PLAYER_UUID, false, TEST_REGION, null, TEST_PERMISSION));
+            assertTrue(getPermissionService().unsetPermission(TEST_PLAYER, TEST_PLAYER_UUID, false, TEST_REGION, null, TEST_PERMISSION));
             commit();
         }
         finally {
@@ -215,13 +215,13 @@ public abstract class AbstractDaoTest {
         begin();
         try {
             // Make sure it's gone
-            assertNull(getDao().getPermission(TEST_PLAYER, TEST_PLAYER_UUID, false, TEST_REGION, null, TEST_PERMISSION));
+            assertNull(getPermissionService().getPermission(TEST_PLAYER, TEST_PLAYER_UUID, false, TEST_REGION, null, TEST_PERMISSION));
             
             // Should be gone from region table too
             assertNull(getRegion(TEST_REGION));
 
             // Clean up
-            assertTrue(getDao().deleteEntity(TEST_PLAYER, TEST_PLAYER_UUID, false));
+            assertTrue(getPermissionService().deleteEntity(TEST_PLAYER, TEST_PLAYER_UUID, false));
             commit();
         }
         finally {
@@ -234,11 +234,11 @@ public abstract class AbstractDaoTest {
         begin();
         try {
             // Should not be in any groups
-            assertTrue(getDao().getGroups(TEST_PLAYER_UUID).isEmpty());
+            assertTrue(getPermissionService().getGroups(TEST_PLAYER_UUID).isEmpty());
             
             // Add to a group
-            assertTrue(getDao().createGroup(TEST_GROUP1));
-            getDao().addMember(TEST_GROUP1, TEST_PLAYER_UUID, TEST_PLAYER, null);
+            assertTrue(getPermissionService().createGroup(TEST_GROUP1));
+            getPermissionService().addMember(TEST_GROUP1, TEST_PLAYER_UUID, TEST_PLAYER, null);
             commit();
         }
         finally {
@@ -248,17 +248,17 @@ public abstract class AbstractDaoTest {
         begin();
         try {
             // Confirm membership
-            List<String> groups = Utils.toGroupNames(getDao().getGroups(TEST_PLAYER_UUID));
+            List<String> groups = Utils.toGroupNames(getPermissionService().getGroups(TEST_PLAYER_UUID));
             assertEquals(1, groups.size());
             assertEquals(TEST_GROUP1, groups.get(0));
             
-            List<String> players = Utils.toMembers(getDao().getMembers(TEST_GROUP1), false);
+            List<String> players = Utils.toMembers(getPermissionService().getMembers(TEST_GROUP1), false);
             assertEquals(1, players.size());
             assertTrue(players.contains(TEST_PLAYER));
     
             // Add to second group
-            assertTrue(getDao().createGroup(TEST_GROUP2));
-            getDao().addMember(TEST_GROUP2, TEST_PLAYER_UUID, TEST_PLAYER, null);
+            assertTrue(getPermissionService().createGroup(TEST_GROUP2));
+            getPermissionService().addMember(TEST_GROUP2, TEST_PLAYER_UUID, TEST_PLAYER, null);
             commit();
         }
         finally {
@@ -268,13 +268,13 @@ public abstract class AbstractDaoTest {
         begin();
         try {
             // Confirm membership
-            List<String> groups = Utils.toGroupNames(getDao().getGroups(TEST_PLAYER_UUID));
+            List<String> groups = Utils.toGroupNames(getPermissionService().getGroups(TEST_PLAYER_UUID));
             assertEquals(2, groups.size());
             // NB: When priorities are equal, falls back to lexicographical ordering
             assertEquals(TEST_GROUP1, groups.get(0));
             assertEquals(TEST_GROUP2, groups.get(1));
             
-            List<String> players = Utils.toMembers(getDao().getMembers(TEST_GROUP2), false);
+            List<String> players = Utils.toMembers(getPermissionService().getMembers(TEST_GROUP2), false);
             assertEquals(1, players.size());
             assertTrue(players.contains(TEST_PLAYER));
         }
@@ -285,7 +285,7 @@ public abstract class AbstractDaoTest {
         begin();
         try {
             // Give TEST_GROUP1 a higher priority
-            getDao().setPriority(TEST_GROUP1, 100);
+            getPermissionService().setPriority(TEST_GROUP1, 100);
             commit();
         }
         finally {
@@ -295,13 +295,13 @@ public abstract class AbstractDaoTest {
         begin();
         try {
             // Confirm new ordering
-            List<String> groups = Utils.toGroupNames(getDao().getGroups(TEST_PLAYER_UUID));
+            List<String> groups = Utils.toGroupNames(getPermissionService().getGroups(TEST_PLAYER_UUID));
             assertEquals(2, groups.size());
             assertEquals(TEST_GROUP2, groups.get(0));
             assertEquals(TEST_GROUP1, groups.get(1));
             
             // Remove membership from TEST_GROUP1
-            assertTrue(getDao().removeMember(TEST_GROUP1, TEST_PLAYER_UUID));
+            assertTrue(getPermissionService().removeMember(TEST_GROUP1, TEST_PLAYER_UUID));
             commit();
         }
         finally {
@@ -311,14 +311,14 @@ public abstract class AbstractDaoTest {
         begin();
         try {
             // Confirm membership
-            List<String> groups = Utils.toGroupNames(getDao().getGroups(TEST_PLAYER_UUID));
+            List<String> groups = Utils.toGroupNames(getPermissionService().getGroups(TEST_PLAYER_UUID));
             assertEquals(1, groups.size());
             assertEquals(TEST_GROUP2, groups.get(0));
     
-            assertTrue(getDao().getMembers(TEST_GROUP1).isEmpty());
+            assertTrue(getPermissionService().getMembers(TEST_GROUP1).isEmpty());
     
             // Set group
-            getDao().setGroup(TEST_PLAYER_UUID, TEST_PLAYER, TEST_GROUP1, null);
+            getPermissionService().setGroup(TEST_PLAYER_UUID, TEST_PLAYER, TEST_GROUP1, null);
             commit();
         }
         finally {
@@ -328,12 +328,12 @@ public abstract class AbstractDaoTest {
         begin();
         try {
             // Confirm membership
-            List<String> groups = Utils.toGroupNames(getDao().getGroups(TEST_PLAYER_UUID));
+            List<String> groups = Utils.toGroupNames(getPermissionService().getGroups(TEST_PLAYER_UUID));
             assertEquals(1, groups.size());
             assertEquals(TEST_GROUP1, groups.get(0));
             
             // Purge final group
-            assertTrue(getDao().deleteEntity(TEST_GROUP1, null, true));
+            assertTrue(getPermissionService().deleteEntity(TEST_GROUP1, null, true));
             commit();
         }
         finally {
@@ -343,11 +343,11 @@ public abstract class AbstractDaoTest {
         begin();
         try {
             // Confirm
-            List<String> groups = Utils.toGroupNames(getDao().getGroups(TEST_PLAYER_UUID));
+            List<String> groups = Utils.toGroupNames(getPermissionService().getGroups(TEST_PLAYER_UUID));
             assertTrue(groups.isEmpty());
 
             // Clean up
-            assertTrue(getDao().deleteEntity(TEST_GROUP2, null, true));
+            assertTrue(getPermissionService().deleteEntity(TEST_GROUP2, null, true));
             commit();
         }
         finally {
@@ -360,11 +360,11 @@ public abstract class AbstractDaoTest {
         begin();
         try {
             // Should not be in any groups
-            assertTrue(getDao().getGroups(TEST_PLAYER_UUID).isEmpty());
+            assertTrue(getPermissionService().getGroups(TEST_PLAYER_UUID).isEmpty());
             
             // Add to a group
-            assertTrue(getDao().createGroup(TEST_GROUP1));
-            getDao().addMember(TEST_GROUP1, TEST_PLAYER_UUID, TEST_PLAYER, null);
+            assertTrue(getPermissionService().createGroup(TEST_GROUP1));
+            getPermissionService().addMember(TEST_GROUP1, TEST_PLAYER_UUID, TEST_PLAYER, null);
             commit();
         }
         finally {
@@ -374,16 +374,16 @@ public abstract class AbstractDaoTest {
         begin();
         try {
             // Confirm membership
-            List<String> groups = Utils.toGroupNames(getDao().getGroups(TEST_PLAYER_UUID));
+            List<String> groups = Utils.toGroupNames(getPermissionService().getGroups(TEST_PLAYER_UUID));
             assertEquals(1, groups.size());
             assertEquals(TEST_GROUP1, groups.get(0));
             
-            List<String> players = Utils.toMembers(getDao().getMembers(TEST_GROUP1), false);
+            List<String> players = Utils.toMembers(getPermissionService().getMembers(TEST_GROUP1), false);
             assertEquals(1, players.size());
             assertTrue(players.contains(TEST_PLAYER));
 
             // Delete player
-            assertTrue(getDao().deleteEntity(TEST_PLAYER, TEST_PLAYER_UUID, false));
+            assertTrue(getPermissionService().deleteEntity(TEST_PLAYER, TEST_PLAYER_UUID, false));
             commit();
         }
         finally {
@@ -393,14 +393,14 @@ public abstract class AbstractDaoTest {
         begin();
         try {
             // Confirm membership
-            List<String> groups = Utils.toGroupNames(getDao().getGroups(TEST_PLAYER_UUID));
+            List<String> groups = Utils.toGroupNames(getPermissionService().getGroups(TEST_PLAYER_UUID));
             assertTrue(groups.isEmpty());
             
-            List<String> players = Utils.toMembers(getDao().getMembers(TEST_GROUP1), false);
+            List<String> players = Utils.toMembers(getPermissionService().getMembers(TEST_GROUP1), false);
             assertTrue(players.isEmpty());
 
             // Clean up
-            assertTrue(getDao().deleteEntity(TEST_GROUP1, null, true));
+            assertTrue(getPermissionService().deleteEntity(TEST_GROUP1, null, true));
             commit();
         }
         finally {
@@ -413,13 +413,13 @@ public abstract class AbstractDaoTest {
         begin();
         try {
             // Confirm test groups are not present
-            assertNull(getDao().getEntity(TEST_GROUP1, null, true));
-            assertNull(getDao().getEntity(TEST_GROUP2, null, true));
+            assertNull(getPermissionService().getEntity(TEST_GROUP1, null, true));
+            assertNull(getPermissionService().getEntity(TEST_GROUP2, null, true));
             
             // Set up inheritance
-            assertTrue(getDao().createGroup(TEST_GROUP1));
-            assertTrue(getDao().createGroup(TEST_GROUP2));
-            getDao().setParent(TEST_GROUP1, TEST_GROUP2);
+            assertTrue(getPermissionService().createGroup(TEST_GROUP1));
+            assertTrue(getPermissionService().createGroup(TEST_GROUP2));
+            getPermissionService().setParent(TEST_GROUP1, TEST_GROUP2);
             commit();
         }
         finally {
@@ -429,20 +429,20 @@ public abstract class AbstractDaoTest {
         begin();
         try {
             // Confirm
-            PermissionEntity group = getDao().getEntity(TEST_GROUP1, null, true);
+            PermissionEntity group = getPermissionService().getEntity(TEST_GROUP1, null, true);
             assertNotNull(group);
             assertFalse(group.getParents().isEmpty());
             assertEquals(TEST_GROUP2, group.getParents().get(0).getDisplayName());
             
-            group = getDao().getEntity(TEST_GROUP2, null, true);
+            group = getPermissionService().getEntity(TEST_GROUP2, null, true);
             assertEquals(1, group.getInheritancesAsParent().size());
 
             // Attempt to set cycle
             boolean good = false;
             try {
-                getDao().setParent(TEST_GROUP2, TEST_GROUP1);
+                getPermissionService().setParent(TEST_GROUP2, TEST_GROUP1);
             }
-            catch (DaoException e) {
+            catch (PermissionServiceException e) {
                 good = true;
             }
             assertTrue(good);
@@ -454,7 +454,7 @@ public abstract class AbstractDaoTest {
         begin();
         try {
             // Set parent to null
-            getDao().setParent(TEST_GROUP1, null);
+            getPermissionService().setParent(TEST_GROUP1, null);
             commit();
         }
         finally {
@@ -464,16 +464,16 @@ public abstract class AbstractDaoTest {
         begin();
         try {
             // Confirm
-            PermissionEntity group = getDao().getEntity(TEST_GROUP1, null, true);
+            PermissionEntity group = getPermissionService().getEntity(TEST_GROUP1, null, true);
             assertNotNull(group);
             assertTrue(group.getParents().isEmpty());
 
-            group = getDao().getEntity(TEST_GROUP2, null, true);
+            group = getPermissionService().getEntity(TEST_GROUP2, null, true);
             assertTrue(group.getInheritancesAsParent().isEmpty());
 
             // Clean up
-            assertTrue(getDao().deleteEntity(TEST_GROUP2, null, true));
-            assertTrue(getDao().deleteEntity(TEST_GROUP1, null, true));
+            assertTrue(getPermissionService().deleteEntity(TEST_GROUP2, null, true));
+            assertTrue(getPermissionService().deleteEntity(TEST_GROUP1, null, true));
             commit();
         }
         finally {
@@ -487,13 +487,13 @@ public abstract class AbstractDaoTest {
         begin();
         try {
             // Confirm test groups are not present
-            assertNull(getDao().getEntity(TEST_GROUP1, null, true));
-            assertNull(getDao().getEntity(TEST_GROUP2, null, true));
+            assertNull(getPermissionService().getEntity(TEST_GROUP1, null, true));
+            assertNull(getPermissionService().getEntity(TEST_GROUP2, null, true));
             
             // Set up inheritance
-            assertTrue(getDao().createGroup(TEST_GROUP1));
-            assertTrue(getDao().createGroup(TEST_GROUP2));
-            getDao().setParent(TEST_GROUP1, TEST_GROUP2);
+            assertTrue(getPermissionService().createGroup(TEST_GROUP1));
+            assertTrue(getPermissionService().createGroup(TEST_GROUP2));
+            getPermissionService().setParent(TEST_GROUP1, TEST_GROUP2);
             commit();
         }
         finally {
@@ -503,16 +503,16 @@ public abstract class AbstractDaoTest {
         begin();
         try {
             // Confirm
-            PermissionEntity group = getDao().getEntity(TEST_GROUP1, null, true);
+            PermissionEntity group = getPermissionService().getEntity(TEST_GROUP1, null, true);
             assertNotNull(group);
             assertFalse(group.getParents().isEmpty());
             assertEquals(TEST_GROUP2, group.getParents().get(0).getDisplayName());
             
-            group = getDao().getEntity(TEST_GROUP2, null, true);
+            group = getPermissionService().getEntity(TEST_GROUP2, null, true);
             assertEquals(1, group.getInheritancesAsParent().size());
             
             // Purge child
-            getDao().deleteEntity(TEST_GROUP1, null, true);
+            getPermissionService().deleteEntity(TEST_GROUP1, null, true);
         }
         finally {
             end();
@@ -521,14 +521,14 @@ public abstract class AbstractDaoTest {
         begin();
         try {
             // Confirm
-            PermissionEntity group = getDao().getEntity(TEST_GROUP1, null, true);
+            PermissionEntity group = getPermissionService().getEntity(TEST_GROUP1, null, true);
             assertNull(group);
 
-            group = getDao().getEntity(TEST_GROUP2, null, true);
+            group = getPermissionService().getEntity(TEST_GROUP2, null, true);
             assertTrue(group.getInheritancesAsParent().isEmpty());
 
             // Clean up
-            assertTrue(getDao().deleteEntity(TEST_GROUP2, null, true));
+            assertTrue(getPermissionService().deleteEntity(TEST_GROUP2, null, true));
             commit();
         }
         finally {
@@ -542,13 +542,13 @@ public abstract class AbstractDaoTest {
         begin();
         try {
             // Confirm test groups are not present
-            assertNull(getDao().getEntity(TEST_GROUP1, null, true));
-            assertNull(getDao().getEntity(TEST_GROUP2, null, true));
+            assertNull(getPermissionService().getEntity(TEST_GROUP1, null, true));
+            assertNull(getPermissionService().getEntity(TEST_GROUP2, null, true));
             
             // Set up inheritance
-            assertTrue(getDao().createGroup(TEST_GROUP1));
-            assertTrue(getDao().createGroup(TEST_GROUP2));
-            getDao().setParent(TEST_GROUP1, TEST_GROUP2);
+            assertTrue(getPermissionService().createGroup(TEST_GROUP1));
+            assertTrue(getPermissionService().createGroup(TEST_GROUP2));
+            getPermissionService().setParent(TEST_GROUP1, TEST_GROUP2);
             commit();
         }
         finally {
@@ -558,16 +558,16 @@ public abstract class AbstractDaoTest {
         begin();
         try {
             // Confirm
-            PermissionEntity group = getDao().getEntity(TEST_GROUP1, null, true);
+            PermissionEntity group = getPermissionService().getEntity(TEST_GROUP1, null, true);
             assertNotNull(group);
             assertFalse(group.getParents().isEmpty());
             assertEquals(TEST_GROUP2, group.getParents().get(0).getDisplayName());
             
-            group = getDao().getEntity(TEST_GROUP2, null, true);
+            group = getPermissionService().getEntity(TEST_GROUP2, null, true);
             assertEquals(1, group.getInheritancesAsParent().size());
             
             // Purge parent
-            getDao().deleteEntity(TEST_GROUP2, null, true);
+            getPermissionService().deleteEntity(TEST_GROUP2, null, true);
         }
         finally {
             end();
@@ -576,15 +576,15 @@ public abstract class AbstractDaoTest {
         begin();
         try {
             // Confirm
-            PermissionEntity group = getDao().getEntity(TEST_GROUP1, null, true);
+            PermissionEntity group = getPermissionService().getEntity(TEST_GROUP1, null, true);
             assertNotNull(group);
             assertTrue(group.getParents().isEmpty());
 
-            group = getDao().getEntity(TEST_GROUP2, null, true);
+            group = getPermissionService().getEntity(TEST_GROUP2, null, true);
             assertNull(group);
 
             // Clean up
-            assertTrue(getDao().deleteEntity(TEST_GROUP1, null, true));
+            assertTrue(getPermissionService().deleteEntity(TEST_GROUP1, null, true));
             commit();
         }
         finally {
@@ -597,18 +597,18 @@ public abstract class AbstractDaoTest {
         begin();
         try {
             // Confirm no entities are present
-            assertNull(getDao().getEntity(TEST_PLAYER, TEST_PLAYER_UUID, false));
-            assertNull(getDao().getEntity(TEST_GROUP1, null, true));
-            assertNull(getDao().getEntity(TEST_GROUP2, null, true));
+            assertNull(getPermissionService().getEntity(TEST_PLAYER, TEST_PLAYER_UUID, false));
+            assertNull(getPermissionService().getEntity(TEST_GROUP1, null, true));
+            assertNull(getPermissionService().getEntity(TEST_GROUP2, null, true));
             
             // Confirm lists are empty
-            assertTrue(getDao().getEntities(false).isEmpty());
-            assertTrue(getDao().getEntities(true).isEmpty());
-            assertTrue(getDao().getEntityNames(false).isEmpty());
-            assertTrue(getDao().getEntityNames(true).isEmpty());
+            assertTrue(getPermissionService().getEntities(false).isEmpty());
+            assertTrue(getPermissionService().getEntities(true).isEmpty());
+            assertTrue(getPermissionService().getEntityNames(false).isEmpty());
+            assertTrue(getPermissionService().getEntityNames(true).isEmpty());
             
             // Add a player
-            getDao().setPermission(TEST_PLAYER, TEST_PLAYER_UUID, false, null, null, TEST_PERMISSION, true);
+            getPermissionService().setPermission(TEST_PLAYER, TEST_PLAYER_UUID, false, null, null, TEST_PERMISSION, true);
             commit();
         }
         finally {
@@ -618,18 +618,18 @@ public abstract class AbstractDaoTest {
         // Confirm
         begin();
         try {
-            List<PermissionEntity> entities = getDao().getEntities(false);
+            List<PermissionEntity> entities = getPermissionService().getEntities(false);
             assertEquals(1, entities.size());
             assertEquals(TEST_PLAYER, entities.get(0).getDisplayName());
             assertFalse(entities.get(0).isGroup());
 
-            List<String> names = getDao().getEntityNames(false);
+            List<String> names = getPermissionService().getEntityNames(false);
             assertEquals(1, names.size());
             assertEquals(TEST_PLAYER, names.get(0));
 
             // Confirm groups still empty
             // Add a group
-            getDao().createGroup(TEST_GROUP1);
+            getPermissionService().createGroup(TEST_GROUP1);
             commit();
         }
         finally {
@@ -639,17 +639,17 @@ public abstract class AbstractDaoTest {
         // Confirm group
         begin();
         try {
-            List<PermissionEntity> entities = getDao().getEntities(true);
+            List<PermissionEntity> entities = getPermissionService().getEntities(true);
             assertEquals(1, entities.size());
             assertEquals(TEST_GROUP1, entities.get(0).getDisplayName());
             assertTrue(entities.get(0).isGroup());
 
-            List<String> names = getDao().getEntityNames(true);
+            List<String> names = getPermissionService().getEntityNames(true);
             assertEquals(1, names.size());
             assertEquals(TEST_GROUP1, names.get(0));
 
             // Add another group
-            getDao().createGroup(TEST_GROUP2);
+            getPermissionService().createGroup(TEST_GROUP2);
             commit();
         }
         finally {
@@ -659,20 +659,20 @@ public abstract class AbstractDaoTest {
         // Confirm groups
         begin();
         try {
-            List<PermissionEntity> entities = getDao().getEntities(true);
+            List<PermissionEntity> entities = getPermissionService().getEntities(true);
             assertEquals(2, entities.size());
             assertNotNull(findEntity(entities, TEST_GROUP1, true));
             assertNotNull(findEntity(entities, TEST_GROUP2, true));
 
-            List<String> names = getDao().getEntityNames(true);
+            List<String> names = getPermissionService().getEntityNames(true);
             assertEquals(2, names.size());
             assertTrue(names.contains(TEST_GROUP1));
             assertTrue(names.contains(TEST_GROUP2));
 
             // Clean up
-            assertTrue(getDao().deleteEntity(TEST_PLAYER, TEST_PLAYER_UUID, false));
-            assertTrue(getDao().deleteEntity(TEST_GROUP2, null, true));
-            assertTrue(getDao().deleteEntity(TEST_GROUP1, null, true));
+            assertTrue(getPermissionService().deleteEntity(TEST_PLAYER, TEST_PLAYER_UUID, false));
+            assertTrue(getPermissionService().deleteEntity(TEST_GROUP2, null, true));
+            assertTrue(getPermissionService().deleteEntity(TEST_GROUP1, null, true));
             commit();
         }
         finally {
@@ -685,13 +685,13 @@ public abstract class AbstractDaoTest {
         begin();
         try {
             // Null get
-            assertNull(getDao().getMetadata(TEST_PLAYER, TEST_PLAYER_UUID, false, TEST_METADATA));
+            assertNull(getPermissionService().getMetadata(TEST_PLAYER, TEST_PLAYER_UUID, false, TEST_METADATA));
     
             // Missing unset
-            assertFalse(getDao().unsetMetadata(TEST_PLAYER, TEST_PLAYER_UUID, false, TEST_METADATA));
+            assertFalse(getPermissionService().unsetMetadata(TEST_PLAYER, TEST_PLAYER_UUID, false, TEST_METADATA));
     
             // Set something
-            getDao().setMetadata(TEST_PLAYER, TEST_PLAYER_UUID, false, TEST_METADATA, TEST_STRING_VALUE);
+            getPermissionService().setMetadata(TEST_PLAYER, TEST_PLAYER_UUID, false, TEST_METADATA, TEST_STRING_VALUE);
             commit();
         }
         finally {
@@ -701,10 +701,10 @@ public abstract class AbstractDaoTest {
         begin();
         try {
             // Verify it's there
-            assertEquals(TEST_STRING_VALUE, getDao().getMetadata(TEST_PLAYER, TEST_PLAYER_UUID, false, TEST_METADATA));
+            assertEquals(TEST_STRING_VALUE, getPermissionService().getMetadata(TEST_PLAYER, TEST_PLAYER_UUID, false, TEST_METADATA));
     
             // Set to something else
-            getDao().setMetadata(TEST_PLAYER, TEST_PLAYER_UUID, false, TEST_METADATA, TEST_INT_VALUE);
+            getPermissionService().setMetadata(TEST_PLAYER, TEST_PLAYER_UUID, false, TEST_METADATA, TEST_INT_VALUE);
             commit();
         }
         finally {
@@ -714,10 +714,10 @@ public abstract class AbstractDaoTest {
         begin();
         try {
             // Verify it changed
-            assertEquals(TEST_INT_VALUE, getDao().getMetadata(TEST_PLAYER, TEST_PLAYER_UUID, false, TEST_METADATA));
+            assertEquals(TEST_INT_VALUE, getPermissionService().getMetadata(TEST_PLAYER, TEST_PLAYER_UUID, false, TEST_METADATA));
     
             // Set to something else
-            getDao().setMetadata(TEST_PLAYER, TEST_PLAYER_UUID, false, TEST_METADATA, TEST_REAL_VALUE);
+            getPermissionService().setMetadata(TEST_PLAYER, TEST_PLAYER_UUID, false, TEST_METADATA, TEST_REAL_VALUE);
             commit();
         }
         finally {
@@ -727,10 +727,10 @@ public abstract class AbstractDaoTest {
         begin();
         try {
             // Verify it changed
-            assertEquals(TEST_REAL_VALUE, getDao().getMetadata(TEST_PLAYER, TEST_PLAYER_UUID, false, TEST_METADATA));
+            assertEquals(TEST_REAL_VALUE, getPermissionService().getMetadata(TEST_PLAYER, TEST_PLAYER_UUID, false, TEST_METADATA));
     
             // Set to something else
-            getDao().setMetadata(TEST_PLAYER, TEST_PLAYER_UUID, false, TEST_METADATA, Boolean.FALSE);
+            getPermissionService().setMetadata(TEST_PLAYER, TEST_PLAYER_UUID, false, TEST_METADATA, Boolean.FALSE);
             commit();
         }
         finally {
@@ -740,10 +740,10 @@ public abstract class AbstractDaoTest {
         begin();
         try {
             // Verify it changed
-            assertEquals(Boolean.FALSE, getDao().getMetadata(TEST_PLAYER, TEST_PLAYER_UUID, false, TEST_METADATA));
+            assertEquals(Boolean.FALSE, getPermissionService().getMetadata(TEST_PLAYER, TEST_PLAYER_UUID, false, TEST_METADATA));
     
             // Unset
-            assertTrue(getDao().unsetMetadata(TEST_PLAYER, TEST_PLAYER_UUID, false, TEST_METADATA));
+            assertTrue(getPermissionService().unsetMetadata(TEST_PLAYER, TEST_PLAYER_UUID, false, TEST_METADATA));
             commit();
         }
         finally {
@@ -753,10 +753,10 @@ public abstract class AbstractDaoTest {
         begin();
         try {
             // Verify it's gone
-            assertNull(getDao().getMetadata(TEST_PLAYER, TEST_PLAYER_UUID, false, TEST_METADATA));
+            assertNull(getPermissionService().getMetadata(TEST_PLAYER, TEST_PLAYER_UUID, false, TEST_METADATA));
             
             // Clean up
-            assertTrue(getDao().deleteEntity(TEST_PLAYER, TEST_PLAYER_UUID, false));
+            assertTrue(getPermissionService().deleteEntity(TEST_PLAYER, TEST_PLAYER_UUID, false));
             commit();
         }
         finally {

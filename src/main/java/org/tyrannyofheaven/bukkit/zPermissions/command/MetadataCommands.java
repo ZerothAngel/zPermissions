@@ -73,7 +73,7 @@ public class MetadataCommands {
         Object result = storageStrategy.getRetryingTransactionStrategy().execute(new TransactionCallback<Object>() {
             @Override
             public Object doInTransaction() throws Exception {
-                return storageStrategy.getDao().getMetadata(name, uuid, group, metadataName);
+                return storageStrategy.getPermissionService().getMetadata(name, uuid, group, metadataName);
             }
         }, true);
         
@@ -111,7 +111,7 @@ public class MetadataCommands {
             storageStrategy.getRetryingTransactionStrategy().execute(new TransactionCallbackWithoutResult() {
                 @Override
                 public void doInTransactionWithoutResult() throws Exception {
-                    storageStrategy.getDao().setMetadata(name, uuid, group, metadataName, value);
+                    storageStrategy.getPermissionService().setMetadata(name, uuid, group, metadataName, value);
                 }
             });
             core.invalidateMetadataCache(name, uuid, group);
@@ -157,7 +157,7 @@ public class MetadataCommands {
         Boolean result = storageStrategy.getRetryingTransactionStrategy().execute(new TransactionCallback<Boolean>() {
             @Override
             public Boolean doInTransaction() throws Exception {
-                return storageStrategy.getDao().unsetMetadata(name, uuid, group, metadataName);
+                return storageStrategy.getPermissionService().unsetMetadata(name, uuid, group, metadataName);
             }
         });
         
@@ -184,7 +184,7 @@ public class MetadataCommands {
     }
 
     private void list(CommandSender sender, final String name, final UUID uuid) {
-        PermissionEntity entity = storageStrategy.getDao().getEntity(name, uuid, group);
+        PermissionEntity entity = storageStrategy.getPermissionService().getEntity(name, uuid, group);
         if (entity == null || entity.getMetadata().isEmpty()) {
             sendMessage(sender, colorize("{RED}%s has no metadata."), group ? "Group" : "Player");
             return;

@@ -26,7 +26,7 @@ import org.tyrannyofheaven.bukkit.zPermissions.ZPermissionsConfig;
 import org.tyrannyofheaven.bukkit.zPermissions.ZPermissionsCore;
 import org.tyrannyofheaven.bukkit.zPermissions.ZPermissionsService;
 import org.tyrannyofheaven.bukkit.zPermissions.dao.MissingGroupException;
-import org.tyrannyofheaven.bukkit.zPermissions.dao.PermissionDao;
+import org.tyrannyofheaven.bukkit.zPermissions.dao.PermissionService;
 import org.tyrannyofheaven.bukkit.zPermissions.storage.StorageStrategy;
 
 import com.google.common.base.Joiner;
@@ -91,7 +91,7 @@ public class VaultPermissionBridge extends PermissionCompatibility implements Li
             getTransactionStrategy().execute(new TransactionCallbackWithoutResult() {
                 @Override
                 public void doInTransactionWithoutResult() throws Exception {
-                    getDao().setPermission(group, null, true, null, permWorld, permission, true);
+                    getPermissionService().setPermission(group, null, true, null, permWorld, permission, true);
                 }
             });
             core.refreshAffectedPlayers(group);
@@ -133,7 +133,7 @@ public class VaultPermissionBridge extends PermissionCompatibility implements Li
         boolean result = getTransactionStrategy().execute(new TransactionCallback<Boolean>() {
             @Override
             public Boolean doInTransaction() throws Exception {
-                return getDao().unsetPermission(group, null, true, null, permWorld, permission);
+                return getPermissionService().unsetPermission(group, null, true, null, permWorld, permission);
             }
         });
         if (result) {
@@ -175,7 +175,7 @@ public class VaultPermissionBridge extends PermissionCompatibility implements Li
         getTransactionStrategy().execute(new TransactionCallbackWithoutResult() {
             @Override
             public void doInTransactionWithoutResult() throws Exception {
-                getDao().setPermission(playerName, uuid, false, null, permWorld, permission, true);
+                getPermissionService().setPermission(playerName, uuid, false, null, permWorld, permission, true);
             }
         });
         core.refreshPlayer(uuid, RefreshCause.COMMAND);
@@ -199,7 +199,7 @@ public class VaultPermissionBridge extends PermissionCompatibility implements Li
             getTransactionStrategy().execute(new TransactionCallbackWithoutResult() {
                 @Override
                 public void doInTransactionWithoutResult() throws Exception {
-                    getDao().addMember(group, uuid, playerName, null);
+                    getPermissionService().addMember(group, uuid, playerName, null);
                 }
             });
         }
@@ -266,7 +266,7 @@ public class VaultPermissionBridge extends PermissionCompatibility implements Li
         boolean result = getTransactionStrategy().execute(new TransactionCallback<Boolean>() {
             @Override
             public Boolean doInTransaction() throws Exception {
-                return getDao().unsetPermission(playerName, uuid, false, null, permWorld, permission);
+                return getPermissionService().unsetPermission(playerName, uuid, false, null, permWorld, permission);
             }
         });
         if (result) {
@@ -292,7 +292,7 @@ public class VaultPermissionBridge extends PermissionCompatibility implements Li
             getTransactionStrategy().execute(new TransactionCallback<Boolean>() {
                 @Override
                 public Boolean doInTransaction() throws Exception {
-                    return getDao().removeMember(group, uuid);
+                    return getPermissionService().removeMember(group, uuid);
                 }
             });
         }
@@ -310,8 +310,8 @@ public class VaultPermissionBridge extends PermissionCompatibility implements Li
         Bukkit.getServicesManager().register(Permission.class, this, plugin, ServicePriority.Highest);
     }
 
-    private PermissionDao getDao() {
-        return storageStrategy.getDao();
+    private PermissionService getPermissionService() {
+        return storageStrategy.getPermissionService();
     }
 
     private TransactionStrategy getTransactionStrategy() {

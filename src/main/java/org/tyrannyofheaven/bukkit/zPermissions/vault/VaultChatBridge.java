@@ -239,9 +239,9 @@ public class VaultChatBridge extends ChatCompatibility {
                 @Override
                 public void doInTransactionWithoutResult() throws Exception {
                     if (value != null)
-                        storageStrategy.getDao().setMetadata(name, uuid, group, metadataName, value);
+                        storageStrategy.getPermissionService().setMetadata(name, uuid, group, metadataName, value);
                     else
-                        storageStrategy.getDao().unsetMetadata(name, uuid, group, metadataName);
+                        storageStrategy.getPermissionService().unsetMetadata(name, uuid, group, metadataName);
                 }
             });
             core.invalidateMetadataCache(name, uuid, group);

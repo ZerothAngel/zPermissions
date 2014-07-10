@@ -22,21 +22,21 @@ import java.util.List;
 import org.bukkit.command.CommandSender;
 import org.bukkit.util.StringUtil;
 import org.tyrannyofheaven.bukkit.util.command.TypeCompleter;
-import org.tyrannyofheaven.bukkit.zPermissions.dao.PermissionDao;
+import org.tyrannyofheaven.bukkit.zPermissions.dao.PermissionService;
 
 public class GroupTypeCompleter implements TypeCompleter {
 
-    private final PermissionDao dao;
+    private final PermissionService permissionService;
 
-    public GroupTypeCompleter(PermissionDao dao) {
-        this.dao = dao;
+    public GroupTypeCompleter(PermissionService permissionService) {
+        this.permissionService = permissionService;
     }
 
     @Override
     public List<String> complete(Class<?> clazz, String arg, CommandSender sender, String partial) {
         if (clazz == String.class) {
             List<String> result = new ArrayList<>();
-            StringUtil.copyPartialMatches(partial, dao.getEntityNames(true), result);
+            StringUtil.copyPartialMatches(partial, permissionService.getEntityNames(true), result);
             Collections.sort(result);
             return result;
         }

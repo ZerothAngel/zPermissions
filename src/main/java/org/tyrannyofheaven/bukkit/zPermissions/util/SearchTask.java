@@ -104,7 +104,7 @@ public class SearchTask implements Runnable {
         while (size < getBatchSize() && !players.isEmpty()) {
             UUID uuid = players.remove(0);
             
-            PermissionEntity entity = storageStrategy.getDao().getEntity("ignored", uuid, false);
+            PermissionEntity entity = storageStrategy.getPermissionService().getEntity("ignored", uuid, false);
             if (entity != null && !entity.getPermissions().isEmpty()) {
                 if (checkPermissions(entity) || (effective && checkEffectivePermissions(entity))) {
                     log(plugin, "Search result (#%d): player %s", getSearchId(), formatPlayerName(entity, showUuid));
@@ -117,7 +117,7 @@ public class SearchTask implements Runnable {
         while (size < getBatchSize() && !groups.isEmpty()) {
             String groupName = groups.remove(0);
             
-            PermissionEntity entity = storageStrategy.getDao().getEntity(groupName, null, true);
+            PermissionEntity entity = storageStrategy.getPermissionService().getEntity(groupName, null, true);
             if (entity != null && !entity.getPermissions().isEmpty()) {
                 if (checkPermissions(entity) || (effective && checkEffectivePermissions(entity))) {
                     log(plugin, "Search result (#%d): group %s", getSearchId(), entity.getDisplayName());

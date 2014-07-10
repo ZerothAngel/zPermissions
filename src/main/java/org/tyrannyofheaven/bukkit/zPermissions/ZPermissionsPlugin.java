@@ -76,7 +76,7 @@ import org.tyrannyofheaven.bukkit.zPermissions.command.DirTypeCompleter;
 import org.tyrannyofheaven.bukkit.zPermissions.command.GroupTypeCompleter;
 import org.tyrannyofheaven.bukkit.zPermissions.command.RootCommands;
 import org.tyrannyofheaven.bukkit.zPermissions.command.TrackTypeCompleter;
-import org.tyrannyofheaven.bukkit.zPermissions.dao.PermissionDao;
+import org.tyrannyofheaven.bukkit.zPermissions.dao.PermissionService;
 import org.tyrannyofheaven.bukkit.zPermissions.listener.ZPermissionsFallbackListener;
 import org.tyrannyofheaven.bukkit.zPermissions.listener.ZPermissionsPlayerListener;
 import org.tyrannyofheaven.bukkit.zPermissions.listener.ZPermissionsRegionPlayerListener;
@@ -96,7 +96,7 @@ import org.tyrannyofheaven.bukkit.zPermissions.service.DefaultPlayerPrefixHandle
 import org.tyrannyofheaven.bukkit.zPermissions.service.PlayerPrefixHandler;
 import org.tyrannyofheaven.bukkit.zPermissions.service.ZPermissionsServiceImpl;
 import org.tyrannyofheaven.bukkit.zPermissions.storage.AvajeStorageStrategy;
-import org.tyrannyofheaven.bukkit.zPermissions.storage.MemoryStorageStrategy;
+import org.tyrannyofheaven.bukkit.zPermissions.storage.FileStorageStrategy;
 import org.tyrannyofheaven.bukkit.zPermissions.storage.StorageStrategy;
 import org.tyrannyofheaven.bukkit.zPermissions.util.ExpirationRefreshHandler;
 import org.tyrannyofheaven.bukkit.zPermissions.util.ModelDumper;
@@ -375,12 +375,12 @@ public class ZPermissionsPlugin extends JavaPlugin implements ZPermissionsCore, 
     }
 
     /**
-     * Retrieve this plugin's DAO.
+     * Retrieve this plugin's PermissionService.
      * 
-     * @return the DAO
+     * @return the PermissionService
      */
-    PermissionDao getDao() {
-        return storageStrategy.getDao();
+    PermissionService getPermissionService() {
+        return storageStrategy.getPermissionService();
     }
 
     // Retrieve the PermissionResolver instance
@@ -521,7 +521,7 @@ public class ZPermissionsPlugin extends JavaPlugin implements ZPermissionsCore, 
 
     private boolean initializeStorageStrategy() {
         try {
-            // Set up TransactionStrategy and DAO
+            // Set up TransactionStrategy and PermissionService
             storageStrategy = null;
             if (databaseSupport) {
                 ebeanServer = ToHDatabaseUtils.createEbeanServer(this, getClassLoader(), namingConvention, config);
@@ -556,7 +556,7 @@ public class ZPermissionsPlugin extends JavaPlugin implements ZPermissionsCore, 
                     new YamlBulkUuidConverter(this, uuidResolver, dataFile).migrate();
                 }
 
-                storageStrategy = new MemoryStorageStrategy(this, dataFile);
+                storageStrategy = new FileStorageStrategy(this, dataFile);
             }
             
             // Initialize storage strategy
@@ -581,7 +581,7 @@ public class ZPermissionsPlugin extends JavaPlugin implements ZPermissionsCore, 
 
             // Install our commands
             (new ToHCommandExecutor<ZPermissionsPlugin>(this, new RootCommands(getZPermissionsCore(), storageStrategy, getResolver(), getModelDumper(), getZPermissionsConfig(), this, commandUuidResolver)))
-                .registerTypeCompleter("group", new GroupTypeCompleter(getDao()))
+                .registerTypeCompleter("group", new GroupTypeCompleter(getPermissionService()))
                 .registerTypeCompleter("track", new TrackTypeCompleter(getZPermissionsConfig()))
                 .registerTypeCompleter("dump-dir", new DirTypeCompleter(getZPermissionsConfig()))
                 .setQuoteAware(true)
@@ -606,7 +606,7 @@ public class ZPermissionsPlugin extends JavaPlugin implements ZPermissionsCore, 
 
             // Set up service API
             PlayerPrefixHandler prefixHandler = new DefaultPlayerPrefixHandler(getZPermissionsConfig());
-            ZPermissionsService service = new ZPermissionsServiceImpl(this, getResolver(), getDao(), metadataManager, getRetryingTransactionStrategy(), getZPermissionsConfig(), prefixHandler);
+            ZPermissionsService service = new ZPermissionsServiceImpl(this, getResolver(), getPermissionService(), metadataManager, getRetryingTransactionStrategy(), getZPermissionsConfig(), prefixHandler);
             getServer().getServicesManager().register(ZPermissionsService.class, service, this, ServicePriority.Normal);
 
             if (nativeVaultBridges && Bukkit.getPluginManager().getPlugin("Vault") != null) {
@@ -1437,7 +1437,7 @@ public class ZPermissionsPlugin extends JavaPlugin implements ZPermissionsCore, 
                 getRetryingTransactionStrategy().execute(new TransactionCallbackWithoutResult() {
                     @Override
                     public void doInTransactionWithoutResult() throws Exception {
-                        getDao().updateDisplayName(uuid, displayName);
+                        getPermissionService().updateDisplayName(uuid, displayName);
                     }
                 });
             }

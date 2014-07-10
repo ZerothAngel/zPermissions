@@ -20,7 +20,7 @@ package org.tyrannyofheaven.bukkit.zPermissions.dao;
  * 
  * @author asaddi
  */
-public class MissingGroupException extends DaoException {
+public class MissingGroupException extends PermissionServiceException {
 
     private static final long serialVersionUID = 1066889464517437579L;
 
