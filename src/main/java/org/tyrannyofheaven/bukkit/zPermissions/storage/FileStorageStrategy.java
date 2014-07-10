@@ -31,7 +31,8 @@ import org.bukkit.plugin.Plugin;
 import org.tyrannyofheaven.bukkit.util.transaction.TransactionCallback;
 import org.tyrannyofheaven.bukkit.util.transaction.TransactionException;
 import org.tyrannyofheaven.bukkit.util.transaction.TransactionStrategy;
-import org.tyrannyofheaven.bukkit.zPermissions.dao.FilePermissionService;
+import org.tyrannyofheaven.bukkit.zPermissions.dao.FilePermissionDao;
+import org.tyrannyofheaven.bukkit.zPermissions.dao.InMemoryPermissionService;
 import org.tyrannyofheaven.bukkit.zPermissions.dao.PermissionService;
 
 /**
@@ -43,7 +44,9 @@ public class FileStorageStrategy implements StorageStrategy, TransactionStrategy
 
     private static final int SAVE_DELAY = 10; // seconds
 
-    private final FilePermissionService permissionService = new FilePermissionService();
+    private final InMemoryPermissionService permissionService = new InMemoryPermissionService();
+
+    private final FilePermissionDao permissionDao = new FilePermissionDao(permissionService);
 
     private final Plugin plugin;
 
@@ -56,6 +59,7 @@ public class FileStorageStrategy implements StorageStrategy, TransactionStrategy
     private ScheduledFuture<?> saveTask; // protected by this
 
     public FileStorageStrategy(Plugin plugin, File saveFile) {
+        permissionService.setPermissionDao(permissionDao);
         this.plugin = plugin;
         this.saveFile = saveFile;
     }
@@ -64,7 +68,7 @@ public class FileStorageStrategy implements StorageStrategy, TransactionStrategy
     public void init() {
         if (saveFile.exists()) {
             try {
-                permissionService.load(saveFile);
+                permissionDao.load(saveFile);
                 initialized = true;
             }
             catch (IOException e) {
@@ -117,7 +121,7 @@ public class FileStorageStrategy implements StorageStrategy, TransactionStrategy
                 cancelSaveTask();
 
                 try {
-                    permissionService.load(saveFile);
+                    permissionDao.load(saveFile);
                 }
                 catch (IOException e) {
                     log(plugin, Level.SEVERE, "Error loading permissions database:", e);
@@ -156,9 +160,9 @@ public class FileStorageStrategy implements StorageStrategy, TransactionStrategy
         try {
             T result = callback.doInTransaction();
             // Schedule a save if dirty and no pending save
-            if (permissionService.isDirty()) {
+            if (permissionDao.isDirty()) {
                 synchronized (this) {
-                    if (permissionService.isDirty() && saveTask == null) { // NB re-test dirty
+                    if (permissionDao.isDirty() && saveTask == null) { // NB re-test dirty
                         saveTask = executorService.schedule(this, SAVE_DELAY, TimeUnit.SECONDS);
                     }
                 }
@@ -187,7 +191,7 @@ public class FileStorageStrategy implements StorageStrategy, TransactionStrategy
     // All calls are therefore serialized
     private void save() {
         try {
-            permissionService.save(saveFile);
+            permissionDao.save(saveFile);
         }
         catch (IOException e) {
             log(plugin, Level.SEVERE, "Error saving permissions database:", e);

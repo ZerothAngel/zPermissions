@@ -50,14 +50,10 @@ public abstract class AbstractDaoTest {
 
     private static final Double TEST_REAL_VALUE = 3.1415926535;
     
-    private PermissionService permissionService;
+    private final InMemoryPermissionService permissionService = new InMemoryPermissionService();
 
-    protected PermissionService getPermissionService() {
+    protected InMemoryPermissionService getPermissionService() {
         return permissionService;
-    }
-
-    protected void setPermissionService(PermissionService permissionService) {
-        this.permissionService = permissionService;
     }
 
     protected abstract void begin();

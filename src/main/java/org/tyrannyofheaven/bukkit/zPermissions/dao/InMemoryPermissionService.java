@@ -46,7 +46,7 @@ import org.tyrannyofheaven.bukkit.zPermissions.model.PermissionWorld;
  * 
  * @author asaddi
  */
-public abstract class NonBlockingPermissionService implements PermissionService {
+public class InMemoryPermissionService implements PermissionService {
 
     private static final Comparator<Membership> MEMBERSHIP_GROUP_PRIORITY_COMPARATOR = new Comparator<Membership>() {
         @Override
@@ -73,34 +73,8 @@ public abstract class NonBlockingPermissionService implements PermissionService 
         return permissionDao;
     }
 
-    protected final void setPermissionDao(PermissionDao permissionDao) {
+    public final void setPermissionDao(PermissionDao permissionDao) {
         this.permissionDao = permissionDao;
-    }
-
-    protected synchronized final MemoryState setMemoryState(MemoryState memoryState) {
-        MemoryState old = this.memoryState;
-        this.memoryState = memoryState;
-        return old;
-    }
-
-    // Must only be called when synchronized on this
-    protected final Map<String, PermissionRegion> getRegions() {
-        return memoryState.getRegions();
-    }
-
-    // Must only be called when synchronized on this
-    protected final Map<String, PermissionWorld> getWorlds() {
-        return memoryState.getWorlds();
-    }
-
-    // Must only be called when synchronized on this
-    protected final Map<String, PermissionEntity> getPlayers() {
-        return memoryState.getPlayers();
-    }
-
-    // Must only be called when synchronized on this
-    protected final Map<String, PermissionEntity> getGroups() {
-        return memoryState.getGroups();
     }
 
     private Map<String, Set<Membership>> getReverseMembershipMap() {
@@ -165,7 +139,7 @@ public abstract class NonBlockingPermissionService implements PermissionService 
         return getWorlds().get(world.toLowerCase());
     }
 
-    protected final PermissionEntity getEntity(String name0, UUID uuid, boolean group, boolean create) {
+    private PermissionEntity getEntity(String name0, UUID uuid, boolean group, boolean create) {
         String lname = checkNameUuid(name0, uuid, group).toLowerCase();
         PermissionEntity entity;
         if (group)
@@ -848,7 +822,40 @@ public abstract class NonBlockingPermissionService implements PermissionService 
         }
     }
 
-    protected static final PermissionEntity getEntity(MemoryState memoryState, String name0, UUID uuid, boolean group) {
+    private static String checkNameUuid(String name, UUID uuid, boolean group) {
+        if (group) {
+            return name;
+        }
+        else if (uuid == null) {
+            throw new IllegalArgumentException("uuid cannot be null");
+        }
+        else {
+            return canonicalizeUuid(uuid);
+        }
+    }
+
+    // Utilities for DAOs (mainly for saving)
+    // If you call more than one, then care must be taken to synchronize the entire block
+
+    public synchronized final Map<String, PermissionRegion> getRegions() {
+        return memoryState.getRegions();
+    }
+
+    public synchronized final Map<String, PermissionWorld> getWorlds() {
+        return memoryState.getWorlds();
+    }
+
+    public synchronized final Map<String, PermissionEntity> getPlayers() {
+        return memoryState.getPlayers();
+    }
+
+    public synchronized final Map<String, PermissionEntity> getGroups() {
+        return memoryState.getGroups();
+    }
+
+    // Utilities for DAOs (mainly concerned with loading)
+
+    public static final PermissionEntity getEntity(MemoryState memoryState, String name0, UUID uuid, boolean group) {
         String lname = checkNameUuid(name0, uuid, group).toLowerCase();
         PermissionEntity entity;
         if (group)
@@ -868,7 +875,7 @@ public abstract class NonBlockingPermissionService implements PermissionService 
         return entity;
     }
 
-    protected static final PermissionRegion getRegion(MemoryState memoryState, String name) {
+    public static final PermissionRegion getRegion(MemoryState memoryState, String name) {
         name = name.toLowerCase();
         PermissionRegion region = memoryState.getRegions().get(name);
         if (region == null) {
@@ -879,7 +886,7 @@ public abstract class NonBlockingPermissionService implements PermissionService 
         return region;
     }
 
-    protected static final PermissionWorld getWorld(MemoryState memoryState, String name) {
+    public static final PermissionWorld getWorld(MemoryState memoryState, String name) {
         name = name.toLowerCase();
         PermissionWorld world = memoryState.getWorlds().get(name);
         if (world == null) {
@@ -890,7 +897,7 @@ public abstract class NonBlockingPermissionService implements PermissionService 
         return world;
     }
 
-    protected static final void rememberMembership(MemoryState memoryState, Membership membership) {
+    public static final void rememberMembership(MemoryState memoryState, Membership membership) {
         Set<Membership> memberships = memoryState.getReverseMembershipMap().get(membership.getMember());
         if (memberships == null) {
             memberships = new HashSet<>();
@@ -899,16 +906,10 @@ public abstract class NonBlockingPermissionService implements PermissionService 
         memberships.add(membership);
     }
 
-    private static String checkNameUuid(String name, UUID uuid, boolean group) {
-        if (group) {
-            return name;
-        }
-        else if (uuid == null) {
-            throw new IllegalArgumentException("uuid cannot be null");
-        }
-        else {
-            return canonicalizeUuid(uuid);
-        }
+    public synchronized final MemoryState setMemoryState(MemoryState memoryState) {
+        MemoryState old = this.memoryState;
+        this.memoryState = memoryState;
+        return old;
     }
 
     protected static class MemoryState {
