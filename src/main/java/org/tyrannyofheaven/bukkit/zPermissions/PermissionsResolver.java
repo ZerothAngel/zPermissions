@@ -27,12 +27,15 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.logging.Logger;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.tyrannyofheaven.bukkit.util.ToHLoggingUtils;
 import org.tyrannyofheaven.bukkit.util.uuid.UuidUtils;
 import org.tyrannyofheaven.bukkit.zPermissions.dao.PermissionService;
 import org.tyrannyofheaven.bukkit.zPermissions.model.EntityMetadata;
 import org.tyrannyofheaven.bukkit.zPermissions.model.Entry;
+import org.tyrannyofheaven.bukkit.zPermissions.util.GlobPattern;
 import org.tyrannyofheaven.bukkit.zPermissions.util.Utils;
 
 /**
@@ -41,6 +44,8 @@ import org.tyrannyofheaven.bukkit.zPermissions.util.Utils;
  * @author asaddi
  */
 public class PermissionsResolver {
+
+    private static final Object NULL_ALIAS = new Object();
 
     private final ZPermissionsPlugin plugin;
 
@@ -58,7 +63,9 @@ public class PermissionsResolver {
 
     private boolean includeDefaultInAssigned = true;
 
-    private final Map<String, String> worldAliases = new HashMap<>();
+    private final Map<String, List<Pattern>> worldAliases = new LinkedHashMap<>(); // target -> [world1, world2, ...]
+
+    private final Map<String, Object> worldAliasCache = new HashMap<>(); // world -> target
 
     // For plugin use
     PermissionsResolver(ZPermissionsPlugin plugin) {
@@ -162,11 +169,18 @@ public class PermissionsResolver {
     }
 
     public void addWorldAlias(String world, String target) {
-        worldAliases.put(world.toLowerCase(), target.toLowerCase());
+        target = target.toLowerCase();
+        List<Pattern> patterns = worldAliases.get(target);
+        if (patterns == null) {
+            patterns = new ArrayList<>();
+            worldAliases.put(target, patterns);
+        }
+        patterns.add(GlobPattern.compile(world.toLowerCase()));
     }
 
     public void clearWorldAliases() {
         worldAliases.clear();
+        worldAliasCache.clear();
     }
 
     // Output debug message
@@ -299,11 +313,40 @@ public class PermissionsResolver {
         }
     }
 
+    // Fetches target world, if aliased
+    private String getWorldAlias(String world) {
+        Object alias = worldAliasCache.get(world); // NB Should only contain Strings or NULL_ALIAS
+        if (alias == null) {
+            // This world has not yet been seen
+            // Go through aliases in order
+            outer:
+            for (Map.Entry<String, List<Pattern>> me : worldAliases.entrySet()) {
+                String target = me.getKey();
+                List<Pattern> patterns = me.getValue();
+                // Attempt to match patterns
+                for (Pattern p : patterns) {
+                    Matcher m = p.matcher(world);
+                    if (m.matches()) {
+                        alias = target;
+                        break outer;
+                    }
+                }
+            }
+            if (alias == null) {
+                // No alias found
+                alias = NULL_ALIAS;
+            }
+            // Set alias cache
+            worldAliasCache.put(world, alias);
+        }
+        return alias != NULL_ALIAS ? (String)alias : null;
+    }
+
     // Apply an entity's permissions to the permission map. Universal permissions
     // (ones not assigned to any specific world) are applied first. They are
     // then overridden by any world-specific permissions.
     private Map<String, Boolean> applyPermissions(List<Entry> entries, Set<String> regions, String world) {
-        String worldAlias = world != null ? worldAliases.get(world) : null;
+        String worldAlias = world != null ? getWorldAlias(world) : null;
 
         Map<String, Boolean> permissions = new LinkedHashMap<>();
 

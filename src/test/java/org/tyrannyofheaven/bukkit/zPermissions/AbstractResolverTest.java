@@ -1526,6 +1526,7 @@ public abstract class AbstractResolverTest {
         assertPermission(permissions, "basic.perm2");
         
         // Now make TEST_WORLD2 a mirror of TEST_WORLD1
+        getResolver().clearWorldAliases(); // Needed to clear cache
         getResolver().addWorldAlias(TEST_WORLD2, TEST_WORLD1);
 
         permissions = resolve(TEST_PLAYER, TEST_PLAYER_UUID, TEST_WORLD1);
@@ -1553,6 +1554,46 @@ public abstract class AbstractResolverTest {
         permissions = resolve(TEST_PLAYER, TEST_PLAYER_UUID, TEST_WORLD1);
         assertPermission(permissions, "basic.perm1");
         assertPermission(permissions, "basic.perm2");
+        permissions = resolve(TEST_PLAYER, TEST_PLAYER_UUID, TEST_WORLD2);
+        assertPermission(permissions, "basic.perm1", false);
+        assertPermission(permissions, "basic.perm2");
+    }
+
+    @Test
+    public void testWorldAliasWildcard() {
+        // First no mirroring
+        setPermissions(TEST_PLAYER, TEST_PLAYER_UUID,
+                false, TEST_WORLD1 + ":basic.perm1");
+        setPermissions(TEST_PLAYER, TEST_PLAYER_UUID,
+                false, TEST_WORLD2 + ":basic.perm2");
+        
+        Map<String, Boolean> permissions;
+
+        permissions = resolve(TEST_PLAYER, TEST_PLAYER_UUID, TEST_WORLD1);
+        assertPermission(permissions, "basic.perm1");
+        assertPermission(permissions, "basic.perm2", false);
+        permissions = resolve(TEST_PLAYER, TEST_PLAYER_UUID, TEST_WORLD2);
+        assertPermission(permissions, "basic.perm1", false);
+        assertPermission(permissions, "basic.perm2");
+        
+        // Now make all worlds a mirror of TEST_WORLD1
+        getResolver().clearWorldAliases(); // Needed to clear cache
+        getResolver().addWorldAlias("*", TEST_WORLD1);
+
+        permissions = resolve(TEST_PLAYER, TEST_PLAYER_UUID, TEST_WORLD1);
+        assertPermission(permissions, "basic.perm1");
+        assertPermission(permissions, "basic.perm2", false);
+        permissions = resolve(TEST_PLAYER, TEST_PLAYER_UUID, TEST_WORLD2);
+        assertPermission(permissions, "basic.perm1");
+        assertPermission(permissions, "basic.perm2");
+        
+        // Override basic.perm1 in TEST_WORLD2
+        setPermissionsFalse(TEST_PLAYER, TEST_PLAYER_UUID,
+                false, TEST_WORLD2 + ":basic.perm1");
+
+        permissions = resolve(TEST_PLAYER, TEST_PLAYER_UUID, TEST_WORLD1);
+        assertPermission(permissions, "basic.perm1");
+        assertPermission(permissions, "basic.perm2", false);
         permissions = resolve(TEST_PLAYER, TEST_PLAYER_UUID, TEST_WORLD2);
         assertPermission(permissions, "basic.perm1", false);
         assertPermission(permissions, "basic.perm2");
