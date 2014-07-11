@@ -912,7 +912,7 @@ public class InMemoryPermissionService implements PermissionService {
         return old;
     }
 
-    protected static class MemoryState {
+    public static class MemoryState {
         
         private final Map<String, PermissionRegion> regions = new HashMap<>();
 
