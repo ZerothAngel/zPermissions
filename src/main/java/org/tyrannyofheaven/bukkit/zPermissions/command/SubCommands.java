@@ -56,6 +56,7 @@ import org.tyrannyofheaven.bukkit.util.transaction.TransactionCallback;
 import org.tyrannyofheaven.bukkit.util.transaction.TransactionCallbackWithoutResult;
 import org.tyrannyofheaven.bukkit.util.uuid.CommandUuidResolver;
 import org.tyrannyofheaven.bukkit.util.uuid.CommandUuidResolverHandler;
+import org.tyrannyofheaven.bukkit.util.uuid.UuidResolver;
 import org.tyrannyofheaven.bukkit.zPermissions.PermissionsResolver;
 import org.tyrannyofheaven.bukkit.zPermissions.ZPermissionsConfig;
 import org.tyrannyofheaven.bukkit.zPermissions.ZPermissionsCore;
@@ -89,7 +90,7 @@ public class SubCommands {
     // Parent plugin
     private final Plugin plugin;
 
-    private final CommandUuidResolver uuidResolver;
+    private final CommandUuidResolver commandUuidResolver;
 
     // The "/permissions player" handler
     private final PlayerCommands playerCommand;
@@ -97,21 +98,25 @@ public class SubCommands {
     // The "/permissions group" handler
     private final GroupCommands groupCommand;
 
+    // The "/permissions uuid-cache" handler
+    private final UuidCacheCommands uuidCacheCommands;
+
     private PurgeCode purgeCode;
 
     private final Random random = new Random();
 
-    SubCommands(ZPermissionsCore core, StorageStrategy storageStrategy, PermissionsResolver resolver, ModelDumper modelDumper, ZPermissionsConfig config, Plugin plugin, CommandUuidResolver uuidResolver) {
+    SubCommands(ZPermissionsCore core, StorageStrategy storageStrategy, PermissionsResolver resolver, ModelDumper modelDumper, ZPermissionsConfig config, Plugin plugin, CommandUuidResolver commandUuidResolver, UuidResolver uuidResolver) {
         this.core = core;
         this.storageStrategy = storageStrategy;
         this.resolver = resolver;
         this.modelDumper = modelDumper;
         this.config = config;
         this.plugin = plugin;
-        this.uuidResolver = uuidResolver;
+        this.commandUuidResolver = commandUuidResolver;
 
-        playerCommand = new PlayerCommands(core, storageStrategy, resolver, config, plugin, uuidResolver);
-        groupCommand = new GroupCommands(core, storageStrategy, resolver, config, plugin, uuidResolver);
+        playerCommand = new PlayerCommands(core, storageStrategy, resolver, config, plugin, commandUuidResolver);
+        groupCommand = new GroupCommands(core, storageStrategy, resolver, config, plugin, commandUuidResolver);
+        uuidCacheCommands = new UuidCacheCommands(uuidResolver);
     }
 
     @Command(value={"player", "pl", "p"}, description="Player-related commands")
@@ -487,11 +492,11 @@ public class SubCommands {
             final @Option(value={"-w", "--world"}, valueName="world") String world, final @Option(value={"-W", "--other-world"}, valueName="other-world") String otherWorld,
             final @Option(value={"-f", "--filter"}, valueName="filter") String filter, final @Option(value="player", completer="player") String player, final @Option(value="other-player", completer="player", optional=true) String otherPlayer) {
         final SubCommands realThis = this;
-        uuidResolver.resolveUsername(sender, player, false, new CommandUuidResolverHandler() {
+        commandUuidResolver.resolveUsername(sender, player, false, new CommandUuidResolverHandler() {
             @Override
             public void process(CommandSender sender, final String name, final UUID uuid, boolean group) {
                 // Resolve other name (if present)
-                uuidResolver.resolveUsername(sender, otherPlayer, false, new CommandUuidResolverHandler() {
+                commandUuidResolver.resolveUsername(sender, otherPlayer, false, new CommandUuidResolverHandler() {
                     @Override
                     public void process(CommandSender sender, String otherPlayer, UUID otherUuid, boolean group) {
                         realThis.diff(sender, regions, otherRegions, world, otherWorld, filter, name, uuid, otherPlayer, otherUuid);
@@ -791,6 +796,23 @@ public class SubCommands {
 
         // Kick off search
         Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, searchTask);
+    }
+
+    @Command(value="uuid-cache", description="UUID cache control")
+    @Require("zpermissions.uuid-cache")
+    public UuidCacheCommands uuidCache(HelpBuilder helpBuilder, CommandSender sender, String[] args) {
+        if (args.length == 0) {
+            // Display sub-command help
+            helpBuilder.withCommandSender(sender)
+                .withHandler(uuidCacheCommands)
+                .forCommand("invalidate")
+                .forCommand("invalidate-all")
+                .show();
+            abortBatchProcessing();
+            return null;
+        }
+
+        return uuidCacheCommands;
     }
 
     private static class PurgeCode {

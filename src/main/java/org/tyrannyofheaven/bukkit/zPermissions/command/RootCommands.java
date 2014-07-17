@@ -42,6 +42,7 @@ import org.tyrannyofheaven.bukkit.util.command.Require;
 import org.tyrannyofheaven.bukkit.util.transaction.TransactionCallback;
 import org.tyrannyofheaven.bukkit.util.uuid.CommandUuidResolver;
 import org.tyrannyofheaven.bukkit.util.uuid.CommandUuidResolverHandler;
+import org.tyrannyofheaven.bukkit.util.uuid.UuidResolver;
 import org.tyrannyofheaven.bukkit.zPermissions.PermissionsResolver;
 import org.tyrannyofheaven.bukkit.zPermissions.RefreshCause;
 import org.tyrannyofheaven.bukkit.zPermissions.ZPermissionsConfig;
@@ -77,7 +78,7 @@ public class RootCommands {
     // Parent plugin
     private final Plugin plugin;
 
-    private final CommandUuidResolver uuidResolver;
+    private final CommandUuidResolver commandUuidResolver;
 
     // Handler for /permissions sub-commands
     private final SubCommands sc;
@@ -97,15 +98,15 @@ public class RootCommands {
 
     }
 
-    public RootCommands(ZPermissionsCore core, StorageStrategy storageStrategy, PermissionsResolver resolver, ModelDumper modelDumper, ZPermissionsConfig config, Plugin plugin, CommandUuidResolver uuidResolver) {
+    public RootCommands(ZPermissionsCore core, StorageStrategy storageStrategy, PermissionsResolver resolver, ModelDumper modelDumper, ZPermissionsConfig config, Plugin plugin, CommandUuidResolver commandUuidResolver, UuidResolver uuidResolver) {
         this.core = core;
         this.storageStrategy = storageStrategy;
         this.resolver = resolver;
         this.config = config;
         this.plugin = plugin;
-        this.uuidResolver = uuidResolver;
+        this.commandUuidResolver = commandUuidResolver;
 
-        sc = new SubCommands(core, storageStrategy, resolver, modelDumper, config, plugin, uuidResolver);
+        sc = new SubCommands(core, storageStrategy, resolver, modelDumper, config, plugin, commandUuidResolver, uuidResolver);
     }
 
     @Command("permissions")
@@ -156,7 +157,7 @@ public class RootCommands {
     }
 
     private void rankChange(final CommandSender sender, final String playerName, final String trackName, final boolean rankUp, final BroadcastScope scope, final boolean verbose) {
-        uuidResolver.resolveUsername(sender, playerName, false, new CommandUuidResolverHandler() {
+        commandUuidResolver.resolveUsername(sender, playerName, false, new CommandUuidResolverHandler() {
             @Override
             public void process(CommandSender sender, String name, UUID uuid, boolean group) {
                 rankChange(sender, uuid, name, trackName, rankUp, scope, verbose);
@@ -296,7 +297,7 @@ public class RootCommands {
     }
 
     private void rankSet(final CommandSender sender, final String playerName, final String trackName, final String rankName, final BroadcastScope scope, final boolean verbose) {
-        uuidResolver.resolveUsername(sender, playerName, false, new CommandUuidResolverHandler() {
+        commandUuidResolver.resolveUsername(sender, playerName, false, new CommandUuidResolverHandler() {
             @Override
             public void process(CommandSender sender, String name, UUID uuid, boolean group) {
                 rankSet(sender, uuid, name, trackName, rankName, scope, verbose);

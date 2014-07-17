@@ -47,6 +47,7 @@ permissions:
       zpermissions.cleanup: true
       zpermissions.rank: true
       zpermissions.rank.*: true
+      zpermissions.uuid-cache: true
   zpermissions.rank:
     description: Allows use of all rank-related commands
     children:
@@ -171,3 +172,5 @@ permissions:
   zpermissions.error.detail:
     description: Receives full details about missing permissions
     default: true
+  zpermissions.uuid-cache:
+    description: Allows use of /permissions uuid-cache commands

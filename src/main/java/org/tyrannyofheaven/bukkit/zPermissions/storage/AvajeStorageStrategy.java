@@ -21,6 +21,7 @@ import static org.tyrannyofheaven.bukkit.util.ToHLoggingUtils.log;
 import java.util.Collection;
 import java.util.Date;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ExecutorService;
@@ -275,6 +276,52 @@ public class AvajeStorageStrategy implements StorageStrategy, PreBeginHook, PreC
                         udnc.setUuid(uuid);
                         udnc.setTimestamp(new Date());
                         getEbeanServer().save(udnc);
+                    }
+                });
+            }
+        });
+    }
+
+    @Override
+    public void invalidate(final String username) {
+        if (readOnlyMode)
+            throw new ReadOnlyException();
+        
+        executorService.execute(new Runnable() {
+            @Override
+            public void run() {
+                internalTransactionStrategy.execute(new TransactionCallbackWithoutResult() {
+                    @Override
+                    public void doInTransactionWithoutResult() throws Exception {
+                        // If it exists (regardless of expiration), just delete it
+                        UuidDisplayNameCache udnc = getEbeanServer().find(UuidDisplayNameCache.class).where()
+                                .eq("name", username.toLowerCase())
+                                .findUnique();
+                        if (udnc != null)
+                            getEbeanServer().delete(udnc);
+                    }
+                });
+            }
+        });
+    }
+
+    @Override
+    public void invalidateAll() {
+        if (readOnlyMode)
+            throw new ReadOnlyException();
+
+        executorService.execute(new Runnable() {
+            @Override
+            public void run() {
+                internalTransactionStrategy.execute(new TransactionCallbackWithoutResult() {
+                    @Override
+                    public void doInTransactionWithoutResult() throws Exception {
+                        // This is a bad way to do it, but I'm not sure how
+                        // an SQL delete would work in light of configurable
+                        // table names.
+                        List<UuidDisplayNameCache> udncs = getEbeanServer().find(UuidDisplayNameCache.class)
+                                .findList();
+                        getEbeanServer().delete(udncs);
                     }
                 });
             }
