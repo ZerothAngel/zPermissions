@@ -599,7 +599,7 @@ public class ZPermissionsPlugin extends JavaPlugin implements ZPermissionsCore, 
             CommandUuidResolver commandUuidResolver = new CommandUuidResolver(this, uuidResolver, commandUuidResolverExecutor, false /* TODO true after 1.3 */);
 
             // Install our commands
-            (new ToHCommandExecutor<ZPermissionsPlugin>(this, new RootCommands(getZPermissionsCore(), storageStrategy, getResolver(), getModelDumper(), getZPermissionsConfig(), this, commandUuidResolver)))
+            (new ToHCommandExecutor<ZPermissionsPlugin>(this, new RootCommands(getZPermissionsCore(), storageStrategy, getResolver(), getModelDumper(), getZPermissionsConfig(), this, commandUuidResolver, uuidResolver)))
                 .registerTypeCompleter("group", new GroupTypeCompleter(getPermissionService()))
                 .registerTypeCompleter("track", new TrackTypeCompleter(getZPermissionsConfig()))
                 .registerTypeCompleter("dump-dir", new DirTypeCompleter(getZPermissionsConfig()))
