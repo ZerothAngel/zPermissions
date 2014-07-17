@@ -20,6 +20,7 @@ import static org.tyrannyofheaven.bukkit.util.ToHLoggingUtils.log;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
@@ -65,7 +66,7 @@ public class FileStorageStrategy implements StorageStrategy, TransactionStrategy
     }
 
     @Override
-    public void init() {
+    public void init(Map<String, Object> configMap) {
         if (saveFile.exists()) {
             try {
                 permissionDao.load(saveFile);

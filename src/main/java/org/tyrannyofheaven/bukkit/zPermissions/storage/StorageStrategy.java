@@ -15,6 +15,8 @@
  */
 package org.tyrannyofheaven.bukkit.zPermissions.storage;
 
+import java.util.Map;
+
 import org.tyrannyofheaven.bukkit.util.transaction.TransactionStrategy;
 import org.tyrannyofheaven.bukkit.zPermissions.dao.PermissionService;
 
@@ -29,8 +31,10 @@ public interface StorageStrategy {
     /**
      * Perform any required initialization. Called once from the zPermissions
      * onEnable() handler.
+     * 
+     * @param configMap Configuration map containing key-value pairs
      */
-    public void init();
+    public void init(Map<String, Object> configMap);
     
     /**
      * Perform any required cleanup. Called from the zPermissions onDisable()

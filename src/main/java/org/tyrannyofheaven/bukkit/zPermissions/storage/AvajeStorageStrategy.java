@@ -18,6 +18,7 @@ package org.tyrannyofheaven.bukkit.zPermissions.storage;
 import static org.tyrannyofheaven.bukkit.util.ToHLoggingUtils.log;
 
 import java.util.Date;
+import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -74,7 +75,7 @@ public class AvajeStorageStrategy implements StorageStrategy, PreBeginHook, PreC
     }
 
     @Override
-    public void init() {
+    public void init(Map<String, Object> configMap) {
         log(plugin, "Loading all permissions from database...");
 //        plugin.getDatabase().getAdminLogging().setDebugGeneratedSql(true);
         long start = System.currentTimeMillis();
