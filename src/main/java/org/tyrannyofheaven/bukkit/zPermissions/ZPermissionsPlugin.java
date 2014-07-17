@@ -68,6 +68,7 @@ import org.tyrannyofheaven.bukkit.util.command.ToHCommandExecutor;
 import org.tyrannyofheaven.bukkit.util.transaction.TransactionCallback;
 import org.tyrannyofheaven.bukkit.util.transaction.TransactionCallbackWithoutResult;
 import org.tyrannyofheaven.bukkit.util.transaction.TransactionStrategy;
+import org.tyrannyofheaven.bukkit.util.uuid.CascadingUuidResolver;
 import org.tyrannyofheaven.bukkit.util.uuid.CommandUuidResolver;
 import org.tyrannyofheaven.bukkit.util.uuid.MojangUuidResolver;
 import org.tyrannyofheaven.bukkit.util.uuid.UuidResolver;
@@ -88,6 +89,7 @@ import org.tyrannyofheaven.bukkit.zPermissions.model.Membership;
 import org.tyrannyofheaven.bukkit.zPermissions.model.PermissionEntity;
 import org.tyrannyofheaven.bukkit.zPermissions.model.PermissionRegion;
 import org.tyrannyofheaven.bukkit.zPermissions.model.PermissionWorld;
+import org.tyrannyofheaven.bukkit.zPermissions.model.UuidDisplayNameCache;
 import org.tyrannyofheaven.bukkit.zPermissions.region.FactionsRegionStrategy;
 import org.tyrannyofheaven.bukkit.zPermissions.region.RegionStrategy;
 import org.tyrannyofheaven.bukkit.zPermissions.region.ResidenceRegionStrategy;
@@ -571,6 +573,13 @@ public class ZPermissionsPlugin extends JavaPlugin implements ZPermissionsCore, 
             // Initialize storage strategy
             Map<String, Object> configMap = config.getValues(true);
             storageStrategy.init(configMap);
+
+            // Set up UuidResolver cascade if StorageStrategy implementation happens
+            // to also implement UuidResolver
+            if (storageStrategy instanceof UuidResolver) {
+                log(this, "Using storage strategy as first-level UUID resolver.");
+                uuidResolver = new CascadingUuidResolver((UuidResolver)storageStrategy, uuidResolver);
+            }
         }
         catch (Exception e) {
             error(this, "Failed to initialize (storage): ", e);
@@ -706,6 +715,7 @@ public class ZPermissionsPlugin extends JavaPlugin implements ZPermissionsCore, 
         result.add(Membership.class);
         result.add(EntityMetadata.class);
         result.add(DataVersion.class);
+        result.add(UuidDisplayNameCache.class);
         return result;
     }
 
@@ -1452,6 +1462,8 @@ public class ZPermissionsPlugin extends JavaPlugin implements ZPermissionsCore, 
                         getPermissionService().updateDisplayName(uuid, displayName);
                     }
                 });
+                // Also preload name -> UUID mapping into UuidResolver cache(s)
+                uuidResolver.preload(displayName, uuid);
             }
         });
     }

@@ -17,8 +17,11 @@ package org.tyrannyofheaven.bukkit.zPermissions.storage;
 
 import static org.tyrannyofheaven.bukkit.util.ToHLoggingUtils.log;
 
+import java.util.Collection;
 import java.util.Date;
+import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -32,19 +35,23 @@ import org.tyrannyofheaven.bukkit.util.transaction.PreBeginHook;
 import org.tyrannyofheaven.bukkit.util.transaction.PreCommitHook;
 import org.tyrannyofheaven.bukkit.util.transaction.RetryingAvajeTransactionStrategy;
 import org.tyrannyofheaven.bukkit.util.transaction.TransactionCallback;
+import org.tyrannyofheaven.bukkit.util.transaction.TransactionCallbackWithoutResult;
 import org.tyrannyofheaven.bukkit.util.transaction.TransactionStrategy;
+import org.tyrannyofheaven.bukkit.util.uuid.UuidDisplayName;
+import org.tyrannyofheaven.bukkit.util.uuid.UuidResolver;
 import org.tyrannyofheaven.bukkit.zPermissions.ReadOnlyException;
 import org.tyrannyofheaven.bukkit.zPermissions.dao.AvajePermissionDao;
 import org.tyrannyofheaven.bukkit.zPermissions.dao.InMemoryPermissionService;
 import org.tyrannyofheaven.bukkit.zPermissions.dao.PermissionService;
 import org.tyrannyofheaven.bukkit.zPermissions.model.DataVersion;
+import org.tyrannyofheaven.bukkit.zPermissions.model.UuidDisplayNameCache;
 
 /**
  * StorageStrategy for AvajePermissionService.
  * 
  * @author asaddi
  */
-public class AvajeStorageStrategy implements StorageStrategy, PreBeginHook, PreCommitHook {
+public class AvajeStorageStrategy implements StorageStrategy, PreBeginHook, PreCommitHook, UuidResolver {
 
     private final InMemoryPermissionService permissionService = new InMemoryPermissionService();
 
@@ -62,6 +69,8 @@ public class AvajeStorageStrategy implements StorageStrategy, PreBeginHook, PreC
 
     private final boolean readOnlyMode;
 
+    private long uuidCacheTimeout = 120L * 60L * 1000L; // Default to 2 hours
+
     public AvajeStorageStrategy(Plugin plugin, int maxRetries, boolean readOnlyMode) {
         // Following will be used to actually execute async
         executorService = Executors.newSingleThreadExecutor();
@@ -76,6 +85,13 @@ public class AvajeStorageStrategy implements StorageStrategy, PreBeginHook, PreC
 
     @Override
     public void init(Map<String, Object> configMap) {
+        // Take care of storage-specific configuration first
+        Number uuidCacheTimeout = (Number)configMap.get("uuid-database-cache-ttl");
+        if (uuidCacheTimeout != null) {
+            this.uuidCacheTimeout = uuidCacheTimeout.longValue() * 60L * 1000L;
+            log(plugin, "AvajeStorageStrategy uuidCacheTimeout = %d", this.uuidCacheTimeout);
+        }
+
         log(plugin, "Loading all permissions from database...");
 //        plugin.getDatabase().getAdminLogging().setDebugGeneratedSql(true);
         long start = System.currentTimeMillis();
@@ -184,6 +200,76 @@ public class AvajeStorageStrategy implements StorageStrategy, PreBeginHook, PreC
         
         if (readOnlyMode)
             throw new ReadOnlyException();
+    }
+
+    // UuidResolver methods (most are allowed to block)
+
+    @Override
+    public UuidDisplayName resolve(final String username) {
+        return retryingTransactionStrategy.execute(new TransactionCallback<UuidDisplayName>() {
+            @Override
+            public UuidDisplayName doInTransaction() throws Exception {
+                Date now = new Date();
+                Date expire = new Date(now.getTime() - uuidCacheTimeout);
+                UuidDisplayNameCache udnc = plugin.getDatabase().find(UuidDisplayNameCache.class).where()
+                        .eq("name", username.toLowerCase())
+                        .ge("timestamp", expire)
+                        .findUnique();
+                if (udnc != null) {
+                    UUID uuid = udnc.getUuid();
+                    return new UuidDisplayName(uuid, udnc.getDisplayName());
+                }
+                return null;
+            }
+        }, true /* always read-only */);
+    }
+
+    @Override
+    public UuidDisplayName resolve(String username, boolean cacheOnly) {
+        if (cacheOnly) return null; // No cache (because we ARE a cache) and we must not block
+        return resolve(username);
+    }
+
+    @Override
+    public Map<String, UuidDisplayName> resolve(Collection<String> usernames) throws Exception {
+        Map<String, UuidDisplayName> resolved = new LinkedHashMap<>();
+        // Just resolve each name one at a time
+        for (String username : usernames) {
+            UuidDisplayName udn = resolve(username);
+            if (udn != null) resolved.put(username.toLowerCase(), udn);
+        }
+        return resolved;
+    }
+
+    @Override
+    public void preload(final String username, final UUID uuid) {
+        if (readOnlyMode) return; // Do nothing if read-only
+
+        // Must never block, so utilize our Executor
+        executorService.execute(new Runnable() {
+            @Override
+            public void run() {
+                retryingTransactionStrategy.execute(new TransactionCallbackWithoutResult() {
+                    @Override
+                    public void doInTransactionWithoutResult() throws Exception {
+                        // Does it already exist? (regardless of expiration)
+                        UuidDisplayNameCache udnc = plugin.getDatabase().find(UuidDisplayNameCache.class).where()
+                                .eq("name", username.toLowerCase())
+                                .findUnique();
+                        if (udnc == null) {
+                            // If not, create it
+                            udnc = new UuidDisplayNameCache();
+                            udnc.setName(username.toLowerCase());
+                        }
+                        // Update values
+                        udnc.setDisplayName(username);
+                        udnc.setUuid(uuid);
+                        udnc.setTimestamp(new Date());
+                        plugin.getDatabase().save(udnc);
+                    }
+                });
+            }
+        });
     }
 
 }
