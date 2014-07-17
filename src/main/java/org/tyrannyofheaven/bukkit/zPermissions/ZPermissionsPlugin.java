@@ -361,6 +361,8 @@ public class ZPermissionsPlugin extends JavaPlugin implements ZPermissionsCore, 
     // Whether ZPermissionService#getPlayerMetadata() should be aware of prefix/suffix
     private boolean serviceMetadataPrefixHack;
 
+    private String storageStrategyClassName;
+
     /**
      * Retrieve this plugin's retrying TransactionStrategy
      * FIXME We use a separate TransactionStrategy because not all transactions
@@ -523,7 +525,14 @@ public class ZPermissionsPlugin extends JavaPlugin implements ZPermissionsCore, 
         try {
             // Set up TransactionStrategy and PermissionService
             storageStrategy = null;
-            if (databaseSupport) {
+            
+            if (hasText(storageStrategyClassName)) {
+                // Use a custom StorageStrategy implementation
+                log(this, "Using custom storage strategy: %s", storageStrategyClassName);
+                storageStrategy = (StorageStrategy)Class.forName(storageStrategyClassName).newInstance();
+            }
+            else if (databaseSupport) {
+                // Use the default Avaje-based StorageStrategy
                 ebeanServer = ToHDatabaseUtils.createEbeanServer(this, getClassLoader(), namingConvention, config);
    
                 SpiEbeanServer spiEbeanServer = (SpiEbeanServer)ebeanServer;
@@ -560,7 +569,8 @@ public class ZPermissionsPlugin extends JavaPlugin implements ZPermissionsCore, 
             }
             
             // Initialize storage strategy
-            storageStrategy.init();
+            Map<String, Object> configMap = config.getValues(true);
+            storageStrategy.init(configMap);
         }
         catch (Exception e) {
             error(this, "Failed to initialize (storage): ", e);
@@ -1236,6 +1246,8 @@ public class ZPermissionsPlugin extends JavaPlugin implements ZPermissionsCore, 
         }
 
         configureWorldMirrors();
+        
+        storageStrategyClassName = config.getString("custom-storage-strategy");
     }
 
     private void configureWorldMirrors() {
