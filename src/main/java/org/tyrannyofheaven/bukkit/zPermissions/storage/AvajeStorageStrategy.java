@@ -15,6 +15,7 @@
  */
 package org.tyrannyofheaven.bukkit.zPermissions.storage;
 
+import static org.tyrannyofheaven.bukkit.util.ToHLoggingUtils.debug;
 import static org.tyrannyofheaven.bukkit.util.ToHLoggingUtils.log;
 
 import java.util.Collection;
@@ -46,6 +47,8 @@ import org.tyrannyofheaven.bukkit.zPermissions.dao.PermissionService;
 import org.tyrannyofheaven.bukkit.zPermissions.model.DataVersion;
 import org.tyrannyofheaven.bukkit.zPermissions.model.UuidDisplayNameCache;
 
+import com.avaje.ebean.EbeanServer;
+
 /**
  * StorageStrategy for AvajePermissionService.
  * 
@@ -59,7 +62,7 @@ public class AvajeStorageStrategy implements StorageStrategy, PreBeginHook, PreC
 
     private final AsyncTransactionStrategy transactionStrategy;
 
-    private final TransactionStrategy retryingTransactionStrategy; // NB private and only used here for loading
+    private final TransactionStrategy internalTransactionStrategy; // NB private and only used here
 
     private final Plugin plugin;
 
@@ -78,7 +81,10 @@ public class AvajeStorageStrategy implements StorageStrategy, PreBeginHook, PreC
         transactionStrategy = new AsyncTransactionStrategy(new RetryingAvajeTransactionStrategy(plugin.getDatabase(), maxRetries, null, this), executorService, this);
         permissionDao = new AvajePermissionDao(permissionService, plugin.getDatabase(), transactionStrategy.getExecutor());
         permissionService.setPermissionDao(permissionDao);
-        retryingTransactionStrategy = new RetryingAvajeTransactionStrategy(plugin.getDatabase(), maxRetries); // NB no need for pre-commit hook since it's read-only
+        // NB internalTransactionStrategy has no pre-commit hook since it falls
+        // outside the purview of data versioning. data versioning = permissions system only.
+        // All reads are uncached. Writes only occur to UUID cache.
+        internalTransactionStrategy = new RetryingAvajeTransactionStrategy(plugin.getDatabase(), maxRetries);
         this.plugin = plugin;
         this.readOnlyMode = readOnlyMode;
     }
@@ -89,7 +95,7 @@ public class AvajeStorageStrategy implements StorageStrategy, PreBeginHook, PreC
         Number uuidCacheTimeout = (Number)configMap.get("uuid-database-cache-ttl");
         if (uuidCacheTimeout != null) {
             this.uuidCacheTimeout = uuidCacheTimeout.longValue() * 60L * 1000L;
-            log(plugin, "AvajeStorageStrategy uuidCacheTimeout = %d", this.uuidCacheTimeout);
+            debug(plugin, "AvajeStorageStrategy uuidCacheTimeout = %d", this.uuidCacheTimeout);
         }
 
         log(plugin, "Loading all permissions from database...");
@@ -129,7 +135,7 @@ public class AvajeStorageStrategy implements StorageStrategy, PreBeginHook, PreC
     }
 
     private boolean refreshInternal(final boolean force) {
-        return retryingTransactionStrategy.execute(new TransactionCallback<Boolean>() {
+        return internalTransactionStrategy.execute(new TransactionCallback<Boolean>() {
             @Override
             public Boolean doInTransaction() throws Exception {
                 DataVersion currentVersion = getCurrentDataVersion();
@@ -160,9 +166,13 @@ public class AvajeStorageStrategy implements StorageStrategy, PreBeginHook, PreC
         return transactionStrategy;
     }
 
+    private EbeanServer getEbeanServer() {
+        return plugin.getDatabase();
+    }
+
     // Return current data version. Will never return null.
     private DataVersion getCurrentDataVersion() {
-        DataVersion dv = plugin.getDatabase().find(DataVersion.class).where()
+        DataVersion dv = getEbeanServer().find(DataVersion.class).where()
                 .eq("name", plugin.getName())
                 .findUnique();
         if (dv == null) {
@@ -189,7 +199,7 @@ public class AvajeStorageStrategy implements StorageStrategy, PreBeginHook, PreC
         dv.setVersion(dv.getVersion() + 1L);
         dv.setTimestamp(new Date());
         // Save
-        plugin.getDatabase().save(dv);
+        getEbeanServer().save(dv);
 
         lastLoadedVersion.compareAndSet(previousVersion, dv.getVersion()); // probably not the appropriate place. Should really be post-commit...
     }
@@ -206,12 +216,11 @@ public class AvajeStorageStrategy implements StorageStrategy, PreBeginHook, PreC
 
     @Override
     public UuidDisplayName resolve(final String username) {
-        return retryingTransactionStrategy.execute(new TransactionCallback<UuidDisplayName>() {
+        return internalTransactionStrategy.execute(new TransactionCallback<UuidDisplayName>() {
             @Override
             public UuidDisplayName doInTransaction() throws Exception {
-                Date now = new Date();
-                Date expire = new Date(now.getTime() - uuidCacheTimeout);
-                UuidDisplayNameCache udnc = plugin.getDatabase().find(UuidDisplayNameCache.class).where()
+                Date expire = new Date(System.currentTimeMillis() - uuidCacheTimeout);
+                UuidDisplayNameCache udnc = getEbeanServer().find(UuidDisplayNameCache.class).where()
                         .eq("name", username.toLowerCase())
                         .ge("timestamp", expire)
                         .findUnique();
@@ -226,7 +235,7 @@ public class AvajeStorageStrategy implements StorageStrategy, PreBeginHook, PreC
 
     @Override
     public UuidDisplayName resolve(String username, boolean cacheOnly) {
-        if (cacheOnly) return null; // No cache (because we ARE a cache) and we must not block
+        if (cacheOnly) return null; // No cache (because we ARE a cache) yet we must not block
         return resolve(username);
     }
 
@@ -249,11 +258,11 @@ public class AvajeStorageStrategy implements StorageStrategy, PreBeginHook, PreC
         executorService.execute(new Runnable() {
             @Override
             public void run() {
-                retryingTransactionStrategy.execute(new TransactionCallbackWithoutResult() {
+                internalTransactionStrategy.execute(new TransactionCallbackWithoutResult() {
                     @Override
                     public void doInTransactionWithoutResult() throws Exception {
                         // Does it already exist? (regardless of expiration)
-                        UuidDisplayNameCache udnc = plugin.getDatabase().find(UuidDisplayNameCache.class).where()
+                        UuidDisplayNameCache udnc = getEbeanServer().find(UuidDisplayNameCache.class).where()
                                 .eq("name", username.toLowerCase())
                                 .findUnique();
                         if (udnc == null) {
@@ -265,7 +274,7 @@ public class AvajeStorageStrategy implements StorageStrategy, PreBeginHook, PreC
                         udnc.setDisplayName(username);
                         udnc.setUuid(uuid);
                         udnc.setTimestamp(new Date());
-                        plugin.getDatabase().save(udnc);
+                        getEbeanServer().save(udnc);
                     }
                 });
             }
