@@ -32,6 +32,12 @@ default-group: |
   The default group. Players that are not explicitly members of any group
   are considered members of this group.
 
+explicit-default-group-membership: |
+  Normally, membership in the default group is implicit, i.e. you are considered
+  a member of the default group if you are not a member of any group. Setting
+  this to true makes the membership explicit, writing out the default group
+  membership to storage on login.
+
 default-track: |
   The default track. When the track name is omitted while using the /promote,
   /demote, /setrank, and /unsetrank commands, this is the track used.

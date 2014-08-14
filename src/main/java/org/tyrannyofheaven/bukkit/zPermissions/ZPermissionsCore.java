@@ -69,6 +69,8 @@ public interface ZPermissionsCore {
 
     public void updateDisplayName(UUID uuid, String displayName);
 
+    public void handleExplicitDefaultGroupMembership(final UUID uuid, final String displayName);
+
     // Metadata cache management
     
     public void invalidateMetadataCache(String name, UUID uuid, boolean group);

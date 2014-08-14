@@ -1,4 +1,4 @@
-config-version: 18
+config-version: 19
 
 database-support: true
 
@@ -13,6 +13,8 @@ assigned-group-permission: ''
 assigned-groups-can-include-default: true
 
 default-group: default
+
+explicit-default-group-membership: false
 
 default-track: default
 
