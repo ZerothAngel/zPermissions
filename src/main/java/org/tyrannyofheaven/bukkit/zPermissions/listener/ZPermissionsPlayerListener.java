@@ -93,6 +93,12 @@ public class ZPermissionsPlayerListener implements Listener {
     }
 
     @EventHandler(priority=EventPriority.MONITOR)
+    public void onPlayerJoinMonitor(PlayerJoinEvent event) {
+        // Make default group membership explicit, if configured to do so...
+        core.handleExplicitDefaultGroupMembership(event.getPlayer().getUniqueId(), event.getPlayer().getName());
+    }
+
+    @EventHandler(priority=EventPriority.MONITOR)
     public void onPlayerQuit(PlayerQuitEvent event) {
         debug(plugin, "%s quitting", event.getPlayer().getName());
         core.removeBukkitPermissions(event.getPlayer(), false); // They're leaving, no need to recalc

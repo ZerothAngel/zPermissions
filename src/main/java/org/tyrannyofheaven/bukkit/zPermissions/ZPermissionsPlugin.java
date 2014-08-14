@@ -77,6 +77,7 @@ import org.tyrannyofheaven.bukkit.zPermissions.command.DirTypeCompleter;
 import org.tyrannyofheaven.bukkit.zPermissions.command.GroupTypeCompleter;
 import org.tyrannyofheaven.bukkit.zPermissions.command.RootCommands;
 import org.tyrannyofheaven.bukkit.zPermissions.command.TrackTypeCompleter;
+import org.tyrannyofheaven.bukkit.zPermissions.dao.MissingGroupException;
 import org.tyrannyofheaven.bukkit.zPermissions.dao.PermissionService;
 import org.tyrannyofheaven.bukkit.zPermissions.listener.ZPermissionsFallbackListener;
 import org.tyrannyofheaven.bukkit.zPermissions.listener.ZPermissionsPlayerListener;
@@ -226,6 +227,9 @@ public class ZPermissionsPlugin extends JavaPlugin implements ZPermissionsCore, 
     // Whether ZPermissionService#getPlayerMetadata() should be aware of prefix/suffix
     private static final boolean DEFAULT_SERVICE_METADATA_PREFIX_HACK = false;
 
+    // Whether default group membership should be made explicit
+    private static final boolean DEFAULT_EXPLICIT_DEFAULT_GROUP_MEMBERSHIP = false;
+
     // Version info (may include build number)
     private VersionInfo versionInfo;
 
@@ -364,6 +368,9 @@ public class ZPermissionsPlugin extends JavaPlugin implements ZPermissionsCore, 
     private boolean serviceMetadataPrefixHack;
 
     private String storageStrategyClassName;
+
+    // Whether default group membership should be made explicit
+    private boolean explicitDefaultGroupMembership;
 
     /**
      * Retrieve this plugin's retrying TransactionStrategy
@@ -1157,6 +1164,7 @@ public class ZPermissionsPlugin extends JavaPlugin implements ZPermissionsCore, 
         value = config.getString("default-group");
         if (hasText(value))
             getResolver().setDefaultGroup(value);
+        explicitDefaultGroupMembership = config.getBoolean("explicit-default-group-membership", DEFAULT_EXPLICIT_DEFAULT_GROUP_MEMBERSHIP);
         
         value = config.getString("default-track");
         if (hasText(value))
@@ -1471,6 +1479,33 @@ public class ZPermissionsPlugin extends JavaPlugin implements ZPermissionsCore, 
     @Override
     public boolean isServiceMetadataPrefixHack() {
         return serviceMetadataPrefixHack;
+    }
+
+    @Override
+    public void handleExplicitDefaultGroupMembership(final UUID uuid, final String displayName) {
+        if (!explicitDefaultGroupMembership) return; // Keep things implicit
+        
+        final Plugin realThis = this;
+        getRetryingTransactionStrategy().execute(new TransactionCallbackWithoutResult() {
+            @Override
+            public void doInTransactionWithoutResult() throws Exception {
+                // Check if they are in any groups
+                List<Membership> memberships = getPermissionService().getGroups(uuid);
+                if (memberships.isEmpty()) {
+                    // No groups, so add them
+                    try {
+                        debug(realThis, "Explicitly adding %s to default group %s", displayName, getResolver().getDefaultGroup());
+                        getPermissionService().addMember(getResolver().getDefaultGroup(), uuid, displayName, null);
+                    }
+                    catch (MissingGroupException e) {
+                        warn(realThis, "explicit-default-group-membership is true but the group (%s) does not exist; nothing done", getResolver().getDefaultGroup());
+                    }
+                    
+                    // No need to refresh or invalidate caches since they were
+                    // already a member of this group.
+                }
+            }
+        });
     }
 
 }
