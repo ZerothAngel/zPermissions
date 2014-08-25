@@ -92,6 +92,7 @@ import org.tyrannyofheaven.bukkit.zPermissions.model.PermissionRegion;
 import org.tyrannyofheaven.bukkit.zPermissions.model.PermissionWorld;
 import org.tyrannyofheaven.bukkit.zPermissions.model.UuidDisplayNameCache;
 import org.tyrannyofheaven.bukkit.zPermissions.region.FactionsRegionStrategy;
+import org.tyrannyofheaven.bukkit.zPermissions.region.FactoidRegionStrategy;
 import org.tyrannyofheaven.bukkit.zPermissions.region.RegionStrategy;
 import org.tyrannyofheaven.bukkit.zPermissions.region.ResidenceRegionStrategy;
 import org.tyrannyofheaven.bukkit.zPermissions.region.WorldGuardRegionStrategy;
@@ -684,6 +685,9 @@ public class ZPermissionsPlugin extends JavaPlugin implements ZPermissionsCore, 
         regionStrategy = new FactionsRegionStrategy(this, getZPermissionsCore());
         strategies.put(regionStrategy.getName(), regionStrategy);
 
+        regionStrategy = new FactoidRegionStrategy(this, getZPermissionsCore());
+        strategies.put(regionStrategy.getName(), regionStrategy);
+
         // Run through list in preference order
         for (String rmName : regionManagers) {
             regionStrategy = strategies.get(rmName);
@@ -1261,6 +1265,7 @@ public class ZPermissionsPlugin extends JavaPlugin implements ZPermissionsCore, 
             // Set up default region manager(s)
             regionManagers.add("WorldGuard");
             regionManagers.add("Residence");
+            regionManagers.add("Factoid");
         }
 
         configureWorldMirrors();
