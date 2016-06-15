@@ -1,5 +1,7 @@
 package org.tyrannyofheaven.bukkit.zPermissions.model;
 
+import org.tyrannyofheaven.bukkit.zPermissions.ZPermissionsPlugin;
+
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
@@ -8,7 +10,7 @@ import javax.persistence.Table;
 import javax.persistence.UniqueConstraint;
 
 @Entity
-@Table(name="inheritances")
+@Table(name=ZPermissionsPlugin.DATABASE_PREFIX + "inheritances")
 @UniqueConstraint(columnNames={"child_id", "parent_id"})
 public class Inheritance implements Comparable<Inheritance> {
 

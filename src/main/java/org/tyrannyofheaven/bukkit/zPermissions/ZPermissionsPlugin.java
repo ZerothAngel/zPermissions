@@ -231,6 +231,9 @@ public class ZPermissionsPlugin extends JavaPlugin implements ZPermissionsCore, 
     // Whether default group membership should be made explicit
     private static final boolean DEFAULT_EXPLICIT_DEFAULT_GROUP_MEMBERSHIP = false;
 
+    // Prefix for each table created by the plugin
+    public static final String DATABASE_PREFIX = "zperms_";
+
     // Version info (may include build number)
     private VersionInfo versionInfo;
 

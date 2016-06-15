@@ -29,9 +29,10 @@ import javax.persistence.TemporalType;
 import javax.persistence.Transient;
 
 import org.tyrannyofheaven.bukkit.util.uuid.UuidUtils;
+import org.tyrannyofheaven.bukkit.zPermissions.ZPermissionsPlugin;
 
 @Entity
-@Table(name="uuidcache")
+@Table(name=ZPermissionsPlugin.DATABASE_PREFIX + "uuidcache")
 public class UuidDisplayNameCache {
 
     private String name;
