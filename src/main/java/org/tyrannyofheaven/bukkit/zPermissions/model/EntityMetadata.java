@@ -15,6 +15,8 @@
  */
 package org.tyrannyofheaven.bukkit.zPermissions.model;
 
+import org.tyrannyofheaven.bukkit.zPermissions.ZPermissionsPlugin;
+
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
@@ -25,7 +27,7 @@ import javax.persistence.Transient;
 import javax.persistence.UniqueConstraint;
 
 @Entity
-@Table(name="metadata")
+@Table(name=ZPermissionsPlugin.DATABASE_PREFIX + "metadata")
 @UniqueConstraint(columnNames={"entity_id", "name"})
 public class EntityMetadata {
 

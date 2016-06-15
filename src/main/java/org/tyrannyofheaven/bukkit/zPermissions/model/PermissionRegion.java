@@ -15,6 +15,8 @@
  */
 package org.tyrannyofheaven.bukkit.zPermissions.model;
 
+import org.tyrannyofheaven.bukkit.zPermissions.ZPermissionsPlugin;
+
 import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.Table;
@@ -26,7 +28,7 @@ import javax.persistence.UniqueConstraint;
  * @author zerothangel
  */
 @Entity
-@Table(name="regions")
+@Table(name=ZPermissionsPlugin.DATABASE_PREFIX + "regions")
 @UniqueConstraint(columnNames="name")
 public class PermissionRegion {
 

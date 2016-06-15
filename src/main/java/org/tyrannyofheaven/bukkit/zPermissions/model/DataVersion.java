@@ -15,6 +15,8 @@
  */
 package org.tyrannyofheaven.bukkit.zPermissions.model;
 
+import org.tyrannyofheaven.bukkit.zPermissions.ZPermissionsPlugin;
+
 import java.util.Date;
 
 import javax.persistence.Column;
@@ -29,6 +31,7 @@ import javax.persistence.TemporalType;
  * @author zerothangel
  */
 @Entity
+@Table(name= ZPermissionsPlugin.DATABASE_PREFIX + "data_version")
 public class DataVersion {
 
     private String name;

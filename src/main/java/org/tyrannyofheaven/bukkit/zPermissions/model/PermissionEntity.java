@@ -37,6 +37,7 @@ import javax.persistence.UniqueConstraint;
 
 import org.tyrannyofheaven.bukkit.util.ToHUtils;
 import org.tyrannyofheaven.bukkit.util.uuid.UuidUtils;
+import org.tyrannyofheaven.bukkit.zPermissions.ZPermissionsPlugin;
 
 /**
  * The permission entity &mdash; something that can have a set of permission
@@ -48,7 +49,7 @@ import org.tyrannyofheaven.bukkit.util.uuid.UuidUtils;
  * @author zerothangel
  */
 @Entity
-@Table(name="entities")
+@Table(name=ZPermissionsPlugin.DATABASE_PREFIX + "entities")
 @UniqueConstraint(columnNames={"name", "is_group"})
 public class PermissionEntity {
 
